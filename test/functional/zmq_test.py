@@ -40,7 +40,7 @@ class ZMQTest (BitcoinTestFramework):
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"hashtx")
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"rawblock")
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"rawtx")
-        ip_address = "tcp://127.0.0.1:28332"
+        ip_address = "tcp://127.0.0.1:28667"
         self.zmqSubSocket.connect(ip_address)
         self.extra_args = [['-zmqpubhashblock=%s' % ip_address, '-zmqpubhashtx=%s' % ip_address,
                        '-zmqpubrawblock=%s' % ip_address, '-zmqpubrawtx=%s' % ip_address], []]

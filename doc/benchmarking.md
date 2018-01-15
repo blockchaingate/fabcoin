@@ -1,11 +1,11 @@
 Benchmarking
 ============
 
-Bitcoin Core has an internal benchmarking framework, with benchmarks
+Fabcoin Core has an internal benchmarking framework, with benchmarks
 for cryptographic algorithms such as SHA1, SHA256, SHA512 and RIPEMD160. As well as the rolling bloom filter.
 
-After compiling bitcoin-core, the benchmarks can be run with:
-`src/bench/bench_bitcoin`
+After compiling fabcoin-core, the benchmarks can be run with:
+`src/bench/bench_fabcoin`
 
 The output will look similar to:
 ```

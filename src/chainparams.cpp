@@ -86,12 +86,12 @@ public:
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
 		consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
 #else
-		consensus.nSubsidyHalvingInterval = 210000;
-		consensus.BIP34Height = 227931;
-		consensus.BIP34Hash = uint256S("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8");
-		consensus.BIP65Height = 388381; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
-		consensus.BIP66Height = 363725; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
-		consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.BIP34Height = 227931;
+        consensus.BIP34Hash = uint256S("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8");
+        consensus.BIP65Height = 388381; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
+        consensus.BIP66Height = 363725; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
+        consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 		consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // 14 days
 		consensus.nPowTargetSpacing = 10 * 60; // 10 minutes
 #endif
@@ -178,7 +178,7 @@ public:
             // Data as of block 000000000000000000d97e53664d17967bd4ee50b23abb92e54a34eb222d15ae (height 478913).
             1501801925, // * UNIX timestamp of last known number of transactions
             243756039,  // * total number of transactions between genesis and that timestamp
-                        //   (the tx=... number in the SetBestChain debug.log lines)
+                    //   (the tx=... number in the SetBestChain debug.log lines)
             3.1         // * estimated number of transactions per second after that timestamp
         };
     }
@@ -353,7 +353,7 @@ public:
 
         fDefaultConsistencyChecks = true;
         fRequireStandard = false;
-        fMineBlocksOnDemand = true;
+        fMineBlocksOnDemand = true; 
 
         checkpointData = (CCheckpointData) {
             {

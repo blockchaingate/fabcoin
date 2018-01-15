@@ -1,6 +1,6 @@
 Bitcoin Core version *0.15.1* is now available from:
 
-  <https://bitcoincore.org/bin/bitcoin-core-0.15.1/>
+  <https://fabcoincore.org/bin/bitcoin-core-0.15.1/>
 
 or
 
@@ -258,8 +258,8 @@ Thanks to everyone who directly contributed to this release:
 - Jim Posen
 - John Newbery
 - Johnson Lau
-- Jo√£o Barbosa
-- Jorge Tim√≥n
+- Jo„o Barbosa
+- Jorge TimÛn
 - Karl-Johan Alm
 - Lucas Betschart
 - MarcoFalke

@@ -977,7 +977,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFlushOnClose)
         if (wtxIn.tx->HasWitness() && !wtx.tx->HasWitness()) {
             wtx.SetTx(wtxIn.tx);
             fUpdated = true;
-        }
+    }
     }
 
     //// debug print
