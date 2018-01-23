@@ -181,6 +181,10 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
+		// Smart contract extension
+    OP_CREATE = 0xc1,
+    OP_CALL = 0xc2,
+    OP_SPEND = 0xc3,
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -643,6 +647,8 @@ public:
 
     /** Check if the script contains valid OP_CODES */
     bool HasValidOps() const;
+
+		//
 
     /**
      * Returns whether the script is guaranteed to fail at execution,
