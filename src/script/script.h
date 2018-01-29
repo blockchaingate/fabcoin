@@ -185,6 +185,11 @@ enum opcodetype
     OP_CREATE = 0xc1,
     OP_CALL = 0xc2,
     OP_SPEND = 0xc3,
+    OP_GAS_LIMIT = 0xc4,
+    OP_GAS_PRICE = 0xc5,
+    OP_DATA =0xc6,
+    OP_VERSION = 0xc7,
+    // end of smart contract extension
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
