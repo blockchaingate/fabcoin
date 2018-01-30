@@ -30,6 +30,10 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_NULL_DATA: return "nulldata";
     case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
     case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
+    // Smart contract support.
+    case TX_CREATE: return "create";
+    case TX_CALL: return "call";
+    // end of smart contract support.
     }
     return nullptr;
 }
@@ -51,6 +55,12 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
         // Sender provides N pubkeys, receivers provides M signatures
         mTemplates.insert(std::make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
+
+        // Smart contract support.
+        mTemplates.insert(std::make_pair(TX_CREATE, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_CREATE));
+
+        mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
+        // end of smart contract support.
     }
 
     vSolutionsRet.clear();
@@ -163,6 +173,28 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
                 else
                     break;
             }
+            // Smart contract extension.
+            else if (opcode2 == OP_VERSION)
+            {
+              assert(false && "OP_VERSION Solver check to be implemented.");
+              return false;
+            }
+            else if (opcode2 == OP_GAS_LIMIT)
+            {
+              assert(false && "OP_GAS_LIMIT Solver check to be implemented.");
+              return false;
+            }
+            else if (opcode2 == OP_GAS_PRICE)
+            {
+              assert(false && "OP_GAS_PRICE Solver check to be implemented.");
+              return false;
+            }
+            else if (opcode2 == OP_DATA)
+            {
+              assert(false && "OP_DATA Solver check to be implemented.");
+              return false;
+            }
+            // end of smart contract extension.
             else if (opcode1 != opcode2 || vch1 != vch2)
             {
                 // Others must match exactly
@@ -202,6 +234,11 @@ bool ExtractDestination(const CScript& scriptPubKey, CTxDestination& addressRet)
         addressRet = CScriptID(uint160(vSolutions[0]));
         return true;
     }
+    else if (whichType == TX_CALL)
+    {
+        addressRet = CScriptID(uint160(vSolutions[0]));
+        return true;
+    }
     // Multisig txns have more than one address...
     return false;
 }
@@ -216,6 +253,14 @@ bool ExtractDestinations(const CScript& scriptPubKey, txnouttype& typeRet, std::
     if (typeRet == TX_NULL_DATA){
         // This is data, not addresses
         return false;
+    }
+
+    if (typeRet == TX_CREATE)
+    {
+      assert(false && "Smart contract address extraction not implemented.");
+      //CTxDestination address = pubKey.GetID();
+      //addressRet.push_back(address);
+      return true;
     }
 
     if (typeRet == TX_MULTISIG)

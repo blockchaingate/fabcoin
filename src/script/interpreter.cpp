@@ -1023,6 +1023,14 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 }
                 break;
 
+                // smart contract support:
+                case OP_CREATE:
+                // TODO: in order to let CALL and SPEND to run correctly, we need to 
+                // also verify the script. But for now just skip it.
+                case OP_CALL:
+                case OP_SPEND:
+                  return true;
+
                 default:
                     return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
             }
