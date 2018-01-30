@@ -41,7 +41,7 @@ Debian Linux was chosen as the host distribution because it has a lightweight in
 Any kind of virtualization can be used, for example:
 - [VirtualBox](https://www.virtualbox.org/) (covered by this guide)
 - [KVM](http://www.linux-kvm.org/page/Main_Page)
-- [LXC](https://linuxcontainers.org/), see also [Gitian host docker container](https://github.com/gdm85/tenku/tree/master/docker/gitian-bitcoin-host/README.md).
+- [LXC](https://linuxcontainers.org/), see also [Gitian host docker container](https://github.com/gdm85/tenku/tree/master/docker/gitian-fabcoin-host/README.md).
 
 You can also install Gitian on actual hardware instead of using virtualization.
 
@@ -314,8 +314,8 @@ Clone the git repositories for fabcoin and Gitian.
 
 ```bash
 git clone https://github.com/devrandom/gitian-builder.git
-git clone https://github.com/fabcoin-project/fabcoin
-git clone https://github.com/fabcoin-project/gitian.sigs.fab.git
+git clone https://github.com/blockchaingate/fabcoin
+git clone https://github.com/fabcoin-core/gitian.sigs.git
 ```
 
 Setting up the Gitian image
@@ -372,7 +372,7 @@ Output from `gbuild` will look something like
     remote: Total 57959 (delta 0), reused 0 (delta 0), pack-reused 57958
     Receiving objects: 100% (57959/57959), 53.76 MiB | 484.00 KiB/s, done.
     Resolving deltas: 100% (41590/41590), done.
-    From https://github.com/fabcoin-project/fabcoin
+    From https://github.com/blockchaingate/fabcoin
     ... (new tags, new branch etc)
     --- Building for trusty amd64 ---
     Stopping target if it is up
@@ -398,7 +398,7 @@ and inputs.
 
 For example:
 ```bash
-URL=https://github.com/thrasher-/fabcoin.git
+URL=https://github.com/laanwj/fabcoin.git
 COMMIT=2014_03_windows_unicode_path
 ./bin/gbuild --commit fabcoin=${COMMIT} --url fabcoin=${URL} ../fabcoin/contrib/gitian-descriptors/gitian-linux.yml
 ./bin/gbuild --commit fabcoin=${COMMIT} --url fabcoin=${URL} ../fabcoin/contrib/gitian-descriptors/gitian-win.yml
@@ -448,12 +448,12 @@ Then when building, override the remote URLs that gbuild would otherwise pull fr
 ```bash
 
 cd /some/root/path/
-git clone https://github.com/fabcoin-project/fabcoin-detached-sigs.git
+git clone https://github.com/fabcoin-core/fabcoin-detached-sigs.git
 
-BTCPATH=/some/root/path/fabcoin
+FABPATH=/some/root/path/fabcoin
 SIGPATH=/some/root/path/fabcoin-detached-sigs
 
-./bin/gbuild --url fabcoin=${BTCPATH},signature=${SIGPATH} ../fabcoin/contrib/gitian-descriptors/gitian-win-signer.yml
+./bin/gbuild --url fabcoin=${FABPATH},signature=${SIGPATH} ../fabcoin/contrib/gitian-descriptors/gitian-win-signer.yml
 ```
 
 Signing externally
@@ -480,5 +480,5 @@ Uploading signatures
 ---------------------
 
 After building and signing you can push your signatures (both the `.assert` and `.assert.sig` files) to the
-[fabcoin-project/gitian.sigs.fab](https://github.com/fabcoin-project/gitian.sigs.fab/) repository, or if that's not possible create a pull
-request. You can also mail the files to thrasher (thrasher@addictionsofware.com) and he will commit them.
+[fabcoin-core/gitian.sigs](https://github.com/fabcoin-core/gitian.sigs/) repository, or if that's not possible create a pull
+request. You can also mail the files to Wladimir (laanwj@gmail.com) and he will commit them.

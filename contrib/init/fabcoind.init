@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+#  fabcoind The fabcoin core server.
+#
+#
+# chkconfig: 345 80 20
+# description: fabcoind
+# processname: fabcoind
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/fabcoind, see below
+if [ -f /etc/sysconfig/fabcoind ]; then
+        . /etc/sysconfig/fabcoind
+fi
+
+RETVAL=0
+
+prog=fabcoind
+# you can override the lockfile via FABCOIND_LOCKFILE in /etc/sysconfig/fabcoind
+lockfile=${FABCOIND_LOCKFILE-/var/lock/subsys/fabcoind}
+
+# fabcoind defaults to /usr/bin/fabcoind, override with FABCOIND_BIN
+fabcoind=${FABCOIND_BIN-/usr/bin/fabcoind}
+
+# fabcoind opts default to -disablewallet, override with FABCOIND_OPTS
+fabcoind_opts=${FABCOIND_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $fabcoind $fabcoind_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac

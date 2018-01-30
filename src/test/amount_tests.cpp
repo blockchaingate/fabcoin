@@ -4,7 +4,7 @@
 
 #include "amount.h"
 #include "policy/feerate.h"
-#include "test/test_bitcoin.h"
+#include "test/test_fabcoin.h"
 
 #include <boost/test/unit_test.hpp>
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(BinaryOperatorTest)
     BOOST_CHECK(a <= a);
     BOOST_CHECK(b >= a);
     BOOST_CHECK(b >= b);
-    // a should be 0.00000002 BTC/kB now
+    // a should be 0.00000002 FAB/kB now
     a += a;
     BOOST_CHECK(a == b);
 }

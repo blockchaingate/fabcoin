@@ -21,8 +21,8 @@ RAW_TEST_FILES =
 
 GENERATED_TEST_FILES = $(JSON_TEST_FILES:.json=.json.h) $(RAW_TEST_FILES:.raw=.raw.h)
 
-# test_bitcoin binary #
-BITCOIN_TESTS =\
+# test_fabcoin binary #
+FABCOIN_TESTS =\
   test/arith_uint256_tests.cpp \
   test/scriptnum10.h \
   test/addrman_tests.cpp \
@@ -72,9 +72,9 @@ BITCOIN_TESTS =\
   test/sigopcount_tests.cpp \
   test/skiplist_tests.cpp \
   test/streams_tests.cpp \
-  test/test_bitcoin.cpp \
-  test/test_bitcoin.h \
-  test/test_bitcoin_main.cpp \
+  test/test_fabcoin.cpp \
+  test/test_fabcoin.h \
+  test/test_fabcoin_main.cpp \
   test/timedata_tests.cpp \
   test/torcontrol_tests.cpp \
   test/transaction_tests.cpp \
@@ -85,7 +85,7 @@ BITCOIN_TESTS =\
   test/util_tests.cpp
 
 if ENABLE_WALLET
-BITCOIN_TESTS += \
+FABCOIN_TESTS += \
   wallet/test/wallet_test_fixture.cpp \
   wallet/test/wallet_test_fixture.h \
   wallet/test/accounting_tests.cpp \
@@ -93,17 +93,17 @@ BITCOIN_TESTS += \
   wallet/test/crypto_tests.cpp
 endif
 
-test_test_fabcoin_SOURCES = $(BITCOIN_TESTS) $(JSON_TEST_FILES) $(RAW_TEST_FILES)
-test_test_fabcoin_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) -I$(builddir)/test/ $(TESTDEFS) $(EVENT_CFLAGS)
+test_test_fabcoin_SOURCES = $(FABCOIN_TESTS) $(JSON_TEST_FILES) $(RAW_TEST_FILES)
+test_test_fabcoin_CPPFLAGS = $(AM_CPPFLAGS) $(FABCOIN_INCLUDES) -I$(builddir)/test/ $(TESTDEFS) $(EVENT_CFLAGS)
 test_test_fabcoin_LDADD =
 if ENABLE_WALLET
-test_test_fabcoin_LDADD += $(LIBBITCOIN_WALLET)
+test_test_fabcoin_LDADD += $(LIBFABCOIN_WALLET)
 endif
-test_test_fabcoin_LDADD += $(LIBBITCOIN_SERVER) $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) \
+test_test_fabcoin_LDADD += $(LIBFABCOIN_SERVER) $(LIBFABCOIN_CLI) $(LIBFABCOIN_COMMON) $(LIBFABCOIN_UTIL) $(LIBFABCOIN_CONSENSUS) $(LIBFABCOIN_CRYPTO) $(LIBUNIVALUE) \
   $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) $(BOOST_LIBS) $(BOOST_UNIT_TEST_FRAMEWORK_LIB) $(LIBSECP256K1) $(EVENT_LIBS) $(EVENT_PTHREADS_LIBS)
 test_test_fabcoin_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
-test_test_fabcoin_LDADD += $(LIBBITCOIN_CONSENSUS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
+test_test_fabcoin_LDADD += $(LIBFABCOIN_CONSENSUS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
 test_test_fabcoin_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
 
 if ENABLE_ZMQ
@@ -111,19 +111,19 @@ test_test_fabcoin_LDADD += $(ZMQ_LIBS)
 endif
 #
 
-# test_bitcoin_fuzzy binary #
-test_test_fabcoin_fuzzy_SOURCES = test/test_bitcoin_fuzzy.cpp
-test_test_fabcoin_fuzzy_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+# test_fabcoin_fuzzy binary #
+test_test_fabcoin_fuzzy_SOURCES = test/test_fabcoin_fuzzy.cpp
+test_test_fabcoin_fuzzy_CPPFLAGS = $(AM_CPPFLAGS) $(FABCOIN_INCLUDES)
 test_test_fabcoin_fuzzy_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 test_test_fabcoin_fuzzy_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 test_test_fabcoin_fuzzy_LDADD = \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
+  $(LIBFABCOIN_SERVER) \
+  $(LIBFABCOIN_COMMON) \
+  $(LIBFABCOIN_UTIL) \
+  $(LIBFABCOIN_CONSENSUS) \
+  $(LIBFABCOIN_CRYPTO) \
   $(LIBSECP256K1)
 
 test_test_fabcoin_fuzzy_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
@@ -131,23 +131,23 @@ test_test_fabcoin_fuzzy_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 
 nodist_test_test_fabcoin_SOURCES = $(GENERATED_TEST_FILES)
 
-$(BITCOIN_TESTS): $(GENERATED_TEST_FILES)
+$(FABCOIN_TESTS): $(GENERATED_TEST_FILES)
 
-CLEAN_BITCOIN_TEST = test/*.gcda test/*.gcno $(GENERATED_TEST_FILES)
+CLEAN_FABCOIN_TEST = test/*.gcda test/*.gcno $(GENERATED_TEST_FILES)
 
-CLEANFILES += $(CLEAN_BITCOIN_TEST)
+CLEANFILES += $(CLEAN_FABCOIN_TEST)
 
-bitcoin_test: $(TEST_BINARY)
+fabcoin_test: $(TEST_BINARY)
 
-bitcoin_test_check: $(TEST_BINARY) FORCE
+fabcoin_test_check: $(TEST_BINARY) FORCE
 	$(MAKE) check-TESTS TESTS=$^
 
-bitcoin_test_clean : FORCE
-	rm -f $(CLEAN_BITCOIN_TEST) $(test_test_bitcoin_OBJECTS) $(TEST_BINARY)
+fabcoin_test_clean : FORCE
+	rm -f $(CLEAN_FABCOIN_TEST) $(test_test_fabcoin_OBJECTS) $(TEST_BINARY)
 
 check-local:
-	@echo "Running test/util/bitcoin-util-test.py..."
-	$(PYTHON) $(top_builddir)/test/util/bitcoin-util-test.py
+	@echo "Running test/util/fabcoin-util-test.py..."
+	$(PYTHON) $(top_builddir)/test/util/fabcoin-util-test.py
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C secp256k1 check
 if EMBEDDED_UNIVALUE
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C univalue check

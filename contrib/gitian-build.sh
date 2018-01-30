@@ -22,7 +22,7 @@ proc=2
 mem=2000
 lxc=true
 osslTarUrl=http://downloads.sourceforge.net/project/osslsigncode/osslsigncode/osslsigncode-1.7.1.tar.gz
-osslPatchUrl=https://bitcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
+osslPatchUrl=https://fabcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
 scriptName=$(basename -- "$0")
 signProg="gpg --detach-sign"
 commitFiles=true
@@ -31,7 +31,7 @@ commitFiles=true
 read -d '' usage <<- EOF
 Usage: $scriptName [-c|u|v|b|s|B|o|h|j|m|] signer version
 
-Run this script from the directory containing the bitcoin, gitian-builder, gitian.sigs.fab, and bitcoin-detached-sigs.
+Run this script from the directory containing the fabcoin, gitian-builder, gitian.sigs, and fabcoin-detached-sigs.
 
 Arguments:
 signer          GPG signer to sign each build assert file
@@ -232,8 +232,8 @@ echo ${COMMIT}
 if [[ $setup = true ]]
 then
     sudo apt-get install ruby apache2 git apt-cacher-ng python-vm-builder qemu-kvm qemu-utils
-    git clone https://github.com/blockchaingate/gitian.sigs.fab.git
-    git clone https://github.com/blockchaingate/fabcoin-detached-sigs.git
+    git clone https://github.com/fabcoin-core/gitian.sigs.git
+    git clone https://github.com/fabcoin-core/fabcoin-detached-sigs.git
     git clone https://github.com/devrandom/gitian-builder.git
     pushd ./gitian-builder
     if [[ -n "$USE_LXC" ]]
@@ -275,7 +275,7 @@ then
 	    echo "Compiling ${VERSION} Linux"
 	    echo ""
 	    ./bin/gbuild -j ${proc} -m ${mem} --commit fabcoin=${COMMIT} --url fabcoin=${url} ../fabcoin/contrib/gitian-descriptors/gitian-linux.yml
-	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs.fab/ ../fabcoin/contrib/gitian-descriptors/gitian-linux.yml
+	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-linux --destination ../gitian.sigs/ ../fabcoin/contrib/gitian-descriptors/gitian-linux.yml
 	    mv build/out/fabcoin-*.tar.gz build/out/src/fabcoin-*.tar.gz ../fabcoin-binaries/${VERSION}
 	fi
 	# Windows
@@ -285,7 +285,7 @@ then
 	    echo "Compiling ${VERSION} Windows"
 	    echo ""
 	    ./bin/gbuild -j ${proc} -m ${mem} --commit fabcoin=${COMMIT} --url fabcoin=${url} ../fabcoin/contrib/gitian-descriptors/gitian-win.yml
-	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-win-unsigned --destination ../gitian.sigs.fab/ ../fabcoin/contrib/gitian-descriptors/gitian-win.yml
+	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-win-unsigned --destination ../gitian.sigs/ ../fabcoin/contrib/gitian-descriptors/gitian-win.yml
 	    mv build/out/fabcoin-*-win-unsigned.tar.gz inputs/fabcoin-win-unsigned.tar.gz
 	    mv build/out/fabcoin-*.zip build/out/fabcoin-*.exe ../fabcoin-binaries/${VERSION}
 	fi
@@ -296,7 +296,7 @@ then
 	    echo "Compiling ${VERSION} Mac OSX"
 	    echo ""
 	    ./bin/gbuild -j ${proc} -m ${mem} --commit fabcoin=${COMMIT} --url fabcoin=${url} ../fabcoin/contrib/gitian-descriptors/gitian-osx.yml
-	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs.fab/ ../fabcoin/contrib/gitian-descriptors/gitian-osx.yml
+	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-osx-unsigned --destination ../gitian.sigs/ ../fabcoin/contrib/gitian-descriptors/gitian-osx.yml
 	    mv build/out/fabcoin-*-osx-unsigned.tar.gz inputs/fabcoin-osx-unsigned.tar.gz
 	    mv build/out/fabcoin-*.tar.gz build/out/fabcoin-*.dmg ../fabcoin-binaries/${VERSION}
 	fi
@@ -325,27 +325,27 @@ then
 	echo ""
 	echo "Verifying v${VERSION} Linux"
 	echo ""
-	./bin/gverify -v -d ../gitian.sigs.fab/ -r ${VERSION}-linux ../fabcoin/contrib/gitian-descriptors/gitian-linux.yml
+	./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-linux ../fabcoin/contrib/gitian-descriptors/gitian-linux.yml
 	# Windows
 	echo ""
 	echo "Verifying v${VERSION} Windows"
 	echo ""
-	./bin/gverify -v -d ../gitian.sigs.fab/ -r ${VERSION}-win-unsigned ../fabcoin/contrib/gitian-descriptors/gitian-win.yml
+	./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-win-unsigned ../fabcoin/contrib/gitian-descriptors/gitian-win.yml
 	# Mac OSX	
 	echo ""
 	echo "Verifying v${VERSION} Mac OSX"
 	echo ""	
-	./bin/gverify -v -d ../gitian.sigs.fab/ -r ${VERSION}-osx-unsigned ../fabcoin/contrib/gitian-descriptors/gitian-osx.yml
+	./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-unsigned ../fabcoin/contrib/gitian-descriptors/gitian-osx.yml
 	# Signed Windows
 	echo ""
 	echo "Verifying v${VERSION} Signed Windows"
 	echo ""
-	./bin/gverify -v -d ../gitian.sigs.fab/ -r ${VERSION}-osx-signed ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml
+	./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-signed ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml
 	# Signed Mac OSX
 	echo ""
 	echo "Verifying v${VERSION} Signed Mac OSX"
 	echo ""
-	./bin/gverify -v -d ../gitian.sigs.fab/ -r ${VERSION}-osx-signed ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml	
+	./bin/gverify -v -d ../gitian.sigs/ -r ${VERSION}-osx-signed ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml	
 	popd
 fi
 
@@ -361,7 +361,7 @@ then
 	    echo "Signing ${VERSION} Windows"
 	    echo ""
 	    ./bin/gbuild -i --commit signature=${COMMIT} ../fabcoin/contrib/gitian-descriptors/gitian-win-signer.yml
-	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-win-signed --destination ../gitian.sigs.fab/ ../fabcoin/contrib/gitian-descriptors/gitian-win-signer.yml
+	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-win-signed --destination ../gitian.sigs/ ../fabcoin/contrib/gitian-descriptors/gitian-win-signer.yml
 	    mv build/out/fabcoin-*win64-setup.exe ../fabcoin-binaries/${VERSION}
 	    mv build/out/fabcoin-*win32-setup.exe ../fabcoin-binaries/${VERSION}
 	fi
@@ -372,7 +372,7 @@ then
 	    echo "Signing ${VERSION} Mac OSX"
 	    echo ""
 	    ./bin/gbuild -i --commit signature=${COMMIT} ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml
-	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-osx-signed --destination ../gitian.sigs.fab/ ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml
+	    ./bin/gsign -p $signProg --signer $SIGNER --release ${VERSION}-osx-signed --destination ../gitian.sigs/ ../fabcoin/contrib/gitian-descriptors/gitian-osx-signer.yml
 	    mv build/out/fabcoin-osx-signed.dmg ../fabcoin-binaries/${VERSION}/fabcoin-${VERSION}-osx.dmg
 	fi
 	popd

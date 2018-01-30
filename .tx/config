@@ -1,0 +1,7 @@
+[main]
+host = https://www.transifex.com
+
+[fabcoin.qt-translation-013x]
+file_filter = src/qt/locale/fabcoin_<lang>.ts
+source_file = src/qt/locale/fabcoin_en.ts
+source_lang = en

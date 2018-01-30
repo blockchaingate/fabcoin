@@ -1,13 +1,13 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Bitcoin
+Upstream-Name: Fabcoin
 Upstream-Contact: Satoshi Nakamoto <satoshin@gmx.com>
- irc://#bitcoin@freenode.net
-Source: https://github.com/bitcoin/bitcoin
+ irc://#fabcoin@freenode.net
+Source: https://github.com/blockchaingate/fabcoin
 
 Files: *
-Copyright: 2009-2018, Bitcoin Core Developers
+Copyright: 2009-2017, Fabcoin Core Developers
 License: Expat
-Comment: The Bitcoin Core Developers encompasses the current developers listed on bitcoin.org,
+Comment: The Fabcoin Core Developers encompasses the current developers listed on fabcoin.org,
          as well as the numerous contributors to the project.
 
 Files: debian/*
@@ -78,12 +78,12 @@ License: Expat
 Comment: Modifications of Stephan Hutchings Typicons
 
 Files: src/qt/res/icons/about.png
-       src/qt/res/icons/bitcoin.*
-       share/pixmaps/bitcoin*
-       src/qt/res/src/bitcoin.svg
+       src/qt/res/icons/fabcoin.*
+       share/pixmaps/fabcoin*
+       src/qt/res/src/fabcoin.svg
 Copyright: Bitboy, Jonas Schnelli
 License: public-domain
-Comment: Site: https://bitcointalk.org/?topic=1756.0
+Comment: Site: https://fabcointalk.org/?topic=1756.0
 
 
 License: Expat

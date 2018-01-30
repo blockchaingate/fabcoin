@@ -1,0 +1,13 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Fabcoin Core
+Comment=Connect to the Fabcoin P2P Network
+Comment[de]=Verbinde mit dem Fabcoin peer-to-peer Netzwerk
+Comment[fr]=Fabcoin, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Fabcoin, eşten eşe kriptografik sanal para birimi
+Exec=fabcoin-qt %u
+Terminal=false
+Type=Application
+Icon=fabcoin128
+MimeType=x-scheme-handler/fabcoin;
+Categories=Office;Finance;

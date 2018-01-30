@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_FEEBUMPER_H
-#define BITCOIN_WALLET_FEEBUMPER_H
+#ifndef FABCOIN_WALLET_FEEBUMPER_H
+#define FABCOIN_WALLET_FEEBUMPER_H
 
 #include <primitives/transaction.h>
 
@@ -58,4 +58,4 @@ private:
     CAmount nNewFee;
 };
 
-#endif // BITCOIN_WALLET_FEEBUMPER_H
+#endif // FABCOIN_WALLET_FEEBUMPER_H

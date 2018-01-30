@@ -18,7 +18,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_fabcoin.h"
 
 #include <memory>
 
@@ -163,7 +163,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vin[0].prevout.hash = txFirst[2]->GetHash();
     tx.vout.resize(2);
     tx.vout[0].nValue = 5000000000LL - 100000000;
-    tx.vout[1].nValue = 100000000; // 1BTC output
+    tx.vout[1].nValue = 100000000; // 1FAB output
     uint256 hashFreeTx2 = tx.GetHash();
     mempool.addUnchecked(hashFreeTx2, entry.Fee(0).SpendsCoinbase(true).FromTx(tx));
 
@@ -368,8 +368,8 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
     // subsidy changing
     int nHeight = chainActive.Height();
-    // Create an actual 209999-long block chain (without valid blocks).
-    while (chainActive.Tip()->nHeight < 209999) {
+    // Create an actual 1679999-long block chain (without valid blocks).
+    while (chainActive.Tip()->nHeight < 1679999) {
         CBlockIndex* prev = chainActive.Tip();
         CBlockIndex* next = new CBlockIndex();
         next->phashBlock = new uint256(InsecureRand256());
@@ -380,8 +380,8 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
         chainActive.SetTip(next);
     }
     BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
-    // Extend to a 210000-long block chain.
-    while (chainActive.Tip()->nHeight < 210000) {
+    // Extend to a 1680000-long block chain.
+    while (chainActive.Tip()->nHeight < 1680000) {
         CBlockIndex* prev = chainActive.Tip();
         CBlockIndex* next = new CBlockIndex();
         next->phashBlock = new uint256(InsecureRand256());

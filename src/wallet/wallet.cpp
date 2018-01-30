@@ -306,7 +306,7 @@ bool CWallet::LoadCScript(const CScript& redeemScript)
      * these. Do not add them to the wallet and warn. */
     if (redeemScript.size() > MAX_SCRIPT_ELEMENT_SIZE)
     {
-        std::string strAddr = CBitcoinAddress(CScriptID(redeemScript)).ToString();
+        std::string strAddr = CFabcoinAddress(CScriptID(redeemScript)).ToString();
         LogPrintf("%s: Warning: This wallet contains a redeemScript of size %i which exceeds maximum size %i thus can never be redeemed. Do not use address %s.\n",
             __func__, redeemScript.size(), MAX_SCRIPT_ELEMENT_SIZE, strAddr);
         return true;
@@ -977,7 +977,7 @@ bool CWallet::AddToWallet(const CWalletTx& wtxIn, bool fFlushOnClose)
         if (wtxIn.tx->HasWitness() && !wtx.tx->HasWitness()) {
             wtx.SetTx(wtxIn.tx);
             fUpdated = true;
-    }
+        }
     }
 
     //// debug print
@@ -2255,8 +2255,8 @@ std::map<CTxDestination, std::vector<COutput>> CWallet::ListCoins() const
     // CWalletTx objects, callers to this function really should acquire the
     // cs_wallet lock before calling it. However, the current caller doesn't
     // acquire this lock yet. There was an attempt to add the missing lock in
-    // https://github.com/bitcoin/bitcoin/pull/10340, but that change has been
-    // postponed until after https://github.com/bitcoin/bitcoin/pull/10244 to
+    // https://github.com/blockchaingate/fabcoin/pull/10340, but that change has been
+    // postponed until after https://github.com/blockchaingate/fabcoin/pull/10244 to
     // avoid adding some extra complexity to the Qt code.
 
     std::map<CTxDestination, std::vector<COutput>> result;
@@ -2690,7 +2690,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
 
             // Create change script that will be used if we need change
             // TODO: pass in scriptChange instead of reservekey so
-            // change transaction isn't always pay-to-bitcoin-address
+            // change transaction isn't always pay-to-fabcoin-address
             CScript scriptChange;
 
             // coin control: send change to custom address
@@ -3204,9 +3204,9 @@ bool CWallet::SetAddressBook(const CTxDestination& address, const std::string& s
     }
     NotifyAddressBookChanged(this, address, strName, ::IsMine(*this, address) != ISMINE_NO,
                              strPurpose, (fUpdated ? CT_UPDATED : CT_NEW) );
-    if (!strPurpose.empty() && !CWalletDB(*dbw).WritePurpose(CBitcoinAddress(address).ToString(), strPurpose))
+    if (!strPurpose.empty() && !CWalletDB(*dbw).WritePurpose(CFabcoinAddress(address).ToString(), strPurpose))
         return false;
-    return CWalletDB(*dbw).WriteName(CBitcoinAddress(address).ToString(), strName);
+    return CWalletDB(*dbw).WriteName(CFabcoinAddress(address).ToString(), strName);
 }
 
 bool CWallet::DelAddressBook(const CTxDestination& address)
@@ -3215,7 +3215,7 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
         LOCK(cs_wallet); // mapAddressBook
 
         // Delete destdata tuples associated with address
-        std::string strAddress = CBitcoinAddress(address).ToString();
+        std::string strAddress = CFabcoinAddress(address).ToString();
         for (const std::pair<std::string, std::string> &item : mapAddressBook[address].destdata)
         {
             CWalletDB(*dbw).EraseDestData(strAddress, item.first);
@@ -3225,8 +3225,8 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
 
     NotifyAddressBookChanged(this, address, "", ::IsMine(*this, address) != ISMINE_NO, "", CT_DELETED);
 
-    CWalletDB(*dbw).ErasePurpose(CBitcoinAddress(address).ToString());
-    return CWalletDB(*dbw).EraseName(CBitcoinAddress(address).ToString());
+    CWalletDB(*dbw).ErasePurpose(CFabcoinAddress(address).ToString());
+    return CWalletDB(*dbw).EraseName(CFabcoinAddress(address).ToString());
 }
 
 const std::string& CWallet::GetAccountName(const CScript& scriptPubKey) const
@@ -3798,8 +3798,8 @@ void CWallet::GetKeyBirthTimes(std::map<CTxDestination, int64_t> &mapKeyBirth) c
  *   the block time.
  *
  * For more information see CWalletTx::nTimeSmart,
- * https://bitcointalk.org/?topic=54527, or
- * https://github.com/bitcoin/bitcoin/pull/1393.
+ * https://fabcointalk.org/?topic=54527, or
+ * https://github.com/blockchaingate/fabcoin/pull/1393.
  */
 unsigned int CWallet::ComputeTimeSmart(const CWalletTx& wtx) const
 {
@@ -3851,14 +3851,14 @@ bool CWallet::AddDestData(const CTxDestination &dest, const std::string &key, co
         return false;
 
     mapAddressBook[dest].destdata.insert(std::make_pair(key, value));
-    return CWalletDB(*dbw).WriteDestData(CBitcoinAddress(dest).ToString(), key, value);
+    return CWalletDB(*dbw).WriteDestData(CFabcoinAddress(dest).ToString(), key, value);
 }
 
 bool CWallet::EraseDestData(const CTxDestination &dest, const std::string &key)
 {
     if (!mapAddressBook[dest].destdata.erase(key))
         return false;
-    return CWalletDB(*dbw).EraseDestData(CBitcoinAddress(dest).ToString(), key);
+    return CWalletDB(*dbw).EraseDestData(CFabcoinAddress(dest).ToString(), key);
 }
 
 bool CWallet::LoadDestData(const CTxDestination &dest, const std::string &key, const std::string &value)

@@ -57,12 +57,12 @@ the pull request affects. Valid areas as:
 
   - *Consensus* for changes to consensus critical code
   - *Docs* for changes to the documentation
-  - *Qt* for changes to bitcoin-qt
+  - *Qt* for changes to fabcoin-qt
   - *Mining* for changes to the mining code
   - *Net* or *P2P* for changes to the peer-to-peer network code
   - *RPC/REST/ZMQ* for changes to the RPC, REST or ZMQ APIs
   - *Scripts and tools* for changes to the scripts and tools
-  - *Tests* for changes to the bitcoin unit tests or QA tests
+  - *Tests* for changes to the fabcoin unit tests or QA tests
   - *Trivial* should **only** be used for PRs that do not change generated
     executable code. Notably, refactors (change of function arguments and code
     reorganization) and changes in behavior should **not** be marked as trivial.
@@ -157,7 +157,7 @@ where possible keep them short, uncomplex and easy to verify.
 "Decision Making" Process
 -------------------------
 
-The following applies to code changes to the Bitcoin Core project (and related
+The following applies to code changes to the Fabcoin Core project (and related
 projects such as libsecp256k1), and is not to be confused with overall Fabcoin
 Network Protocol consensus changes.
 
@@ -264,9 +264,6 @@ The project leader is the release manager for each Fabcoin Core release.
 
 Copyright
 ---------
-Copyright 2018 The Fabcoin Core Developers
-
-- bitcoin: Copyright (c) 2009-2018 Bitcoin Core Developers (MIT License)
 
 By contributing to this repository, you agree to license your work under the 
 MIT license unless specified otherwise in `contrib/debian/copyright` or at 

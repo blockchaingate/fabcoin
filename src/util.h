@@ -7,11 +7,11 @@
  * Server/client environment: argument handling, config file parsing,
  * logging, thread wrappers, startup time
  */
-#ifndef BITCOIN_UTIL_H
-#define BITCOIN_UTIL_H
+#ifndef FABCOIN_UTIL_H
+#define FABCOIN_UTIL_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/bitcoin-config.h"
+#include "config/fabcoin-config.h"
 #endif
 
 #include "compat.h"
@@ -53,8 +53,8 @@ extern bool fLogIPs;
 extern std::atomic<bool> fReopenDebugLog;
 extern CTranslationInterface translationInterface;
 
-extern const char * const BITCOIN_CONF_FILENAME;
-extern const char * const BITCOIN_PID_FILENAME;
+extern const char * const FABCOIN_CONF_FILENAME;
+extern const char * const FABCOIN_PID_FILENAME;
 
 extern std::atomic<uint32_t> logCategories;
 
@@ -294,7 +294,7 @@ void RenameThread(const char* name);
  */
 template <typename Callable> void TraceThread(const char* name,  Callable func)
 {
-    std::string s = strprintf("bitcoin-%s", name);
+    std::string s = strprintf("fabcoin-%s", name);
     RenameThread(s.c_str());
     try
     {
@@ -319,4 +319,4 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
 
 std::string CopyrightHolders(const std::string& strPrefix);
 
-#endif // BITCOIN_UTIL_H
+#endif // FABCOIN_UTIL_H

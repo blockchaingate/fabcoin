@@ -43,10 +43,10 @@ TEST_EXIT_PASSED = 0
 TEST_EXIT_FAILED = 1
 TEST_EXIT_SKIPPED = 77
 
-class BitcoinTestFramework(object):
-    """Base class for a bitcoin test script.
+class FabcoinTestFramework(object):
+    """Base class for a fabcoin test script.
 
-    Individual bitcoin test scripts should subclass this class and override the set_test_params() and run_test() methods.
+    Individual fabcoin test scripts should subclass this class and override the set_test_params() and run_test() methods.
 
     Individual tests can also override the following methods to customize the test setup:
 
@@ -231,7 +231,7 @@ class BitcoinTestFramework(object):
             self.nodes.append(TestNode(i, self.options.tmpdir, extra_args[i], rpchost, timewait=timewait, binary=binary[i], stderr=None, mocktime=self.mocktime, coverage_dir=self.options.coveragedir))
 
     def start_node(self, i, extra_args=None, stderr=None):
-        """Start a bitcoind"""
+        """Start a fabcoind"""
 
         node = self.nodes[i]
 
@@ -242,7 +242,7 @@ class BitcoinTestFramework(object):
             coverage.write_all_rpc_commands(self.options.coveragedir, node.rpc)
 
     def start_nodes(self, extra_args=None):
-        """Start multiple bitcoinds"""
+        """Start multiple fabcoinds"""
 
         if extra_args is None:
             extra_args = [None] * self.num_nodes
@@ -262,12 +262,12 @@ class BitcoinTestFramework(object):
                 coverage.write_all_rpc_commands(self.options.coveragedir, node.rpc)
 
     def stop_node(self, i):
-        """Stop a bitcoind test node"""
+        """Stop a fabcoind test node"""
         self.nodes[i].stop_node()
         self.nodes[i].wait_until_stopped()
 
     def stop_nodes(self):
-        """Stop multiple bitcoind test nodes"""
+        """Stop multiple fabcoind test nodes"""
         for node in self.nodes:
             # Issue RPC to stop nodes
             node.stop_node()
@@ -282,7 +282,7 @@ class BitcoinTestFramework(object):
                 self.start_node(i, extra_args, stderr=log_stderr)
                 self.stop_node(i)
             except Exception as e:
-                assert 'bitcoind exited' in str(e)  # node must have shutdown
+                assert 'fabcoind exited' in str(e)  # node must have shutdown
                 self.nodes[i].running = False
                 self.nodes[i].process = None
                 if expected_msg is not None:
@@ -352,7 +352,7 @@ class BitcoinTestFramework(object):
         # User can provide log level as a number or string (eg DEBUG). loglevel was caught as a string, so try to convert it to an int
         ll = int(self.options.loglevel) if self.options.loglevel.isdigit() else self.options.loglevel.upper()
         ch.setLevel(ll)
-        # Format logs the same as bitcoind's debug.log with microprecision (so log files can be concatenated and sorted)
+        # Format logs the same as fabcoind's debug.log with microprecision (so log files can be concatenated and sorted)
         formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d000 %(name)s (%(levelname)s): %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         formatter.converter = time.gmtime
         fh.setFormatter(formatter)
@@ -362,7 +362,7 @@ class BitcoinTestFramework(object):
         self.log.addHandler(ch)
 
         if self.options.trace_rpc:
-            rpc_logger = logging.getLogger("BitcoinRPC")
+            rpc_logger = logging.getLogger("FabcoinRPC")
             rpc_logger.setLevel(logging.DEBUG)
             rpc_handler = logging.StreamHandler(sys.stdout)
             rpc_handler.setLevel(logging.DEBUG)
@@ -389,7 +389,7 @@ class BitcoinTestFramework(object):
                 if os.path.isdir(os.path.join(self.options.cachedir, "node" + str(i))):
                     shutil.rmtree(os.path.join(self.options.cachedir, "node" + str(i)))
 
-            # Create cache directories, run bitcoinds:
+            # Create cache directories, run fabcoinds:
             for i in range(MAX_NODES):
                 datadir = initialize_datadir(self.options.cachedir, i)
                 args = [os.getenv("FABCOIND", "fabcoind"), "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
@@ -435,7 +435,7 @@ class BitcoinTestFramework(object):
             from_dir = os.path.join(self.options.cachedir, "node" + str(i))
             to_dir = os.path.join(self.options.tmpdir, "node" + str(i))
             shutil.copytree(from_dir, to_dir)
-            initialize_datadir(self.options.tmpdir, i)  # Overwrite port/rpcport in bitcoin.conf
+            initialize_datadir(self.options.tmpdir, i)  # Overwrite port/rpcport in fabcoin.conf
 
     def _initialize_chain_clean(self):
         """Initialize empty blockchain for use by the test.
@@ -445,10 +445,10 @@ class BitcoinTestFramework(object):
         for i in range(self.num_nodes):
             initialize_datadir(self.options.tmpdir, i)
 
-class ComparisonTestFramework(BitcoinTestFramework):
+class ComparisonTestFramework(FabcoinTestFramework):
     """Test framework for doing p2p comparison testing
 
-    Sets up some bitcoind binaries:
+    Sets up some fabcoind binaries:
     - 1 binary: test binary
     - 2 binaries: 1 test binary, 1 ref binary
     - n>2 binaries: 1 test binary, n-1 ref binaries"""
@@ -466,12 +466,12 @@ class ComparisonTestFramework(BitcoinTestFramework):
                           help="fabcoind binary to use for reference nodes (if any)")
 
     def setup_network(self):
-        extra_args = [['-whitelist=127.0.0.1']]*self.num_nodes
+        extra_args = [['-whitelist=127.0.0.1']] * self.num_nodes
         if hasattr(self, "extra_args"):
             extra_args = self.extra_args
         self.add_nodes(self.num_nodes, extra_args,
-            binary=[self.options.testbinary] +
-            [self.options.refbinary] * (self.num_nodes - 1))
+                       binary=[self.options.testbinary] +
+                       [self.options.refbinary] * (self.num_nodes - 1))
         self.start_nodes()
 
 class SkipTest(Exception):

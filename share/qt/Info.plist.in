@@ -11,7 +11,7 @@
   </array>
 
   <key>CFBundleIconFile</key>
-  <string>bitcoin.icns</string>
+  <string>fabcoin.icns</string>
 
   <key>CFBundlePackageType</key>
   <string>APPL</string>
@@ -38,7 +38,7 @@
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.fabcoin.Fabcoin-Qt</string>
+  <string>org.fabcoinfoundation.Fabcoin-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>

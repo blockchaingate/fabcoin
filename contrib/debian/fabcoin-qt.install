@@ -1,0 +1,6 @@
+usr/local/bin/fabcoin-qt usr/bin
+share/pixmaps/fabcoin32.xpm usr/share/pixmaps
+share/pixmaps/fabcoin16.xpm usr/share/pixmaps
+share/pixmaps/fabcoin128.png usr/share/pixmaps
+debian/fabcoin-qt.desktop usr/share/applications
+debian/fabcoin-qt.protocol usr/share/kde4/services/

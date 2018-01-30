@@ -168,18 +168,18 @@ UniValue getnewaddress(const JSONRPCRequest& request)
 
     pwallet->SetAddressBook(keyID, strAccount, "receive");
 
-    return CBitcoinAddress(keyID).ToString();
+    return CFabcoinAddress(keyID).ToString();
 }
 
 
-CBitcoinAddress GetAccountAddress(CWallet* const pwallet, std::string strAccount, bool bForceNew=false)
+CFabcoinAddress GetAccountAddress(CWallet* const pwallet, std::string strAccount, bool bForceNew=false)
 {
     CPubKey pubKey;
     if (!pwallet->GetAccountPubkey(pubKey, strAccount, bForceNew)) {
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
     }
 
-    return CBitcoinAddress(pubKey.GetID());
+    return CFabcoinAddress(pubKey.GetID());
 }
 
 UniValue getaccountaddress(const JSONRPCRequest& request)
@@ -250,7 +250,7 @@ UniValue getrawchangeaddress(const JSONRPCRequest& request)
 
     CKeyID keyID = vchPubKey.GetID();
 
-    return CBitcoinAddress(keyID).ToString();
+    return CFabcoinAddress(keyID).ToString();
 }
 
 
@@ -275,7 +275,7 @@ UniValue setaccount(const JSONRPCRequest& request)
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    CBitcoinAddress address(request.params[0].get_str());
+    CFabcoinAddress address(request.params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
 
@@ -323,7 +323,7 @@ UniValue getaccount(const JSONRPCRequest& request)
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    CBitcoinAddress address(request.params[0].get_str());
+    CFabcoinAddress address(request.params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
 
@@ -365,8 +365,8 @@ UniValue getaddressesbyaccount(const JSONRPCRequest& request)
 
     // Find all addresses that have the given account
     UniValue ret(UniValue::VARR);
-    for (const std::pair<CBitcoinAddress, CAddressBookData>& item : pwallet->mapAddressBook) {
-        const CBitcoinAddress& address = item.first;
+    for (const std::pair<CFabcoinAddress, CAddressBookData>& item : pwallet->mapAddressBook) {
+        const CFabcoinAddress& address = item.first;
         const std::string& strName = item.second.name;
         if (strName == strAccount)
             ret.push_back(address.ToString());
@@ -389,7 +389,7 @@ static void SendMoney(CWallet * const pwallet, const CTxDestination &address, CA
         throw JSONRPCError(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
     }
 
-    // Parse Bitcoin address
+    // Parse Fabcoin address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -451,7 +451,7 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    CBitcoinAddress address(request.params[0].get_str());
+    CFabcoinAddress address(request.params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
 
@@ -534,11 +534,11 @@ UniValue listaddressgroupings(const JSONRPCRequest& request)
         for (CTxDestination address : grouping)
         {
             UniValue addressInfo(UniValue::VARR);
-            addressInfo.push_back(CBitcoinAddress(address).ToString());
+            addressInfo.push_back(CFabcoinAddress(address).ToString());
             addressInfo.push_back(ValueFromAmount(balances[address]));
             {
-                if (pwallet->mapAddressBook.find(CBitcoinAddress(address).Get()) != pwallet->mapAddressBook.end()) {
-                    addressInfo.push_back(pwallet->mapAddressBook.find(CBitcoinAddress(address).Get())->second.name);
+                if (pwallet->mapAddressBook.find(CFabcoinAddress(address).Get()) != pwallet->mapAddressBook.end()) {
+                    addressInfo.push_back(pwallet->mapAddressBook.find(CFabcoinAddress(address).Get())->second.name);
                 }
             }
             jsonGrouping.push_back(addressInfo);
@@ -583,7 +583,7 @@ UniValue signmessage(const JSONRPCRequest& request)
     std::string strAddress = request.params[0].get_str();
     std::string strMessage = request.params[1].get_str();
 
-    CBitcoinAddress addr(strAddress);
+    CFabcoinAddress addr(strAddress);
     if (!addr.IsValid())
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
 
@@ -636,8 +636,8 @@ UniValue getreceivedbyaddress(const JSONRPCRequest& request)
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
-    // Bitcoin address
-    CBitcoinAddress address = CBitcoinAddress(request.params[0].get_str());
+    // Fabcoin address
+    CFabcoinAddress address = CFabcoinAddress(request.params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
     CScript scriptPubKey = GetScriptForDestination(address.Get());
@@ -892,7 +892,7 @@ UniValue sendfrom(const JSONRPCRequest& request)
     LOCK2(cs_main, pwallet->cs_wallet);
 
     std::string strAccount = AccountFromValue(request.params[0]);
-    CBitcoinAddress address(request.params[1].get_str());
+    CFabcoinAddress address(request.params[1].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
     CAmount nAmount = AmountFromValue(request.params[2]);
@@ -1008,14 +1008,14 @@ UniValue sendmany(const JSONRPCRequest& request)
         }
     }
 
-    std::set<CBitcoinAddress> setAddress;
+    std::set<CFabcoinAddress> setAddress;
     std::vector<CRecipient> vecSend;
 
     CAmount totalAmount = 0;
     std::vector<std::string> keys = sendTo.getKeys();
     for (const std::string& name_ : keys)
     {
-        CBitcoinAddress address(name_);
+        CFabcoinAddress address(name_);
         if (!address.IsValid())
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Fabcoin address: ")+name_);
 
@@ -1114,7 +1114,7 @@ UniValue addmultisigaddress(const JSONRPCRequest& request)
     pwallet->AddCScript(inner);
 
     pwallet->SetAddressBook(innerID, strAccount, "send");
-    return CBitcoinAddress(innerID).ToString();
+    return CFabcoinAddress(innerID).ToString();
 }
 
 class Witnessifier : public boost::static_visitor<bool>
@@ -1202,7 +1202,7 @@ UniValue addwitnessaddress(const JSONRPCRequest& request)
         }
     }
 
-    CBitcoinAddress address(request.params[0].get_str());
+    CFabcoinAddress address(request.params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
 
@@ -1215,7 +1215,7 @@ UniValue addwitnessaddress(const JSONRPCRequest& request)
 
     pwallet->SetAddressBook(w.result, "", "receive");
 
-    return CBitcoinAddress(w.result).ToString();
+    return CFabcoinAddress(w.result).ToString();
 }
 
 struct tallyitem
@@ -1250,7 +1250,7 @@ UniValue ListReceived(CWallet * const pwallet, const UniValue& params, bool fByA
             filter = filter | ISMINE_WATCH_ONLY;
 
     // Tally
-    std::map<CBitcoinAddress, tallyitem> mapTally;
+    std::map<CFabcoinAddress, tallyitem> mapTally;
     for (const std::pair<uint256, CWalletTx>& pairWtx : pwallet->mapWallet) {
         const CWalletTx& wtx = pairWtx.second;
 
@@ -1283,10 +1283,10 @@ UniValue ListReceived(CWallet * const pwallet, const UniValue& params, bool fByA
     // Reply
     UniValue ret(UniValue::VARR);
     std::map<std::string, tallyitem> mapAccountTally;
-    for (const std::pair<CBitcoinAddress, CAddressBookData>& item : pwallet->mapAddressBook) {
-        const CBitcoinAddress& address = item.first;
+    for (const std::pair<CFabcoinAddress, CAddressBookData>& item : pwallet->mapAddressBook) {
+        const CFabcoinAddress& address = item.first;
         const std::string& strAccount = item.second.name;
-        std::map<CBitcoinAddress, tallyitem>::iterator it = mapTally.find(address);
+        std::map<CFabcoinAddress, tallyitem>::iterator it = mapTally.find(address);
         if (it == mapTally.end() && !fIncludeEmpty)
             continue;
 
@@ -1435,7 +1435,7 @@ UniValue listreceivedbyaccount(const JSONRPCRequest& request)
 
 static void MaybePushAddress(UniValue & entry, const CTxDestination &dest)
 {
-    CBitcoinAddress addr;
+    CFabcoinAddress addr;
     if (addr.Set(dest))
         entry.push_back(Pair("address", addr.ToString()));
 }
@@ -1831,14 +1831,14 @@ UniValue listsinceblock(const JSONRPCRequest& request)
         if (it == mapBlockIndex.end()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
         }
-            paltindex = pindex = it->second;
-            if (chainActive[pindex->nHeight] != pindex) {
-                // the block being asked for is a part of a deactivated chain;
-                // we don't want to depend on its perceived height in the block
-                // chain, we want to instead use the last common ancestor
-                pindex = chainActive.FindFork(pindex);
-            }
+        paltindex = pindex = it->second;
+        if (chainActive[pindex->nHeight] != pindex) {
+            // the block being asked for is a part of a deactivated chain;
+            // we don't want to depend on its perceived height in the block
+            // chain, we want to instead use the last common ancestor
+            pindex = chainActive.FindFork(pindex);
         }
+    }
 
     if (!request.params[1].isNull()) {
         target_confirms = request.params[1].get_int();
@@ -2431,11 +2431,11 @@ UniValue listlockunspent(const JSONRPCRequest& request)
             "\nList the unspent transactions\n"
             + HelpExampleCli("listunspent", "") +
             "\nLock an unspent transaction\n"
-            + HelpExampleCli("lockunspent", "false \"[{\\\"txid\\\":\\\"daaf44ec1e64e66ffda4a7e195ea60d5c8c8b602fc6bf22928582d3ff2530462\\\",\\\"vout\\\":1}]\"") +
+            + HelpExampleCli("lockunspent", "false \"[{\\\"txid\\\":\\\"a08e6907dbbd3d809776dbfc5d82e371b764ed838b5655e72f463568df1aadf0\\\",\\\"vout\\\":1}]\"") +
             "\nList the locked transactions\n"
             + HelpExampleCli("listlockunspent", "") +
             "\nUnlock the transaction again\n"
-            + HelpExampleCli("lockunspent", "true \"[{\\\"txid\\\":\\\"daaf44ec1e64e66ffda4a7e195ea60d5c8c8b602fc6bf22928582d3ff2530462\\\",\\\"vout\\\":1}]\"") +
+            + HelpExampleCli("lockunspent", "true \"[{\\\"txid\\\":\\\"a08e6907dbbd3d809776dbfc5d82e371b764ed838b5655e72f463568df1aadf0\\\",\\\"vout\\\":1}]\"") +
             "\nAs a json rpc call\n"
             + HelpExampleRpc("listlockunspent", "")
         );
@@ -2664,8 +2664,8 @@ UniValue listunspent(const JSONRPCRequest& request)
 
             "\nExamples\n"
             + HelpExampleCli("listunspent", "")
-            + HelpExampleCli("listunspent", "6 9999999 \"[\\\"LGPYcOdyoBnraaWX5tknkJZZWafjRAGVzx\\\",\\\"LLmraTr3qBjE2YseA3CnZ55la4TQmWnRY3\\\"]\"")
-            + HelpExampleRpc("listunspent", "6, 9999999 \"[\\\"LGPYcOdyoBnraaWX5tknkJZZWafjRAGVzx\\\",\\\"LLmraTr3qBjE2YseA3CnZ55la4TQmWnRY3\\\"]\"")
+            + HelpExampleCli("listunspent", "6 9999999 \"[\\\"1PGFqEzfmQch1gKD3ra4k18PNj3tTUUSqg\\\",\\\"1LtvqCaApEdUGFkpKMM4MstjcaL4dKg8SP\\\"]\"")
+            + HelpExampleRpc("listunspent", "6, 9999999 \"[\\\"1PGFqEzfmQch1gKD3ra4k18PNj3tTUUSqg\\\",\\\"1LtvqCaApEdUGFkpKMM4MstjcaL4dKg8SP\\\"]\"")
             + HelpExampleCli("listunspent", "6 9999999 '[]' true '{ \"minimumAmount\": 0.005 }'")
             + HelpExampleRpc("listunspent", "6, 9999999, [] , true, { \"minimumAmount\": 0.005 } ")
         );
@@ -2682,13 +2682,13 @@ UniValue listunspent(const JSONRPCRequest& request)
         nMaxDepth = request.params[1].get_int();
     }
 
-    std::set<CBitcoinAddress> setAddress;
+    std::set<CFabcoinAddress> setAddress;
     if (request.params.size() > 2 && !request.params[2].isNull()) {
         RPCTypeCheckArgument(request.params[2], UniValue::VARR);
         UniValue inputs = request.params[2].get_array();
         for (unsigned int idx = 0; idx < inputs.size(); idx++) {
             const UniValue& input = inputs[idx];
-            CBitcoinAddress address(input.get_str());
+            CFabcoinAddress address(input.get_str());
             if (!address.IsValid())
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Fabcoin address: ")+input.get_str());
             if (setAddress.count(address))
@@ -2743,7 +2743,7 @@ UniValue listunspent(const JSONRPCRequest& request)
         entry.push_back(Pair("vout", out.i));
 
         if (fValidAddress) {
-            entry.push_back(Pair("address", CBitcoinAddress(address).ToString()));
+            entry.push_back(Pair("address", CFabcoinAddress(address).ToString()));
 
             if (pwallet->mapAddressBook.count(address)) {
                 entry.push_back(Pair("account", pwallet->mapAddressBook[address].name));
@@ -2865,7 +2865,7 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
             true, true);
 
         if (options.exists("changeAddress")) {
-            CBitcoinAddress address(options["changeAddress"].get_str());
+            CFabcoinAddress address(options["changeAddress"].get_str());
 
             if (!address.IsValid())
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "changeAddress must be a valid fabcoin address");

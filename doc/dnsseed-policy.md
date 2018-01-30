@@ -44,11 +44,11 @@ related to the DNS seed operation.
 If these expectations cannot be satisfied the operator should
 discontinue providing services and contact the active Fabcoin
 Core development team as well as posting on
-[fabcoin-dev](https://groups.google.com/forum/#!forum/fabcoin-dev).
+[fabcoin-dev](https://lists.linuxfoundation.org/mailman/listinfo/fabcoin-dev).
 
 Behavior outside of these expectations may be reasonable in some
 situations but should be discussed in public in advance.
 
 See also
 ----------
-- [fabcoin-seeder](https://github.com/pooler/fabcoin-seeder) is a reference implementation of a DNS seed.
+- [fabcoin-seeder](https://github.com/sipa/fabcoin-seeder) is a reference implementation of a DNS seed.

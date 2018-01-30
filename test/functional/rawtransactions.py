@@ -12,11 +12,11 @@ Test the following RPCs:
    - getrawtransaction
 """
 
-from test_framework.test_framework import BitcoinTestFramework
+from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
 
 # Create one-input, one-output, no-fee transaction:
-class RawTransactionsTest(BitcoinTestFramework):
+class RawTransactionsTest(FabcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 3

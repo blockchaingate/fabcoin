@@ -33,7 +33,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// BitcoinMiner
+// FabcoinMiner
 //
 
 //
@@ -79,7 +79,7 @@ static BlockAssembler::Options DefaultOptions(const CChainParams& params)
     // If only one is given, only restrict the specified resource.
     // If both are given, restrict both.
     BlockAssembler::Options options;
-        options.nBlockMaxWeight = gArgs.GetArg("-blockmaxweight", DEFAULT_BLOCK_MAX_WEIGHT);
+    options.nBlockMaxWeight = gArgs.GetArg("-blockmaxweight", DEFAULT_BLOCK_MAX_WEIGHT);
     if (gArgs.IsArgSet("-blockmintxfee")) {
         CAmount n = 0;
         ParseMoney(gArgs.GetArg("-blockmintxfee", ""), n);
@@ -223,7 +223,7 @@ bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& packa
             return false;
         if (!fIncludeWitness && it->GetTx().HasWitness())
             return false;
-            }
+    }
     return true;
 }
 

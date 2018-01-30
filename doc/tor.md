@@ -41,7 +41,7 @@ If you configure your Tor system accordingly, it is possible to make your node a
 reachable from the Tor network. Add these lines to your /etc/tor/torrc (or equivalent
 config file):
 
-	HiddenServiceDir /var/lib/tor/bitcoin-service/
+	HiddenServiceDir /var/lib/tor/fabcoin-service/
 	HiddenServicePort 8665 127.0.0.1:8665
 	HiddenServicePort 18665 127.0.0.1:18665
 

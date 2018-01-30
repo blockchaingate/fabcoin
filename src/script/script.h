@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_SCRIPT_H
-#define BITCOIN_SCRIPT_SCRIPT_H
+#ifndef FABCOIN_SCRIPT_SCRIPT_H
+#define FABCOIN_SCRIPT_SCRIPT_H
 
 #include "crypto/common.h"
 #include "prevector.h"
@@ -181,7 +181,7 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
-		// Smart contract extension
+    // Smart contract extension
     OP_CREATE = 0xc1,
     OP_CALL = 0xc2,
     OP_SPEND = 0xc3,
@@ -628,7 +628,7 @@ public:
     }
 
     /**
-     * Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
+     * Pre-version-0.6, Fabcoin always counted CHECKMULTISIGs
      * as 20 sigops. With pay-to-script-hash, that changed:
      * CHECKMULTISIGs serialized in scriptSigs are
      * counted more accurately, assuming they are of the form
@@ -652,8 +652,6 @@ public:
 
     /** Check if the script contains valid OP_CODES */
     bool HasValidOps() const;
-
-		//
 
     /**
      * Returns whether the script is guaranteed to fail at execution,
@@ -698,4 +696,4 @@ public:
     virtual ~CReserveScript() {}
 };
 
-#endif // BITCOIN_SCRIPT_SCRIPT_H
+#endif // FABCOIN_SCRIPT_SCRIPT_H

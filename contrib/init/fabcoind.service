@@ -1,0 +1,22 @@
+[Unit]
+Description=Fabcoin's distributed currency daemon
+After=network.target
+
+[Service]
+User=fabcoin
+Group=fabcoin
+
+Type=forking
+PIDFile=/var/lib/fabcoind/fabcoind.pid
+ExecStart=/usr/bin/fabcoind -daemon -pid=/var/lib/fabcoind/fabcoind.pid \
+-conf=/etc/fabcoin/fabcoin.conf -datadir=/var/lib/fabcoind -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

@@ -10,7 +10,7 @@ forward all unrecognized arguments onto the individual test scripts.
 Functional tests are disabled on Windows by default. Use --force to run them anyway.
 
 For a description of arguments recognized by test scripts, see
-`test/functional/test_framework/test_framework.py:BitcoinTestFramework.main`.
+`test/functional/test_framework/test_framework.py:FabcoinTestFramework.main`.
 
 """
 
@@ -81,7 +81,7 @@ BASE_SCRIPTS= [
     # vv Tests less than 30s vv
     'keypool-topup.py',
     'zmq_test.py',
-    'bitcoin_cli.py',
+    'fabcoin_cli.py',
     'mempool_resurrect_test.py',
     'txn_doublespend.py --mineblock',
     'txn_clone.py',
@@ -205,11 +205,11 @@ def main():
 
     enable_wallet = config["components"].getboolean("ENABLE_WALLET")
     enable_utils = config["components"].getboolean("ENABLE_UTILS")
-    enable_fabcoind = config["components"].getboolean("ENABLE_fabcoinD")
+    enable_fabcoind = config["components"].getboolean("ENABLE_FABCOIND")
 
     if config["environment"]["EXEEXT"] == ".exe" and not args.force:
-        # https://github.com/bitcoin/bitcoin/commit/d52802551752140cf41f0d9a225a43e84404d3e9
-        # https://github.com/bitcoin/bitcoin/pull/5677#issuecomment-136646964
+        # https://github.com/blockchaingate/fabcoin/commit/d52802551752140cf41f0d9a225a43e84404d3e9
+        # https://github.com/blockchaingate/fabcoin/pull/5677#issuecomment-136646964
         print("Tests currently disabled on Windows by default. Use --force option to enable")
         sys.exit(0)
 

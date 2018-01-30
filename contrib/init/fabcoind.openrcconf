@@ -1,0 +1,33 @@
+# /etc/conf.d/fabcoind: config file for /etc/init.d/fabcoind
+
+# Config file location
+#FABCOIND_CONFIGFILE="/etc/fabcoin/fabcoin.conf"
+
+# What directory to write pidfile to?  (created and owned by $FABCOIND_USER)
+#FABCOIND_PIDDIR="/var/run/fabcoind"
+
+# What filename to give the pidfile
+#FABCOIND_PIDFILE="${FABCOIND_PIDDIR}/fabcoind.pid"
+
+# Where to write fabcoind data (be mindful that the blockchain is large)
+#FABCOIND_DATADIR="/var/lib/fabcoind"
+
+# User and group to own fabcoind process
+#FABCOIND_USER="fabcoin"
+#FABCOIND_GROUP="fabcoin"
+
+# Path to fabcoind executable
+#FABCOIND_BIN="/usr/bin/fabcoind"
+
+# Nice value to run fabcoind under
+#FABCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#FABCOIND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for fabcoind to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+FABCOIND_SIGTERM_TIMEOUT=60

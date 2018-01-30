@@ -300,8 +300,8 @@ def get_datadir_path(dirname, n):
 def get_auth_cookie(datadir):
     user = None
     password = None
-    if os.path.isfile(os.path.join(datadir, "bitcoin.conf")):
-        with open(os.path.join(datadir, "bitcoin.conf"), 'r', encoding='utf8') as f:
+    if os.path.isfile(os.path.join(datadir, "fabcoin.conf")):
+        with open(os.path.join(datadir, "fabcoin.conf"), 'r', encoding='utf8') as f:
             for line in f:
                 if line.startswith("rpcuser="):
                     assert user is None  # Ensure that there is only one rpcuser line

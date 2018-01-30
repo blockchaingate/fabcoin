@@ -35,7 +35,7 @@ in.
 The fuzzing can be sped up significantly (~200x) by using `afl-clang-fast` and
 `afl-clang-fast++` in place of `afl-gcc` and `afl-g++` when compiling. When
 compiling using `afl-clang-fast`/`afl-clang-fast++` the resulting
-`test_bitcoin_fuzzy` binary will be instrumented in such a way that the AFL
+`test_fabcoin_fuzzy` binary will be instrumented in such a way that the AFL
 features "persistent mode" and "deferred forkserver" can be used. See
 https://github.com/mcarpenter/afl/tree/master/llvm_mode for details.
 
@@ -55,7 +55,7 @@ AFLOUT=$PWD/outputs
 
 Example inputs are available from:
 
-- https://download.visucore.com/bitcoin/bitcoin_fuzzy_in.tar.xz
+- https://download.visucore.com/fabcoin/fabcoin_fuzzy_in.tar.xz
 - http://strateman.ninja/fuzzing.tar.xz
 
 Extract these (or other starting inputs) into the `inputs` directory before starting fuzzing.

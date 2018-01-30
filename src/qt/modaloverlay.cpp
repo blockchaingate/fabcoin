@@ -107,7 +107,7 @@ void ModalOverlay::tipUpdate(int count, const QDateTime& blockDate, double nVeri
         ui->progressIncreasePerH->setText(QString::number(progressPerHour*100, 'f', 2)+"%");
 
         if(remainingMSecs >= 0) {	
-        ui->expectedTimeLeft->setText(GUIUtil::formatNiceTimeOffset(remainingMSecs/1000.0));
+            ui->expectedTimeLeft->setText(GUIUtil::formatNiceTimeOffset(remainingMSecs / 1000.0));
         } else {
             ui->expectedTimeLeft->setText(QObject::tr("unknown"));
         }

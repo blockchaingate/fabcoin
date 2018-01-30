@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_RPCWALLET_H
-#define BITCOIN_WALLET_RPCWALLET_H
+#ifndef FABCOIN_WALLET_RPCWALLET_H
+#define FABCOIN_WALLET_RPCWALLET_H
 
 class CRPCTable;
 class JSONRPCRequest;
@@ -22,4 +22,4 @@ std::string HelpRequiringPassphrase(CWallet *);
 void EnsureWalletIsUnlocked(CWallet *);
 bool EnsureWalletIsAvailable(CWallet *, bool avoidException);
 
-#endif //BITCOIN_WALLET_RPCWALLET_H
+#endif //FABCOIN_WALLET_RPCWALLET_H

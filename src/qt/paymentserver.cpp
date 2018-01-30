@@ -4,7 +4,7 @@
 
 #include "paymentserver.h"
 
-#include "bitcoinunits.h"
+#include "fabcoinunits.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
 
@@ -46,8 +46,8 @@
 #include <QUrlQuery>
 #endif
 
-const int BITCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
-const QString BITCOIN_IPC_PREFIX("fabcoin:");
+const int FABCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
+const QString FABCOIN_IPC_PREFIX("fabcoin:");
 // BIP70 payment protocol messages
 const char* BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char* BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
@@ -207,18 +207,18 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
         if (arg.startsWith("-"))
             continue;
 
-        // If the bitcoin: URI contains a payment request, we are not able to detect the
+        // If the fabcoin: URI contains a payment request, we are not able to detect the
         // network as that would require fetching and parsing the payment request.
         // That means clicking such an URI which contains a testnet payment request
         // will start a mainnet instance and throw a "wrong network" error.
-        if (arg.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // bitcoin: URI
+        if (arg.startsWith(FABCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // fabcoin: URI
         {
             savedPaymentRequests.append(arg);
 
             SendCoinsRecipient r;
-            if (GUIUtil::parseBitcoinURI(arg, &r) && !r.address.isEmpty())
+            if (GUIUtil::parseFabcoinURI(arg, &r) && !r.address.isEmpty())
             {
-                CBitcoinAddress address(r.address.toStdString());
+                CFabcoinAddress address(r.address.toStdString());
                 auto tempChainParams = CreateChainParams(CBaseChainParams::MAIN);
 
                 if (address.IsValid(*tempChainParams))
@@ -271,7 +271,7 @@ bool PaymentServer::ipcSendCommandLine()
     {
         QLocalSocket* socket = new QLocalSocket();
         socket->connectToServer(ipcServerName(), QIODevice::WriteOnly);
-        if (!socket->waitForConnected(BITCOIN_IPC_CONNECT_TIMEOUT))
+        if (!socket->waitForConnected(FABCOIN_IPC_CONNECT_TIMEOUT))
         {
             delete socket;
             socket = nullptr;
@@ -286,7 +286,7 @@ bool PaymentServer::ipcSendCommandLine()
 
         socket->write(block);
         socket->flush();
-        socket->waitForBytesWritten(BITCOIN_IPC_CONNECT_TIMEOUT);
+        socket->waitForBytesWritten(FABCOIN_IPC_CONNECT_TIMEOUT);
         socket->disconnectFromServer();
 
         delete socket;
@@ -309,7 +309,7 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer) :
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     // Install global event filter to catch QFileOpenEvents
-    // on Mac: sent when you click bitcoin: links
+    // on Mac: sent when you click fabcoin: links
     // other OSes: helpful when dealing with payment request files
     if (parent)
         parent->installEventFilter(this);
@@ -341,7 +341,7 @@ PaymentServer::~PaymentServer()
 }
 
 //
-// OSX-specific way of handling bitcoin: URIs and PaymentRequest mime types.
+// OSX-specific way of handling fabcoin: URIs and PaymentRequest mime types.
 // Also used by paymentservertests.cpp and when opening a payment request file
 // via "Open URI..." menu entry.
 //
@@ -367,7 +367,7 @@ void PaymentServer::initNetManager()
     if (netManager != nullptr)
         delete netManager;
 
-    // netManager is used to fetch paymentrequests given in bitcoin: URIs
+    // netManager is used to fetch paymentrequests given in fabcoin: URIs
     netManager = new QNetworkAccessManager(this);
 
     QNetworkProxy proxy;
@@ -407,7 +407,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
         return;
     }
 
-    if (s.startsWith(BITCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // bitcoin: URI
+    if (s.startsWith(FABCOIN_IPC_PREFIX, Qt::CaseInsensitive)) // fabcoin: URI
     {
 #if QT_VERSION < 0x050000
         QUrl uri(s);
@@ -439,9 +439,9 @@ void PaymentServer::handleURIOrFile(const QString& s)
         else // normal URI
         {
             SendCoinsRecipient recipient;
-            if (GUIUtil::parseBitcoinURI(s, &recipient))
+            if (GUIUtil::parseFabcoinURI(s, &recipient))
             {
-                CBitcoinAddress address(recipient.address.toStdString());
+                CFabcoinAddress address(recipient.address.toStdString());
                 if (!address.IsValid()) {
                     Q_EMIT message(tr("URI handling"), tr("Invalid payment address %1").arg(recipient.address),
                         CClientUIInterface::MSG_ERROR);
@@ -560,10 +560,10 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
         CTxDestination dest;
         if (ExtractDestination(sendingTo.first, dest)) {
             // Append destination address
-            addresses.append(QString::fromStdString(CBitcoinAddress(dest).ToString()));
+            addresses.append(QString::fromStdString(CFabcoinAddress(dest).ToString()));
         }
         else if (!recipient.authenticatedMerchant.isEmpty()) {
-            // Unauthenticated payment requests to custom bitcoin addresses are not supported
+            // Unauthenticated payment requests to custom fabcoin addresses are not supported
             // (there is no good way to tell the user where they are paying in a way they'd
             // have a chance of understanding).
             Q_EMIT message(tr("Payment request rejected"),
@@ -572,7 +572,7 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
             return false;
         }
 
-        // Bitcoin amounts are stored as (optional) uint64 in the protobuf messages (see paymentrequest.proto),
+        // Fabcoin amounts are stored as (optional) uint64 in the protobuf messages (see paymentrequest.proto),
         // but CAmount is defined as int64_t. Because of that we need to verify that amounts are in a valid range
         // and no overflow has happened.
         if (!verifyAmount(sendingTo.second)) {
@@ -584,7 +584,7 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
         CTxOut txOut(sendingTo.second, sendingTo.first);
         if (IsDust(txOut, ::dustRelayFee)) {
             Q_EMIT message(tr("Payment request error"), tr("Requested payment amount of %1 is too small (considered dust).")
-                .arg(BitcoinUnits::formatWithUnit(optionsModel->getDisplayUnit(), sendingTo.second)),
+                .arg(FabcoinUnits::formatWithUnit(optionsModel->getDisplayUnit(), sendingTo.second)),
                 CClientUIInterface::MSG_ERROR);
 
             return false;

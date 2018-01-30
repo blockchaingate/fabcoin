@@ -32,9 +32,9 @@ block hash)
 If this block is in the chain assume that it and its ancestors are valid
 and potentially skip their script verification (0 to verify all,
 default:
-29c8c00e1a5f446a6364a29633d3f1ee16428d87c8d3851a1c570be8170b04c2,
+0000000000000000003b9ce759c2a087d52abc4266f8f4ebd6d768b89defa50a,
 testnet:
-ad8ff6c2f5580d2b50bd881e11312425ea84fa99f322bf132beb722f97971bba)
+0000000002e9e7b00e1f6dc5123a04aad68dd0f0968d8c7aa45f6640795c37b1)
 .HP
 \fB\-conf=\fR<file>
 .IP
@@ -58,7 +58,7 @@ Keep at most <n> unconnectable transactions in memory (default: 100)
 .HP
 \fB\-maxmempool=\fR<n>
 .IP
-Keep the transaction memory pool below <n> megabytes (default: 5)
+Keep the transaction memory pool below <n> megabytes (default: 300)
 .HP
 \fB\-mempoolexpiry=\fR<n>
 .IP
@@ -269,7 +269,7 @@ Set key pool size to <n> (default: 1000)
 \fB\-fallbackfee=\fR<amt>
 .IP
 A fee rate (in FAB/kB) that will be used when fee estimation has
-insufficient data (default: 0.002)
+insufficient data (default: 0.0002)
 .HP
 \fB\-discardfee=\fR<amt>
 .IP
@@ -282,7 +282,7 @@ limited by the fee estimate for the longest target
 \fB\-mintxfee=\fR<amt>
 .IP
 Fees (in FAB/kB) smaller than this are considered zero fee for
-transaction creation (default: 0.001)
+transaction creation (default: 0.00001)
 .HP
 \fB\-paytxfee=\fR<amt>
 .IP
@@ -432,7 +432,7 @@ Enable transaction replacement in the memory pool (default: 1)
 \fB\-minrelaytxfee=\fR<amt>
 .IP
 Fees (in FAB/kB) smaller than this are considered zero fee for relaying,
-mining and transaction creation (default: 0.001)
+mining and transaction creation (default: 0.00001)
 .HP
 \fB\-whitelistrelay\fR
 .IP
@@ -547,11 +547,10 @@ Show splash screen on startup (default: 1)
 Reset all settings changed in the GUI
 .SH COPYRIGHT
 Copyright (C) 2009-2017 The Bitcoin Core developers
-Copyright (C) 2011-2017 The Fabcoin Core developers
 
 Please contribute if you find Fabcoin Core useful. Visit
-<https://fabcoin.org> for further information about the software.
-The source code is available from <https://github.com/fabcoin-project/fabcoin>.
+<https://fabcoincore.org> for further information about the software.
+The source code is available from <https://github.com/blockchaingate/fabcoin>.
 
 This is experimental software.
 Distributed under the MIT software license, see the accompanying file COPYING

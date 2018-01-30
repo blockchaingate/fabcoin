@@ -1,9 +1,9 @@
 Fabcoin Core integration/staging tree
 =====================================
 
-[![Build Status](https://travis-ci.org/blockchaingate/fabcoin.svg?branch=master)](https://travis-ci.org/blockchaingate/fabcoin)
+[![Build Status](https://travis-ci.org/fabcoin/fabcoin.svg?branch=master)](https://travis-ci.org/fabcoin/fabcoin)
 
-https://fabcoin.org
+https://fabcoincore.org
 
 What is Fabcoin?
 ----------------
@@ -15,7 +15,8 @@ out collectively by the network. Fabcoin Core is the name of open source
 software which enables the use of this currency.
 
 For more information, as well as an immediately useable, binary version of
-the Fabcoin Core software, see [https://fabcoin.org](https://fabcoin.org).
+the Fabcoin Core software, see https://fabcoin.org/en/download, or read the
+[original whitepaper](https://fabcoincore.org/fabcoin.pdf).
 
 License
 -------
@@ -32,11 +33,11 @@ regularly to indicate new official, stable release versions of Fabcoin Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The developer [mailing list](https://groups.google.com/forum/#!forum/fabcoin-dev)
+The developer [mailing list](https://lists.linuxfoundation.org/mailman/listinfo/fabcoin-dev)
 should be used to discuss complicated or controversial changes before working
 on a patch set.
 
-Developer IRC can be found on Freenode at #fabcoin-dev.
+Developer IRC can be found on Freenode at #fabcoin-core-dev.
 
 Testing
 -------
@@ -70,7 +71,7 @@ Translations
 ------------
 
 Changes to translations as well as new translations can be submitted to
-[Bitcoin Core's Transifex page](https://www.transifex.com/projects/p/bitcoin/).
+[Fabcoin Core's Transifex page](https://www.transifex.com/projects/p/fabcoin/).
 
 Translations are periodically pulled from Transifex and merged into the git repository. See the
 [translation process](doc/translation_process.md) for details on how this works.
@@ -78,4 +79,4 @@ Translations are periodically pulled from Transifex and merged into the git repo
 **Important**: We do not accept translation changes as GitHub pull requests because the next
 pull from Transifex would automatically overwrite them again.
 
-Translators should also subscribe to the [mailing list](https://groups.google.com/forum/#!forum/bitcoin-translators).
+Translators should also subscribe to the [mailing list](https://groups.google.com/forum/#!forum/fabcoin-translators).

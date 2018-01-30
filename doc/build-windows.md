@@ -7,7 +7,7 @@ Most developers use cross-compilation from Ubuntu to build executables for
 Windows. Cross-compilation is also used to build the release binaries.
 
 Currently only building on Ubuntu Trusty 14.04 or Ubuntu Zesty 17.04 or later is supported.
-Building on Ubuntu Xenial 16.04 is known to be broken, see extensive discussion in issue [8732](https://github.com/bitcoin/bitcoin/issues/8732).
+Building on Ubuntu Xenial 16.04 is known to be broken, see extensive discussion in issue [8732](https://github.com/blockchaingate/fabcoin/issues/8732).
 While it may be possible to do so with work arounds, it's potentially dangerous and not recommended.
 
 While there are potentially a number of ways to build on Windows (for example using msys / mingw-w64),
@@ -65,7 +65,7 @@ build process.
 
 
 If you're building on Ubuntu 17.04 or later, run these two commands, selecting the 'posix' variant for both,
-to work around issues with mingw-w64. See issue [8732](https://github.com/bitcoin/bitcoin/issues/8732) for more information.
+to work around issues with mingw-w64. See issue [8732](https://github.com/blockchaingate/fabcoin/issues/8732) for more information.
 ```
 sudo update-alternatives --config x86_64-w64-mingw32-g++
 sudo update-alternatives --config x86_64-w64-mingw32-gcc
@@ -91,7 +91,7 @@ Then build using:
 
 To build executables for Windows 32-bit, install the following dependencies:
 
-    sudo apt-get install g++-mingw-w64-i686 mingw-w64-i686-dev 
+    sudo apt-get install g++-mingw-w64-i686 mingw-w64-i686-dev
 
 Then build using:
 

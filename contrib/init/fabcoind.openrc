@@ -1,0 +1,92 @@
+#!/sbin/runscript
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/fabcoin/.fabcoin" ]; then
+	FABCOIND_DEFAULT_DATADIR="/var/lib/fabcoin/.fabcoin"
+else
+	FABCOIND_DEFAULT_DATADIR="/var/lib/fabcoind"
+fi
+
+FABCOIND_CONFIGFILE=${FABCOIND_CONFIGFILE:-/etc/fabcoin/fabcoin.conf}
+FABCOIND_PIDDIR=${FABCOIND_PIDDIR:-/var/run/fabcoind}
+FABCOIND_PIDFILE=${FABCOIND_PIDFILE:-${FABCOIND_PIDDIR}/fabcoind.pid}
+FABCOIND_DATADIR=${FABCOIND_DATADIR:-${FABCOIND_DEFAULT_DATADIR}}
+FABCOIND_USER=${FABCOIND_USER:-${FABCOIN_USER:-fabcoin}}
+FABCOIND_GROUP=${FABCOIND_GROUP:-fabcoin}
+FABCOIND_BIN=${FABCOIND_BIN:-/usr/bin/fabcoind}
+FABCOIND_NICE=${FABCOIND_NICE:-${NICELEVEL:-0}}
+FABCOIND_OPTS="${FABCOIND_OPTS:-${FABCOIN_OPTS}}"
+
+name="Fabcoin Core Daemon"
+description="Fabcoin cryptocurrency P2P network daemon"
+
+command="/usr/bin/fabcoind"
+command_args="-pid=\"${FABCOIND_PIDFILE}\" \
+		-conf=\"${FABCOIND_CONFIGFILE}\" \
+		-datadir=\"${FABCOIND_DATADIR}\" \
+		-daemon \
+		${FABCOIND_OPTS}"
+
+required_files="${FABCOIND_CONFIGFILE}"
+start_stop_daemon_args="-u ${FABCOIND_USER} \
+			-N ${FABCOIND_NICE} -w 2000"
+pidfile="${FABCOIND_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${FABCOIND_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${FABCOIND_USER}:${FABCOIND_GROUP}" \
+	"${FABCOIND_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${FABCOIND_USER}:${FABCOIND_GROUP}" \
+	"${FABCOIND_PIDDIR}"
+
+	checkpath -f \
+	-o ${FABCOIND_USER}:${FABCOIND_GROUP} \
+	-m 0660 \
+	${FABCOIND_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${FABCOIND_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run fabcoind."
+		eerror "The setting must appear in ${FABCOIND_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following"
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is also recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Fabcoin Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

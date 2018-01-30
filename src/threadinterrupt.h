@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_THREADINTERRUPT_H
-#define BITCOIN_THREADINTERRUPT_H
+#ifndef FABCOIN_THREADINTERRUPT_H
+#define FABCOIN_THREADINTERRUPT_H
 
 #include <atomic>
 #include <chrono>
@@ -31,4 +31,4 @@ private:
     std::atomic<bool> flag;
 };
 
-#endif //BITCOIN_THREADINTERRUPT_H
+#endif //FABCOIN_THREADINTERRUPT_H
