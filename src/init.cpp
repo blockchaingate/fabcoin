@@ -192,6 +192,8 @@ void Shutdown()
         pwallet->Flush(false);
     }
 #endif
+	GenerateBitcoins(false, 0, Params());
+
     MapPort(false);
 
     // Because these depend on each-other, we make sure that neither can be
@@ -1719,6 +1721,9 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     if (!connman.Start(scheduler, connOptions)) {
         return false;
     }
+
+	// Generate coins in the background
+	GenerateBitcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams);
 
     // ********************************************************* Step 12: finished
 
