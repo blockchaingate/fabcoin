@@ -104,7 +104,6 @@ bool CNetAddr::IsIPv6() const
 
 bool CNetAddr::IsRFC1918() const
 {
-	return false;
     return IsIPv4() && (
         GetByte(3) == 10 ||
         (GetByte(3) == 192 && GetByte(2) == 168) ||

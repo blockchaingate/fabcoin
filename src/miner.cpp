@@ -538,7 +538,7 @@ void static BitcoinMiner(const CChainParams& chainparams)
 	{	
 		// TODO: find the proper wallet
 		::vpwallets[0]->GetScriptForMining(coinbaseScript);
-//		GetMainSignals().ScriptForMining(coinbaseScript);
+//		GetMainSignals().ScriptForMining(coinbaseScript); // from v0.12.1
 	}
 
 	try {
