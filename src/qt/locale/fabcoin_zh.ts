@@ -108,7 +108,7 @@
     </message>
     <message>
         <source>Warning: Invalid Fabcoin address</source>
-        <translation>警告：比特币地址无效</translation>
+        <translation>警告：發币地址无效</translation>
     </message>
     </context>
 <context>
