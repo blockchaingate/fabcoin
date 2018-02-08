@@ -51,10 +51,6 @@ enum txnouttype
     TX_SCRIPTHASH,
     TX_MULTISIG,
     TX_NULL_DATA,
-    // Smart contract support.
-    TX_CREATE,
-    TX_CALL,
-    // End of smart contract support.
     TX_WITNESS_V0_SCRIPTHASH,
     TX_WITNESS_V0_KEYHASH,
 };
