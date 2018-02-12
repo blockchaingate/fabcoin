@@ -206,7 +206,7 @@ private:
 };
 
 /** Run the miner threads */
-void GenerateBitcoins(bool fGenerate, int nThreads, const CChainParams& chainparams);
+void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams);
 
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);

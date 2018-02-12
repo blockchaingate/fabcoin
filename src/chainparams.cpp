@@ -14,8 +14,6 @@
 
 #include "chainparamsseeds.h"
 
-#define FABCOIN
-
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;
@@ -76,13 +74,20 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
- 
         consensus.nSubsidyHalvingInterval = 1680000;
-        consensus.BIP34Height = 0;
-        consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; 
-        consensus.BIP66Height = 0; 
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.BIP34Height = 227931;
+        consensus.BIP34Hash = uint256S("0x000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8");
+        consensus.BIP65Height = 388381; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
+        consensus.BIP66Height = 363725; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
+
+        //++ to do 
+        //++ consensus.BIP34Height = 5000;
+        //++ consensus.BIP34Hash = uint256S("0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+        //++ consensus.BIP65Height = 5000; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
+        //++ consensus.BIP66Height = 5000; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
+
+        consensus.powLimit      = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        //++ consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
@@ -96,7 +101,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
-
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
@@ -108,10 +112,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000010000"); // qtum
+        consensus.nMinimumChainWork = uint256S("0x0"); // qtum
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x00000000000000000013176bf8d7dfeab4e1db31dc93bc311b436e82ab226b90"); //453354
+        consensus.defaultAssumeValid = uint256S("0x0000000000000000003b9ce759c2a087d52abc4266f8f4ebd6d768b89defa50a"); //477890
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -147,7 +151,7 @@ public:
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
 
-		fMiningRequiresPeers = true;
+        fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
@@ -176,11 +180,19 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 1680000; // fabcoin halving every 4 years
-        consensus.BIP34Height = 0;
-        consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; 
-        consensus.BIP66Height = 0; 
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        //++consensus.BIP34Height = 21111;
+        //++consensus.BIP34Hash = uint256S("0x0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8");
+        //++ consensus.BIP65Height = 581885; // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
+        //++ consensus.BIP66Height = 330776; // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
+
+        //++ to do 
+        consensus.BIP34Height = 5000; //
+        consensus.BIP34Hash = uint256S("0x000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943");
+        consensus.BIP65Height = 5000;  //
+        consensus.BIP66Height = 5000;  //
+
+        //++consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit =     uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
@@ -193,7 +205,6 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
 
-
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
@@ -205,8 +216,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
 
         // The best chain should have at least this much work.
-		consensus.nMinimumChainWork = uint256S("0x00");
-
+    	consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x0000000002e9e7b00e1f6dc5123a04aad68dd0f0968d8c7aa45f6640795c37b1"); //1135275
@@ -218,29 +228,17 @@ public:
         nDefaultPort = 18665;
         nPruneAfterHeight = 1000;
 
-
-#if 0 
-		genesis = CreateGenesisBlock(1296688602, 414098458, 0x1d00ffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1296688602, 414098458, 0x1d00ffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"));
         assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
-#else
-		// copied from regression test
-		// 1517433514 2018.1.31
-		genesis = CreateGenesisBlock(1517433514, 36, 0x207fffff, 1, 50 * COIN);
-		consensus.hashGenesisBlock = genesis.GetHash();
-		assert(consensus.hashGenesisBlock == uint256S("0x047b98c19e0c05b3360219b3564e0c734b764d9f8e5bae49c240bb1db31cee07"));
-		assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
-#endif
+
         vFixedSeeds.clear();
         vSeeds.clear();
-
-#if 0
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch", true);
+        vSeeds.emplace_back("testnet-seed.fabcoin.jonasschnelli.ch", true);
         vSeeds.emplace_back("seed.tbtc.petertodd.org", true);
         vSeeds.emplace_back("testnet-seed.bluematt.me", false);
-#endif
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
@@ -250,7 +248,7 @@ public:
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
-		fMiningRequiresPeers = true;
+        fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
@@ -280,10 +278,10 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.BIP34Height = 0; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests) // activate for qtum
+        consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
+        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
 
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
@@ -325,7 +323,7 @@ public:
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
 
-		fMiningRequiresPeers = false;
+        fMiningRequiresPeers = false;
         fDefaultConsistencyChecks = true;
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
