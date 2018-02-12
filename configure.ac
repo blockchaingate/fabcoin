@@ -719,6 +719,11 @@ if test x$use_upnp != xno; then
   )
 fi
 
+dnl Check to find the libsodium headers/libraries
+AC_CHECK_LIB(sodium, sodium_init,[],
+[AC_MSG_ERROR([The Sodium crypto library libraries not found.])]
+)
+
 FABCOIN_QT_INIT
 
 dnl sets $fabcoin_enable_qt, $fabcoin_enable_qt_test, $fabcoin_enable_qt_dbus
