@@ -212,7 +212,7 @@ public:
 		consensus.nPowMaxAdjustDown = 32; // 32% adjustment down
 		consensus.nPowMaxAdjustUp = 16; // 16% adjustment up
 
-		consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
+		consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days, for SHA256 mining only
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
 
         consensus.fPowAllowMinDifficultyBlocks = true;
@@ -280,7 +280,7 @@ public:
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
-		fMiningRequiresPeers = false;//true;
+		fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
