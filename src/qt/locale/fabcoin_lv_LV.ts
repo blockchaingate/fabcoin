@@ -203,7 +203,7 @@
     </message>
     <message>
         <source>Send coins to a Fabcoin address</source>
-        <translation>Nosūtīt bitkoinus uz Fabcoin adresi</translation>
+        <translation>Nosūtīt Fabcoinus uz Fabcoin adresi</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -619,7 +619,7 @@
     </message>
     <message>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Izvēlēties dalījuma vienību pēc noklusēšanas, ko izmantot interfeisā un nosūtot bitkoinus.</translation>
+        <translation>Izvēlēties dalījuma vienību pēc noklusēšanas, ko izmantot interfeisā un nosūtot Fabcoinus.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -928,7 +928,7 @@
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
-        <translation>Sūtīt Bitkoinus</translation>
+        <translation>Sūtīt Fabcoinus</translation>
     </message>
     <message>
         <source>Coin Control Features</source>
@@ -1329,7 +1329,7 @@
     </message>
     <message>
         <source>Insufficient funds</source>
-        <translation>Nepietiek bitkoinu</translation>
+        <translation>Nepietiek Fabcoinu</translation>
     </message>
     <message>
         <source>Loading block index...</source>

@@ -49,12 +49,23 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
 {
     const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
     CAmount nSum = 0;
+
+    CAmount nSubsidy ;
+
+    nSubsidy = GetBlockSubsidy(2, chainParams->GetConsensus());
+    BOOST_CHECK_EQUAL(nSubsidy , 32000000 * COIN);
+
     for (int nHeight = 0; nHeight < 112000000; nHeight += 1000) {
-        CAmount nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
-        BOOST_CHECK(nSubsidy <= 50 * COIN);
+        nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
+        if ( nHeight == 2 )
+            BOOST_CHECK_EQUAL(nSubsidy , 32000000 * COIN);
+        else
+            BOOST_CHECK(nSubsidy <= 50 * COIN);
+
         nSum += nSubsidy * 1000;
         BOOST_CHECK(MoneyRange(nSum));
     }
+    //std::cerr << "nSum" << nSum << std::endl;
     BOOST_CHECK_EQUAL(nSum, 16799999981520000ULL);
 }
 
