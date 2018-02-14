@@ -192,7 +192,7 @@ void Shutdown()
         pwallet->Flush(false);
     }
 #endif
-	GenerateBitcoins(false, 0, Params());
+	GenerateFabcoins(false, 0, Params());
 
     MapPort(false);
 
@@ -1723,7 +1723,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
 
 	// Generate coins in the background
-	GenerateBitcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams);
+	GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams);
 
     // ********************************************************* Step 12: finished
 

@@ -1068,7 +1068,7 @@ UniValue setgenerate(const JSONRPCRequest& request)
 
 	gArgs.ForceSetArg("-gen",fGenerate ? "1" : "0");
 	gArgs.ForceSetArg("-genproclimit",itostr(nGenProcLimit));
-	GenerateBitcoins(fGenerate, nGenProcLimit, Params());
+	GenerateFabcoins(fGenerate, nGenProcLimit, Params());
 
 	return 0;
 }
@@ -1083,9 +1083,9 @@ static const CRPCCommand commands[] =
     { "mining",             "getblocktemplate",       &getblocktemplate,       true,  {"template_request"} },
     { "mining",             "submitblock",            &submitblock,            true,  {"hexdata","dummy"} },
 
-	{ "generating",         "generatetoaddress",      &generatetoaddress,      true,  {"nblocks","address","maxtries"} },
-	{ "generating",         "getgenerate",            &getgenerate,            true,  {"generate","genproclimit"} },
-	{ "generating",         "setgenerate",            &setgenerate,            true,  {"generate"} },
+    { "generating",         "generatetoaddress",      &generatetoaddress,      true,  {"nblocks","address","maxtries"} },
+    { "generating",         "getgenerate",            &getgenerate,            true,  {"generate","genproclimit"} },
+    { "generating",         "setgenerate",            &setgenerate,            true,  {"generate"} },
 
     { "util",               "estimatefee",            &estimatefee,            true,  {"nblocks"} },
     { "util",               "estimatesmartfee",       &estimatesmartfee,       true,  {"conf_target", "estimate_mode"} },

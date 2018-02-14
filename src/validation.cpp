@@ -1046,7 +1046,15 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
         return 0;
 
     CAmount nSubsidy = 50 * COIN;
-    // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
+
+    //Pre-mining 
+    bool fRegTest = gArgs.GetBoolArg("-regtest", false);
+
+    if ( nHeight == 2  &&  !fRegTest ) {
+       nSubsidy = 32000000 * COIN;
+    }
+
+    // Subsidy is cut in half every 1680,000 blocks which will occur approximately every 4 years.
     nSubsidy >>= halvings;
     return nSubsidy;
 }

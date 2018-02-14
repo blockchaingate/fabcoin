@@ -481,226 +481,227 @@ void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned
 
 static bool ProcessBlockFound(const CBlock* pblock, const CChainParams& chainparams)
 {
-	LogPrintf("%s\n", pblock->ToString());
-	LogPrintf("generated %s\n", FormatMoney(pblock->vtx[0]->vout[0].nValue));
+    LogPrintf("%s\n", pblock->ToString());
+    LogPrintf("generated %s\n", FormatMoney(pblock->vtx[0]->vout[0].nValue));
 
-	// Found a solution
-	{
-		LOCK(cs_main);
-		if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
-			return error("FabcoinMiner: generated block is stale");
-	}
+    // Found a solution
+    {
+        LOCK(cs_main);
+        if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
+            return error("FabcoinMiner: generated block is stale");
+    }
 
-	// Inform about the new block
-	GetMainSignals().BlockFound(pblock->GetHash());
+    // Inform about the new block
+    GetMainSignals().BlockFound(pblock->GetHash());
 
-	// Process this block the same as if we had received it from another node
-	bool fNewBlock = false;
-	std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
-	if (!ProcessNewBlock(chainparams, shared_pblock, true, &fNewBlock))
-		return error("FabcoinMiner: ProcessNewBlock, block not accepted");
+    // Process this block the same as if we had received it from another node
+    bool fNewBlock = false;
+    std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
+    if (!ProcessNewBlock(chainparams, shared_pblock, true, &fNewBlock))
+        return error("FabcoinMiner: ProcessNewBlock, block not accepted");
 
-	return true;
+    return true;
 }
 
-void static BitcoinMiner(const CChainParams& chainparams)
+void static FabcoinMiner(const CChainParams& chainparams)
 {
-	LogPrintf("FabcoinMiner started\n");
-	SetThreadPriority(THREAD_PRIORITY_LOWEST);
-	RenameThread("fabcoin-miner");
+    LogPrintf("FabcoinMiner started\n");
+    SetThreadPriority(THREAD_PRIORITY_LOWEST);
+    RenameThread("fabcoin-miner");
 
-	unsigned int nExtraNonce = 0;
-	std::shared_ptr<CReserveScript> coinbaseScript;
-	if( ::vpwallets.size() > 0 )
-	{	
-		// TODO: find the proper wallet
-		::vpwallets[0]->GetScriptForMining(coinbaseScript);
-//		GetMainSignals().ScriptForMining(coinbaseScript); // from v0.12.1
-	}
+    unsigned int nExtraNonce = 0;
+    std::shared_ptr<CReserveScript> coinbaseScript;
+    if( ::vpwallets.size() > 0 )
+    {    
+        // TODO: find the proper wallet
+        ::vpwallets[0]->GetScriptForMining(coinbaseScript);
+//        GetMainSignals().ScriptForMining(coinbaseScript); // from v0.12.1
+    }
 
-	unsigned int n = chainparams.EquihashN();
-	unsigned int k = chainparams.EquihashK();
+    unsigned int n = chainparams.EquihashN();
+    unsigned int k = chainparams.EquihashK();
 
-	std::mutex m_cs;
-	bool cancelSolver = false;
+    std::mutex m_cs;
+    bool cancelSolver = false;
 
-//	boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
-//		[&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
-//			std::lock_guard<std::mutex> lock{m_cs};
-//			cancelSolver = true;
-//	}
-//	);
+//    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
+//        [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
+//            std::lock_guard<std::mutex> lock{m_cs};
+//            cancelSolver = true;
+//    }
+//    );
 
-	try {
-		// Throw an error if no script was provided.  This can happen
-		// due to some internal error but also if the keypool is empty.
-		// In the latter case, already the pointer is NULL.
-		if (!coinbaseScript || coinbaseScript->reserveScript.empty())
-			throw std::runtime_error("No coinbase script available (mining requires a wallet)");
+    try {
+        // Throw an error if no script was provided.  This can happen
+        // due to some internal error but also if the keypool is empty.
+        // In the latter case, already the pointer is NULL.
+        if (!coinbaseScript || coinbaseScript->reserveScript.empty())
+            throw std::runtime_error("No coinbase script available (mining requires a wallet)");
 
-		while (true) {
-			if (chainparams.MiningRequiresPeers()) {
-				// Busy-wait for the network to come online so we don't waste time mining
-				// on an obsolete chain. In regtest mode we expect to fly solo.
-				do {
-					unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
-					if ( nNodeCount && !IsInitialBlockDownload())
-						break;
-					MilliSleep(1000);
-				} while (true);
-			}
+        while (true) {
+            if (chainparams.MiningRequiresPeers()) {
+                // Busy-wait for the network to come online so we don't waste time mining
+                // on an obsolete chain. In regtest mode we expect to fly solo.
+                do {
+                    unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
+                    if ( nNodeCount && !IsInitialBlockDownload())
+                        break;
+                    MilliSleep(1000);
+                } while (true);
+            }
 
-			//
-			// Create new block
-			//
-			unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-			CBlockIndex* pindexPrev = chainActive.Tip();
+            //
+            // Create new block
+            //
+            unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
+            CBlockIndex* pindexPrev = chainActive.Tip();
 
-			std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
-			if (!pblocktemplate.get())
-			{
-				LogPrintf("Error in FabcoinMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
-				return;
-			}
-			CBlock *pblock = &pblocktemplate->block;
-			IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
+            std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
+            if (!pblocktemplate.get())
+            {
+                LogPrintf("Error in FabcoinMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
+                return;
+            }
+            CBlock *pblock = &pblocktemplate->block;
+            IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-			LogPrintf("Running FabcoinMiner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
-				::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
+            LogPrintf("Running FabcoinMiner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
+                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
-			//
-			// Search
-			//
-			int64_t nStart = GetTime();
-			arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
-			uint256 hash;
-			while (true) {
-				// Hash state
-				crypto_generichash_blake2b_state state;
-				EhInitialiseState(n, k, state);
+            //
+            // Search
+            //
+            int64_t nStart = GetTime();
+            arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
+            uint256 hash;
+            while (true) {
+                // Hash state
+                crypto_generichash_blake2b_state state;
+                EhInitialiseState(n, k, state);
 
-				// I = the block header minus nonce and solution.
-				CEquihashInput I{*pblock};
-				CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-				ss << I;
+                // I = the block header minus nonce and solution.
+                CEquihashInput I{*pblock};
+                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                ss << I;
 
-				// H(I||...
-				crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+                // H(I||...
+                crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
 
-				// H(I||V||...
-				crypto_generichash_blake2b_state curr_state;
-				curr_state = state;
-				crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
-				
-				// (x_1, x_2, ...) = A(I, V, n, k)
-//				LogPrint(BCLog::POW, "Running Equihash solver \"%s\" with nNonce = %s\n",
-//					solver, pblock->nNonce.ToString());
+                // H(I||V||...
+                crypto_generichash_blake2b_state curr_state;
+                curr_state = state;
+                crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
+                
+                // (x_1, x_2, ...) = A(I, V, n, k)
+//                LogPrint(BCLog::POW, "Running Equihash solver \"%s\" with nNonce = %s\n",
+//                    solver, pblock->nNonce.ToString());
 
-				std::function<bool(std::vector<unsigned char>)> validBlock =
-					[&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams](std::vector<unsigned char> soln) 
-				{
-					// Write the solution to the hash and compute the result.
-					LogPrint(BCLog::POW, "- Checking solution against target\n");
-					pblock->nSolution = soln;
+                std::function<bool(std::vector<unsigned char>)> validBlock =
+                    [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams](std::vector<unsigned char> soln) 
+                {
+                    // Write the solution to the hash and compute the result.
+                    LogPrint(BCLog::POW, "- Checking solution against target\n");
+                    pblock->nSolution = soln;
 
-					if (UintToArith256(pblock->GetHash()) > hashTarget) 
-					{
-						return false;
-					}
-					// Found a solution
-					SetThreadPriority(THREAD_PRIORITY_NORMAL);
-					LogPrintf("FabcoinMiner:\n");
-					LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
-					if (ProcessBlockFound(pblock, chainparams)) 
-					{
-						// Ignore chain updates caused by us
-						std::lock_guard<std::mutex> lock{m_cs};
-						cancelSolver = false;
-					}
-					SetThreadPriority(THREAD_PRIORITY_LOWEST);
+                    if (UintToArith256(pblock->GetHash()) > hashTarget) 
+                    {
+                        return false;
+                    }
+                    // Found a solution
+                    SetThreadPriority(THREAD_PRIORITY_NORMAL);
+                    LogPrintf("FabcoinMiner:\n");
+                    LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
+                    if (ProcessBlockFound(pblock, chainparams)) 
+                    {
+                        // Ignore chain updates caused by us
+                        std::lock_guard<std::mutex> lock{m_cs};
+                        cancelSolver = false;
+                    }
+                    SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
-					// In regression test mode, stop mining after a block is found.
-					if (chainparams.MineBlocksOnDemand()) {
-						// Increment here because throwing skips the call below
-						throw boost::thread_interrupted();
-					}
-					return true;
-				};
-			
-				std::function<bool(EhSolverCancelCheck)> cancelled = [&m_cs, &cancelSolver](EhSolverCancelCheck pos) {
-					std::lock_guard<std::mutex> lock{m_cs};
-					return cancelSolver;
-				};
+                    // In regression test mode, stop mining after a block is found.
+                    if (chainparams.MineBlocksOnDemand()) {
+                        // Increment here because throwing skips the call below
+                        throw boost::thread_interrupted();
+                    }
+                    return true;
+                };
+            
+                std::function<bool(EhSolverCancelCheck)> cancelled = [&m_cs, &cancelSolver](EhSolverCancelCheck pos) {
+                    std::lock_guard<std::mutex> lock{m_cs};
+                    return cancelSolver;
+                };
 
-				try {
-					// If we find a valid block, we rebuild
-					bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
-					if (found) {
-						break;
-					}
-				} catch (EhSolverCancelledException&) {
-					LogPrint(BCLog::POW, "Equihash solver cancelled\n");
-					std::lock_guard<std::mutex> lock{m_cs};
-					cancelSolver = false;
-				}
+                try {
+                    // If we find a valid block, we rebuild
+                    bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
+                    if (found) {
+                        break;
+                    }
+                } catch (EhSolverCancelledException&) {
+                    LogPrint(BCLog::POW, "Equihash solver cancelled\n");
+                    std::lock_guard<std::mutex> lock{m_cs};
+                    cancelSolver = false;
+                }
 
-				// Check for stop or if block needs to be rebuilt
-				boost::this_thread::interruption_point();
-				// Regtest mode doesn't require peers
-				unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
-				if (nNodeCount == 0 && chainparams.MiningRequiresPeers())
-					break;
-				if ((UintToArith256(pblock->nNonce) & 0xffff) == 0xffff)
-					break;
-				if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
-					break;
-				if (pindexPrev != chainActive.Tip())
-					break;
+                // Check for stop or if block needs to be rebuilt
+                boost::this_thread::interruption_point();
+                // Regtest mode doesn't require peers
+                unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
+                if (nNodeCount == 0 && chainparams.MiningRequiresPeers())
+                    break;
+                if ((UintToArith256(pblock->nNonce) & 0xffff) == 0xffff)
+                    break;
+                if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
+                    break;
+                if (pindexPrev != chainActive.Tip())
+                    break;
 
-				// Update nNonce and nTime
-				pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
-				// Update nTime every few seconds
-				if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
-					break; // Recreate the block if the clock has run backwards,
-				// so that we can use the correct time.
-				if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
-				{
-					// Changing pblock->nTime can change work required on testnet:
-					hashTarget.SetCompact(pblock->nBits);
-				}
-			}
-		}
-	}
-	catch (const boost::thread_interrupted&)
-	{
-		LogPrintf("FabcoinMiner terminated\n");
-		throw;
-	}
-	catch (const std::runtime_error &e)
-	{
-		LogPrintf("FabcoinMiner runtime error: %s\n", e.what());
-		return;
-	}
+                // Update nNonce and nTime
+                pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+                // Update nTime every few seconds
+                if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
+                    break; // Recreate the block if the clock has run backwards,
+                // so that we can use the correct time.
+                if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
+                {
+                    // Changing pblock->nTime can change work required on testnet:
+                    hashTarget.SetCompact(pblock->nBits);
+                }
+            }
+        }
+    }
+    catch (const boost::thread_interrupted&)
+    {
+        LogPrintf("FabcoinMiner terminated\n");
+        throw;
+    }
+    catch (const std::runtime_error &e)
+    {
+        LogPrintf("FabcoinMiner runtime error: %s\n", e.what());
+        return;
+    }
 }
 
-void GenerateBitcoins(bool fGenerate, int nThreads, const CChainParams& chainparams)
+void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams)
 {
-	static boost::thread_group* minerThreads = NULL;
+    static boost::thread_group* minerThreads = NULL;
 
-	if (nThreads < 0)
-		nThreads = GetNumCores();
+    if (nThreads < 0)
+        nThreads = GetNumCores();
 
-	if (minerThreads != NULL)
-	{
-		minerThreads->interrupt_all();
-		delete minerThreads;
-		minerThreads = NULL;
-	}
+    if (minerThreads != NULL)
+    {
+        minerThreads->interrupt_all();
+        delete minerThreads;
+        minerThreads = NULL;
+    }
 
-	if (nThreads == 0 || !fGenerate)
-		return;
+    if (nThreads == 0 || !fGenerate)
+        return;
 
-	minerThreads = new boost::thread_group();
-	for (int i = 0; i < nThreads; i++)
-		minerThreads->create_thread(boost::bind(&BitcoinMiner, boost::cref(chainparams)));	
+    minerThreads = new boost::thread_group();
+    for (int i = 0; i < nThreads; i++)
+        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams)));    
 }
+

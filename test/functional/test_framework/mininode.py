@@ -1617,7 +1617,7 @@ class NodeConnCB(object):
         self.sync_with_ping()
 
     # Sync up with the node
-    def sync_with_ping(self, timeout=60):
+    def sync_with_ping(self, timeout=160):
         self.send_message(msg_ping(nonce=self.ping_counter))
         test_function = lambda: self.last_message.get("pong") and self.last_message["pong"].nonce == self.ping_counter
         wait_until(test_function, timeout=timeout, lock=mininode_lock)
