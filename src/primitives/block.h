@@ -6,9 +6,14 @@
 #ifndef FABCOIN_PRIMITIVES_BLOCK_H
 #define FABCOIN_PRIMITIVES_BLOCK_H
 
+#include "arith_uint256.h"
 #include "primitives/transaction.h"
 #include "serialize.h"
 #include "uint256.h"
+
+namespace Consensus {
+	struct Params;
+};
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -20,13 +25,17 @@
 class CBlockHeader
 {
 public:
-    // header
-    int32_t nVersion;
-    uint256 hashPrevBlock;
-    uint256 hashMerkleRoot;
-    uint32_t nTime;
-    uint32_t nBits;
-    uint32_t nNonce;
+	static const size_t HEADER_SIZE = 4+32+32+4+4+4;  // Excluding Equihash solution
+	// header
+	int32_t nVersion;
+	uint256 hashPrevBlock;
+	uint256 hashMerkleRoot;
+	uint32_t nHeight;
+	uint32_t nReserved[7];
+	uint32_t nTime;
+	uint32_t nBits;
+	uint256 nNonce;
+	std::vector<unsigned char> nSolution;  // Equihash solution.
 
     CBlockHeader()
     {
@@ -37,22 +46,30 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
-        READWRITE(this->nVersion);
-        READWRITE(hashPrevBlock);
-        READWRITE(hashMerkleRoot);
-        READWRITE(nTime);
-        READWRITE(nBits);
-        READWRITE(nNonce);
+		READWRITE(this->nVersion);
+		READWRITE(hashPrevBlock);
+		READWRITE(hashMerkleRoot);
+		READWRITE(nHeight);
+		for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
+			READWRITE(nReserved[i]);
+		}
+		READWRITE(nTime);
+		READWRITE(nBits);
+		READWRITE(nNonce);
+		READWRITE(nSolution);
     }
 
     void SetNull()
     {
-        nVersion = 0;
-        hashPrevBlock.SetNull();
-        hashMerkleRoot.SetNull();
-        nTime = 0;
-        nBits = 0;
-        nNonce = 0;
+		nVersion = 0;
+		hashPrevBlock.SetNull();
+		hashMerkleRoot.SetNull();
+		nHeight = 0;
+		memset(nReserved, 0, sizeof(nReserved));
+		nTime = 0;
+		nBits = 0;
+		nNonce.SetNull();
+		nSolution.clear();
     }
 
     bool IsNull() const
@@ -110,13 +127,45 @@ public:
         block.nVersion       = nVersion;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
+        block.nHeight        = nHeight;
+        memcpy(block.nReserved, nReserved, sizeof(block.nReserved));
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.nSolution      = nSolution;
         return block;
     }
 
     std::string ToString() const;
+};
+
+/**
+ * Custom serializer for CBlockHeader that omits the nonce and solution, for use
+ * as input to Equihash.
+ */
+class CEquihashInput : private CBlockHeader
+{
+public:
+    CEquihashInput(const CBlockHeader &header)
+    {
+        CBlockHeader::SetNull();
+        *((CBlockHeader*)this) = header;
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(this->nVersion);
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        READWRITE(nHeight);
+        for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
+            READWRITE(nReserved[i]);
+        }
+        READWRITE(nTime);
+        READWRITE(nBits);
+    }
 };
 
 /** Describes a place in the block chain to another node such that if the
