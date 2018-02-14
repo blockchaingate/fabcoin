@@ -265,14 +265,13 @@ public:
         assert(consensus.hashGenesisBlock == uint256S("0x07cc05ee568ae8d41434a905c94bd1e453aebb45d2b4c8a4d22dff9290ae7774"));
         assert(genesis.hashMerkleRoot == uint256S("0x14c680866f7ce4b2fad3a15ed55d4a94185888a3328343a57ca61052c08fd5d2"));
 
+        vFixedSeeds.clear();
+        vSeeds.clear();
 #if 0
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch", true);
         vSeeds.emplace_back("seed.tbtc.petertodd.org", true);
         vSeeds.emplace_back("testnet-seed.bluematt.me", false);
-#else
-        vFixedSeeds.clear();
-        vSeeds.clear();
 #endif
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
