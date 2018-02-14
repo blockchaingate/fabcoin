@@ -97,8 +97,10 @@ public:
         consensus.nPowAveragingWindow = 17;
         assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow);
 
+
         consensus.nPowMaxAdjustDown = 32;
         consensus.nPowMaxAdjustUp = 16;
+
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
@@ -127,7 +129,9 @@ public:
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000"); // need change to the value of the longest chain
 
         // By default assume that the signatures in ancestors of this block are valid.
+
         consensus.defaultAssumeValid = uint256S("0x07cc05ee568ae8d41434a905c94bd1e453aebb45d2b4c8a4d22dff9290ae7774");
+
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -138,6 +142,7 @@ public:
         pchMessageStart[1] = 0xbe;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0xd9;
+
         nDefaultPort = 8665;
         nPruneAfterHeight = 100000;
         
@@ -158,6 +163,7 @@ public:
 
 #if 0
         // Note that of those with the service bits flag, most only support a subset of possible options
+#if 0
         vSeeds.emplace_back("seed.fabcoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
         vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
         vSeeds.emplace_back("dnsseed.fabcoin.dashjr.org", false); // Luke Dashjr
@@ -241,7 +247,9 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
+
         consensus.defaultAssumeValid = uint256S("0x07cc05ee568ae8d41434a905c94bd1e453aebb45d2b4c8a4d22dff9290ae7774"); 
+
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x11;
@@ -249,6 +257,7 @@ public:
         pchMessageStart[3] = 0x07;
         nDefaultPort = 18665;
         nPruneAfterHeight = 1000;
+
 
         const size_t N = 48, K = 5;
         BOOST_STATIC_ASSERT(equihash_parameters_acceptable(N, K));
@@ -266,14 +275,17 @@ public:
         assert(genesis.hashMerkleRoot == uint256S("0x14c680866f7ce4b2fad3a15ed55d4a94185888a3328343a57ca61052c08fd5d2"));
 
 #if 0
+
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("testnet-seed.bitcoin.jonasschnelli.ch", true);
         vSeeds.emplace_back("seed.tbtc.petertodd.org", true);
         vSeeds.emplace_back("testnet-seed.bluematt.me", false);
+
 #else
         vFixedSeeds.clear();
         vSeeds.clear();
 #endif
+
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
@@ -344,7 +356,9 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
+
         consensus.defaultAssumeValid = uint256S("0x07cc05ee568ae8d41434a905c94bd1e453aebb45d2b4c8a4d22dff9290ae7774");
+
 
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
