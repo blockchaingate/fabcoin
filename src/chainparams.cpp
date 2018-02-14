@@ -163,7 +163,6 @@ public:
 
 #if 0
         // Note that of those with the service bits flag, most only support a subset of possible options
-#if 0
         vSeeds.emplace_back("seed.fabcoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
         vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
         vSeeds.emplace_back("dnsseed.fabcoin.dashjr.org", false); // Luke Dashjr
