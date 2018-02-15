@@ -343,7 +343,7 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0003cee35a4473ff424bc809c74e1f48e38dae1011d1e489c50f792d318f0645");
+        consensus.defaultAssumeValid = uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a");
 
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
@@ -360,11 +360,11 @@ public:
         // 1517433514 2018.1.31
         genesis = CreateGenesisBlock(
             1517433514,
-            uint256S("0x000000000000000000000000000000000000000000000000000000000000415c"),
-            ParseHex("03ee1bf1d4ed2237a808e0d17ad20a10bedd1dd6ca5e8231b4e9db4150e6ffb6bf59e5ed"),
+            uint256S("0x000000000000000000000000000000000000000000000000000000000000000a"),
+            ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
             0x2007ffff, 1, 50 * COIN );
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x0003cee35a4473ff424bc809c74e1f48e38dae1011d1e489c50f792d318f0645"));
+        assert(consensus.hashGenesisBlock == uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a"));
         assert(genesis.hashMerkleRoot == uint256S("0x7b4992742919dc326f297b549df082cf4b4c88f2a52f1987a06826e600d4479e"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
@@ -377,7 +377,7 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                {0, uint256S("0x0003cee35a4473ff424bc809c74e1f48e38dae1011d1e489c50f792d318f0645")},
+                {0, uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a")},
             }
         };
 
