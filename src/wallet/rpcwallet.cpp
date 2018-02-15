@@ -3111,6 +3111,9 @@ UniValue generate(const JSONRPCRequest& request)
         );
     }
 
+    if (!Params().MineBlocksOnDemand())
+        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "This method can only be used on regtest");
+
     int num_generate = request.params[0].get_int();
     uint64_t max_tries = 1000000;
     if (request.params.size() > 1 && !request.params[1].isNull()) {
