@@ -513,9 +513,7 @@ void static FabcoinMiner(const CChainParams& chainparams)
     std::shared_ptr<CReserveScript> coinbaseScript;
     if( ::vpwallets.size() > 0 )
     {    
-        // TODO: find the proper wallet
-        ::vpwallets[0]->GetScriptForMining(coinbaseScript);
-//        GetMainSignals().ScriptForMining(coinbaseScript); // from v0.12.1
+        GetMainSignals().ScriptForMining(coinbaseScript);
     }
 
     unsigned int n = chainparams.EquihashN();

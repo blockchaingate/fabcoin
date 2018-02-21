@@ -1598,6 +1598,11 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 #ifdef ENABLE_WALLET
     if (!CWallet::InitLoadWallet())
         return false;
+    
+    if( vpwallets.size()>0 )
+    {
+        RegisterValidationInterface(vpwallets[0]);
+    }
 #else
     LogPrintf("No wallet support compiled in!\n");
 #endif
