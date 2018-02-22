@@ -25,7 +25,7 @@ namespace Consensus {
 class CBlockHeader
 {
 public:
-	static const size_t HEADER_SIZE = 4+32+32+4+4+4;  // Excluding Equihash solution
+	static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
 	// header
 	int32_t nVersion;
 	uint256 hashPrevBlock;
