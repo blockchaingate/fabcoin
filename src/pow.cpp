@@ -17,81 +17,81 @@
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
-	unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
+    unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
 
-	// Genesis block
-	if (pindexLast == NULL)
-		return nProofOfWorkLimit;
+    // Genesis block
+    if (pindexLast == NULL)
+        return nProofOfWorkLimit;
 
-	// Find the first block in the averaging interval
-	const CBlockIndex* pindexFirst = pindexLast;
-	arith_uint256 bnTot {0};
-	for (int i = 0; pindexFirst && i < params.nPowAveragingWindow; i++) {
-		arith_uint256 bnTmp;
-		bnTmp.SetCompact(pindexFirst->nBits);
-		bnTot += bnTmp;
-		pindexFirst = pindexFirst->pprev;
-	}
+    // Find the first block in the averaging interval
+    const CBlockIndex* pindexFirst = pindexLast;
+    arith_uint256 bnTot {0};
+    for (int i = 0; pindexFirst && i < params.nPowAveragingWindow; i++) {
+        arith_uint256 bnTmp;
+        bnTmp.SetCompact(pindexFirst->nBits);
+        bnTot += bnTmp;
+        pindexFirst = pindexFirst->pprev;
+    }
 
-	// Check we have enough blocks
-	if (pindexFirst == NULL)
-		return nProofOfWorkLimit;
+    // Check we have enough blocks
+    if (pindexFirst == NULL)
+        return nProofOfWorkLimit;
 
-	arith_uint256 bnAvg {bnTot / params.nPowAveragingWindow};
+    arith_uint256 bnAvg {bnTot / params.nPowAveragingWindow};
 
-	return CalculateNextWorkRequired(bnAvg, pindexLast->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
+    return CalculateNextWorkRequired(bnAvg, pindexLast->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
 }
 
 unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTime, int64_t nFirstBlockTime, const Consensus::Params& params)
 {
-	// Limit adjustment
-	// Use medians to prevent time-warp attacks
-	int64_t nActualTimespan = nLastBlockTime - nFirstBlockTime;
-	nActualTimespan = params.AveragingWindowTimespan() + (nActualTimespan - params.AveragingWindowTimespan())/4;
+    // Limit adjustment
+    // Use medians to prevent time-warp attacks
+    int64_t nActualTimespan = nLastBlockTime - nFirstBlockTime;
+    nActualTimespan = params.AveragingWindowTimespan() + (nActualTimespan - params.AveragingWindowTimespan())/4;
 
-	if (nActualTimespan < params.MinActualTimespan())
-		nActualTimespan = params.MinActualTimespan();
-	if (nActualTimespan > params.MaxActualTimespan())
-		nActualTimespan = params.MaxActualTimespan();
+    if (nActualTimespan < params.MinActualTimespan())
+        nActualTimespan = params.MinActualTimespan();
+    if (nActualTimespan > params.MaxActualTimespan())
+        nActualTimespan = params.MaxActualTimespan();
 
-	// Retarget
-	const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
-	arith_uint256 bnNew {bnAvg};
-	bnNew /= params.AveragingWindowTimespan();
-	bnNew *= nActualTimespan;
+    // Retarget
+    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
+    arith_uint256 bnNew {bnAvg};
+    bnNew /= params.AveragingWindowTimespan();
+    bnNew *= nActualTimespan;
 
-	if (bnNew > bnPowLimit)
-		bnNew = bnPowLimit;
+    if (bnNew > bnPowLimit)
+        bnNew = bnPowLimit;
 
-	return bnNew.GetCompact();
+    return bnNew.GetCompact();
 }
 
 bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& params)
 {
 
-	unsigned int n = params.EquihashN();
-	unsigned int k = params.EquihashK();
+    unsigned int n = params.EquihashN();
+    unsigned int k = params.EquihashK();
 
-	// Hash state
-	crypto_generichash_blake2b_state state;
-	EhInitialiseState(n, k, state);
+    // Hash state
+    crypto_generichash_blake2b_state state;
+    EhInitialiseState(n, k, state);
 
-	// I = the block header minus nonce and solution.
-	CEquihashInput I{*pblock};
-	// I||V
-	CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-	ss << I;
-	ss << pblock->nNonce;
+    // I = the block header minus nonce and solution.
+    CEquihashInput I{*pblock};
+    // I||V
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    ss << I;
+    ss << pblock->nNonce;
 
-	// H(I||V||...
-	crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+    // H(I||V||...
+    crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
 
-	bool isValid;
-	EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
-	if (!isValid)
-		return error("CheckEquihashSolution(): invalid solution");
+    bool isValid;
+    EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
+    if (!isValid)
+        return error("CheckEquihashSolution(): invalid solution");
 
-	return true;
+    return true;
 }
 
 

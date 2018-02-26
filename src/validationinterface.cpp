@@ -26,8 +26,8 @@ struct MainSignalsInstance {
     boost::signals2::signal<void (int64_t nBestBlockTime, CConnman* connman)> Broadcast;
     boost::signals2::signal<void (const CBlock&, const CValidationState&)> BlockChecked;
     boost::signals2::signal<void (const CBlockIndex *, const std::shared_ptr<const CBlock>&)> NewPoWValidBlock;
-	boost::signals2::signal<void (std::shared_ptr<CReserveScript>&)> ScriptForMining;
-	boost::signals2::signal<void (const uint256 &)> BlockFound;
+    boost::signals2::signal<void (std::shared_ptr<CReserveScript>&)> ScriptForMining;
+    boost::signals2::signal<void (const uint256 &)> BlockFound;
 
 
     // We are not allowed to assume the scheduler only runs in one thread,
@@ -137,9 +137,9 @@ void CMainSignals::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared
 }
 
 void CMainSignals::ScriptForMining(std::shared_ptr<CReserveScript> &coinbaseScript){
-	m_internals->ScriptForMining(coinbaseScript);
+    m_internals->ScriptForMining(coinbaseScript);
 }
 
 void CMainSignals::BlockFound(const uint256 &hash){
-	m_internals->BlockFound(hash);
+    m_internals->BlockFound(hash);
 }

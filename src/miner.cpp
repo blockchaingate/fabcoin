@@ -529,12 +529,12 @@ void static FabcoinMiner(const CChainParams& chainparams)
     std::mutex m_cs;
     bool cancelSolver = false;
 
-//    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
-//        [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
-//            std::lock_guard<std::mutex> lock{m_cs};
-//            cancelSolver = true;
-//    }
-//    );
+    //    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
+    //        [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
+    //            std::lock_guard<std::mutex> lock{m_cs};
+    //            cancelSolver = true;
+    //    }
+    //    );
 
     try {
         // Throw an error if no script was provided.  This can happen
@@ -605,7 +605,7 @@ void static FabcoinMiner(const CChainParams& chainparams)
                     [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams](std::vector<unsigned char> soln) 
                 {
                     // Write the solution to the hash and compute the result.
-                    LogPrint(BCLog::POW, "- Checking solution against target\n");
+                    //LogPrint(BCLog::POW, "- Checking solution against target\n");
                     pblock->nSolution = soln;
 
                     if (UintToArith256(pblock->GetHash()) > hashTarget) 
@@ -707,6 +707,135 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
     minerThreads = new boost::thread_group();
     for (int i = 0; i < nThreads; i++)
-        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams)));    
+        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams)));
+}
+
+bool CheckProofOfWork0(uint256 hash, unsigned int nBits, const Consensus::Params& params) {
+    bool fNegative;
+    bool fOverflow;
+    arith_uint256 bnTarget;
+
+    bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
+
+    // Check range 
+    if (fNegative || bnTarget == 0 || fOverflow ||
+            bnTarget > UintToArith256(uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))) {
+        return false;
+    }
+
+    // Check proof of work matches claimed amount
+    if (UintToArith256(hash) > bnTarget) {
+        return false;
+    }
+
+    return true;
+}
+
+void Scan_nNonce_nSolution(CBlock *pblock, unsigned int n, unsigned int k ) 
+{
+    bool cancelSolver = false;
+    uint64_t nMaxTries = 0;
+
+    //
+    // Search
+    //
+    arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
+    uint256 hash;
+
+    while (true) {
+        nMaxTries++;
+        // Hash state
+        crypto_generichash_blake2b_state state;
+        EhInitialiseState(n, k, state);
+
+        // I = the block header minus nonce and solution.
+        CEquihashInput I{*pblock};
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        ss << I;
+
+        // H(I||...
+        crypto_generichash_blake2b_update(&state, (unsigned char*) &ss[0], ss.size());
+
+        // H(I||V||...
+        crypto_generichash_blake2b_state curr_state;
+        curr_state = state;
+        crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
+
+        // (x_1, x_2, ...) = A(I, V, n, k)
+        //  LogPrint(BCLog::POW, "Running Equihash solver \"%s\" with nNonce = %s\n",
+        //      solver, pblock->nNonce.ToString());
+
+        std::function<bool(std::vector<unsigned char>) > validBlock =
+                [&pblock, &hashTarget, &cancelSolver ](std::vector<unsigned char> soln) {
+                    // Write the solution to the hash and compute the result.
+                    LogPrint(BCLog::POW, "- Checking solution against target\n");
+                    pblock->nSolution = soln;
+
+                    if (UintToArith256(pblock->GetHash()) > hashTarget) {
+                        return false;
+                    }
+
+                    // Found a solution
+                    SetThreadPriority(THREAD_PRIORITY_NORMAL);
+                    LogPrintf("Scan_nNonce:\n");
+                    LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
+
+                    return true;
+                };
+
+        std::function<bool(EhSolverCancelCheck) > cancelled = [ &cancelSolver](EhSolverCancelCheck pos) {
+            return cancelSolver;
+        };
+
+        try {
+            // If we find a valid block, we rebuild
+            bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
+            if (found) {
+                pblock->ToString();
+ 
+                break;
+            }
+        } catch (EhSolverCancelledException&) {
+            LogPrint(BCLog::POW, "Equihash solver cancelled\n");
+            cancelSolver = false;
+        }
+
+        // Update nNonce and nTime
+        pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+    }
+}
+
+
+void creategenesisblock ( uint32_t nTime, uint32_t nBits )
+{
+    const char* pszTimestamp = "Fabcoin1ff5c8707d920ee573f5f1d43e559dfa3e4cb3f97786e8cb1685c991786b2";
+    const CScript genesisOutputScript = CScript() << ParseHex("0322fdc78866c654c11da2fac29f47b2936f2c75a569155017893607b9386a4861") << OP_CHECKSIG;
+
+    CMutableTransaction txNew;
+    txNew.nVersion = 1;
+    txNew.vin.resize(1);
+    txNew.vout.resize(1);
+
+    txNew.vin[0].scriptSig = CScript() << 00 << 520617983 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+
+    txNew.vout[0].nValue = 50 * COIN;
+    txNew.vout[0].scriptPubKey = genesisOutputScript;
+
+    CBlock pblock;
+    //pblock.nTime = GetAdjustedTime();
+    pblock.nTime = nTime;
+    pblock.nBits = nBits;
+    pblock.nNonce     = uint256();
+    //pblock.nSolution  = uint256();
+    pblock.nVersion = 4;
+    pblock.vtx.push_back(MakeTransactionRef(std::move(txNew)));
+    pblock.hashPrevBlock.SetNull();
+    pblock.nHeight  = 0;
+    pblock.hashMerkleRoot = BlockMerkleRoot(pblock);
+
+    const size_t N = 48, K = 5;
+    Scan_nNonce_nSolution ( & pblock, N, K );
+
+    std::cerr << pblock.ToString() << std::endl;
 }
 

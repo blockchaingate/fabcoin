@@ -367,11 +367,11 @@
     </message>
     <message>
         <source>Request payments (generates QR codes and fabcoin: URIs)</source>
-        <translation>Loo maksepäring (genereerib QR koodid ja fabcoini: URId)</translation>
+        <translation>Maksekorralduste taotlemine (genereerib QR-koode ja tehasesid: URI-d)</translation>
     </message>
     <message>
         <source>Open a fabcoin: URI or payment request</source>
-        <translation>Ava fabcoini: URI või maksepäring</translation>
+        <translation>Avage fabcoin: URI või maksetaotlus</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -379,7 +379,7 @@
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Fabcoin network</source>
-        <translation><numerusform>%n aktiivne ühendus Fabcoini võrku</numerusform><numerusform>%n aktiivset ühendust Fabcoini võrku</numerusform></translation>
+        <translation><numerusform>%n aktiivne ühendus (ed) Fabcoini võrgule</numerusform><numerusform>%n aktiivset ühendust Fabcoini võrku</numerusform></translation>
     </message>
     <message>
         <source>Indexing blocks on disk...</source>
@@ -627,7 +627,7 @@
     </message>
     <message>
         <source>The entered address "%1" is not a valid Fabcoin address.</source>
-        <translation>Sisestatud aadress "%1" ei ole korrektne Fabcoin aadress.</translation>
+        <translation>Sisestatud aadress "%1" ei ole kehtiv Fabcoini aadress.</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>

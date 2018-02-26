@@ -209,11 +209,11 @@ public:
     //! block header
     int nVersion;
     uint256 hashMerkleRoot;
-	uint32_t nReserved[7];
+    uint32_t nReserved[7];
     unsigned int nTime;
     unsigned int nBits;
     uint256 nNonce;
-	std::vector<unsigned char> nSolution;
+    std::vector<unsigned char> nSolution;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
