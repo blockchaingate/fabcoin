@@ -33,6 +33,8 @@
 #include <queue>
 #include <utility>
 
+#include "libgpusolver/libgpusolver.h"
+
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -180,8 +182,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // Randomise nonce for new block foramt.
     nonce = UintToArith256(GetRandHash());
     // Clear the top and bottom 16 bits (for local use as thread flags and counters)
+    nonce >>= 128;
     nonce <<= 32;
-    nonce >>= 16;
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
@@ -473,7 +475,7 @@ void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned
     pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
 }
 
-
+#ifdef ENABLE_WALLET
 //////////////////////////////////////////////////////////////////////////////
 //
 // Internal miner
@@ -510,12 +512,19 @@ static bool ProcessBlockFound(const CBlock* pblock, const CChainParams& chainpar
     return true;
 }
 
-void static FabcoinMiner(const CChainParams& chainparams)
+void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 {
-    LogPrintf("FabcoinMiner started\n");
+	static const int nInnerLoopCount = 0x10000;
+	int nCounter = 0;
+
+    if(conf.useGPU)
+        LogPrintf("FabcoinMiner started on device: %u\n", conf.currentDevice);
+    else
+        LogPrintf("FabcoinMiner started\n");
+
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("fabcoin-miner");
-
+  
     unsigned int nExtraNonce = 0;
     std::shared_ptr<CReserveScript> coinbaseScript;
     if( ::vpwallets.size() > 0 )
@@ -526,9 +535,17 @@ void static FabcoinMiner(const CChainParams& chainparams)
     unsigned int n = chainparams.EquihashN();
     unsigned int k = chainparams.EquihashK();
 
+    GPUSolver * g_solver = NULL;
+    uint8_t * header = NULL;
+	if(conf.useGPU) 
+	{
+        g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
+        LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
+        header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
+	}
+
     std::mutex m_cs;
     bool cancelSolver = false;
-
 //    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
 //        [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
 //            std::lock_guard<std::mutex> lock{m_cs};
@@ -579,27 +596,44 @@ void static FabcoinMiner(const CChainParams& chainparams)
             int64_t nStart = GetTime();
             arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
             uint256 hash;
-            while (true) {
-                // Hash state
+
+			nCounter = 0;
+            while (true) 
+            {
+				// I = the block header minus nonce and solution.
+				CEquihashInput I{*pblock};
+				CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+				ss << I;
+
+				// Hash state
                 crypto_generichash_blake2b_state state;
-                EhInitialiseState(n, k, state);
-
-                // I = the block header minus nonce and solution.
-                CEquihashInput I{*pblock};
-                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-                ss << I;
-
-                // H(I||...
-                crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+				if(conf.useGPU)
+				{
+					memcpy(header, &ss[0], ss.size());
+				}
+				else
+				{
+					EhInitialiseState(n, k, state);
+	                // H(I||...
+		            crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+				}
 
                 // H(I||V||...
                 crypto_generichash_blake2b_state curr_state;
-                curr_state = state;
-                crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
-                
+
+				if(conf.useGPU)
+				{
+					for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
+						header[108 + i] = pblock->nNonce.begin()[i];
+				}
+				else
+				{
+					curr_state = state;
+					crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
+				}                
+
                 // (x_1, x_2, ...) = A(I, V, n, k)
-//                LogPrint(BCLog::POW, "Running Equihash solver \"%s\" with nNonce = %s\n",
-//                    solver, pblock->nNonce.ToString());
+                LogPrint(BCLog::POW, "Running Equihash solver with nNonce = %s\n", pblock->nNonce.ToString());
 
                 std::function<bool(std::vector<unsigned char>)> validBlock =
                     [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams](std::vector<unsigned char> soln) 
@@ -612,6 +646,7 @@ void static FabcoinMiner(const CChainParams& chainparams)
                     {
                         return false;
                     }
+
                     // Found a solution
                     SetThreadPriority(THREAD_PRIORITY_NORMAL);
                     LogPrintf("FabcoinMiner:\n");
@@ -632,16 +667,30 @@ void static FabcoinMiner(const CChainParams& chainparams)
                     return true;
                 };
             
+                std::function<bool(GPUSolverCancelCheck)> cancelledGPU = [&m_cs, &cancelSolver](GPUSolverCancelCheck pos) {
+                    std::lock_guard<std::mutex> lock{m_cs};
+                    return cancelSolver;
+                };
+
                 std::function<bool(EhSolverCancelCheck)> cancelled = [&m_cs, &cancelSolver](EhSolverCancelCheck pos) {
                     std::lock_guard<std::mutex> lock{m_cs};
                     return cancelSolver;
                 };
 
                 try {
-                    // If we find a valid block, we rebuild
-                    bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
-                    if (found) {
-                        break;
+					if(!conf.useGPU) 
+                    {
+                        // If we find a valid block, we rebuild
+                        bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
+                        if (found) {
+                            break;
+                        }
+                    }
+                    else 
+                    {
+                        bool found = g_solver->run(n, k, header, CBlockHeader::HEADER_SIZE, pblock->nNonce, validBlock, cancelledGPU, curr_state);
+                        if (found)
+                            break;
                     }
                 } catch (EhSolverCancelledException&) {
                     LogPrint(BCLog::POW, "Equihash solver cancelled\n");
@@ -655,7 +704,7 @@ void static FabcoinMiner(const CChainParams& chainparams)
                 unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
                 if (nNodeCount == 0 && chainparams.MiningRequiresPeers())
                     break;
-                if ((UintToArith256(pblock->nNonce) & 0xffff) == 0xffff)
+                if ( nCounter == nInnerLoopCount )
                     break;
                 if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
                     break;
@@ -664,6 +713,8 @@ void static FabcoinMiner(const CChainParams& chainparams)
 
                 // Update nNonce and nTime
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+				++nCounter;
+
                 // Update nTime every few seconds
                 if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
                     break; // Recreate the block if the clock has run backwards,
@@ -679,16 +730,47 @@ void static FabcoinMiner(const CChainParams& chainparams)
     catch (const boost::thread_interrupted&)
     {
         LogPrintf("FabcoinMiner terminated\n");
+        if(conf.useGPU)
+            delete g_solver;
+        free(header);
         throw;
     }
     catch (const std::runtime_error &e)
     {
         LogPrintf("FabcoinMiner runtime error: %s\n", e.what());
+        if(conf.useGPU)
+            delete g_solver;
+        free(header);
         return;
     }
+
+    if(conf.useGPU)
+        delete g_solver;
+    free(header);
+
+//    c.disconnect();
 }
 
+
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams)
+{
+    static boost::thread_group* minerThreads = NULL;
+
+    if (nThreads < 0) 
+        nThreads = GetNumCores();
+    
+    if (minerThreads != NULL)
+    {
+        minerThreads->interrupt_all();
+        delete minerThreads;
+        minerThreads = NULL;
+    }
+
+    if (nThreads == 0 || !fGenerate)
+        return;
+}
+
+void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams, GPUConfig conf)
 {
     static boost::thread_group* minerThreads = NULL;
 
@@ -706,7 +788,98 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
         return;
 
     minerThreads = new boost::thread_group();
-    for (int i = 0; i < nThreads; i++)
-        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams)));    
+
+    // If using GPU
+    if(conf.useGPU) {
+
+        conf.currentPlatform = 0;
+        conf.currentDevice = conf.selGPU;
+
+        std::vector<cl::Platform> platforms = cl_gpuminer::getPlatforms();
+
+        // use all available GPUs
+        if(conf.allGPU) {
+
+            int devicesFound = 0;
+            unsigned numPlatforms = platforms.size();
+
+            for(unsigned platform = 0; platform < numPlatforms; ++platform) {
+
+                std::vector<cl::Device> devices = cl_gpuminer::getDevices(platforms, platform);
+                unsigned noDevices = devices.size();
+                devicesFound += noDevices;
+                for(unsigned device = 0; device < noDevices; ++device) {
+
+                    conf.currentPlatform = platform;
+                    conf.currentDevice = device;
+
+                    cl_ulong result;
+                    devices[device].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
+
+                    int maxThreads = nThreads;
+                    if (!conf.forceGenProcLimit) {
+                        if (result > 7500000000) {
+							maxThreads = std::min(4, nThreads);
+                        } else if (result > 5500000000) {
+                            maxThreads = std::min(3, nThreads);
+                        } else if (result > 3500000000) {
+                            maxThreads = std::min(2, nThreads);
+                        } else {
+                            maxThreads = std::min(1, nThreads);
+                        }
+                    }
+
+                    for (int i = 0; i < maxThreads; i++)
+                        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
+
+                }
+            }
+
+            if (devicesFound <= 0) {
+                LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
+            }
+
+        } 
+		else
+		{
+
+            // mine on specified GPU device
+            std::vector<cl::Device> devices = cl_gpuminer::getDevices(platforms, conf.currentPlatform);
+
+            if (devices.size() > conf.currentDevice) 
+			{
+
+                cl_ulong result;
+                devices[conf.currentDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
+
+                int maxThreads = nThreads;
+                if (!conf.forceGenProcLimit) {
+                    if (result > 7500000000) {
+                        maxThreads = std::min(4, nThreads);
+                    } else if (result > 5500000000) {
+                        maxThreads = std::min(3, nThreads);
+                    } else if (result > 3500000000) {
+                        maxThreads = std::min(2, nThreads);
+                    } else {
+                        maxThreads = std::min(1, nThreads);
+                    }
+                }
+
+                for (int i = 0; i < maxThreads; i++)
+                    minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
+
+            } 
+			else 
+			{
+                LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < nThreads; i++)
+            minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));    
+    }
 }
+#endif // ENABLE_WALLET
 

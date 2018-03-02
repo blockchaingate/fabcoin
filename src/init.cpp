@@ -191,8 +191,8 @@ void Shutdown()
     for (CWalletRef pwallet : vpwallets) {
         pwallet->Flush(false);
     }
+    GenerateFabcoins(false, 0, Params());
 #endif
-	GenerateFabcoins(false, 0, Params());
 
     MapPort(false);
 
@@ -464,6 +464,16 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-debug=<category>", strprintf(_("Output debugging information (default: %u, supplying <category> is optional)"), 0) + ". " +
         _("If <category> is not supplied or if <category> = 1, output all debugging information.") + " " + _("<category> can be:") + " " + ListLogCategories() + ".");
     strUsage += HelpMessageOpt("-debugexclude=<category>", strprintf(_("Exclude debugging information for a category. Can be used in conjunction with -debug=1 to output debug logs for all categories except one or more specified categories.")));
+
+#ifdef ENABLE_WALLET
+    strUsage += HelpMessageOpt("-gen", strprintf(_("Generate coins (default: %u)"), 0));
+    strUsage += HelpMessageOpt("-genproclimit=<n>", strprintf(_("Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)"), 1));
+    strUsage += HelpMessageOpt("-G", _("Enable GPU mining (default: false)"));
+    strUsage += HelpMessageOpt("-device=<id>", _("If -G is enabled this specifies the GPU device number to use (default: 0)"));
+    strUsage += HelpMessageOpt("-allgpu", _("If -G is enabled this will mine on all available GPU devices (default: false)"));
+    strUsage += HelpMessageOpt("-forcenolimit", _("Do not limit thread count per GPU by memory limits. (default: false)"));
+#endif
+
     strUsage += HelpMessageOpt("-help-debug", _("Show all debugging options (usage: --help -help-debug)"));
     strUsage += HelpMessageOpt("-logips", strprintf(_("Include IP addresses in debug output (default: %u)"), DEFAULT_LOGIPS));
     strUsage += HelpMessageOpt("-logtimestamps", strprintf(_("Prepend debug output with timestamp (default: %u)"), DEFAULT_LOGTIMESTAMPS));
@@ -1727,8 +1737,15 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         return false;
     }
 
-	// Generate coins in the background
-	GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams);
+#ifdef ENABLE_WALLET
+    // Generate coins in the background
+    GPUConfig conf;
+    conf.useGPU = gArgs.GetBoolArg("-G", false) || gArgs.GetBoolArg("-GPU", false);
+    conf.selGPU = gArgs.GetArg("-deviceid", 0);
+    conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
+    conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
+	GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams, conf);
+#endif
 
     // ********************************************************* Step 12: finished
 

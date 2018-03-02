@@ -7,6 +7,7 @@
 #define FABCOIN_MINER_H
 
 #include "primitives/block.h"
+#include "libgpusolver/gpuconfig.h"
 #include "txmempool.h"
 
 #include <stdint.h>
@@ -207,6 +208,7 @@ private:
 
 /** Run the miner threads */
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams);
+void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams, GPUConfig conf);
 
 /** Modify the extranonce in a block */
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
