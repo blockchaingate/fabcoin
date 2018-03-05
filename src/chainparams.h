@@ -62,15 +62,15 @@ public:
     int GetDefaultPort() const { return nDefaultPort; }
 
     const CBlock& GenesisBlock() const { return genesis; }
-	/** Make miner wait to have peers to avoid wasting work */
-	bool MiningRequiresPeers() const { return fMiningRequiresPeers; }
+    /** Make miner wait to have peers to avoid wasting work */
+    bool MiningRequiresPeers() const { return fMiningRequiresPeers; }
     /** Default value for -checkmempool and -checkblockindex argument */
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
-	unsigned int EquihashN() const { return nEquihashN; }
-	unsigned int EquihashK() const { return nEquihashK; }
+    unsigned int EquihashN() const { return nEquihashN; }
+    unsigned int EquihashK() const { return nEquihashK; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
     /** Return the BIP70 network string (main, test or regtest) */
@@ -88,14 +88,14 @@ protected:
     CMessageHeader::MessageStartChars pchMessageStart;
     int nDefaultPort;
     uint64_t nPruneAfterHeight;
-	unsigned int nEquihashN = 0;
-	unsigned int nEquihashK = 0;
+    unsigned int nEquihashN = 0;
+    unsigned int nEquihashK = 0;
     std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     std::string strNetworkID;
     CBlock genesis;
     std::vector<SeedSpec6> vFixedSeeds;
-	bool fMiningRequiresPeers;
+    bool fMiningRequiresPeers;
     bool fDefaultConsistencyChecks;
     bool fRequireStandard;
     bool fMineBlocksOnDemand;

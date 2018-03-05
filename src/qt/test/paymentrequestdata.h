@@ -435,7 +435,7 @@ d2hj739GDLz0b5KuJ2SG6VknMRQM976w/m2qlq0ccVGaaZ2zMIGfpzL3p6adwx/5\
 ";
 
 //
-// Payment request with amount overflow (amount is set to 168000001 FAB)
+// Payment request with amount overflow (amount is set to 200000001 FAB)
 //
 const char* paymentrequest5_cert2_BASE64 =
 "\

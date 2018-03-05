@@ -375,7 +375,7 @@
     </message>
     <message>
         <source>Request payments (generates QR codes and fabcoin: URIs)</source>
-        <translation>درخواست پرداخت ( تولید کد کیوار و ادرس بیت کوین)</translation>
+        <translation>درخواست پرداخت ( تولید کد کیوار و fabcoin کوین)</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -387,7 +387,7 @@
     </message>
     <message>
         <source>Open a fabcoin: URI or payment request</source>
-        <translation>بازکردن یک بیت کوین: آدرس یا درخواست پرداخت</translation>
+        <translation>بازکردن fabcoin: آدرس یا درخواست پرداخت</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -395,7 +395,7 @@
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Fabcoin network</source>
-        <translation><numerusform>%n ارتباط فعال با شبکهٔ بیت‌کوین</numerusform></translation>
+        <translation><numerusform>%n اتصال فعال به شبکه فابکوین‌کوین</numerusform></translation>
     </message>
     <message>
         <source>Processing blocks on disk...</source>
@@ -643,7 +643,7 @@
     </message>
     <message>
         <source>The entered address "%1" is not a valid Fabcoin address.</source>
-        <translation>نشانی وارد شده "%1" یک نشانی معتبر بیت‌کوین نیست.</translation>
+        <translation>نشانی وارد شده "%1" یک آدرس فابکوین معتبر نیست</translation>
     </message>
     <message>
         <source>The entered address "%1" is already in the address book.</source>
@@ -853,7 +853,7 @@
     </message>
     <message>
         <source>Automatically open the Fabcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>باز کردن خودکار درگاه شبکهٔ بیت‌کوین روی روترها. تنها زمانی کار می‌کند که روتر از پروتکل UPnP پشتیبانی کند و این پروتکل فعال باشد.</translation>
+        <translation>باز کردن خودکار درگاه فابکوین بیت‌کوین روی روترها. تنها زمانی کار می‌کند که روتر از پروتکل UPnP پشتیبانی کند و این پروتکل فعال باشد.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -1017,7 +1017,7 @@
     </message>
     <message>
         <source>Enter a Fabcoin address (e.g. %1)</source>
-        <translation>یک آدرس بیت‌کوین وارد کنید (مثلاً %1)</translation>
+        <translation>آدرس فابکوین را وارد کنید(مثلاً %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1562,7 +1562,7 @@
     </message>
     <message>
         <source>Sign the message to prove you own this Fabcoin address</source>
-        <translation>برای اثبات تعلق این نشانی به شما، پیام را امضا کنید</translation>
+        <translation>پیام را برای اثبات این آدرس فابکوین خود وارد کنید</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -1582,7 +1582,7 @@
     </message>
     <message>
         <source>The Fabcoin address the message was signed with</source>
-        <translation>نشانی بیت‌کوین که پیغام با آن امضاء شده</translation>
+        <translation>فابکوین با این پیام موافقت کرد</translation>
     </message>
     <message>
         <source>Verify the message to ensure it was signed with the specified Fabcoin address</source>
@@ -1703,7 +1703,7 @@
     </message>
     <message>
         <source>Fabcoin Core</source>
-        <translation> هسته Fabcoin </translation>
+        <translation>فوکوین هسته </translation>
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>

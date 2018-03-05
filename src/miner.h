@@ -214,4 +214,8 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev);
 
+void Scan_nNonce_nSolution(CBlock *pblock, unsigned int n, unsigned int k);
+void creategenesisblock ( uint32_t nTime, uint32_t nBits );
+
+
 #endif // FABCOIN_MINER_H

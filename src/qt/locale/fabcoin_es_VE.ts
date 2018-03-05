@@ -115,7 +115,7 @@
     </message>
     <message>
         <source>Send coins to a Fabcoin address</source>
-        <translation>Enviar monedas a una dirección Fabcoin</translation>
+        <translation>Enviar monedas a una dirección de Fabcoin</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>

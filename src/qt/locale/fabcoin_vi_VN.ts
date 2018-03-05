@@ -271,7 +271,7 @@
     </message>
     <message>
         <source>Open a fabcoin: URI or payment request</source>
-        <translation>Mở fabcoin:URL hoặc yêu cầu thanh toán</translation>
+        <translation>Mở fabcoin: URI hoặc yêu cầu thanh toán</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -537,7 +537,7 @@
     </message>
     <message>
         <source>Connect to the Fabcoin network through a SOCKS5 proxy.</source>
-        <translation>Kết nối đến máy chủ Fabcoin thông qua SOCKS5 proxy.</translation>
+        <translation>Kết nối với mạng Fabcoin qua SOCKS5 proxy</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>

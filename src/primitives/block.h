@@ -12,7 +12,7 @@
 #include "uint256.h"
 
 namespace Consensus {
-	struct Params;
+    struct Params;
 };
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
@@ -25,17 +25,17 @@ namespace Consensus {
 class CBlockHeader
 {
 public:
-	static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
-	// header
-	int32_t nVersion;
-	uint256 hashPrevBlock;
-	uint256 hashMerkleRoot;
-	uint32_t nHeight;
-	uint32_t nReserved[7];
-	uint32_t nTime;
-	uint32_t nBits;
-	uint256 nNonce;
-	std::vector<unsigned char> nSolution;  // Equihash solution.
+    static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
+    // header
+    int32_t nVersion;
+    uint256 hashPrevBlock;
+    uint256 hashMerkleRoot;
+    uint32_t nHeight;
+    uint32_t nReserved[7];
+    uint32_t nTime;
+    uint32_t nBits;
+    uint256 nNonce;
+    std::vector<unsigned char> nSolution;  // Equihash solution.
 
     CBlockHeader()
     {
@@ -46,30 +46,30 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
-		READWRITE(this->nVersion);
-		READWRITE(hashPrevBlock);
-		READWRITE(hashMerkleRoot);
-		READWRITE(nHeight);
-		for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
-			READWRITE(nReserved[i]);
-		}
-		READWRITE(nTime);
-		READWRITE(nBits);
-		READWRITE(nNonce);
-		READWRITE(nSolution);
+        READWRITE(this->nVersion);
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        READWRITE(nHeight);
+        for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
+            READWRITE(nReserved[i]);
+        }
+        READWRITE(nTime);
+        READWRITE(nBits);
+        READWRITE(nNonce);
+        READWRITE(nSolution);
     }
 
     void SetNull()
     {
-		nVersion = 0;
-		hashPrevBlock.SetNull();
-		hashMerkleRoot.SetNull();
-		nHeight = 0;
-		memset(nReserved, 0, sizeof(nReserved));
-		nTime = 0;
-		nBits = 0;
-		nNonce.SetNull();
-		nSolution.clear();
+        nVersion = 0;
+        hashPrevBlock.SetNull();
+        hashMerkleRoot.SetNull();
+        nHeight = 0;
+        memset(nReserved, 0, sizeof(nReserved));
+        nTime = 0;
+        nBits = 0;
+        nNonce.SetNull();
+        nSolution.clear();
     }
 
     bool IsNull() const

@@ -28,7 +28,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     txNew.nVersion = 1;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
-    txNew.vin[0].scriptSig = CScript() << 520617983 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+    txNew.vin[0].scriptSig = CScript() << 00 << 520617983 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
     txNew.vout[0].nValue = genesisReward;
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
@@ -39,9 +39,11 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nSolution = nSolution;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
+
     genesis.hashPrevBlock.SetNull();
     genesis.nHeight  = 0;
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
+
     return genesis;
 }
 
@@ -58,8 +60,8 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, const uint256& nNonce, const std::vector<unsigned char>& nSolution, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-	const char* pszTimestamp = "Fabcoin1ff5c8707d920ee573f5f1d43e559dfa3e4cb3f97786e8cb1685c991786b2";
-	const CScript genesisOutputScript = CScript() << ParseHex("0322fdc78866c654c11da2fac29f47b2936f2c75a569155017893607b9386a4861") << OP_CHECKSIG;
+    const char* pszTimestamp = "Fabcoin1ff5c8707d920ee573f5f1d43e559dfa3e4cb3f97786e8cb1685c991786b2";
+    const CScript genesisOutputScript = CScript() << ParseHex("0322fdc78866c654c11da2fac29f47b2936f2c75a569155017893607b9386a4861") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nSolution, nBits, nVersion, genesisReward);
 }
 
@@ -89,7 +91,7 @@ public:
  
         consensus.nSubsidyHalvingInterval = 1680000;
         consensus.BIP34Height = 0;
-        consensus.BIP34Hash = uint256();
+        consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
         consensus.BIP66Height = 0; 
         consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -205,7 +207,7 @@ public:
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 1680000; // fabcoin halving every 4 years
         consensus.BIP34Height = 0;
-        consensus.BIP34Hash = uint256();
+        consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
         consensus.BIP66Height = 0; 
         consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
@@ -292,8 +294,6 @@ public:
             }
         };
 
-
-
         chainTxData = ChainTxData{
             0,
             0,
@@ -311,10 +311,11 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.BIP34Height = 0; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests) // activate for qtum
+
+        consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
+        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
 
         consensus.nPowAveragingWindow = 17;
         consensus.nPowMaxAdjustDown = 32;
@@ -341,9 +342,6 @@ public:
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
 
-        // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a");
-
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5;
@@ -359,12 +357,21 @@ public:
         // 1517433514 2018.1.31
         genesis = CreateGenesisBlock(
             1517433514,
-            uint256S("0x000000000000000000000000000000000000000000000000000000000000000a"),
-            ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
-            0x2007ffff, 1, 50 * COIN );
+            uint256S("0x00000000000000000000000000000000000000000000000000000000000000a5"),
+            ParseHex("082205565143429ba30b6a934b6277759b7a25e6ddf2d4f65aa7f1286b5a9e940d8dd7a8"),
+            0x2007ffff, 4, 50 * COIN );
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a"));
-        assert(genesis.hashMerkleRoot == uint256S("0x7b4992742919dc326f297b549df082cf4b4c88f2a52f1987a06826e600d4479e"));
+        assert(consensus.hashGenesisBlock == uint256S("0x00d0afe208ed97ccf503adbda469e7feddc0eebae96b67ea54a13792873e3c4d"));
+        assert(genesis.hashMerkleRoot == uint256S("83acaf917b80757baa79d9635c35f0b09c7cab3c30f213d62419cc3630bc6960"));
+
+        // By default assume that the signatures in ancestors of this block are valid.
+        consensus.defaultAssumeValid = uint256S("0x00d0afe208ed97ccf503adbda469e7feddc0eebae96b67ea54a13792873e3c4d");
+
+        checkpointData = (CCheckpointData) {
+            {
+               {0, uint256S("0x00d0afe208ed97ccf503adbda469e7feddc0eebae96b67ea54a13792873e3c4d")},
+            }
+        };
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -374,11 +381,6 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
 
-        checkpointData = (CCheckpointData) {
-            {
-                {0, uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a")},
-            }
-        };
 
         chainTxData = ChainTxData{
             0,

@@ -181,7 +181,7 @@
     </message>
     <message>
         <source>%1 will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your fabcoins from being stolen by malware infecting your computer.</source>
-        <translation>%1 ייסגר כעת כדי לסיים את תהליך ההצפנה. נא לשים לב כי הצפנת הארנק שלך לא יכול להגן על הביטקוינים שלך מפני גניבה או נוזקה שתוקפת את מחשבך.</translation>
+        <translation>%1ייסגר עכשיו כדי לסיים את תהליך ההצפנה. זכור כי הצפנת הארנק שלך לא יכול להגן באופן מלא על fabcoins שלך מפני שנגנב על ידי תוכנות זדוניות להדביק את המחשב.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -427,7 +427,7 @@
     </message>
     <message>
         <source>Open a fabcoin: URI or payment request</source>
-        <translation>פתיחת ביטקוין: כתובת משאב או בקשת תשלום</translation>
+        <translation>פתיחת fabcoin: URI או בקשת תשלום</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>

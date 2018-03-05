@@ -194,7 +194,7 @@ void Shutdown()
     GenerateFabcoins(false, 0, Params());
 #endif
 
-    MapPort(false);
+  MapPort(false);
 
     // Because these depend on each-other, we make sure that neither can be
     // using the other before destroying them.
@@ -1748,7 +1748,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 #endif
 
     // ********************************************************* Step 12: finished
-
     SetRPCWarmupFinished();
     uiInterface.InitMessage(_("Done loading"));
 

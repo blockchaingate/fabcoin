@@ -67,7 +67,7 @@
     </message>
     <message>
         <source>These are your Fabcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Това са Вашите Биткойн адреси,благодарение на които ще получавате плащания.Препоръчително е да използвате нови адреси за получаване на всяка транзакция.</translation>
+        <translation>Това са Вашите Fabcoin адреси,благодарение на които ще получавате плащания.Препоръчително е да използвате нови адреси за получаване на всяка транзакция.</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -383,7 +383,7 @@
     </message>
     <message>
         <source>Sign messages with your Fabcoin addresses to prove you own them</source>
-        <translation>Пишете съобщения със своя Биткойн адрес за да докажете,че е ваш.</translation>
+        <translation>Пишете съобщения със своя Fabcoin адрес за да докажете,че е ваш.</translation>
     </message>
     <message>
         <source>Verify messages to ensure they were signed with specified Fabcoin addresses</source>
@@ -463,7 +463,7 @@
     </message>
     <message>
         <source>Show the %1 help message to get a list with possible Fabcoin command-line options</source>
-        <translation>Покажи %1 помощно съобщение за да получиш лист с възможни Биткойн команди</translation>
+        <translation>Покажи %1 помощно съобщение за да получиш лист с възможни Fabcoin команди</translation>
     </message>
     <message>
         <source>%1 client</source>
@@ -937,7 +937,7 @@
     </message>
     <message>
         <source>Connect to the Fabcoin network through a SOCKS5 proxy.</source>
-        <translation>Свързване с Биткойн мрежата чрез SOCKS5  прокси.</translation>
+        <translation>Свързване с Fabcoin мрежата чрез SOCKS5  прокси.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
@@ -1087,7 +1087,7 @@
     </message>
     <message>
         <source>Cannot start fabcoin: click-to-pay handler</source>
-        <translation>Биткойн не можe да се стартира: click-to-pay handler</translation>
+        <translation>Fabcoin не можe да се стартира: click-to-pay handler</translation>
     </message>
     <message>
         <source>URI handling</source>
@@ -1161,7 +1161,7 @@
     </message>
     <message>
         <source>Enter a Fabcoin address (e.g. %1)</source>
-        <translation>Въведете Биткойн адрес (например: %1)</translation>
+        <translation>Въведете Fabcoin адрес (например: %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1714,7 +1714,7 @@
     </message>
     <message>
         <source>Warning: Invalid Fabcoin address</source>
-        <translation>Внимание: Невалиден Биткойн адрес</translation>
+        <translation>Внимание: Невалиден Fabcoin адрес</translation>
     </message>
     <message>
         <source>Warning: Unknown change address</source>
@@ -2371,7 +2371,7 @@
     </message>
     <message>
         <source>Fabcoin Core</source>
-        <translation>Биткойн ядро</translation>
+        <translation>Fabcoin ядро</translation>
     </message>
     <message>
         <source>&lt;category&gt; can be:</source>

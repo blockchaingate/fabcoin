@@ -63,11 +63,11 @@
     </message>
     <message>
         <source>These are your Fabcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Estas son sus direcciones Fabcoin para enviar pagos. Verifique siempre la cantidad y la dirección de recepción antes de enviar fabcoins.</translation>
+        <translation>Estas son sus direcciones de Fabcoin para enviar pagos.  Verifique siempre la cantidad y la dirección de recepción antes de enviar fabcoins.</translation>
     </message>
     <message>
         <source>These are your Fabcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Estas son sus direcciones Fabcoin para recibir pagos. Se recomienda utilizar una nueva dirección de recepción para cada transacción</translation>
+        <translation>Estas son sus direcciones de Fabcoin para recibir pagos. Se recomienda utilizar una nueva dirección de recepción para cada transacción</translation>
     </message>
     <message>
         <source>&amp;Copy Address</source>
@@ -427,7 +427,7 @@
     </message>
     <message>
         <source>Open a fabcoin: URI or payment request</source>
-        <translation>Abrir un identificador URI "fabcoin:" o una petición de pago</translation>
+        <translation>Abra un fabcoin: URI o solicitud de pago</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>

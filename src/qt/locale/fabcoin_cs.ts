@@ -63,7 +63,7 @@
     </message>
     <message>
         <source>These are your Fabcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Tohle jsou tvé fabcoinové adresy pro posílání plateb. Před odesláním mincí si vždy zkontroluj částku a cílovou adresu.</translation>
+        <translation>Tohle jsou tvé Fabcoin adresa pro posílání plateb. Před odesláním mincí si vždy zkontroluj částku a cílovou adresu.</translation>
     </message>
     <message>
         <source>These are your Fabcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
