@@ -33,7 +33,7 @@ public:
 	bool useGPU;
 	unsigned selGPU;
 	bool allGPU;
-        bool forceGenProcLimit;
+    bool forceGenProcLimit;
 	unsigned currentPlatform;
 	unsigned currentDevice;
 	unsigned globalWorkSize;

@@ -26,8 +26,11 @@
 #include "utilstrencodings.h"
 #include "validationinterface.h"
 #include "warnings.h"
+
+#ifdef ENABLE_GPU
 #include "libgpusolver/libgpusolver.h"
 #include "libgpusolver/libclwrapper.h"
+#endif
 
 #include <memory>
 #include <stdint.h>
@@ -134,14 +137,16 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
     conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
 
-    GPUSolver * g_solver = NULL;
     uint8_t * header = NULL;
+#ifdef ENABLE_GPU
+    GPUSolver * g_solver = NULL;
     if( conf.useGPU )
     {
         g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
         header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
     }    
+#endif
 
     while (nHeight < nHeightEnd)
     {
@@ -185,8 +190,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
                 if( conf.useGPU )
                 {
+#ifdef ENABLE_GPU
                     for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
                         header[108 + i] = pblock->nNonce.begin()[i];
+#endif
                 }
                 else
                 {
@@ -207,7 +214,11 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
                 bool found = false;
                 if( conf.useGPU )
+                {
+#ifdef ENABLE_GPU
                     found = g_solver->run(n, k, header, CBlockHeader::HEADER_SIZE, pblock->nNonce, validBlock, false, curr_state);
+#endif
+                }
                 else
 				    found = EhBasicSolveUncancellable(n, k, curr_state, validBlock);
 				--nMaxTries;
@@ -235,7 +246,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     if( conf.useGPU )
     {
+#ifdef ENABLE_GPU
         delete g_solver;
+#endif
         free(header);
     }
 

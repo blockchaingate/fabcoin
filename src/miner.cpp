@@ -33,7 +33,9 @@
 #include <queue>
 #include <utility>
 
+#ifdef ENABLE_GPU
 #include "libgpusolver/libgpusolver.h"
+#endif
 
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -535,14 +537,16 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     unsigned int n = chainparams.EquihashN();
     unsigned int k = chainparams.EquihashK();
 
-    GPUSolver * g_solver = NULL;
     uint8_t * header = NULL;
+#ifdef ENABLE_GPU
+    GPUSolver * g_solver = NULL;
 	if(conf.useGPU) 
 	{
         g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
         header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
 	}
+#endif
 
     std::mutex m_cs;
     bool cancelSolver = false;
@@ -623,8 +627,10 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 
 				if(conf.useGPU)
 				{
-					for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
+#ifdef ENABLE_GPU
+                    for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
 						header[108 + i] = pblock->nNonce.begin()[i];
+#endif
 				}
 				else
 				{
@@ -667,11 +673,12 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                     return true;
                 };
             
+#ifdef ENABLE_GPU
                 std::function<bool(GPUSolverCancelCheck)> cancelledGPU = [&m_cs, &cancelSolver](GPUSolverCancelCheck pos) {
                     std::lock_guard<std::mutex> lock{m_cs};
                     return cancelSolver;
                 };
-
+#endif
                 std::function<bool(EhSolverCancelCheck)> cancelled = [&m_cs, &cancelSolver](EhSolverCancelCheck pos) {
                     std::lock_guard<std::mutex> lock{m_cs};
                     return cancelSolver;
@@ -688,9 +695,11 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                     }
                     else 
                     {
+#ifdef ENABLE_GPU
                         bool found = g_solver->run(n, k, header, CBlockHeader::HEADER_SIZE, pblock->nNonce, validBlock, cancelledGPU, curr_state);
                         if (found)
                             break;
+#endif
                     }
                 } catch (EhSolverCancelledException&) {
                     LogPrint(BCLog::POW, "Equihash solver cancelled\n");
@@ -730,22 +739,28 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     catch (const boost::thread_interrupted&)
     {
         LogPrintf("FabcoinMiner terminated\n");
+#ifdef ENABLE_GPU
         if(conf.useGPU)
             delete g_solver;
+#endif
         free(header);
         throw;
     }
     catch (const std::runtime_error &e)
     {
         LogPrintf("FabcoinMiner runtime error: %s\n", e.what());
+#ifdef ENABLE_GPU
         if(conf.useGPU)
             delete g_solver;
+#endif
         free(header);
         return;
     }
 
+#ifdef ENABLE_GPU
     if(conf.useGPU)
         delete g_solver;
+#endif
     free(header);
 
 //    c.disconnect();
@@ -791,7 +806,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
     // If using GPU
     if(conf.useGPU) {
-
+#ifdef ENABLE_GPU
         conf.currentPlatform = 0;
         conf.currentDevice = conf.selGPU;
 
@@ -874,6 +889,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                 LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
             }
         }
+#endif
     }
     else
     {
