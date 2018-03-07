@@ -171,7 +171,17 @@ FABCOIN_CORE_H = \
   zmq/zmqnotificationinterface.h \
   zmq/zmqpublishnotifier.h
 
-
+if ENABLE_GPU
+LIBGPUSOLVER_H = \
+  libgpusolver/libgpusolver.h \
+  libgpusolver/gpuconfig.h \
+  libgpusolver/kernels/silentarmy.h \
+  libgpusolver/libclwrapper.h \
+  libgpusolver/cl.hpp \
+  libgpusolver/blake.h \
+  libgpusolver/param.h
+endif
+  
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh "$(abs_top_builddir)/src/obj/build.h" \
@@ -219,7 +229,12 @@ libfabcoin_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-  $(FABCOIN_CORE_H)
+  $(FABCOIN_CORE_H) 
+
+if ENABLE_GPU
+libgpusolver_SOURCES = libgpusolver/libgpusolver.cpp libgpusolver/libclwrapper.cpp libgpusolver/blake.cpp $(LIBGPUSOLVER_H) 
+libfabcoin_server_a_SOURCES += $(libgpusolver_SOURCES)
+endif
 
 if ENABLE_ZMQ
 libfabcoin_zmq_a_CPPFLAGS = $(FABCOIN_INCLUDES) $(ZMQ_CFLAGS)

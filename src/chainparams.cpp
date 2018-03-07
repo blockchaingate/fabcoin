@@ -94,7 +94,7 @@ public:
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
         consensus.BIP66Height = 0; 
-        consensus.powLimit = uint256S("0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
         consensus.nPowAveragingWindow = 17;
         assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow);
@@ -128,6 +128,8 @@ public:
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000000000000000000000"); // need change to the value of the longest chain
 
+        // By default assume that the signatures in ancestors of this block are valid.
+        consensus.defaultAssumeValid = uint256S("0x00dfd158881d90583835516f775ae2e6c49b62eb39fccb251e787c85ee84b994");
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -141,29 +143,20 @@ public:
         nDefaultPort = 8665;
         nPruneAfterHeight = 100000;
         
-        const size_t N = 48, K = 5;
+        const size_t N = 200, K = 9;
         BOOST_STATIC_ASSERT(equihash_parameters_acceptable(N, K));
         nEquihashN = N;
         nEquihashK = K;
 
-        // 1517433514 2018.1.31
+		// 1517433514 2018.1.31
         genesis = CreateGenesisBlock(
             1517433514,
-            uint256S("0x0000000000000000000000000000000000000000000000000000000000001e8f"),
-            ParseHex("069804c9a4fe5d5ae829d9d11b02b5cd69e412ff2217744eae333315e3e53f524c5e41ce"),
-            0x1f03ffff, 4, 50 * COIN );
+            uint256S("0x0000000000000000000000000000000000000000000000000000000000000014"),
+            ParseHex("0108353b75c2f99d7f22e07eecdb85e6207c3312172a5cdaeb6ed5a681e463195605628f22ed949953460c6fcc244b04a0328ee982e148c456c22e86dd7a951cac6564bc3412afd4ae944777d408316a675e8761018d18911ca1728f86ad511dc948dba6d8c616e757086fc5bf5b039e534b2fd2977ed7f1b1a9bef7454321ec33de9fd98adae53b340a826391a63c479ea524386a3fed2610b07a980465dc01c2fa73200bff2ccb06da08384bf59e43f93df0cf106d1f1380bcbffb0e0d54627bdf3e1323f9c581b7aef82bd593075f88ba07b544214e229d9963554a01ff6f3db32c88dadabf1258b937db62a86124cb929a57c50151048eeec0bb1430b0a4afd08c8f933a464f5144b286533cde5401236a8765fe0f4699dd0cb6cb034fb795c310ae3e8b1b16c18a3657d987dbac72449a27d3d9e49ada9fdc2da2fdda94da8ccfcd57b52034c0aff9ceac7dcb0f032fcab5c49fce135121a0836bb5bc6072e4adb707046d6d50639406b92a04b06ce87ec22ad6bc789a541a8d9c0c37ed322d8853a630cfb60ebef7a33d42e32cda66801f1c01d7b1f5180e02c0f2c281717a57031926146012ed8139b3ec8439b1e4c836fb201b93ea2278dd9a9aa98b9f9510648f20b51e354e4d8feaad20e5d7b6c3f8c7c9edc5c300e3acb8d23875d1e7a433f40efe4551062d1dfb84de69b3620f33d4dfb010048db2b9675c7b5f811ef31a741fdbbecb49babed00acd770ba043fcc0855815872fb1988e29ac37bebe0b7bb5f20665ad4b6eec822de3fe2e9e0ba83d7f4f2b8d3dd4fe25b41d4231d4fa31e3c6ddff63de124a0575b6b4df1a5311896255a898ea84fd7292769ea4123f0a2ef85d65bceea0e162b59c18d4e4379154460fc28d30f2cf4d1f3761384c00dbf6d699d05bebd92005038271cc367892a66788406e02fdfaf7b8f6480229894f9c09a27272b0a386c55abe8e4ecd5a04f50f095d2f5a87a9a77fbeb36627d9280136d07570530529c7866956e6238959a800246cf986f6e4b897960be5f439ce60a3cda1266ab57cdb7cbeff5f5e0ce7043450967d634b4da8ffe0ca0ce7ed6ceafe312aa22900868b458db6d29216090e684d34c34a92bf92a10e67cbc4ab03bbf683f342d69a76cabd3ae26b15832ae15496954c02e9f7175417feaaeb129993bf6ff506f77cc1ced0b6a8dfd706d9ba6d061ac31b5ce36c15f35ad1ec0a03987dcf9657d8ffb087312a1bce882c3c7177302e15b58ac2e7e6b7e6fcd2360c3a772c592d03749018eeed9bdbf63c3b5c11cad5f1b853460821072dbf04ddc6d4e9543038a7c185a8263e34fa090161dda89c4b99600cd43d7c614eed5e1a5552f20c2055b9d725df6f89a31233e99905b92d35eb723519c26e27d95f2eb511ab32f757983bfe1e0b932770033b6b574e0d51896e7f016a721c6dc89286e987ef0889d2d31deaac558b2d2783e75c9a567c0f7573d457ac5de5cb189f71a735d6396d7cd8cded56d9f57e7e31ffcb3666ee05fc91cd018774b81b40ca1c09e70f005a1a2b8e30a0c84cc2f0cdb77f30dc6d87357d13ad8389562f26e3c86b7431bb3b11b6fad4d86a99318034395ca981794d1695575933530dc26730eaf3797a1c1548a2f471b5efe7afadd1494b32d1ba2799041ad7ed4890d8b4f69675df68ccdc7a4f5ebf3d6553f79e9146de2bad16339764eeece7aa362999ff460a343c9d6b59a1eaf95a80d0c09684a5886ddf273945dc8ae892eaba19db38580d22e09b8f3b8cbd396d07f4d5e46fb8b633fe2b83467571893dd3f5b62ebf10782d316754bbd8d16bb6621a44e5aa0431bd4a1d1cfc3effcad28243a052a210ca7f9461560d3997012d57239c5321668b3aa56486e15b73be6bf75363ce"),
+            0x2007ffff, 1, 50 * COIN );
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835"));
-        assert(genesis.hashMerkleRoot     == uint256S("83acaf917b80757baa79d9635c35f0b09c7cab3c30f213d62419cc3630bc6960"));
-
-        // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
-
-        checkpointData = (CCheckpointData) {
-            {
-                { 0, uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835")},            }
-        };
-
+        assert(consensus.hashGenesisBlock == uint256S("0x00dfd158881d90583835516f775ae2e6c49b62eb39fccb251e787c85ee84b994"));
+        assert(genesis.hashMerkleRoot == uint256S("0x7b4992742919dc326f297b549df082cf4b4c88f2a52f1987a06826e600d4479e"));
 
 #if 0
         // Note that of those with the service bits flag, most only support a subset of possible options
@@ -192,6 +185,11 @@ public:
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
 
+        checkpointData = (CCheckpointData) {
+            {
+                { 0, uint256S("0x00dfd158881d90583835516f775ae2e6c49b62eb39fccb251e787c85ee84b994")},            }
+        };
+
         chainTxData = ChainTxData{
             0,
             0,
@@ -212,8 +210,7 @@ public:
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
         consensus.BIP66Height = 0; 
-        consensus.powLimit = uint256S("0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
+        consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowAveragingWindow = 17;
         assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow);
         consensus.nPowMaxAdjustDown = 32; // 32% adjustment down
@@ -244,6 +241,8 @@ public:
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
 
+        // By default assume that the signatures in ancestors of this block are valid.
+        consensus.defaultAssumeValid = uint256S("0x00dfd158881d90583835516f775ae2e6c49b62eb39fccb251e787c85ee84b994"); 
 
         pchMessageStart[0] = 0x0b;
         pchMessageStart[1] = 0x11;
@@ -252,29 +251,20 @@ public:
         nDefaultPort = 18665;
         nPruneAfterHeight = 1000;
 
-        const size_t N = 48, K = 5;
+        const size_t N = 200, K = 9;
         BOOST_STATIC_ASSERT(equihash_parameters_acceptable(N, K));
         nEquihashN = N;
         nEquihashK = K;
 
-        // 1517433514 2018.1.31
+		// 1517433514 2018.1.31
         genesis = CreateGenesisBlock(
             1517433514,
-            uint256S("0x0000000000000000000000000000000000000000000000000000000000001e8f"),
-            ParseHex("069804c9a4fe5d5ae829d9d11b02b5cd69e412ff2217744eae333315e3e53f524c5e41ce"),
-            0x1f03ffff, 4, 50 * COIN );
+            uint256S("0x0000000000000000000000000000000000000000000000000000000000000014"),
+            ParseHex("0108353b75c2f99d7f22e07eecdb85e6207c3312172a5cdaeb6ed5a681e463195605628f22ed949953460c6fcc244b04a0328ee982e148c456c22e86dd7a951cac6564bc3412afd4ae944777d408316a675e8761018d18911ca1728f86ad511dc948dba6d8c616e757086fc5bf5b039e534b2fd2977ed7f1b1a9bef7454321ec33de9fd98adae53b340a826391a63c479ea524386a3fed2610b07a980465dc01c2fa73200bff2ccb06da08384bf59e43f93df0cf106d1f1380bcbffb0e0d54627bdf3e1323f9c581b7aef82bd593075f88ba07b544214e229d9963554a01ff6f3db32c88dadabf1258b937db62a86124cb929a57c50151048eeec0bb1430b0a4afd08c8f933a464f5144b286533cde5401236a8765fe0f4699dd0cb6cb034fb795c310ae3e8b1b16c18a3657d987dbac72449a27d3d9e49ada9fdc2da2fdda94da8ccfcd57b52034c0aff9ceac7dcb0f032fcab5c49fce135121a0836bb5bc6072e4adb707046d6d50639406b92a04b06ce87ec22ad6bc789a541a8d9c0c37ed322d8853a630cfb60ebef7a33d42e32cda66801f1c01d7b1f5180e02c0f2c281717a57031926146012ed8139b3ec8439b1e4c836fb201b93ea2278dd9a9aa98b9f9510648f20b51e354e4d8feaad20e5d7b6c3f8c7c9edc5c300e3acb8d23875d1e7a433f40efe4551062d1dfb84de69b3620f33d4dfb010048db2b9675c7b5f811ef31a741fdbbecb49babed00acd770ba043fcc0855815872fb1988e29ac37bebe0b7bb5f20665ad4b6eec822de3fe2e9e0ba83d7f4f2b8d3dd4fe25b41d4231d4fa31e3c6ddff63de124a0575b6b4df1a5311896255a898ea84fd7292769ea4123f0a2ef85d65bceea0e162b59c18d4e4379154460fc28d30f2cf4d1f3761384c00dbf6d699d05bebd92005038271cc367892a66788406e02fdfaf7b8f6480229894f9c09a27272b0a386c55abe8e4ecd5a04f50f095d2f5a87a9a77fbeb36627d9280136d07570530529c7866956e6238959a800246cf986f6e4b897960be5f439ce60a3cda1266ab57cdb7cbeff5f5e0ce7043450967d634b4da8ffe0ca0ce7ed6ceafe312aa22900868b458db6d29216090e684d34c34a92bf92a10e67cbc4ab03bbf683f342d69a76cabd3ae26b15832ae15496954c02e9f7175417feaaeb129993bf6ff506f77cc1ced0b6a8dfd706d9ba6d061ac31b5ce36c15f35ad1ec0a03987dcf9657d8ffb087312a1bce882c3c7177302e15b58ac2e7e6b7e6fcd2360c3a772c592d03749018eeed9bdbf63c3b5c11cad5f1b853460821072dbf04ddc6d4e9543038a7c185a8263e34fa090161dda89c4b99600cd43d7c614eed5e1a5552f20c2055b9d725df6f89a31233e99905b92d35eb723519c26e27d95f2eb511ab32f757983bfe1e0b932770033b6b574e0d51896e7f016a721c6dc89286e987ef0889d2d31deaac558b2d2783e75c9a567c0f7573d457ac5de5cb189f71a735d6396d7cd8cded56d9f57e7e31ffcb3666ee05fc91cd018774b81b40ca1c09e70f005a1a2b8e30a0c84cc2f0cdb77f30dc6d87357d13ad8389562f26e3c86b7431bb3b11b6fad4d86a99318034395ca981794d1695575933530dc26730eaf3797a1c1548a2f471b5efe7afadd1494b32d1ba2799041ad7ed4890d8b4f69675df68ccdc7a4f5ebf3d6553f79e9146de2bad16339764eeece7aa362999ff460a343c9d6b59a1eaf95a80d0c09684a5886ddf273945dc8ae892eaba19db38580d22e09b8f3b8cbd396d07f4d5e46fb8b633fe2b83467571893dd3f5b62ebf10782d316754bbd8d16bb6621a44e5aa0431bd4a1d1cfc3effcad28243a052a210ca7f9461560d3997012d57239c5321668b3aa56486e15b73be6bf75363ce"),
+            0x2007ffff, 1, 50 * COIN );
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835"));
-        assert(genesis.hashMerkleRoot == uint256S("83acaf917b80757baa79d9635c35f0b09c7cab3c30f213d62419cc3630bc6960"));
-
-        // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835"); 
-
-        checkpointData = (CCheckpointData) {
-            {
-                {0, uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835")},
-            }
-        };
+        assert(consensus.hashGenesisBlock == uint256S("0x00dfd158881d90583835516f775ae2e6c49b62eb39fccb251e787c85ee84b994"));
+        assert(genesis.hashMerkleRoot == uint256S("0x7b4992742919dc326f297b549df082cf4b4c88f2a52f1987a06826e600d4479e"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -298,6 +288,11 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
+        checkpointData = (CCheckpointData) {
+            {
+                {0, uint256S("0x00dfd158881d90583835516f775ae2e6c49b62eb39fccb251e787c85ee84b994")},
+            }
+        };
 
         chainTxData = ChainTxData{
             0,

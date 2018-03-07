@@ -103,6 +103,13 @@ AC_ARG_ENABLE([wallet],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
 
+# Enable GPU miner
+AC_ARG_ENABLE([gpu],
+  [AS_HELP_STRING([--enable-gpu],
+  [enable gpu (disabled by default)])],
+  [enable_gpu=$enableval],
+  [enable_gpu=no])
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -1082,6 +1089,16 @@ else
   AC_MSG_RESULT(no)
 fi
 
+dnl enable gpu miner
+AC_MSG_CHECKING([if gpu miner should be enabled])
+if test x$enable_gpu != xno; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE_UNQUOTED([ENABLE_GPU],[1],[Define to 1 to enable gpu miner])
+
+else
+  AC_MSG_RESULT(no)
+fi
+
 dnl enable upnp support
 AC_MSG_CHECKING([whether to build with support for UPnP])
 if test x$have_miniupnpc = xno; then
@@ -1171,10 +1188,15 @@ if test x$build_fabcoin_utils$build_fabcoin_libs$build_fabcoind$fabcoin_enable_q
   AC_MSG_ERROR([No targets! Please specify at least one of: --with-utils --with-libs --with-daemon --with-gui --enable-bench or --enable-tests])
 fi
 
+if test x$enable_gpu != xno; then
+    LIBGPUSOLVER_LIBS="-lOpenCL"
+fi
+
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
+AM_CONDITIONAL([ENABLE_GPU],[test x$enable_gpu = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
 AM_CONDITIONAL([ENABLE_QT],[test x$fabcoin_enable_qt = xyes])
 AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
@@ -1233,6 +1255,8 @@ AC_SUBST(EVENT_PTHREADS_LIBS)
 AC_SUBST(ZMQ_LIBS)
 AC_SUBST(PROTOBUF_LIBS)
 AC_SUBST(QR_LIBS)
+AC_SUBST(LIBGPUSOLVER_LIBS)
+
 AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist test/config.ini])
 AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/split-debug.sh])
 AC_CONFIG_FILES([doc/Doxyfile])
@@ -1253,7 +1277,7 @@ LDFLAGS="$LDFLAGS_TEMP"
 
 LIBS_TEMP="$LIBS"
 unset LIBS
-LIBS="$LIBS_TEMP"
+LIBS="$LIBS_TEMP $LIBGPUSOLVER_LIBS"
 
 PKGCONFIG_PATH_TEMP="$PKG_CONFIG_PATH"
 unset PKG_CONFIG_PATH
@@ -1294,6 +1318,7 @@ esac
 echo 
 echo "Options used to compile and link:"
 echo "  with wallet   = $enable_wallet"
+echo "  with gpuminer   = $enable_gpu"
 echo "  with gui / qt = $fabcoin_enable_qt"
 if test x$fabcoin_enable_qt != xno; then
     echo "    qt version  = $fabcoin_qt_got_major_vers"
