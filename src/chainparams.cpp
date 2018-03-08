@@ -346,6 +346,9 @@ public:
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0x00");
 
+        // By default assume that the signatures in ancestors of this block are valid.
+        consensus.defaultAssumeValid = uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a");
+
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5;
@@ -361,19 +364,19 @@ public:
         // 1517433514 2018.1.31
         genesis = CreateGenesisBlock(
             1517433514,
-            uint256S("0x00000000000000000000000000000000000000000000000000000000000000a5"),
-            ParseHex("082205565143429ba30b6a934b6277759b7a25e6ddf2d4f65aa7f1286b5a9e940d8dd7a8"),
-            0x2007ffff, 4, 50 * COIN );
+            uint256S("0x000000000000000000000000000000000000000000000000000000000000000a"),
+            ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
+            0x2007ffff, 1, 50 * COIN );
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x00d0afe208ed97ccf503adbda469e7feddc0eebae96b67ea54a13792873e3c4d"));
-        assert(genesis.hashMerkleRoot == uint256S("83acaf917b80757baa79d9635c35f0b09c7cab3c30f213d62419cc3630bc6960"));
+        assert(consensus.hashGenesisBlock == uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a"));
+        assert(genesis.hashMerkleRoot == uint256S("0x7b4992742919dc326f297b549df082cf4b4c88f2a52f1987a06826e600d4479e"));
+
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x00d0afe208ed97ccf503adbda469e7feddc0eebae96b67ea54a13792873e3c4d");
 
         checkpointData = (CCheckpointData) {
             {
-               {0, uint256S("0x00d0afe208ed97ccf503adbda469e7feddc0eebae96b67ea54a13792873e3c4d")},
+                {0, uint256S("0x04afce71be4bfe0e3558ecaedd57ae986cf700ad90777fa599fb131ce3a4960a")},
             }
         };
 
