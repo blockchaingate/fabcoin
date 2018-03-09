@@ -194,7 +194,7 @@ void Shutdown()
     GenerateFabcoins(false, 0, Params());
 #endif
 
-  MapPort(false);
+    MapPort(false);
 
     // Because these depend on each-other, we make sure that neither can be
     // using the other before destroying them.

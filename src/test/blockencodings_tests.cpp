@@ -47,7 +47,7 @@ static CBlock BuildBlockTestCase() {
     bool mutated;
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) 
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, false, Params().GetConsensus())) 
     {
         block.nNonce = ArithToUint256(UintToArith256(block.nNonce) + 1);
     }
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
     bool mutated;
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus())) 
+    while (!CheckProofOfWork(block.GetHash(), block.nBits, false, Params().GetConsensus())) 
     {
         block.nNonce = ArithToUint256(UintToArith256(block.nNonce) + 1);
     }

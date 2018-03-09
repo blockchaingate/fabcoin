@@ -178,14 +178,20 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxFees[0] = -nFees;
 
-    LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
+    const Consensus::Params& params = chainparams.GetConsensus();
+    int ser_flags = (nHeight < params.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
+    uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+    LogPrintf("CreateNewBlock(): total size: %u block weight: %u txs: %u fees: %ld sigops %d\n",
+              nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
 
     arith_uint256 nonce;
-    // Randomise nonce for new block foramt.
-    nonce = UintToArith256(GetRandHash());
-    // Clear the top and bottom 16 bits (for local use as thread flags and counters)
-    nonce >>= 128;
-    nonce <<= 32;
+    if (nHeight >= params.FABHeight) {
+        // Randomise nonce for new block foramt.
+        nonce = UintToArith256(GetRandHash());
+        // Clear the top and bottom 16 bits (for local use as thread flags and counters)
+        nonce >>= 128;
+        nonce <<= 32;
+    }
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
@@ -516,8 +522,8 @@ static bool ProcessBlockFound(const CBlock* pblock, const CChainParams& chainpar
 
 void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 {
-	static const int nInnerLoopCount = 0x10000;
-	int nCounter = 0;
+    static const int nInnerLoopCount = 0x10000;
+    int nCounter = 0;
 
     if(conf.useGPU)
         LogPrintf("FabcoinMiner started on device: %u\n", conf.currentDevice);
@@ -601,45 +607,47 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
             arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
             uint256 hash;
 
-			nCounter = 0;
+            nCounter = 0;
+            LogPrint(BCLog::POW, "Running Equihash solver in %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
+
             while (true) 
             {
-				// I = the block header minus nonce and solution.
-				CEquihashInput I{*pblock};
-				CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-				ss << I;
+                // I = the block header minus nonce and solution.
+                CEquihashInput I{*pblock};
+                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                ss << I;
 
-				// Hash state
+                // Hash state
                 crypto_generichash_blake2b_state state;
-				if(conf.useGPU)
-				{
-					memcpy(header, &ss[0], ss.size());
-				}
-				else
-				{
-					EhInitialiseState(n, k, state);
-	                // H(I||...
-		            crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
-				}
+                if(conf.useGPU)
+                {
+                    memcpy(header, &ss[0], ss.size());
+                }
+                else
+                {
+                    EhInitialiseState(n, k, state);
+                    // H(I||...
+                    crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
+                }
 
                 // H(I||V||...
                 crypto_generichash_blake2b_state curr_state;
 
-				if(conf.useGPU)
-				{
+                if(conf.useGPU)
+                {
 #ifdef ENABLE_GPU
                     for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
-						header[108 + i] = pblock->nNonce.begin()[i];
+                        header[108 + i] = pblock->nNonce.begin()[i];
 #endif
-				}
-				else
-				{
-					curr_state = state;
-					crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
-				}                
+                }
+                else
+                {
+                    curr_state = state;
+                    crypto_generichash_blake2b_update(&curr_state,pblock->nNonce.begin(),pblock->nNonce.size());
+                }                
 
                 // (x_1, x_2, ...) = A(I, V, n, k)
-                LogPrint(BCLog::POW, "Running Equihash solver with nNonce = %s\n", pblock->nNonce.ToString());
+                //LogPrint(BCLog::POW, "Running Equihash solver in %u %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
 
                 std::function<bool(std::vector<unsigned char>)> validBlock =
                     [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams](std::vector<unsigned char> soln) 
@@ -657,6 +665,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                     SetThreadPriority(THREAD_PRIORITY_NORMAL);
                     LogPrintf("FabcoinMiner:\n");
                     LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
+                    LogPrintf("Block ------------------ \n%s\n ----------------", pblock->ToString());
+
                     if (ProcessBlockFound(pblock, chainparams)) 
                     {
                         // Ignore chain updates caused by us
@@ -685,7 +695,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                 };
 
                 try {
-					if(!conf.useGPU) 
+                    if(!conf.useGPU) 
                     {
                         // If we find a valid block, we rebuild
                         bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
@@ -722,7 +732,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 
                 // Update nNonce and nTime
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
-				++nCounter;
+                ++nCounter;
 
                 // Update nTime every few seconds
                 if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
@@ -834,7 +844,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                     int maxThreads = nThreads;
                     if (!conf.forceGenProcLimit) {
                         if (result > 7500000000) {
-							maxThreads = std::min(4, nThreads);
+                            maxThreads = std::min(4, nThreads);
                         } else if (result > 5500000000) {
                             maxThreads = std::min(3, nThreads);
                         } else if (result > 3500000000) {
@@ -844,8 +854,10 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                         }
                     }
 
-                    for (int i = 0; i < maxThreads; i++)
+                    for (int i = 0; i < maxThreads; i++){
+                        LogPrintf("FabcoinMiner GPU platform=%d device=%d thread=%d!\n", conf.currentPlatform, conf.currentDevice, i);
                         minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
+                    }
 
                 }
             }
@@ -855,14 +867,14 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
             }
 
         } 
-		else
-		{
+        else
+        {
 
             // mine on specified GPU device
             std::vector<cl::Device> devices = cl_gpuminer::getDevices(platforms, conf.currentPlatform);
 
             if (devices.size() > conf.currentDevice) 
-			{
+            {
 
                 cl_ulong result;
                 devices[conf.currentDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
@@ -884,8 +896,8 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                     minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
 
             } 
-			else 
-			{
+            else 
+            {
                 LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
             }
         }
@@ -893,31 +905,13 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
     }
     else
     {
-        for (int i = 0; i < nThreads; i++)
+        for (int i = 0; i < nThreads; i++){
+            LogPrintf("FabcoinMiner CPU, thread=%d!\n",  i);
             minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));    
+        }
     }
 }
 
-bool CheckProofOfWork0(uint256 hash, unsigned int nBits, const Consensus::Params& params) {
-    bool fNegative;
-    bool fOverflow;
-    arith_uint256 bnTarget;
-
-    bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
-
-    // Check range 
-    if (fNegative || bnTarget == 0 || fOverflow ||
-            bnTarget > UintToArith256(uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))) {
-        return false;
-    }
-
-    // Check proof of work matches claimed amount
-    if (UintToArith256(hash) > bnTarget) {
-        return false;
-    }
-
-    return true;
-}
 
 void Scan_nNonce_nSolution(CBlock *pblock, unsigned int n, unsigned int k ) 
 {
