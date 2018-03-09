@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "txmempool.h"
-
+#include "chainparams.h"
 #include "consensus/consensus.h"
 #include "consensus/tx_verify.h"
 #include "consensus/validation.h"
@@ -527,7 +527,12 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
                     continue;
                 const Coin &coin = pcoins->AccessCoin(txin.prevout);
                 if (nCheckFrequency != 0) assert(!coin.IsSpent());
-                if (coin.IsSpent() || (coin.IsCoinBase() && ((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY)) {
+
+                const Consensus::Params& consensus = Params().GetConsensus();
+                if ( coin.IsSpent() || 
+                    ( coin.IsCoinBase() && ((((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY) 
+                    || ( coin.nHeight < consensus.CoinbaseLock && coin.nHeight != 1 && (signed long)nMemPoolHeight - coin.nHeight < consensus.CoinbaseLock )) ) 
+                    ){
                     txToRemove.insert(it);
                     break;
                 }
