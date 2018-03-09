@@ -205,6 +205,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     return true;
 }
 
+#include "../util.h"
 bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight)
 {
         // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
@@ -226,6 +227,15 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
                     return state.Invalid(false,
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                         strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
+
+                LogPrintf("AAAA: %s:%d:CoinbaseLock=%d\n",Params().CoinbaseLock);
+                if( coin.nHeight < Params().CoinbaseLock && coin.nHeight  != 1 )
+                {
+                    if (nSpendHeight - coin.nHeight < Params().CoinbaseLock)
+                        return state.Invalid(false,
+                        REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
+                        strprintf("tried to spend coinbase on height %d at depth %d", coin.nHeight, nSpendHeight - coin.nHeight));
+                }
             }
 
             // Check for negative or overflow input values

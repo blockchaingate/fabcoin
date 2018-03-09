@@ -193,6 +193,8 @@ public:
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
         consensus.BIP66Height = 0; 
+        consensus.CoinbaseLock = 80000;
+
         consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.powLimitLegacy = uint256S("0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
@@ -312,6 +314,8 @@ public:
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
         consensus.BIP66Height = 0; 
+        consensus.CoinbaseLock = 0;
+
         consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.powLimitLegacy = uint256S("0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowAveragingWindow = 17;
@@ -420,6 +424,8 @@ public:
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.FABHeight = 3000;
+        consensus.CoinbaseLock = 0;
+
         consensus.nPowAveragingWindow = 17;
         consensus.nPowMaxAdjustDown = 32;
         consensus.nPowMaxAdjustUp = 16;

@@ -4315,6 +4315,24 @@ void CMerkleTx::SetMerkleBranch(const CBlockIndex* pindex, int posInBlock)
     nIndex = posInBlock;
 }
 
+int CMerkleTx::GetHeight() const
+{
+    if (hashUnset())
+        return 0;
+
+    AssertLockHeld(cs_main);
+
+    // Find the block it claims to be in
+    BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
+    if (mi == mapBlockIndex.end())
+        return 0;
+    CBlockIndex* pindex = (*mi).second;
+    if (!pindex || !chainActive.Contains(pindex))
+        return 0;
+
+    return pindex->nHeight;
+}
+
 int CMerkleTx::GetDepthInMainChain(const CBlockIndex* &pindexRet) const
 {
     if (hashUnset())
@@ -4338,7 +4356,12 @@ int CMerkleTx::GetBlocksToMaturity() const
 {
     if (!IsCoinBase())
         return 0;
-    return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
+
+    const Consensus::Params& consensus = Params().GetConsensus();
+    if( this->GetHeight() < consensus.CoinbaseLock  && this->GetHeight() != 1 )
+        return std::max(0, (consensus.CoinbaseLock+1) - GetDepthInMainChain());
+    else
+        return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
 }
 
 
