@@ -12,13 +12,27 @@
 #include "consensus/params.h"
 #include "crypto/common.h"
 
-uint256 CBlockHeader::GetHash() const
+uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
 {
     int version;
-    version = PROTOCOL_VERSION;
+
+    if ((uint32_t) -1 == (uint32_t)params.FABHeight ) {
+        version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
+    }
+    else if (nHeight >= (uint32_t)params.FABHeight) {
+        version = PROTOCOL_VERSION;
+    } else {
+        version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
+    }
     CHashWriter writer(SER_GETHASH, version);
     ::Serialize(writer, *this);
     return writer.GetHash();
+}
+
+uint256 CBlockHeader::GetHash() const
+{
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+    return GetHash(consensusParams);
 }
 
 std::string CBlock::ToString() const
@@ -38,3 +52,4 @@ std::string CBlock::ToString() const
     
     return s.str();
 }
+

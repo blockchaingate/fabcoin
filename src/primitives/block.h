@@ -10,10 +10,14 @@
 #include "primitives/transaction.h"
 #include "serialize.h"
 #include "uint256.h"
+#include "version.h"
+#include <string.h>
 
 namespace Consensus {
     struct Params;
 };
+
+static const int SERIALIZE_BLOCK_LEGACY = 0x04000000;
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -45,18 +49,28 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action) {
+    inline void SerializationOp(Stream& s, Operation ser_action)
+    {
+        bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
-        READWRITE(nHeight);
-        for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
-            READWRITE(nReserved[i]);
+        if (new_format) {
+            READWRITE(nHeight);
+            for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
+                READWRITE(nReserved[i]);
+            }
         }
         READWRITE(nTime);
         READWRITE(nBits);
-        READWRITE(nNonce);
-        READWRITE(nSolution);
+        if (new_format) {
+            READWRITE(nNonce);
+            READWRITE(nSolution);
+        } else {
+            uint32_t legacy_nonce = (uint32_t)nNonce.GetUint64(0);
+            READWRITE(legacy_nonce);
+            nNonce = ArithToUint256(arith_uint256(legacy_nonce));
+        }
     }
 
     void SetNull()
@@ -78,6 +92,7 @@ public:
     }
 
     uint256 GetHash() const;
+    uint256 GetHash(const Consensus::Params& params) const;
 
     int64_t GetBlockTime() const
     {

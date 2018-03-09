@@ -91,7 +91,7 @@ const char * const FABCOIN_CONF_FILENAME = "fabcoin.conf";
 const char * const FABCOIN_PID_FILENAME = "fabcoind.pid";
 
 ArgsManager gArgs;
-bool fPrintToConsole = false;
+bool fPrintToConsole = true;
 bool fPrintToDebugLog = true;
 
 bool fLogTimestamps = DEFAULT_LOGTIMESTAMPS;

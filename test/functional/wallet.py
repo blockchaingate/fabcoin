@@ -72,7 +72,7 @@ class WalletTest(FabcoinTestFramework):
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 11)
         mempool_txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 10)
         memory_after = self.nodes[0].getmemoryinfo()
-        assert(memory_before['locked']['used'] + 64 <= memory_after['locked']['used'])
+        assert(memory_before['locked']['used'] + 32 <= memory_after['locked']['used'])
 
         self.log.info("test gettxout (second part)")
         # utxo spent in mempool should be visible if you exclude mempool

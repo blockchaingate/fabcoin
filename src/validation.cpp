@@ -372,6 +372,23 @@ static bool IsCurrentForFeeEstimation()
     return true;
 }
 
+bool static IsFABHardForkEnabled(int nHeight, const Consensus::Params& params) {
+    return nHeight >= params.FABHeight;
+}
+
+bool IsFABHardForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params) {
+    if (pindexPrev == nullptr) {
+        return false;
+    }
+
+    return IsFABHardForkEnabled(pindexPrev->nHeight, params);
+}
+
+bool IsFABHardForkEnabledForCurrentBlock(const Consensus::Params& params) {
+    AssertLockHeld(cs_main);
+    return IsFABHardForkEnabled(chainActive.Tip(), params);
+}
+
 /* Make mempool consistent after a reorg, by re-adding or recursively erasing
  * disconnected block transactions from the mempool, and also removing any
  * other transactions from the mempool that are no longer valid given the new
@@ -1021,8 +1038,13 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus:
         return error("%s: Deserialize or I/O error - %s at %s", __func__, e.what(), pos.ToString());
     }
 
+    // Check Equihash solution
+    bool postfork = block.nHeight >= (uint32_t)consensusParams.FABHeight;
+    if (postfork && !CheckEquihashSolution(&block, Params())) {
+        return error("ReadBlockFromDisk: Errors in block header at %s (bad Equihash solution)", pos.ToString());
+    }
     // Check the header
-    if (!CheckEquihashSolution(&block, Params()))
+    if (!CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
         return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
 
     return true;
@@ -1061,6 +1083,8 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 
 bool IsInitialBlockDownload()
 {
+    const CChainParams& chainParams = Params();
+
     // Once this function has returned false, it must remain false.
     static std::atomic<bool> latchToFalse{false};
     // Optimization: pre-test latch before taking the lock.
@@ -1074,7 +1098,7 @@ bool IsInitialBlockDownload()
         return true;
     if (chainActive.Tip() == nullptr)
         return true;
-    if (chainActive.Tip()->nChainWork < nMinimumChainWork)
+    if (chainActive.Tip()->nChainWork < UintToArith256(chainParams.GetConsensus().nMinimumChainWork))
         return true;
     if (chainActive.Tip()->GetBlockTime() < (GetTime() - nMaxTipAge))
         return true;
@@ -1692,7 +1716,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         if (it != mapBlockIndex.end()) {
             if (it->second->GetAncestor(pindex->nHeight) == pindex &&
                 pindexBestHeader->GetAncestor(pindex->nHeight) == pindex &&
-                pindexBestHeader->nChainWork >= nMinimumChainWork) {
+                pindexBestHeader->nChainWork >= UintToArith256(chainparams.GetConsensus().nMinimumChainWork)) {
                 // This block is a member of the assumed verified chain and an ancestor of the best header.
                 // The equivalent time check discourages hash power from extorting the network via DOS attack
                 //  into accepting an invalid block through telling users they must manually set assumevalid.
@@ -1722,8 +1746,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // Now that the whole chain is irreversibly beyond that time it is applied to all blocks except the
     // two in the chain that violate it. This prevents exploiting the issue against nodes during their
     // initial block download.
-    bool fEnforceBIP30 = (!pindex->phashBlock) ; // Enforce on CreateNewBlock invocations which don't have a hash.
-                           
+    bool fEnforceBIP30 = (!pindex->phashBlock) || // Enforce on CreateNewBlock invocations which don't have a hash.
+                          !((pindex->nHeight==91842 && pindex->GetBlockHash() == uint256S("0x00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec")) ||
+                           (pindex->nHeight==91880 && pindex->GetBlockHash() == uint256S("0x00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721")));
 
     // Once BIP34 activated it was not possible to create new duplicate coinbases and thus other than starting
     // with the 2 existing duplicate coinbase pairs, not possible to create overwriting txs.  But by the
@@ -2810,11 +2835,16 @@ static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, 
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check Equihash solution is valid
-    if (fCheckPOW && !CheckEquihashSolution(&block, Params())) {
+    bool postfork = block.nHeight >= (uint32_t)consensusParams.FABHeight;
+    if (fCheckPOW && postfork && !CheckEquihashSolution(&block, Params())) {
         LogPrintf("CheckBlockHeader(): Equihash solution invalid at height %d\n", block.nHeight);
         return state.DoS(100, error("CheckBlockHeader(): Equihash solution invalid"),
-            REJECT_INVALID, "invalid-solution");
+                         REJECT_INVALID, "invalid-solution");
     }
+
+    // Check proof of work matches claimed amount
+    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
+        return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
     return true;
 }
@@ -2852,7 +2882,11 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     // checks that use witness data may be performed here.
 
     // Size limits
-    if (block.vtx.empty() || block.vtx.size() * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT)
+    int serialization_flags = SERIALIZE_TRANSACTION_NO_WITNESS;
+    if (block.nHeight < (uint32_t)consensusParams.FABHeight) {
+        serialization_flags |= SERIALIZE_BLOCK_LEGACY;
+    }
+    if (block.vtx.empty() || block.vtx.size() * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | serialization_flags) * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT)
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
 
     // First transaction must be coinbase, the rest must not be
@@ -2967,6 +3001,10 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
     }
 
+    // Check block height for blocks after FAB fork.
+    if (nHeight >= consensusParams.FABHeight && block.nHeight != (uint32_t)nHeight)
+        return state.Invalid(false, REJECT_INVALID, "bad-height", "incorrect block height");
+
     // Check timestamp against prev
     if (block.GetBlockTime() <= pindexPrev->GetMedianTimePast())
         return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
@@ -3017,6 +3055,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
         }
     }
 
+
     // Validation for witness commitments.
     // * We compute the witness hash (which is the hash including witnesses) of all the block's transactions, except the
     //   coinbase (where 0x0000....0000 is used instead).
@@ -3060,7 +3099,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     // large by filling up the coinbase witness, which doesn't change
     // the block hash, so we couldn't mark the block as permanently
     // failed).
-    if (GetBlockWeight(block) > MAX_BLOCK_WEIGHT) {
+    if (GetBlockWeight(block, consensusParams) > MAX_BLOCK_WEIGHT) {
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-weight", false, strprintf("%s : weight limit failed", __func__));
     }
 

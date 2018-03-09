@@ -27,17 +27,17 @@
 class GPUConfig {
 
 public:
-	//GPUConfig();
-	//~GPUConfig();
+    //GPUConfig();
+    //~GPUConfig();
 
-	bool useGPU;
-	unsigned selGPU;
-	bool allGPU;
+    bool useGPU;
+    unsigned selGPU;
+    bool allGPU;
     bool forceGenProcLimit;
-	unsigned currentPlatform;
-	unsigned currentDevice;
-	unsigned globalWorkSize;
-	unsigned workgroupSize;
+    unsigned currentPlatform;
+    unsigned currentDevice;
+    unsigned globalWorkSize;
+    unsigned workgroupSize;
 
 };
 
