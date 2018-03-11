@@ -8,6 +8,7 @@
 #include "primitives/transaction.h"
 #include "script/interpreter.h"
 #include "validation.h"
+#include "chainparams.h"
 
 // TODO remove the following dependencies
 #include "chain.h"
@@ -205,7 +206,6 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     return true;
 }
 
-#include "../util.h"
 bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight)
 {
         // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
@@ -223,15 +223,15 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
 
             // If prev is coinbase, check that it's matured
             if (coin.IsCoinBase()) {
+                const Consensus::Params& consensus = ::GetParams().GetConsensus();
                 if (nSpendHeight - coin.nHeight < COINBASE_MATURITY)
                     return state.Invalid(false,
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                         strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
 
-                LogPrintf("AAAA: %s:%d:CoinbaseLock=%d\n",Params().CoinbaseLock);
-                if( coin.nHeight < Params().CoinbaseLock && coin.nHeight  != 1 )
+                if( coin.nHeight < consensus.CoinbaseLock && coin.nHeight  != 1 )
                 {
-                    if (nSpendHeight - coin.nHeight < Params().CoinbaseLock)
+                    if (nSpendHeight - coin.nHeight < consensus.CoinbaseLock)
                         return state.Invalid(false,
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                         strprintf("tried to spend coinbase on height %d at depth %d", coin.nHeight, nSpendHeight - coin.nHeight));
