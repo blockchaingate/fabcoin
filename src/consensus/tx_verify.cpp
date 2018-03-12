@@ -229,7 +229,7 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
                         REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                         strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
 
-                if( coin.nHeight < consensus.CoinbaseLock && coin.nHeight  != 1 )
+                if( coin.nHeight < consensus.CoinbaseLock && coin.nHeight  != 2 )
                 {
                     if (nSpendHeight - coin.nHeight < consensus.CoinbaseLock)
                         return state.Invalid(false,
