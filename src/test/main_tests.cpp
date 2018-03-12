@@ -16,7 +16,7 @@ BOOST_FIXTURE_TEST_SUITE(main_tests, TestingSetup)
 static void TestBlockSubsidyHalvings(const Consensus::Params& consensusParams)
 {
     int maxHalvings = 64;
-    CAmount nInitialSubsidy = 50 * COIN;
+    CAmount nInitialSubsidy = 25 * COIN;
 
     CAmount nPreviousSubsidy = nInitialSubsidy * 2; // for height == 0
     BOOST_CHECK_EQUAL(nPreviousSubsidy, nInitialSubsidy * 2);
@@ -52,21 +52,22 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
 
     CAmount nSubsidy ;
 
+    nSubsidy = GetBlockSubsidy(1, chainParams->GetConsensus());
+    BOOST_CHECK_EQUAL(nSubsidy , 25 * COIN); //genesis
     nSubsidy = GetBlockSubsidy(2, chainParams->GetConsensus());
-    BOOST_CHECK_EQUAL(nSubsidy , 32000000 * COIN);
+    BOOST_CHECK_EQUAL(nSubsidy , 32000000 * COIN); //pre-mined
 
     for (int nHeight = 0; nHeight < 112000000; nHeight += 1000) {
         nSubsidy = GetBlockSubsidy(nHeight, chainParams->GetConsensus());
-        if ( nHeight == 2 )
-            BOOST_CHECK_EQUAL(nSubsidy , 32000000 * COIN);
-        else
-            BOOST_CHECK(nSubsidy <= 50 * COIN);
+        BOOST_CHECK(nSubsidy <= 25 * COIN);
 
         nSum += nSubsidy * 1000;
+
         BOOST_CHECK(MoneyRange(nSum));
     }
+
     //std::cerr << "nSum" << nSum << std::endl;
-    BOOST_CHECK_EQUAL(nSum, 16799999981520000ULL);
+    BOOST_CHECK_EQUAL(nSum, 16799999963040000ULL);
 }
 
 bool ReturnFalse() { return false; }

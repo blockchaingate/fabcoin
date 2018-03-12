@@ -114,7 +114,7 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 }
 
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
-{	
+{    
     static const int nInnerLoopCount = 0x10000;
     int nHeightEnd = 0;
     int nHeight = 0;
@@ -127,9 +127,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     }
     unsigned int nExtraNonce = 0;
     UniValue blockHashes(UniValue::VARR);
-	const CChainParams& params = Params();
-	unsigned int n = params.EquihashN();
-	unsigned int k = params.EquihashK();
+    const CChainParams& params = Params();
+    unsigned int n = params.EquihashN();
+    unsigned int k = params.EquihashK();
 
     GPUConfig conf;
     memset(&conf,0,sizeof(GPUConfig));
@@ -155,14 +155,21 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
-        
         nCounter = 0;
         CBlock *pblock = &pblocktemplate->block;
         {
             LOCK(cs_main);
             IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
-		{
+        if (pblock->nHeight < (uint32_t)params.GetConsensus().FABHeight) {
+            // Solve sha256d.
+            while (nMaxTries > 0 && (int)pblock->nNonce.GetUint64(0) < nInnerLoopCount &&
+                   !CheckProofOfWork(pblock->GetHash(), pblock->nBits, false, Params().GetConsensus())) {
+                pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+                --nMaxTries;
+            }
+        } else {
+            // Solve Equihash.
             // I = the block header minus nonce and solution.
             CEquihashInput I{*pblock};
             CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -176,18 +183,18 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             else
             {
                 // Solve Equihash.
-			    EhInitialiseState(n, k, eh_state);
+                EhInitialiseState(n, k, eh_state);
                 // H(I||...
                 crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
             }
 
-			while ( nMaxTries > 0  && nCounter < nInnerLoopCount ) 
+            while ( nMaxTries > 0  && nCounter < nInnerLoopCount ) 
             {
                 crypto_generichash_blake2b_state curr_state;
 
                 // Yes, there is a chance every nonce could fail to satisfy the -regtest
-				// target -- 1 in 2^(2^256). That ain't gonna happen
-				pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+                // target -- 1 in 2^(2^256). That ain't gonna happen
+                pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
                 ++nCounter;
 
                 if( conf.useGPU )
@@ -199,20 +206,20 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 }
                 else
                 {
-				    // H(I||V||...
-				    curr_state = eh_state;
-				    crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
+                    // H(I||V||...
+                    curr_state = eh_state;
+                    crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
                 }
 
-				// (x_1, x_2, ...) = A(I, V, n, k)
-				std::function<bool(std::vector<unsigned char>)> validBlock =
-					[&pblock](std::vector<unsigned char> soln) 
-				{
-					pblock->nSolution = soln;
-					// TODO(h4x3rotab): Add metrics counter like Zcash? `solutionTargetChecks.increment();`
-					// TODO(h4x3rotab): Maybe switch to EhBasicSolve and better deal with `nMaxTries`?
-					return CheckProofOfWork(pblock->GetHash(), pblock->nBits, true, Params().GetConsensus());
-				};
+                // (x_1, x_2, ...) = A(I, V, n, k)
+                std::function<bool(std::vector<unsigned char>)> validBlock =
+                    [&pblock](std::vector<unsigned char> soln) 
+                {
+                    pblock->nSolution = soln;
+                    // TODO(h4x3rotab): Add metrics counter like Zcash? `solutionTargetChecks.increment();`
+                    // TODO(h4x3rotab): Maybe switch to EhBasicSolve and better deal with `nMaxTries`?
+                    return CheckProofOfWork(pblock->GetHash(), pblock->nBits, true, Params().GetConsensus());
+                };
 
                 bool found = false;
                 if( conf.useGPU )
@@ -222,17 +229,18 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 #endif
                 }
                 else
-				    found = EhBasicSolveUncancellable(n, k, curr_state, validBlock);
-				--nMaxTries;
-				// TODO(h4x3rotab): Add metrics counter like Zcash? `ehSolverRuns.increment();`
-				if (found) break;				
-			}
-		}
+                    found = EhBasicSolveUncancellable(n, k, curr_state, validBlock);
+                --nMaxTries;
+                // TODO(h4x3rotab): Add metrics counter like Zcash? `ehSolverRuns.increment();`
+                if (found) break;
+            }
+        }
 
         if (nMaxTries == 0)
             break;
         if (nCounter == nInnerLoopCount) 
             continue;
+
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
             throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
@@ -1117,62 +1125,63 @@ UniValue estimaterawfee(const JSONRPCRequest& request)
 
 UniValue getgenerate(const JSONRPCRequest& request)
 {
-	if (request.fHelp || request.params.size() != 0)
-		throw std::runtime_error(
-		"getgenerate\n"
-		"\nReturn if the server is set to generate coins or not. The default is false.\n"
-		"It is set with the command line argument -gen (or " + std::string(FABCOIN_CONF_FILENAME) + " setting gen)\n"
-		"It can also be set with the setgenerate call.\n"
-		"\nResult\n"
-		"true|false      (boolean) If the server is set to generate coins or not\n"
-		"\nExamples:\n"
-		+ HelpExampleCli("getgenerate", "")
-		+ HelpExampleRpc("getgenerate", "")
-		);
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+        "getgenerate\n"
+        "\nReturn if the server is set to generate coins or not. The default is false.\n"
+        "It is set with the command line argument -gen (or " + std::string(FABCOIN_CONF_FILENAME) + " setting gen)\n"
+        "It can also be set with the setgenerate call.\n"
+        "\nResult\n"
+        "true|false      (boolean) If the server is set to generate coins or not\n"
+        "\nExamples:\n"
+        + HelpExampleCli("getgenerate", "")
+        + HelpExampleRpc("getgenerate", "")
+        );
 
-	LOCK(cs_main);
-	return gArgs.GetBoolArg("-gen", DEFAULT_GENERATE);
+    LOCK(cs_main);
+    return gArgs.GetBoolArg("-gen", DEFAULT_GENERATE);
 }
 
 UniValue setgenerate(const JSONRPCRequest& request)
 {
-	if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
-		throw std::runtime_error(
-		"setgenerate generate ( genproclimit )\n"
-		"\nSet 'generate' true or false to turn generation on or off.\n"
-		"Generation is limited to 'genproclimit' processors, -1 is unlimited.\n"
-		"See the getgenerate call for the current setting.\n"
-		"\nArguments:\n"
-		"1. generate         (boolean, required) Set to true to turn on generation, off to turn off.\n"
-		"2. genproclimit     (numeric, optional) Set the processor limit for when generation is on. Can be -1 for unlimited.\n"
-		"\nExamples:\n"
-		"\nSet the generation on with a limit of one processor\n"
-		+ HelpExampleCli("setgenerate", "true 1") +
-		"\nCheck the setting\n"
-		+ HelpExampleCli("getgenerate", "") +
-		"\nTurn off generation\n"
-		+ HelpExampleCli("setgenerate", "false") +
-		"\nUsing json rpc\n"
-		+ HelpExampleRpc("setgenerate", "true, 1")
-		);
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+        "setgenerate generate ( genproclimit )\n"
+        "\nSet 'generate' true or false to turn generation on or off.\n"
+        "Generation is limited to 'genproclimit' processors, -1 is unlimited.\n"
+        "See the getgenerate call for the current setting.\n"
+        "\nArguments:\n"
+        "1. generate         (boolean, required) Set to true to turn on generation, off to turn off.\n"
+        "2. genproclimit     (numeric, optional) Set the processor limit for when generation is on. Can be -1 for unlimited.\n"
+        "\nExamples:\n"
+        "\nSet the generation on with a limit of one processor\n"
+        + HelpExampleCli("setgenerate", "true 1") +
+        "\nCheck the setting\n"
+        + HelpExampleCli("getgenerate", "") +
+        "\nTurn off generation\n"
+        + HelpExampleCli("setgenerate", "false") +
+        "\nUsing json rpc\n"
+        + HelpExampleRpc("setgenerate", "true, 1")
+        );
 
-	if (Params().MineBlocksOnDemand())
-		throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Use the generate method instead of setgenerate on this network");
+    if (Params().MineBlocksOnDemand())
+        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Use the generate method instead of setgenerate on this network");
 
-	bool fGenerate = true;
-	if (request.params.size() > 0)
-		fGenerate = request.params[0].get_bool();
+    bool fGenerate = true;
+    if (request.params.size() > 0)
+        fGenerate = request.params[0].get_bool();
 
-	int nGenProcLimit = 1;
-	if (request.params.size() > 1)
-	{
-		nGenProcLimit = request.params[1].get_int();
-		if (nGenProcLimit == 0)
-			fGenerate = false;
-	}
+    int nGenProcLimit = 1;
+    if (request.params.size() > 1)
+    {
+        nGenProcLimit = request.params[1].get_int();
+        if (nGenProcLimit == 0)
+            fGenerate = false;
+    }
 
-	gArgs.ForceSetArg("-gen",fGenerate ? "1" : "0");
-	gArgs.ForceSetArg("-genproclimit",itostr(nGenProcLimit));
+    gArgs.ForceSetArg("-gen",fGenerate ? "1" : "0");
+    gArgs.ForceSetArg("-genproclimit",itostr(nGenProcLimit));
+    GenerateFabcoins(fGenerate, nGenProcLimit, Params());
 
     GPUConfig conf;
     conf.useGPU = gArgs.GetBoolArg("-G", false) || gArgs.GetBoolArg("-GPU", false);
@@ -1181,7 +1190,7 @@ UniValue setgenerate(const JSONRPCRequest& request)
     conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
     GenerateFabcoins(fGenerate, nGenProcLimit, Params(), conf);
 
-	return 0;
+    return 0;
 }
 
 

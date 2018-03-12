@@ -187,7 +187,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
  
-        consensus.nSubsidyHalvingInterval = 1680000;
+        consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
@@ -308,7 +308,7 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
 
-        consensus.nSubsidyHalvingInterval = 1680000;
+        consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
@@ -467,15 +467,11 @@ public:
         nEquihashN = N;
         nEquihashK = K;
 
-        // 1517433514 2018.1.31
-        genesis = CreateGenesisBlock(
-            1517433514,
-            uint256S("0x000000000000000000000000000000000000000000000000000000000000003b"),
-            ParseHex("057067f9f08ebd59ef0854d3cd130e290dee1bf0d3eed28d7141a12b47112f35cbde8386"),
-            0x2007ffff, 1, 25 * COIN );
+        genesis = CreateGenesisBlock_legacy(1296688602, 2, 0x207fffff, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
-        assert(consensus.hashGenesisBlock == uint256S("0x023dac02cc4987c6bc5b8f7d37fc8cbd8381ec75a8d16a3eb9e0228b645915a4"));
-        assert(genesis.hashMerkleRoot == uint256S("afcaf52027ac3c032eda00c018bde8996dfec7523d88d028f0fd188a35b01b06"));
+        assert(consensus.hashGenesisBlock == uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
+        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -487,7 +483,8 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-               {0, uint256S("0x023dac02cc4987c6bc5b8f7d37fc8cbd8381ec75a8d16a3eb9e0228b645915a4")},
+               {0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")},
+
             }
         };
 

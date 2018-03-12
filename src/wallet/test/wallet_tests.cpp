@@ -370,7 +370,7 @@ static void AddKey(CWallet& wallet, const CKey& key)
     wallet.AddKeyPubKey(key, key.GetPubKey());
 }
 
-BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
+BOOST_FIXTURE_TEST_CASE(rescan, TestChain800Setup)
 {
     LOCK(cs_main);
 
@@ -387,7 +387,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
         BOOST_CHECK_EQUAL(nullBlock, wallet.ScanForWalletTransactions(oldTip));
-        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 100 * COIN);
+        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 1.5625 * COIN);
     }
 
     // Prune the older block file.
@@ -400,7 +400,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
         CWallet wallet;
         AddKey(wallet, coinbaseKey);
         BOOST_CHECK_EQUAL(oldTip, wallet.ScanForWalletTransactions(oldTip));
-        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 50 * COIN);
+        BOOST_CHECK_EQUAL(wallet.GetImmatureBalance(), 0.78125 * COIN);
     }
 
     // Verify importmulti RPC returns failure for a key whose creation time is
@@ -447,7 +447,7 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup)
 // greater or equal than key birthday. Previously there was a bug where
 // importwallet RPC would start the scan at the latest block with timestamp less
 // than or equal to key birthday.
-BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain100Setup)
+BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain800Setup)
 {
     LOCK(cs_main);
 
@@ -490,10 +490,10 @@ BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain100Setup)
         ::importwallet(request);
 
         BOOST_CHECK_EQUAL(wallet.mapWallet.size(), 3);
-        BOOST_CHECK_EQUAL(coinbaseTxns.size(), 103);
+        BOOST_CHECK_EQUAL(coinbaseTxns.size(), 803);
         for (size_t i = 0; i < coinbaseTxns.size(); ++i) {
             bool found = wallet.GetWalletTx(coinbaseTxns[i].GetHash());
-            bool expected = i >= 100;
+            bool expected = i >= 800;
             BOOST_CHECK_EQUAL(found, expected);
         }
     }
@@ -508,7 +508,7 @@ BOOST_FIXTURE_TEST_CASE(importwallet_rescan, TestChain100Setup)
 // This is a regression test written to verify a bugfix for the immature credit
 // function. Similar tests probably should be written for the other credit and
 // debit functions.
-BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain100Setup)
+BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain800Setup)
 {
     CWallet wallet;
     CWalletTx wtx(&wallet, MakeTransactionRef(coinbaseTxns.back()));
@@ -524,7 +524,7 @@ BOOST_FIXTURE_TEST_CASE(coin_mark_dirty_immature_credit, TestChain100Setup)
     // credit amount is calculated.
     wtx.MarkDirty();
     wallet.AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
-    BOOST_CHECK_EQUAL(wtx.GetImmatureCredit(), 50*COIN);
+    BOOST_CHECK_EQUAL(wtx.GetImmatureCredit(), 0.78125*COIN);
 }
 
 static int64_t AddTx(CWallet& wallet, uint32_t lockTime, int64_t mockTime, int64_t blockTime)
@@ -593,7 +593,7 @@ BOOST_AUTO_TEST_CASE(LoadReceiveRequests)
     BOOST_CHECK_EQUAL(values[1], "val_rr1");
 }
 
-class ListCoinsTestingSetup : public TestChain100Setup
+class ListCoinsTestingSetup : public TestChain800Setup
 {
 public:
     ListCoinsTestingSetup()
@@ -648,7 +648,7 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
     BOOST_CHECK_EQUAL(list.begin()->second.size(), 1);
 
     // Check initial balance from one mature coinbase transaction.
-    BOOST_CHECK_EQUAL(50 * COIN, wallet->GetAvailableBalance());
+    BOOST_CHECK_EQUAL(25 * COIN, wallet->GetAvailableBalance());
 
     // Add a transaction creating a change address, and confirm ListCoins still
     // returns the coin associated with the change address underneath the
@@ -658,12 +658,14 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
     list = wallet->ListCoins();
     BOOST_CHECK_EQUAL(list.size(), 1);
     BOOST_CHECK_EQUAL(boost::get<CKeyID>(list.begin()->first).ToString(), coinbaseAddress);
-    BOOST_CHECK_EQUAL(list.begin()->second.size(), 2);
+    //BOOST_CHECK_EQUAL(list.begin()->second.size(), 2);
+    BOOST_CHECK_EQUAL(list.begin()->second.size(), 1);
 
     // Lock both coins. Confirm number of available coins drops to 0.
     std::vector<COutput> available;
     wallet->AvailableCoins(available);
-    BOOST_CHECK_EQUAL(available.size(), 2);
+    // BOOST_CHECK_EQUAL(available.size(), 2);
+    BOOST_CHECK_EQUAL(available.size(), 1);
     for (const auto& group : list) {
         for (const auto& coin : group.second) {
             wallet->LockCoin(COutPoint(coin.tx->GetHash(), coin.i));
@@ -677,7 +679,8 @@ BOOST_FIXTURE_TEST_CASE(ListCoins, ListCoinsTestingSetup)
     list = wallet->ListCoins();
     BOOST_CHECK_EQUAL(list.size(), 1);
     BOOST_CHECK_EQUAL(boost::get<CKeyID>(list.begin()->first).ToString(), coinbaseAddress);
-    BOOST_CHECK_EQUAL(list.begin()->second.size(), 2);
+    //BOOST_CHECK_EQUAL(list.begin()->second.size(), 2);
+    BOOST_CHECK_EQUAL(list.begin()->second.size(), 1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

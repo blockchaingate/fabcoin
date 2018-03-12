@@ -526,9 +526,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     int nCounter = 0;
 
     if(conf.useGPU)
-        LogPrintf("FabcoinMiner started on device: %u\n", conf.currentDevice);
+        LogPrintf("FabcoinMiner started on GPU device: %u\n", conf.currentDevice);
     else
-        LogPrintf("FabcoinMiner started\n");
+        LogPrintf("FabcoinMiner started on CPU \n");
 
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("fabcoin-miner");
@@ -546,12 +546,12 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     uint8_t * header = NULL;
 #ifdef ENABLE_GPU
     GPUSolver * g_solver = NULL;
-	if(conf.useGPU) 
-	{
+    if(conf.useGPU) 
+    {
         g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
         header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
-	}
+    }
 #endif
 
     std::mutex m_cs;
@@ -608,7 +608,10 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
             uint256 hash;
 
             nCounter = 0;
-            LogPrint(BCLog::POW, "Running Equihash solver in %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
+            if (conf.useGPU)
+               LogPrint(BCLog::POW, "Equihash solver in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+            else LogPrint(BCLog::POW, "Equihash solver in CPU with nNonce = %s hashTarget=%s\n", pblock->nNonce.ToString(), hashTarget.GetHex());
+  
 
             while (true) 
             {
@@ -621,7 +624,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                 crypto_generichash_blake2b_state state;
                 if(conf.useGPU)
                 {
+#ifdef ENABLE_GPU
                     memcpy(header, &ss[0], ss.size());
+#endif
                 }
                 else
                 {
@@ -730,6 +735,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                 if (pindexPrev != chainActive.Tip())
                     break;
 
+                //LogPrint(BCLog::POW, "solver... nNonce = %s -> Hash = %s \n", pblock->nNonce.ToString(), pblock->GetHash().GetHex());
                 // Update nNonce and nTime
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
                 ++nCounter;
@@ -752,8 +758,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 #ifdef ENABLE_GPU
         if(conf.useGPU)
             delete g_solver;
-#endif
         free(header);
+#endif
         throw;
     }
     catch (const std::runtime_error &e)
@@ -892,9 +898,9 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                     }
                 }
 
-                for (int i = 0; i < maxThreads; i++)
+                for (int i = 0; i < maxThreads; i++) {
                     minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
-
+                }
             } 
             else 
             {
@@ -1000,7 +1006,7 @@ void creategenesisblock ( uint32_t nTime, uint32_t nBits )
 
     txNew.vin[0].scriptSig = CScript() << 00 << 520617983 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
 
-    txNew.vout[0].nValue = 50 * COIN;
+    txNew.vout[0].nValue = 25 * COIN;
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
     CBlock pblock;

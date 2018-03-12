@@ -1067,7 +1067,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     if (halvings >= 64)
         return 0;
 
-    CAmount nSubsidy = 50 * COIN;
+    CAmount nSubsidy = 25 * COIN;
 
     //Pre-mining 
     bool fRegTest = gArgs.GetBoolArg("-regtest", false);
