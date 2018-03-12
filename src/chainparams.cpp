@@ -524,6 +524,11 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
+const CChainParams &GetParams() {
+    assert(globalChainParams);
+    return *globalChainParams;
+}
+
 std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
 {
     if (chain == CBaseChainParams::MAIN)
