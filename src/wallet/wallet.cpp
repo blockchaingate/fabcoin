@@ -4361,7 +4361,7 @@ int CMerkleTx::GetBlocksToMaturity() const
 #else 
      //80000
     const Consensus::Params& consensus = Params().GetConsensus();
-    if( this->GetHeight() < consensus.CoinbaseLock  && this->GetHeight() != 1 )
+    if( this->GetHeight() < consensus.CoinbaseLock  && this->GetHeight() != 2 )
         return std::max(0, (consensus.CoinbaseLock+1) - GetDepthInMainChain());
     else
         return std::max(0, (COINBASE_MATURITY+1) - GetDepthInMainChain());
