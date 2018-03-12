@@ -258,8 +258,8 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     {
 #ifdef ENABLE_GPU
         delete g_solver;
-#endif
         free(header);
+#endif
     }
 
     return blockHashes;

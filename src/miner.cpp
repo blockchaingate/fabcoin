@@ -768,16 +768,16 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 #ifdef ENABLE_GPU
         if(conf.useGPU)
             delete g_solver;
-#endif
         free(header);
+#endif
         return;
     }
 
 #ifdef ENABLE_GPU
     if(conf.useGPU)
         delete g_solver;
-#endif
     free(header);
+#endif
 
 //    c.disconnect();
 }
