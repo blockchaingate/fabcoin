@@ -3,9 +3,9 @@ Fabcoin Core
 
 Setup
 ---------------------
-Fabcoin Core is the original Fabcoin client and it builds the backbone of the network. It downloads and, by default, stores the entire history of Fabcoin transactions (which is currently more than 100 GBs); depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more.
+Fabcoin Core is the original Fabcoin client and it builds the backbone of the network. It downloads and, by default, stores the entire history of Fabcoin transactions (which is currently just started and will grow as time being); depending on the speed of your computer and network connection, the synchronization process will depends on the volume of the blocks generated.
 
-To download Fabcoin Core, visit [fabcoincore.org](https://fabcoincore.org/en/releases/).
+To download Fabcoin Core, please visit [FABCOINCORE.ORg](HTTPS://FABCOINCORE.ORG/EN/RELEASES/).
 
 Running
 ---------------------
@@ -60,10 +60,6 @@ The Fabcoin repo's [root README](/README.md) contains relevant information on th
 - [Dnsseed Policy](dnsseed-policy.md)
 - [Benchmarking](benchmarking.md)
 
-### Resources
-* Discuss on the [FabcoinTalk](https://fabcointalk.org/) forums, in the [Development & Technical Discussion board](https://fabcointalk.org/index.php?board=6.0).
-* Discuss project-specific development on #fabcoin-core-dev on Freenode. If you don't have an IRC client use [webchat here](http://webchat.freenode.net/?channels=fabcoin-core-dev).
-* Discuss general Fabcoin development on #fabcoin-dev on Freenode. If you don't have an IRC client use [webchat here](http://webchat.freenode.net/?channels=fabcoin-dev).
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)

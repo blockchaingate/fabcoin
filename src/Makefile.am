@@ -303,7 +303,6 @@ libfabcoin_consensus_a_SOURCES = \
   hash.cpp \
   hash.h \
   prevector.h \
-  primitives/block.cpp \
   primitives/block.h \
   primitives/transaction.cpp \
   primitives/transaction.h \
@@ -339,6 +338,7 @@ libfabcoin_common_a_SOURCES = \
   netaddress.cpp \
   netbase.cpp \
   policy/feerate.cpp \
+  primitives/block.cpp \
   protocol.cpp \
   scheduler.cpp \
   script/sign.cpp \
@@ -408,7 +408,7 @@ fabcoind_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-fabcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+fabcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(LIBEQUIHASH_LIBS)
 
 # fabcoin-cli binary #
 fabcoin_cli_SOURCES = fabcoin-cli.cpp
@@ -422,11 +422,14 @@ endif
 
 fabcoin_cli_LDADD = \
   $(LIBFABCOIN_CLI) \
+  $(LIBFABCOIN_COMMON) \
+  $(LIBFABCOIN_CONSENSUS) \
+  $(LIBSECP256K1) \
   $(LIBUNIVALUE) \
   $(LIBFABCOIN_UTIL) \
   $(LIBFABCOIN_CRYPTO)
 
-fabcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+fabcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS) $(LIBEQUIHASH_LIBS)
 #
 
 # fabcoin-tx binary #
@@ -445,7 +448,8 @@ fabcoin_tx_LDADD = \
   $(LIBFABCOIN_UTIL) \
   $(LIBFABCOIN_CONSENSUS) \
   $(LIBFABCOIN_CRYPTO) \
-  $(LIBSECP256K1)
+  $(LIBSECP256K1) \
+  $(LIBEQUIHASH_LIBS)
 
 fabcoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
@@ -460,8 +464,8 @@ if GLIBC_BACK_COMPAT
 endif
 
 libfabcoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libfabcoinconsensus_la_LIBADD = $(LIBSECP256K1)
-libfabcoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_FABCOIN_INTERNAL
+libfabcoinconsensus_la_LIBADD = $(LIBSECP256K1) $(BOOST_LIBS) $(LIBEQUIHASH_LIBS)
+libfabcoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_FABCOIN_INTERNAL -DNO_UTIL_LOG
 libfabcoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 endif
