@@ -57,15 +57,6 @@ static std::atomic_flag s_logSpin = ATOMIC_FLAG_INIT;
 // Types of OpenCL devices we are interested in
 #define CL_QUERIED_DEVICE_TYPES (CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR)
 
-// Inject definitions into the kernal source
-static void addDefinition(string& _source, char const* _id, unsigned _value)
-{
-	char buf[256];
-	sprintf(buf, "#define %s %uu\n", _id, _value);
-	_source.insert(_source.begin(), buf, buf + strlen(buf));
-}
-
-
 cl_gpuminer::cl_gpuminer()
 :	m_openclOnePointOne()
 {

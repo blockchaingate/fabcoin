@@ -514,7 +514,7 @@ part2:
         uint collisionThreadId = collision >> 10;
         uint i = (collision >> 5) & 0x1F;
         uint j = collision & 0x1F;
-        __global uchar *ptr = ht_src + collisionThreadId * ((1 << (((200 / (9 + 1)) + 1) - 20)) * 6) * 32 +
+        __global uchar *ptr = (__global uchar *)ht_src + collisionThreadId * ((1 << (((200 / (9 + 1)) + 1) - 20)) * 6) * 32 +
             xi_offset;
         a = (__global ulong *)(ptr + i * 32);
         b = (__global ulong *)(ptr + j * 32);
@@ -632,7 +632,7 @@ void kernel_sols(__global char *ht0, __global char *ht1, __global sols_t *sols,
 {
     uint tid = get_global_id(0);
     __global char *htabs[2] = { ht0, ht1 };
-    __global char *hcounters[2] = { rowCountersSrc, rowCountersDst };
+//    __global char *hcounters[2] = { rowCountersSrc, rowCountersDst };
     uint ht_i = (9 - 1) % 2;
     uint cnt;
     uint xi_offset = (8 + ((9 - 1) / 2) * 4);
