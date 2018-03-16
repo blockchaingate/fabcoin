@@ -782,17 +782,16 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 //    c.disconnect();
 }
 
-
+static boost::thread_group* minerThreads = NULL;
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams)
 {
-    static boost::thread_group* minerThreads = NULL;
-
     if (nThreads < 0) 
         nThreads = GetNumCores();
     
     if (minerThreads != NULL)
     {
         minerThreads->interrupt_all();
+        minerThreads->join_all();
         delete minerThreads;
         minerThreads = NULL;
     }
@@ -803,14 +802,13 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams, GPUConfig conf)
 {
-    static boost::thread_group* minerThreads = NULL;
-
     if (nThreads < 0)
         nThreads = GetNumCores();
 
     if (minerThreads != NULL)
     {
         minerThreads->interrupt_all();
+        minerThreads->join_all();
         delete minerThreads;
         minerThreads = NULL;
     }
