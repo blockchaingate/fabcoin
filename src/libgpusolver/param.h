@@ -45,8 +45,17 @@
 // at least 2 wavefronts per SIMD to hide the 2-clock latency of integer
 // instructions. 10 is the max supported by the hw.
 #define BLAKE_WPS               	    10
-#define MAX_SOLS			            2000
+#define MAX_SOLS			            10  // 2000
 
+#if (NR_SLOTS < 16)
+#define BITS_PER_ROW 4
+#define ROWS_PER_UINT 8
+#define ROW_MASK 0x0F
+#else
+#define BITS_PER_ROW 8
+#define ROWS_PER_UINT 4
+#define ROW_MASK 0xFF
+#endif
 // Optional features
 #undef ENABLE_DEBUG
 

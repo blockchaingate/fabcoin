@@ -211,15 +211,10 @@ private:
 	cl::Context m_context;
 	cl::CommandQueue m_queue;
 	std::vector<cl::Kernel> m_gpuKernels;
-	/*cl::Buffer m_digests[2];
-	cl::Buffer m_buckets;
-	cl::Buffer m_new_digest_index;
-	cl::Buffer m_blake2b_digest;
-	cl::Buffer m_dst_solutions;
-	cl::Buffer m_n_solutions;*/
 	cl::Buffer buf_ht[2];
 	cl::Buffer buf_sols;
 	cl::Buffer buf_dbg;
+    cl::Buffer rowCounters[2];
 
 	uint64_t		nonce;
     uint64_t		total;

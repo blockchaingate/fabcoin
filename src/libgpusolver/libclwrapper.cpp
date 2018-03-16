@@ -373,13 +373,14 @@ bool cl_gpuminer::init(
 			return false;
 		}
 
-		// TODO create buffer kernel inputs (private variables)
 	  	buf_dbg = cl::Buffer(m_context, CL_MEM_READ_WRITE, dbg_size, NULL, NULL);
-		//TODO Dangger
-		m_queue.enqueueFillBuffer(buf_dbg, &zero, 1, 0, dbg_size, 0);
+
+        m_queue.enqueueFillBuffer(buf_dbg, &zero, 1, 0, dbg_size, 0);
 		buf_ht[0] = cl::Buffer(m_context, CL_MEM_READ_WRITE, HT_SIZE, NULL, NULL);
 		buf_ht[1] = cl::Buffer(m_context, CL_MEM_READ_WRITE, HT_SIZE, NULL, NULL);
 		buf_sols = cl::Buffer(m_context, CL_MEM_READ_WRITE, sizeof (sols_t), NULL, NULL);
+        rowCounters[0] = cl::Buffer(m_context, CL_MEM_READ_WRITE, NR_ROWS, NULL,NULL);
+        rowCounters[1] = cl::Buffer(m_context, CL_MEM_READ_WRITE, NR_ROWS, NULL, NULL);
 
 		m_queue.finish();
 
@@ -402,76 +403,73 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
 		uint32_t		sol_found = 0;
 		size_t          local_ws = 64;
 		size_t		    global_ws;
-		uint256		*nonce_ptr;
 
         assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
-        nonce_ptr = (uint256 *)(header + CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
-		//memset(nonce_ptr, 0, FABCOIN_NONCE_LEN);
-		//*nonce_ptr = nonce;
-		*ptr = *nonce_ptr;
+        *ptr = *(uint256 *)(header + CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
 
-		//printf("\nSolving nonce %s\n", s_hexdump(nonce_ptr, FABCOIN_NONCE_LEN));
 		zcash_blake2b_init(&blake, FABCOIN_HASH_LEN, PARAM_N, PARAM_K);
 		zcash_blake2b_update(&blake, header, 128, 0);
 		buf_blake_st = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof (blake.h), NULL, NULL);
 		m_queue.enqueueWriteBuffer(buf_blake_st, true, 0, sizeof(blake.h), blake.h);
-
 		m_queue.finish();
 
-		for (unsigned round = 0; round < PARAM_K; round++) {
-
-			size_t      global_ws = NR_ROWS;
-
+		for (unsigned round = 0; round < PARAM_K; round++) 
+        {
 			m_gpuKernels[0].setArg(0, buf_ht[round % 2]);
-			m_queue.enqueueNDRangeKernel(m_gpuKernels[0], cl::NullRange, cl::NDRange(global_ws), cl::NDRange(local_ws));
-
-			if (!round) {
+            m_gpuKernels[0].setArg(1, rowCounters[round % 2]);
+			m_queue.enqueueNDRangeKernel(m_gpuKernels[0], cl::NullRange, cl::NDRange(NR_ROWS / ROWS_PER_UINT), cl::NDRange(256));
+            
+			if (!round) 
+            {
 				m_gpuKernels[1+round].setArg(0, buf_blake_st);
 				m_gpuKernels[1+round].setArg(1, buf_ht[round % 2]);
+                m_gpuKernels[1+round].setArg(2, rowCounters[round % 2]);
 				global_ws = select_work_size_blake();
-			} else {
+			} 
+            else 
+            {
 				m_gpuKernels[1+round].setArg(0, buf_ht[(round - 1) % 2]);
 				m_gpuKernels[1+round].setArg(1, buf_ht[round % 2]);
+                m_gpuKernels[1+round].setArg(2, rowCounters[(round - 1) % 2]);
+                m_gpuKernels[1+round].setArg(3, rowCounters[round % 2]);
 				global_ws = NR_ROWS;
 			}
 
-			m_gpuKernels[1+round].setArg(2, buf_dbg);
+			m_gpuKernels[1+round].setArg(round == 0 ? 3 : 4, buf_dbg);
+            if (round == PARAM_K - 1)
+            {
+                m_gpuKernels[1+round].setArg(5, buf_sols);
+            }
 
 			m_queue.enqueueNDRangeKernel(m_gpuKernels[1+round], cl::NullRange, cl::NDRange(global_ws), cl::NDRange(local_ws));
-
 		}
 
 		m_gpuKernels[10].setArg(0, buf_ht[0]);
 		m_gpuKernels[10].setArg(1, buf_ht[1]);
 		m_gpuKernels[10].setArg(2, buf_sols);
+        m_gpuKernels[10].setArg(3, rowCounters[0]);
+        m_gpuKernels[10].setArg(4, rowCounters[1]);
 		global_ws = NR_ROWS;
 		m_queue.enqueueNDRangeKernel(m_gpuKernels[10], cl::NullRange, cl::NDRange(global_ws), cl::NDRange(local_ws));
 
 		sols_t	* sols;
-		sols = (sols_t *)malloc(sizeof(*sols));
+        size_t sz = sizeof(sols_t)*1;
 
-		m_queue.enqueueReadBuffer(buf_sols, true, 0, sizeof (*sols), sols);
-
+		sols = (sols_t *)malloc(sz);
+		m_queue.enqueueReadBuffer(buf_sols, true, 0, sz, sols);
 		m_queue.finish();
 
-		if (sols->nr > MAX_SOLS) {
-			/*fprintf(stderr, "%d (probably invalid) solutions were dropped!\n",
-			sols->nr - MAX_SOLS);*/
+		if (sols->nr > MAX_SOLS) 
+        {
 			sols->nr = MAX_SOLS;
 		}
 
 		for (unsigned sol_i = 0; sol_i < sols->nr; sol_i++)
 			sol_found += verify_sol(sols, sol_i);
 
-		//print_sols(sols, nonce, nr_valid_sols);
-
-		//printf("\nSolutions: %u\n", sol_found);
-
 		*n_sol = sol_found;
 		memcpy(indices, sols, sizeof(sols_t));
-
 		free(sols);
-
 	}
 	catch (cl::Error const& err)
 	{
