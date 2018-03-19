@@ -8,6 +8,7 @@
 #include "hash.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "consensus/consensus.h"
 
 std::string COutPoint::ToString() const
 {
@@ -91,6 +92,24 @@ CAmount CTransaction::GetValueOut() const
     return nValueOut;
 }
 
+double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const
+{
+    nTxSize = CalculateModifiedSize(nTxSize);
+    if (nTxSize == 0) return 0.0;
+    return dPriorityInputs / nTxSize;
+}
+unsigned int CTransaction::CalculateModifiedSize(unsigned int nTxSize) const
+{
+    if (nTxSize == 0)
+        nTxSize = (GetTransactionWeight(*this) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
+    for (std::vector<CTxIn>::const_iterator it(vin.begin()); it != vin.end(); ++it)
+    {
+        unsigned int offset = 41U + std::min(110U, (unsigned int)it->scriptSig.size());
+        if (nTxSize > offset)
+            nTxSize -= offset;
+    }
+    return nTxSize;
+}
 unsigned int CTransaction::GetTotalSize() const
 {
     return ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
@@ -112,4 +131,24 @@ std::string CTransaction::ToString() const
     for (const auto& tx_out : vout)
         str += "    " + tx_out.ToString() + "\n";
     return str;
+}
+int64_t GetTransactionWeight(const CTransaction& tx)
+{
+    return ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR -1) + ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
+}
+bool CTransaction::HasCreateOrCall() const{
+    for(const CTxOut& v : vout){
+        if(v.scriptPubKey.HasOpCreate() || v.scriptPubKey.HasOpCall()){
+            return true;
+        }
+    }
+    return false;
+}
+bool CTransaction::HasOpSpend() const{
+    for(const CTxIn& i : vin){
+        if(i.scriptSig.HasOpSpend()){
+            return true;
+        }
+    }
+    return false;
 }

@@ -14,7 +14,7 @@
 #include "txmempool.h"
 #include "util.h"
 
-static constexpr double INF_FEERATE = 1e99;
+
 
 std::string StringForFeeEstimateHorizon(FeeEstimateHorizon horizon) {
     static const std::map<FeeEstimateHorizon, std::string> horizon_strings = {
@@ -548,6 +548,22 @@ CBlockPolicyEstimator::CBlockPolicyEstimator()
     longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 }
 
+CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee) //jyan
+    : nBestSeenHeight(0), firstRecordedHeight(0), historicalFirst(0), historicalBest(0), trackedTxs(0), untrackedTxs(0)
+{
+    static_assert(MIN_BUCKET_FEERATE > 0, "Min feerate must be nonzero");
+    size_t bucketIndex = 0;
+    for (double bucketBoundary = MIN_BUCKET_FEERATE; bucketBoundary <= MAX_BUCKET_FEERATE; bucketBoundary *= FEE_SPACING, bucketIndex++) {
+        buckets.push_back(bucketBoundary);
+        bucketMap[bucketBoundary] = bucketIndex;
+    }
+    buckets.push_back(INF_FEERATE);
+    bucketMap[INF_FEERATE] = bucketIndex;
+    assert(bucketMap.size() == buckets.size());
+    feeStats = new TxConfirmStats(buckets, bucketMap, MED_BLOCK_PERIODS, MED_DECAY, MED_SCALE);
+    shortStats = new TxConfirmStats(buckets, bucketMap, SHORT_BLOCK_PERIODS, SHORT_DECAY, SHORT_SCALE);
+    longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
+}
 CBlockPolicyEstimator::~CBlockPolicyEstimator()
 {
     delete feeStats;
@@ -716,7 +732,41 @@ CFeeRate CBlockPolicyEstimator::estimateRawFee(int confTarget, double successThr
 
     return CFeeRate(median);
 }
+CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
+{
+    if (answerFoundAtTarget)
+        *answerFoundAtTarget = confTarget;
+    // Return failure if trying to analyze a target we're not tracking
+    if (confTarget <= 0 || (unsigned int)confTarget > feeStats->GetMaxConfirms())
+        return CFeeRate(0);
 
+    // It's not possible to get reasonable estimates for confTarget of 1
+    if (confTarget == 1)
+        confTarget = 2;
+
+    double median = -1;
+    while (median < 0 && (unsigned int)confTarget <= feeStats->GetMaxConfirms()) {
+        median = feeStats->EstimateMedianVal(confTarget++, SUFFICIENT_FEETXS, MIN_SUCCESS_PCT, true, nBestSeenHeight);
+    }
+
+    if (answerFoundAtTarget)
+        *answerFoundAtTarget = confTarget - 1;
+
+    // If mempool is limiting txs , return at least the min feerate from the mempool
+    CAmount minPoolFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFeePerK();
+    if (minPoolFee > 0 && minPoolFee > median)
+        return CFeeRate(minPoolFee);
+
+    if (median < 0)
+        return CFeeRate(0);
+
+    return CFeeRate(median);
+}
+
+double CBlockPolicyEstimator::estimatePriority(int confTarget)
+{
+    return -1;
+}
 unsigned int CBlockPolicyEstimator::HighestTargetTracked(FeeEstimateHorizon horizon) const
 {
     switch (horizon) {
@@ -903,8 +953,18 @@ CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, FeeCalculation 
 
     return CFeeRate(median);
 }
+double CBlockPolicyEstimator::estimateSmartPriority(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
+{
+    if (answerFoundAtTarget)
+        *answerFoundAtTarget = confTarget;
 
+    // If mempool is limiting txs, no priority txs are allowed
+    CAmount minPoolFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFeePerK();
+    if (minPoolFee > 0)
+        return INF_PRIORITY;
 
+    return -1;
+}
 bool CBlockPolicyEstimator::Write(CAutoFile& fileout) const
 {
     try {

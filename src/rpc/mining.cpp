@@ -34,6 +34,8 @@
 
 #include <memory>
 #include <stdint.h>
+#include <boost/assign/list_of.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <univalue.h>
 

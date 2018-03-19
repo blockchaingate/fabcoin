@@ -13,6 +13,7 @@
 #include "version.h"
 #include <string.h>
 
+static const int SER_WITHOUT_SIGNATURE = 1 << 3;
 namespace Consensus {
     struct Params;
 };
@@ -29,11 +30,13 @@ static const int SERIALIZE_BLOCK_LEGACY = 0x04000000;
 class CBlockHeader
 {
 public:
-    static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
+    static const size_t HEADER_SIZE = 4+32+32+32+32+4+28+4+4+32;  // Excluding Equihash solution
     // header
     int32_t nVersion;
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
+	uint256 hashStateRoot; // fasc
+    uint256 hashUTXORoot; // fasc
     uint32_t nHeight;
     uint32_t nReserved[7];
     uint32_t nTime;
@@ -55,6 +58,8 @@ public:
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
+        READWRITE(hashStateRoot); // fasc
+        READWRITE(hashUTXORoot); // fasc
         if (new_format) {
             READWRITE(nHeight);
             for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
@@ -78,6 +83,8 @@ public:
         nVersion = 0;
         hashPrevBlock.SetNull();
         hashMerkleRoot.SetNull();
+		hashStateRoot.SetNull(); // fasc
+        hashUTXORoot.SetNull(); // fasc
         nHeight = 0;
         memset(nReserved, 0, sizeof(nReserved));
         nTime = 0;
@@ -93,10 +100,26 @@ public:
 
     uint256 GetHash() const;
     uint256 GetHash(const Consensus::Params& params) const;
+	uint256 GetHashWithoutSign() const;
 
     int64_t GetBlockTime() const
     {
         return (int64_t)nTime;
+	}
+    CBlockHeader& operator=(const CBlockHeader& other) //fasc
+    {
+        if (this != &other)
+        {
+            this->nVersion       = other.nVersion;
+            this->hashPrevBlock  = other.hashPrevBlock;
+            this->hashMerkleRoot = other.hashMerkleRoot;
+            this->nTime          = other.nTime;
+            this->nBits          = other.nBits;
+            this->nNonce         = other.nNonce;
+            this->hashStateRoot  = other.hashStateRoot;
+            this->hashUTXORoot   = other.hashUTXORoot;
+        }
+        return *this;
     }
 };
 
@@ -142,6 +165,8 @@ public:
         block.nVersion       = nVersion;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
+		block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashUTXORoot   = hashUTXORoot; // fasc
         block.nHeight        = nHeight;
         memcpy(block.nReserved, nReserved, sizeof(block.nReserved));
         block.nTime          = nTime;
