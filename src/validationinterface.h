@@ -5,7 +5,8 @@
 
 #ifndef FABCOIN_VALIDATIONINTERFACE_H
 #define FABCOIN_VALIDATIONINTERFACE_H
-
+#include <boost/signals2/signal.hpp>
+#include <boost/shared_ptr.hpp>
 #include <memory>
 
 #include "primitives/transaction.h" // CTransaction(Ref)
@@ -43,6 +44,8 @@ protected:
     virtual void BlockConnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex *pindex, const std::vector<CTransactionRef> &txnConflicted) {}
     /** Notifies listeners of a block being disconnected */
     virtual void BlockDisconnected(const std::shared_ptr<const CBlock> &block) {}
+    virtual void SyncTransaction(const CTransaction &tx, const CBlockIndex *pindex, int posInBlock) {}
+    virtual void UpdatedTransaction(const uint256 &hash) {}
     /** Notifies listeners of the new active block chain on-disk. */
     virtual void SetBestChain(const CBlockLocator &locator) {}
     /** Notifies listeners about an inventory item being seen on the network. */
@@ -77,6 +80,9 @@ private:
     friend void ::UnregisterAllValidationInterfaces();
 
 public:
+    static const int SYNC_TRANSACTION_NOT_IN_BLOCK = -1;
+    boost::signals2::signal<void (const CTransaction &, const CBlockIndex *pindex, int posInBlock)> SyncTransaction;
+    boost::signals2::signal<void (const uint256 &)> UpdatedTransaction;
     /** Register a CScheduler to give callbacks which should run in the background (may only be called once) */
     void RegisterBackgroundSignalScheduler(CScheduler& scheduler);
     /** Unregister a CScheduler to give callbacks which should run in the background - these callbacks will now be dropped! */

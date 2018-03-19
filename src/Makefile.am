@@ -124,7 +124,6 @@ FABCOIN_CORE_H = \
   policy/policy.h \
   policy/rbf.h \
   pow.h \
-  pos.h \
   protocol.h \
   random.h \
   reverse_iterator.h \
@@ -220,7 +219,6 @@ libfabcoin_server_a_SOURCES = \
   policy/policy.cpp \
   policy/rbf.cpp \
   pow.cpp \
-  pos.cpp \
   rest.cpp \
   rpc/blockchain.cpp \
   rpc/mining.cpp \
@@ -273,7 +271,6 @@ libfabcoin_wallet_a_SOURCES = \
   wallet/wallet.cpp \
   wallet/walletdb.cpp \
   policy/rbf.cpp \
-  pos.cpp \
   $(FABCOIN_CORE_H)
 
 # crypto primitives library

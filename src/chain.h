@@ -213,6 +213,9 @@ public:
     unsigned int nTime;
     unsigned int nBits;
     uint256 nNonce;
+    uint256 hashStateRoot; // fasc
+    uint256 hashUTXORoot; // fasc
+    uint256 hashProof; // fasc
     std::vector<unsigned char> nSolution;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
@@ -243,6 +246,9 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = uint256();
+		hashStateRoot  = uint256(); // fasc
+        hashUTXORoot   = uint256(); // fasc
+		//nMoneySupply = 0;
         nSolution.clear();
     }
 
@@ -263,6 +269,9 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+		//nMoneySupply   = 0;
+        hashStateRoot  = block.hashStateRoot; // fasc
+        hashUTXORoot   = block.hashUTXORoot; // fasc
         nSolution      = block.nSolution;
     }
 
@@ -296,6 +305,8 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+		block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashUTXORoot   = hashUTXORoot; // fasc
         block.nSolution      = nSolution;
         return block;
     }
@@ -419,6 +430,8 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+		READWRITE(hashStateRoot); // fasc
+        READWRITE(hashUTXORoot); // fasc
         READWRITE(nSolution);
     }
 
@@ -433,6 +446,8 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
+		block.hashStateRoot   = hashStateRoot; // fasc
+        block.hashUTXORoot    = hashUTXORoot; // fasc
         block.nSolution       = nSolution;
         return block.GetHash();
     }

@@ -22,6 +22,6 @@ unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTi
 bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams&);
 
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
-bool CheckProofOfWork(uint256 hash, unsigned int nBits,  bool postfork, const Consensus::Params&);
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, bool postfork, const Consensus::Params&);
 
 #endif // FABCOIN_POW_H
