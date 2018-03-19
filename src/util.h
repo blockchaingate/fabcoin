@@ -101,10 +101,14 @@ namespace BCLog {
         COINDB      = (1 << 18),
         QT          = (1 << 19),
         LEVELDB     = (1 << 20),
-        POW         = (1 << 30),
+		POW         = (1 << 30),
         ALL         = ~(uint32_t)0,
     };
 }
+
+/** Return true if log accepts specified category */
+bool LogAcceptCategoryChar(const char* category);
+
 /** Return true if log accepts specified category */
 static inline bool LogAcceptCategory(uint32_t category)
 {
@@ -122,6 +126,7 @@ bool GetLogCategory(uint32_t *f, const std::string *str);
 
 /** Send a string to the log output */
 int LogPrintStr(const std::string &str);
+//int LogPrintStr(const std::string &str, bool useVMLog = false); // fasc
 
 /** Get format string from VA_ARGS for error reporting */
 template<typename... Args> std::string FormatStringFromLogArgs(const char *fmt, const Args&... args) { return fmt; }
@@ -154,6 +159,12 @@ template<typename T, typename... Args> static inline void MarkUsed(const T& t, c
     } \
 } while(0)
 #endif
+
+#define LogPrintChar(category, ...) do { \
+    if (LogAcceptCategoryChar((category))) { \
+        LogPrintStr(tfm::format(__VA_ARGS__)); \
+    } \
+} while(0)
 
 template<typename... Args>
 bool error(const char* fmt, const Args&... args)
@@ -321,4 +332,5 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
 
 std::string CopyrightHolders(const std::string& strPrefix);
 
+bool CheckHex(const std::string& str);
 #endif // FABCOIN_UTIL_H

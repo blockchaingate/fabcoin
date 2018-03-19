@@ -84,6 +84,7 @@
 #include <openssl/rand.h>
 #include <openssl/conf.h>
 
+using namespace std;
 // Application startup time (used for uptime calculation)
 const int64_t nStartupTime = GetTime();
 
@@ -241,7 +242,7 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::COINDB, "coindb"},
     {BCLog::QT, "qt"},
     {BCLog::LEVELDB, "leveldb"},
-    {BCLog::POW, "pow"},
+	{BCLog::POW, "pow"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 };
@@ -291,6 +292,40 @@ std::vector<CLogCategoryActive> ListActiveLogCategories()
         }
     }
     return ret;
+}
+
+bool LogAcceptCategoryChar(const char* category)
+{
+    /*
+    if (category != NULL)
+    {
+        if (!fDebug)
+            return false;
+
+        // Give each thread quick access to -debug settings.
+        // This helps prevent issues debugging global destructors,
+        // where mapMultiArgs might be deleted before another
+        // global destructor calls LogPrint()
+        static boost::thread_specific_ptr<set<string> > ptrCategory;
+        if (ptrCategory.get() == NULL)
+        {
+            if (mapMultiArgs.count("-debug")) {
+                const vector<string>& categories = mapMultiArgs.at("-debug");
+                ptrCategory.reset(new set<string>(categories.begin(), categories.end()));
+                // thread_specific_ptr automatically deletes the set when the thread ends.
+            } else
+                ptrCategory.reset(new set<string>());
+        }
+        const set<string>& setCategories = *ptrCategory.get();
+
+        // if not debugging everything and not debugging specific category, LogPrint does nothing.
+        if (setCategories.count(string("")) == 0 &&
+            setCategories.count(string("1")) == 0 &&
+            setCategories.count(string(category)) == 0)
+            return false;
+    }
+    */
+    return true;
 }
 
 /**
@@ -878,12 +913,12 @@ bool SetupNetworking()
 void SetThreadPriority(int nPriority)
 {
 #ifdef WIN32
-    SetThreadPriority(GetCurrentThread(), nPriority);
+	SetThreadPriority(GetCurrentThread(), nPriority);
 #else // WIN32
 #ifdef PRIO_THREAD
-    setpriority(PRIO_THREAD, 0, nPriority);
+	setpriority(PRIO_THREAD, 0, nPriority);
 #else // PRIO_THREAD
-    setpriority(PRIO_PROCESS, 0, nPriority);
+	setpriority(PRIO_PROCESS, 0, nPriority);
 #endif // PRIO_THREAD
 #endif // WIN32
 }
@@ -914,3 +949,12 @@ int64_t GetStartupTime()
 {
     return nStartupTime;
 }
+
+bool CheckHex(const std::string& str) {
+    size_t data=0;
+    if(str.size() > 2 && (str.compare(0, 2, "0x") == 0 || str.compare(0, 2, "0X") == 0)){
+        data=2;
+    }
+    return str.size() > data && str.find_first_not_of("0123456789abcdefABCDEF", data) == std::string::npos;
+}
+
