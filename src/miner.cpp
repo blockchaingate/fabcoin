@@ -179,10 +179,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxFees[0] = -nFees;
 
     const Consensus::Params& params = chainparams.GetConsensus();
-    int ser_flags = (nHeight < params.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
-    uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
-    LogPrintf("CreateNewBlock(): total size: %u block weight: %u txs: %u fees: %ld sigops %d\n",
-              nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
+    //int ser_flags = (nHeight < params.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
+    //uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+    //LogPrintf("CreateNewBlock(): total size: %u block weight: %u txs: %u fees: %ld sigops %d\n",
+    //         nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
 
     arith_uint256 nonce;
     if (nHeight >= params.FABHeight) {
@@ -543,7 +543,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     unsigned int n = chainparams.EquihashN();
     unsigned int k = chainparams.EquihashK();
 
-    uint8_t * header = NULL;
+    //uint8_t * header = NULL;
 #ifdef ENABLE_GPU
     GPUSolver * g_solver = NULL;
     if(conf.useGPU) 
@@ -782,9 +782,11 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 //    c.disconnect();
 }
 
+
 static boost::thread_group* minerThreads = NULL;
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams)
 {
+
     if (nThreads < 0) 
         nThreads = GetNumCores();
     
@@ -802,6 +804,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams, GPUConfig conf)
 {
+
     if (nThreads < 0)
         nThreads = GetNumCores();
 

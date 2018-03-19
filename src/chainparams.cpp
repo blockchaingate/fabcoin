@@ -43,7 +43,8 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.hashPrevBlock.SetNull();
     genesis.nHeight  = 0;
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
-
+    genesis.hashStateRoot = uint256(h256Touint(dev::h256("e965ffd002cd6ad0e2dc402b8044de833e06b23127ea8c3d80aec91410771495"))); // fasc
+    genesis.hashUTXORoot = uint256(h256Touint(dev::sha3(dev::rlp("")))); // fasc
     return genesis;
 }
 
@@ -94,6 +95,9 @@ static CBlock CreateGenesisBlock_legacy(const char* pszTimestamp, const CScript&
     genesis.hashPrevBlock.SetNull();
     genesis.nHeight  = 0;
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
+    genesis.hashStateRoot = uint256(h256Touint(dev::h256("e965ffd002cd6ad0e2dc402b8044de833e06b23127ea8c3d80aec91410771495"))); // fasc
+    genesis.hashUTXORoot = uint256(h256Touint(dev::sha3(dev::rlp("")))); // fasc
+
     return genesis;
 }
 
@@ -470,7 +474,8 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
+        const std::string genesisHashString =  "0xe738ccb74b988c39f0a03938d46e7c831199381d89291c3a12d83ffd5835876b";
+        consensus.defaultAssumeValid = uint256S(genesisHashString);
 
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
@@ -484,24 +489,33 @@ public:
         nEquihashN = N;
         nEquihashK = K;
 
-        genesis = CreateGenesisBlock_legacy(1296688602, 2, 0x207fffff, 1, 50 * COIN);
+        // 1517433514 2018.1.31
+        // jyan genesis = CreateGenesisBlock_legacy(1296688602, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(
+            1517433514,
+            uint256S("0x000000000000000000000000000000000000000000000000000000000000000a"),
+            ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
+            0x2007ffff, 1, 50 * COIN );
+
+        //jyan consensus.hashGenesisBlock = genesis.GetHash();
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
-        assert(consensus.hashGenesisBlock == uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
-        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+
+
+        assert(consensus.hashGenesisBlock == uint256S(genesisHashString));
+        assert(genesis.hashMerkleRoot == uint256S("0x83acaf917b80757baa79d9635c35f0b09c7cab3c30f213d62419cc3630bc6960"));
 
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
 
         fMiningRequiresPeers = false;
-        fDefaultConsistencyChecks = true;
+        fDefaultConsistencyChecks = false; //jyan
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
 
         checkpointData = (CCheckpointData) {
             {
-               {0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")},
-
+                {0, uint256S(genesisHashString)},
             }
         };
 
@@ -569,3 +583,4 @@ void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime,
 {
     globalChainParams->UpdateVersionBitsParameters(d, nStartTime, nTimeout);
 }
+
