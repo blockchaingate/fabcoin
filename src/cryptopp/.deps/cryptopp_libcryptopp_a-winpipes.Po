@@ -1,0 +1,8 @@
+cryptopp/cryptopp_libcryptopp_a-winpipes.o: cryptopp/winpipes.cpp \
+ /usr/include/stdc-predef.h cryptopp/pch.h cryptopp/config.h
+
+/usr/include/stdc-predef.h:
+
+cryptopp/pch.h:
+
+cryptopp/config.h:
