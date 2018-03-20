@@ -43,11 +43,23 @@ bench_bench_fabcoin_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
   $(LIBUNIVALUE) \
+  $(LIBETHEREUM) \
+  $(LIBETHASHSEAL) \
+  $(LIBETHASH) \
+  $(LIBETHCORE) \
+  $(LIBDEVCORE) \
+  $(LIBJSONCPP) \
+  $(LIBEVM) \
+  $(LIBEVMCORE) \
+  $(LIBDEVCRYPTO) \
+  $(LIBCRYPTOPP) \
+  $(LIBSCRYIPT) \
   $(LIBEQUIHASH_LIBS)
 
 if ENABLE_ZMQ
 bench_bench_fabcoin_LDADD += $(LIBFABCOIN_ZMQ) $(ZMQ_LIBS)
 endif
+
 
 if ENABLE_WALLET
 bench_bench_fabcoin_SOURCES += bench/coin_selection.cpp
