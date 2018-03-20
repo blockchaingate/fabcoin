@@ -47,7 +47,7 @@ class MaxUploadTest(FabcoinTestFramework):
         self.nodes[0].setmocktime(old_time)
 
         # Generate some old blocks
-        self.nodes[0].generate(130)
+        self.nodes[0].generate(830)
 
         # test_nodes[0] will only request old blocks
         # test_nodes[1] will only request new blocks
