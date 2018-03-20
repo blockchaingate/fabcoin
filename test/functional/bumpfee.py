@@ -50,8 +50,9 @@ class BumpFeeTest(FabcoinTestFramework):
 
         # fund rbf node with 10 coins of 0.001 btc (100,000 satoshis)
         self.log.info("Mining blocks...")
-        peer_node.generate(110)
+        peer_node.generate(810)
         self.sync_all()
+
         for i in range(25):
             peer_node.sendtoaddress(rbf_node_address, 0.001)
         self.sync_all()
@@ -291,7 +292,7 @@ def submit_block_with_tx(node, tx):
     block.rehash()
     block.hashMerkleRoot = block.calc_merkle_root()
     block.solve()
-    node.submitblock(bytes_to_hex_str(block.serialize(True)))
+    node.submitblock(bytes_to_hex_str(block.serialize(True)), '', True)
     return block
 
 

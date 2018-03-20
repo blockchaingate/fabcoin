@@ -8,7 +8,7 @@ Test case is:
 4 nodes. 1 2 and 3 send transactions between each other,
 fourth node is a miner.
 1 2 3 each mine a block to start, then
-Miner creates 100 blocks so 1 2 3 each have 50 mature
+Miner creates 800 blocks so 1 2 3 each have 25 mature
 coins to spend.
 Then 5 iterations of 1/2/3 sending coins amongst
 themselves to get transactions in the wallets,
@@ -102,18 +102,20 @@ class WalletBackupTest(FabcoinTestFramework):
         sync_blocks(self.nodes)
         self.nodes[2].generate(1)
         sync_blocks(self.nodes)
-        self.nodes[3].generate(100)
+
+        self.nodes[3].generate(800)
         sync_blocks(self.nodes)
 
-        assert_equal(self.nodes[0].getbalance(), 50)
-        assert_equal(self.nodes[1].getbalance(), 50)
-        assert_equal(self.nodes[2].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), 25)
+        assert_equal(self.nodes[1].getbalance(), 25)
+        assert_equal(self.nodes[2].getbalance(), 25)
         assert_equal(self.nodes[3].getbalance(), 0)
 
         self.log.info("Creating transactions")
         # Five rounds of sending each other transactions.
         for i in range(5):
             self.do_one_round()
+        self.sync_all()
 
         self.log.info("Backing up")
         tmpdir = self.options.tmpdir
@@ -128,8 +130,10 @@ class WalletBackupTest(FabcoinTestFramework):
         for i in range(5):
             self.do_one_round()
 
-        # Generate 101 more blocks, so any fees paid mature
-        self.nodes[3].generate(101)
+        self.sync_all()
+
+        #Generate 801 more blocks, so any fees paid mature
+        self.nodes[3].generate(801)
         self.sync_all()
 
         balance0 = self.nodes[0].getbalance()
@@ -138,9 +142,17 @@ class WalletBackupTest(FabcoinTestFramework):
         balance3 = self.nodes[3].getbalance()
         total = balance0 + balance1 + balance2 + balance3
 
-        # At this point, there are 214 blocks (103 for setup, then 10 rounds, then 101.)
-        # 114 are mature, so the sum of all wallets should be 114 * 50 = 5700.
-        assert_equal(total, 5700)
+        # At this point, there are 1614 blocks (803 for setup, then 10 rounds, then 801.)
+        # 814 are mature, so the sum of all wallets should be 114 * 50 = 5700.
+        # 149 * 25.0                0  -149     # notes: no block 0 
+        # 150 * 25.0/2              150-299
+        # 150 * 25.0/2/2            300-449
+        # 150 * 25.0/2/2/2          450-599
+        # 150 * 25.0/2/2/2/2        600-749
+        # 65  * 25.0/2/2/2/2/2      750-899
+        # echo "149 * 25.0 + 150 * 25.0/2 + 150 * 25.0/2/2 + 150 * 25.0/2/2/2 + 150 * 25.0/2/2/2/2 + 65*25.0/2/2/2/2/2" | bc -l
+
+        assert_equal(total, 7291.40625)
 
         ##
         # Test restoring spender wallets from backups

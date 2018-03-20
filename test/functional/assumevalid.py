@@ -127,8 +127,8 @@ class AssumeValidTest(FabcoinTestFramework):
         self.tip = block.sha256
         height += 1
 
-        # Bury the block 100 deep so the coinbase output is spendable
-        for i in range(100):
+        # Bury the block 800 deep so the coinbase output is spendable
+        for i in range(800):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.solve()
             self.blocks.append(block)
@@ -139,7 +139,7 @@ class AssumeValidTest(FabcoinTestFramework):
         # Create a transaction spending the coinbase output with an invalid (null) signature
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.block1.vtx[0].sha256, 0), scriptSig=b""))
-        tx.vout.append(CTxOut(49 * 100000000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(24 * 100000000, CScript([OP_TRUE])))
         tx.calc_sha256()
 
         block102 = create_block(self.tip, create_coinbase(height), self.block_time)
@@ -183,15 +183,15 @@ class AssumeValidTest(FabcoinTestFramework):
         node1.send_header_for_blocks(self.blocks[2000:])
         node2.send_header_for_blocks(self.blocks[0:200])
 
-        # Send blocks to node0. Block 102 will be rejected.
+        # Send blocks to node0. Block 802 will be rejected.
         self.send_blocks_until_disconnected(node0)
-        self.assert_blockchain_height(self.nodes[0], 101)
+        self.assert_blockchain_height(self.nodes[0], 801)
 
         # Send all blocks to node1. All blocks will be accepted.
         for i in range(2202):
             node1.send_message(msg_block(self.blocks[i]))
         # Syncing 2200 blocks can take a while on slow systems. Give it plenty of time to sync.
-        node1.sync_with_ping(120)
+        node1.sync_with_ping(240)
         assert_equal(self.nodes[1].getblock(self.nodes[1].getbestblockhash())['height'], 2202)
 
         # Send blocks to node2. Block 102 will be rejected.

@@ -27,7 +27,7 @@ class KeypoolRestoreTest(FabcoinTestFramework):
 
     def run_test(self):
         self.tmpdir = self.options.tmpdir
-        self.nodes[0].generate(101)
+        self.nodes[0].generate(801)
 
         self.log.info("Make backup of wallet")
 

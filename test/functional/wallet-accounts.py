@@ -29,8 +29,8 @@ class WalletAccountsTest(FabcoinTestFramework):
 
         # Note each time we call generate, all generated coins go into
         # the same address, so we call twice to get two addresses w/50 each
-        node.generate(1)
-        node.generate(101)
+        node.generate(2)
+        node.generate(802)
         assert_equal(node.getbalance(), 100)
 
         # there should be 2 address groups
@@ -70,7 +70,7 @@ class WalletAccountsTest(FabcoinTestFramework):
 
         # we want to reset so that the "" account has what's expected.
         # otherwise we're off by exactly the fee amount as that's mined
-        # and matures in the next 100 blocks
+        # and matures in the next 800 blocks
         node.sendfrom("", common_address, fee)
         accounts = ["a", "b", "c", "d", "e"]
         amount_to_send = 1.0
@@ -101,15 +101,15 @@ class WalletAccountsTest(FabcoinTestFramework):
             assert_equal(node.getreceivedbyaccount(account), 2)
             node.move(account, "", node.getbalance(account))
 
-        node.generate(101)
+        node.generate(801)
         
-        expected_account_balances = {"": 5200}
+        expected_account_balances = {"": 7186.71875000}
         for account in accounts:
             expected_account_balances[account] = 0
         
         assert_equal(node.listaccounts(), expected_account_balances)
         
-        assert_equal(node.getbalance(""), 5200)
+        assert_equal(node.getbalance(""), 7186.71875000 )
         
         for account in accounts:
             address = node.getaccountaddress("")
@@ -124,7 +124,7 @@ class WalletAccountsTest(FabcoinTestFramework):
             multisig_address = node.addmultisigaddress(5, addresses, account)
             node.sendfrom("", multisig_address, 50)
         
-        node.generate(101)
+        node.generate(801)
         
         for account in accounts:
             assert_equal(node.getbalance(account), 50)
