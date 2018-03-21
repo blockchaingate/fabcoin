@@ -169,7 +169,6 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
              (int)::GetSerializeSize(block, SER_NETWORK,
                                      PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS | ser_flags)));
     result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | ser_flags)));
-    //jyan result.push_back(Pair("weight", (int)::GetBlockWeight(block, consensusParams)));
 	result.push_back(Pair("weight", (int)::GetBlockWeight(block)));
     result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", block.nVersion));

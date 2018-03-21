@@ -621,7 +621,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         view.SetBackend(viewMemPool);
 
         // do we already have it?
-        for (size_t out = 0; out < tx.vout.size(); out++) {
+        /*for (size_t out = 0; out < tx.vout.size(); out++) {
             COutPoint outpoint(hash, out);
             bool had_coin_in_cache = pcoinsTip->HaveCoinInCache(outpoint);
             if (view.HaveCoin(outpoint)) {
@@ -630,7 +630,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                 }
                 return state.Invalid(false, REJECT_ALREADY_KNOWN, "txn-already-known");
             }
-        }
+        }*/
         // do all inputs exist?
         for (const CTxIn txin : tx.vin) {
             if (!pcoinsTip->HaveCoinInCache(txin.prevout)) {
@@ -2783,7 +2783,7 @@ valtype GetSenderAddress(const CTransaction& tx, const CCoinsViewCache* coinsVie
 
 	CTxDestination addressBit;
     txnouttype txType=TX_NONSTANDARD;
-	if(ExtractDestination(script, addressBit)){ //jyan
+        if(ExtractDestination(script, addressBit, &txType)){
 		if ((txType == TX_PUBKEY || txType == TX_PUBKEYHASH) &&
                 addressBit.type() == typeid(CKeyID)){
 			CKeyID senderAddress(boost::get<CKeyID>(addressBit));
@@ -2941,7 +2941,7 @@ dev::eth::EnvInfo ByteCodeExec::BuildEVMEnvironment(){
 dev::Address ByteCodeExec::EthAddrFromScript(const CScript& script){
     CTxDestination addressBit;
     txnouttype txType=TX_NONSTANDARD;
-    if(ExtractDestination(script, addressBit)){  //jyan
+    if(ExtractDestination(script, addressBit, &txType)){
         if ((txType == TX_PUBKEY || txType == TX_PUBKEYHASH) &&
             addressBit.type() == typeid(CKeyID)){
             CKeyID addressKey(boost::get<CKeyID>(addressBit));

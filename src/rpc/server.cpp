@@ -509,7 +509,6 @@ UniValue CRPCTable::execute(const JSONRPCRequest &request) const
     {
         throw JSONRPCError(RPC_MISC_ERROR, e.what());
     }
-    g_rpcSignals.PostCommand(*pcmd); //jyan qtum dadded
 }
 
 std::vector<std::string> CRPCTable::listCommands() const
