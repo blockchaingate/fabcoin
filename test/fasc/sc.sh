@@ -4,6 +4,7 @@ source "./fab_daemon.sh"
 source "./fab_mining.sh"
 source "./fab_info.sh"
 source "./fab_acct.sh"
+source "./fab_bal.sh"
 
 DAEMON_NUM=5
 
@@ -20,30 +21,26 @@ fab_daemon $DAEMON_NUM $FAB_ROOT $FAB_PORT $RPC_PORT
 
 sleep 10 
 
-#### Test Case : getinfo #######################
 echo
 echo
-echo "Test: getinfo ..."
+echo "Test: getinfo =================================================="
 fab_info 1
 BLOCK_NUM=$?
 assert_eq "1" "$BLOCK_NUM" "failed: block # is not 1 !"
 echo "Pass: getinfo "
 #### END Case : getinf #######################
 
-#### Test Case : generate #######################
 echo
 echo
 echo "Test: generate ..."
 
 fab_mining $DAEMON_NUM $FAB_ROOT $RPC_PORT 6
 
-echo "Pass: generate "
 #### END Case : generate #######################
 
-#### Test Case : account address #######################
 echo
 echo
-echo "Test: account address ..."
+echo "Test: account address =================================================="
 
 port_rpc=$(($RPC_PORT + 1 ))
 export ADDR_1=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getaccountaddress ""`
@@ -57,19 +54,18 @@ port_rpc=$(($RPC_PORT + 3 ))
 export ADDR_3=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getaccountaddress ""`
 echo "address node 3 " ${ADDR_3}
 
-echo "Pass: account address "
+port_rpc=$(($RPC_PORT + 4 ))
+export ADDR_4=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getaccountaddress ""`
+echo "address node 4 " ${ADDR_4}
+
+
 #### END Case : account address #######################
 
-#### Test Case : transaction #######################
 echo
 echo
-echo "Test: transaction ..."
+echo "Test: transaction =================================================="
 
-for i in `seq 1 ${DAEMON_NUM}`; 
-do
-fab_acct $i 
-done
-
+fab_bal $DAEMON_NUM 
 
 port_rpc=$(($RPC_PORT + 1 ))
 export TXID_1_2=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} sendtoaddress ${ADDR_2} 10`
@@ -78,11 +74,6 @@ echo "TXID (node 1-->2) 10 coin" $TXID_1_2
 
 fab_mining $DAEMON_NUM $FAB_ROOT $RPC_PORT 5
 
-for i in `seq 1 ${DAEMON_NUM}`; 
-do
-fab_acct $i 
-done
+fab_bal $DAEMON_NUM 
 
-
-echo "Pass:transactions "
 #### END Case : transaction #######################
