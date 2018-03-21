@@ -1,0 +1,28 @@
+#!/bin/bash
+
+fab_mining() {
+  local DAEMON_NUM="$1"
+  local FAB_ROOT="$2"
+  local RPC_PORT="$3"
+  local round_num=$4
+
+  COUNTER=0
+  while [  $COUNTER -lt $round_num ]; do
+    let COUNTER=COUNTER+1
+    for j in `seq 1 ${DAEMON_NUM}`;
+    do
+      port_rpc=$(( $RPC_PORT + $j ))
+      ${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} generate 1
+      sleep 1
+  
+      port_rpc=$(($RPC_PORT + $j))
+      TR=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getinfo`
+      BLOCK_NUM=`echo $TR|jq '.blocks'`
+      BALANCE_NUM=`echo $TR|jq '.balance'`
+      echo "node is " $j "   blocks=" $BLOCK_NUM "   balance=" $BALANCE_NUM
+      echo
+    done
+    sleep 1
+  done
+}
+
