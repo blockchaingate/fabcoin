@@ -1173,13 +1173,6 @@ bool CheckHeaderProof(const CBlockHeader& block, const Consensus::Params& consen
 
 bool CheckIndexProof(const CBlockIndex& block, const Consensus::Params& consensusParams)
 {
-    // Get the hash of the proof
-    // After validating the PoS block the computed hash proof is saved in the block index, which is used to check the index
-    // uint256 hashProof =  block.GetBlockHash(); 
-    // Check for proof after the hash proof is computed
-   
-    //return CheckProofOfWork(hashProof, block.nBits, consensusParams, false); 
-    
     //TODO-J this fucntion is for POS, leave it empty now
     return true;
 }
@@ -1233,7 +1226,7 @@ bool ReadBlockFromDisk(Block& block, const CDiskBlockPos& pos, const Consensus::
     if (postfork && !CheckEquihashSolution(&block, Params())) {
         return error("ReadBlockFromDisk: Errors in block header at %s (bad Equihash solution)", pos.ToString());
     }
-    // Check the header // jyan not checked in qtum 
+    // Check the header // jyan not checked in qfasc 
     //if (!CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
     //    return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
 
@@ -2700,47 +2693,11 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 					nActualStakeReward, blockReward),
 				REJECT_INVALID, "bad-cs-amount");
 
-		// The first proof-of-stake blocks get full reward, the rest of them are split between recipients
-		int rewardRecipients = 1;
-		// int nPrevHeight = nHeight - 1;
-		// jyan if (nPrevHeight >= consensusParams.nFirstMPoSBlock)
-		//	rewardRecipients = consensusParams.nMPoSRewardRecipients;
-
-		// Check reward recipients number
-		if (rewardRecipients < 1)
-			return error("CheckReward(): invalid reward recipients");
-
-		//if only 1 then no MPoS logic required
-		if (rewardRecipients == 1) {
-			return true;
-		}
 		if (blockReward < gasRefunds) {
 			return state.DoS(100, error("CheckReward(): Block Reward is less than total gas refunds"),
 				REJECT_INVALID, "bad-cs-gas-greater-than-reward");
 
 		}
-                //TODO-J The following logic if for POS, commented 
-
-                /*
-		CAmount splitReward = (blockReward - gasRefunds) / rewardRecipients;
-
-		// Generate the list of script recipients including all of their parameters
-		std::vector<CScript> mposScriptList;
-		if (!GetMPoSOutputScripts(mposScriptList, nPrevHeight, consensusParams))
-			return error("CheckReward(): cannot create the list of MPoS output scripts");
-
-		for (size_t i = 0; i < mposScriptList.size(); i++) {
-			it = std::find(vTempVouts.begin(), vTempVouts.end(), CTxOut(splitReward, mposScriptList[i]));
-			if (it == vTempVouts.end()) {
-				return state.DoS(100,
-					error("CheckReward(): An MPoS participant was not properly paid"),
-					REJECT_INVALID, "bad-cs-mpos-missing");
-			}
-			else {
-				vTempVouts.erase(it);
-			}
-		}
-                */
 
 		vTempVouts.clear();
 	}
@@ -3755,7 +3712,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
                          REJECT_INVALID, "invalid-solution");
     }
 
-    // Check proof of work matches claimed amount //jyan not checked in qtum
+    // Check proof of work matches claimed amount //jyan not checked in qfasc
     //if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
     //    return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
@@ -4040,7 +3997,8 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     // large by filling up the coinbase witness, which doesn't change
     // the block hash, so we couldn't mark the block as permanently
     // failed).
-    if (GetBlockWeight(block) > MAX_BLOCK_WEIGHT) { //jyan
+    // MAX_BLOCK_WEIGHT = 4000000 while qfasc use dgpMaxBlockWeight = 8000000
+    if (GetBlockWeight(block) > MAX_BLOCK_WEIGHT) { 
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-weight", false, strprintf("%s : weight limit failed", __func__));
     }
 
@@ -4167,8 +4125,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
 
-    int nHeight = pindex->nHeight;
-
     // Try to process all requested blocks that we don't have, but only
     // process an unrequested block if it's new and has enough work to
     // advance our tip, and isn't too many blocks ahead.
@@ -4216,7 +4172,7 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
 
-    //int nHeight = pindex->nHeight; //jyan
+    int nHeight = pindex->nHeight;
 
     // Write block to history file
     try {
@@ -4243,13 +4199,6 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
 bool static IsCanonicalBlockSignature(const std::shared_ptr<const CBlock> pblock, bool checkLowS)
 {
-    /*if (pblock->IsProofOfWork()) { 
-        return pblock->vchBlockSig.empty();
-    }
-
-    return checkLowS ? IsLowDERSignature(pblock->vchBlockSig, nullptr, false) : IsDERSignature(pblock->vchBlockSig, nullptr, false);*/
-
-
     //TODO-J this fucntion is for POS, leave it empty
     return true;
 }
