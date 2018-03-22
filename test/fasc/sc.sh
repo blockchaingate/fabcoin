@@ -77,3 +77,24 @@ fab_mining $DAEMON_NUM $FAB_ROOT $RPC_PORT 5
 fab_bal $DAEMON_NUM 
 
 #### END Case : transaction #######################
+
+echo
+echo
+echo "Test: create contract =================================================="
+
+fab_bal $DAEMON_NUM 
+
+port_rpc=$(($RPC_PORT + 2 ))
+export SC_2_1=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} createcontract "60606040525b33600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690836c010000000000000000000000009081020402179055506103786001600050819055505b600c80605b6000396000f360606040526008565b600256" 6000000 0.0000004 $ADDR_1 true`
+echo $SC_2_1
+
+port_rpc=$(($RPC_PORT + 3 ))
+export TXID_3_4=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} sendtoaddress ${ADDR_4} 10`
+
+echo "TXID (node 3-->4) 10 coin" $TXID_3_4
+
+fab_mining $DAEMON_NUM $FAB_ROOT $RPC_PORT 5
+
+fab_bal $DAEMON_NUM 
+
+#### END Case : create contract #######################

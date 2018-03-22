@@ -1,4 +1,5 @@
 #!/bin/bash
+source "./fab_mining.sh"
 
 fab_daemon() {
   local daemon_num="$1"
@@ -36,6 +37,8 @@ fab_daemon() {
        sleep 1
      else
        sleep 10
+       fab_mining_one 1 $FAB_ROOT $RPC_PORT 20
+       sleep 3
      fi
     done    
 }

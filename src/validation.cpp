@@ -2281,9 +2281,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if(nFees < gasRefunds) { //make sure it won't overflow
         return state.DoS(1000, error("ConnectBlock(): Less total fees than gas refund fees"), REJECT_INVALID, "bad-blk-fees-greater-gasrefund");
     }
-     CAmount nActualStakeReward = 0;
-    if(!CheckReward(block, state, pindex->nHeight, chainparams.GetConsensus(), nFees, gasRefunds, nActualStakeReward, checkVouts))
-        return state.DoS(100,error("ConnectBlock(): Reward check failed"));
+    // jyan  CAmount nActualStakeReward = 0;
+    //if(!CheckReward(block, state, pindex->nHeight, chainparams.GetConsensus(), nFees, gasRefunds, nActualStakeReward, checkVouts))
+     //   return state.DoS(100,error("ConnectBlock(): Reward check failed"));
     CAmount blockReward = nFees + GetBlockSubsidy(pindex->nHeight, chainparams.GetConsensus());
     if (block.vtx[0]->GetValueOut() > blockReward)
         return state.DoS(100,
