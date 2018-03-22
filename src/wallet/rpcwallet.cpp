@@ -1218,6 +1218,57 @@ UniValue addwitnessaddress(const JSONRPCRequest& request)
     return CFabcoinAddress(w.result).ToString();
 }
 
+UniValue getnewwitnessaddress(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+        "getnewwitnessaddress ( \"account\" )\n"
+        "\nReturns a new Fabcoin address for receiving payments.\n"
+        "If 'account' is specified (DEPRECATED), it is added to the address book \n"
+        "so payments received with the address will be credited to 'account'.\n"
+        "\nArguments:\n"
+        "1. \"account\"        (string, optional) DEPRECATED. The account name for the address to be linked to. If not provided, the default account \"\" is used. It can also be set to the empty string \"\" to represent the default account. The account does not need to exist, it will be created if there is no account by the given name.\n"
+        "\nResult:\n"
+        "\"address\"    (string) The new fabcoin address\n"
+        "\nExamples:\n"
+        + HelpExampleCli("getnewwitnessaddress", "")
+        + HelpExampleRpc("getnewwitnessaddress", "")
+        );
+
+    LOCK2(cs_main, pwallet->cs_wallet);
+
+    // Parse the account first so we don't generate a key if there's an error
+    std::string strAccount;
+    if (!request.params[0].isNull())
+        strAccount = AccountFromValue(request.params[0]);
+
+    if (!pwallet->IsLocked()) {
+        pwallet->TopUpKeyPool();
+    }
+
+    // Generate a new key that is added to wallet
+    CPubKey newKey;
+    if (!pwallet->GetKeyFromPool(newKey)) {
+        throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
+    }
+
+    Witnessifier w(pwallet);
+    CTxDestination dest = newKey.GetID();
+
+    bool ret = boost::apply_visitor(w, dest);
+    if (!ret) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "Public key or redeemscript not known to wallet, or the key is uncompressed");
+    }
+
+    pwallet->SetAddressBook(w.result, strAccount, "receive");
+    return CFabcoinAddress(w.result).ToString();
+}
+
 struct tallyitem
 {
     CAmount nAmount;
@@ -3166,6 +3217,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "getaddressesbyaccount",    &getaddressesbyaccount,    true,   {"account"} },
     { "wallet",             "getbalance",               &getbalance,               false,  {"account","minconf","include_watchonly"} },
     { "wallet",             "getnewaddress",            &getnewaddress,            true,   {"account"} },
+    { "wallet",             "getnewwitnessaddress",     &getnewwitnessaddress,     true,   {"account"} },
     { "wallet",             "getrawchangeaddress",      &getrawchangeaddress,      true,   {} },
     { "wallet",             "getreceivedbyaccount",     &getreceivedbyaccount,     false,  {"account","minconf"} },
     { "wallet",             "getreceivedbyaddress",     &getreceivedbyaddress,     false,  {"address","minconf"} },
