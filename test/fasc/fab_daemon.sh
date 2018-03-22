@@ -9,9 +9,7 @@ fab_daemon() {
 
   killall fabcoind
   sleep 3
-  cd $HOME
   rm -fr ~/.fabcoin
-  cd ${fab_root}/src
   for i in `seq 1 ${daemon_num}`;
     do
       portf=$(($fab_port + $i))
@@ -32,7 +30,7 @@ fab_daemon() {
         fi
       done
 
-      ./fabcoind -server -listen -port=${portf} -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcport=${portr} -datadir=$HOME/regtest/${i}/ -connect=localhost:${portn} -regtest -pid=$HOME/regtest/${i}/.pid -daemon -debug  ${addnode}  -gen
+      ${fab_root}/src/fabcoind -server -listen -port=${portf} -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcport=${portr} -datadir=$HOME/regtest/${i}/ -connect=localhost:${portn} -regtest -pid=$HOME/regtest/${i}/.pid -daemon -debug  ${addnode}  -gen
      if [ "$i" != "1" ]; then
        sleep 1
      else
