@@ -2918,8 +2918,9 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
 bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
-    LOCK(cs_main);
-    return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_SEGWIT, versionbitscache) == THRESHOLD_ACTIVE);
+//    LOCK(cs_main);
+//    return (VersionBitsState(pindexPrev, params, Consensus::DEPLOYMENT_SEGWIT, versionbitscache) == THRESHOLD_ACTIVE);
+    return true;
 }
 
 // Compute at which vout of the block's coinbase transaction the witness
@@ -3065,7 +3066,8 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     //   {0xaa, 0x21, 0xa9, 0xed}, and the following 32 bytes are SHA256^2(witness root, witness nonce). In case there are
     //   multiple, the last one is used.
     bool fHaveWitness = false;
-    if (VersionBitsState(pindexPrev, consensusParams, Consensus::DEPLOYMENT_SEGWIT, versionbitscache) == THRESHOLD_ACTIVE) {
+    
+    if ( IsWitnessEnabled(pindexPrev, consensusParams) ) {
         int commitpos = GetWitnessCommitmentIndex(block);
         if (commitpos != -1) {
             bool malleated = false;
@@ -3081,6 +3083,10 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
                 return state.DoS(100, false, REJECT_INVALID, "bad-witness-merkle-match", true, strprintf("%s : witness merkle commitment mismatch", __func__));
             }
             fHaveWitness = true;
+        }
+        else
+        {
+            return state.DoS(100, false, REJECT_INVALID, "bad-block", true, strprintf("%s : no witness commitment found", __func__));
         }
     }
 
