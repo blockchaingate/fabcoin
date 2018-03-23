@@ -27,7 +27,7 @@ We developed GPU mining in OpenCL and Ubuntu 16.04 system, and has been tested o
 
 ## Graphic card driver and OpenCl installation
 
-1.Configure 
+### Configure 
  
 Ensure that your user account is a member of the "video" group prior to using the  driver. You can find which groups you are a member of with the following command:
 
@@ -39,7 +39,7 @@ $ sudo usermod -a -G video $LOGNAME
 
 You will need to log out and in again to activate this change.
 
-2. Install graphic card driver and Open CL
+### Install graphic card driver and Open CL
 OpenCL support comes with the graphic card driver. Please check your graphic card vendor website, and found out how to install your   graphic card driver and Open Cl.
 
 Read the appropriate subsection below:
@@ -59,7 +59,7 @@ $ ./configure --enable-gpu
 $ make 
 
  
-4. Run Mining  
+### Run Mining  
 call fabcoind or fabcoin-qt  with option -gen  -G -allgpu will start GPU mining 
   
 $ fabcoind \
