@@ -105,7 +105,7 @@ CBlockPolicyEstimator feeEstimator;
 CTxMemPool mempool(::minRelayTxFee);
 
 static void CheckBlockIndex(const Consensus::Params& consensusParams);
-// static bool UpdateHashProof(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, CBlockIndex* pindex, CCoinsViewCache& view);
+static bool UpdateHashProof(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, CBlockIndex* pindex, CCoinsViewCache& view);
 
 /** Constant stuff for coinbase transactions we create: */
 CScript COINBASE_FLAGS;
@@ -1159,23 +1159,9 @@ bool GetTransaction(const uint256 &hash, CTransactionRef &txOut, const Consensus
     return false;
 }
 
-bool CheckHeaderPoW(const CBlockHeader& block, const Consensus::Params& consensusParams)
-{
-    // Check for proof of work block header
-    return CheckProofOfWork(block.GetHash(), block.nBits, false, consensusParams);
-}
 
 
 
-bool CheckHeaderProof(const CBlockHeader& block, const Consensus::Params& consensusParams){
-    return CheckHeaderPoW(block, consensusParams);
-}
-
-bool CheckIndexProof(const CBlockIndex& block, const Consensus::Params& consensusParams)
-{
-    //TODO-J this fucntion is for POS, leave it empty now
-    return true;
-}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -1226,7 +1212,7 @@ bool ReadBlockFromDisk(Block& block, const CDiskBlockPos& pos, const Consensus::
     if (postfork && !CheckEquihashSolution(&block, Params())) {
         return error("ReadBlockFromDisk: Errors in block header at %s (bad Equihash solution)", pos.ToString());
     }
-    // Check the header // jyan not checked in qfasc 
+    // Check the header // jyan 
     //if (!CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
     //    return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
 
@@ -1962,6 +1948,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         return true;
     }
 
+    // State is filled in by UpdateHashProof, this is an addional step from qfasc
+    if (!UpdateHashProof(block, state, chainparams.GetConsensus(), pindex, view)) {
+        return error("%s: ConnectBlock(): %s", __func__, state.GetRejectReason().c_str());
+    }
+
     bool fScriptChecks = true;
     if (!hashAssumeValid.IsNull()) {
         // We've been configured with the hash of a block which has been externally verified to have a valid history.
@@ -2681,29 +2672,6 @@ bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, cons
 			error("CheckReward(): coinbase pays too much (actual=%d vs limit=%d)",
 				block.vtx[offset]->GetValueOut(), blockReward),
 			REJECT_INVALID, "bad-cb-amount");
-
-
-
-	{
-		// Check full reward
-		CAmount blockReward = nFees + GetBlockSubsidy(nHeight, consensusParams);
-		if (nActualStakeReward > blockReward)
-			return state.DoS(100,
-				error("CheckReward(): coinstake pays too much (actual=%d vs limit=%d)",
-					nActualStakeReward, blockReward),
-				REJECT_INVALID, "bad-cs-amount");
-
-		if (blockReward < gasRefunds) {
-			return state.DoS(100, error("CheckReward(): Block Reward is less than total gas refunds"),
-				REJECT_INVALID, "bad-cs-gas-greater-than-reward");
-
-		}
-
-		vTempVouts.clear();
-	}
-
-
-
 
 	return true;
 }
@@ -3712,7 +3680,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
                          REJECT_INVALID, "invalid-solution");
     }
 
-    // Check proof of work matches claimed amount //jyan not checked in qfasc
+    // Check proof of work matches claimed amount //jyan 
     //if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
     //    return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
@@ -4004,32 +3972,20 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 
     return true;
 }
-// static bool UpdateHashProof(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, CBlockIndex* pindex, CCoinsViewCache& view)
-// {
-//     //int nHeight = pindex->nHeight;
-//     // uint256 hash = block.GetHash(); 
+ static bool UpdateHashProof(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, CBlockIndex* pindex, CCoinsViewCache& view)
+ {
+  
+     // Check proof-of-work 
+     if (block.nBits != GetNextWorkRequired(pindex->pprev, &block, consensusParams))
+         return state.DoS(100, error("UpdateHashProof() : incorrect %s", "proof-of-work" ));
 
-//     //reject proof of work at height consensusParams.nLastPOWBlock
-//     // jyan if (nHeight > consensusParams.nLastPOWBlock)
-//     //    return state.DoS(100, error("UpdateHashProof() : reject proof-of-work at height %d", nHeight));
-    
-    
-//     // Check proof-of-work 
-//     if (block.nBits != GetNextWorkRequired(pindex->pprev, &block, consensusParams))
-//         return state.DoS(100, error("UpdateHashProof() : incorrect %s", "proof-of-work" ));
+     uint256 hashProof;
+     hashProof = block.GetHash();
+     pindex->hashProof = hashProof;
 
-//     uint256 hashProof;
-
-    
-//     // PoW is checked in CheckBlock()
-   
-//         hashProof = block.GetHash();
-
-    
-//     // Record proof hash value
-//     //pindex->hashProof = hashProof;
-//     return true;
-// }
+     // Record proof hash value
+     return true;
+ }
 
 static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex)
 {
@@ -4124,6 +4080,10 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
+
+    if (!UpdateHashProof(block, state, chainparams.GetConsensus(), pindex, *pcoinsTip)) {
+        return error("%s: AcceptBlock(): %s", __func__, state.GetRejectReason().c_str());
+    }
 
     // Try to process all requested blocks that we don't have, but only
     // process an unrequested block if it's new and has enough work to
