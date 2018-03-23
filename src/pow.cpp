@@ -86,11 +86,10 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
 	// H(I||V||...
 	crypto_generichash_blake2b_update(&state, (unsigned char*)&ss[0], ss.size());
 
-	// jyan
-	/*bool isValid;
+	bool isValid;
 	EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
 	if (!isValid)
-		return error("CheckEquihashSolution(): invalid solution");*/
+		return error("CheckEquihashSolution(): invalid solution");
 
 	return true;
 }
