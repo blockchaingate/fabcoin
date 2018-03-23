@@ -1212,9 +1212,9 @@ bool ReadBlockFromDisk(Block& block, const CDiskBlockPos& pos, const Consensus::
     if (postfork && !CheckEquihashSolution(&block, Params())) {
         return error("ReadBlockFromDisk: Errors in block header at %s (bad Equihash solution)", pos.ToString());
     }
-    // Check the header // jyan 
-    //if (!CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
-    //    return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
+    // Check the header 
+    if (!CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
+        return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
 
     return true;
 }
@@ -3680,9 +3680,9 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
                          REJECT_INVALID, "invalid-solution");
     }
 
-    // Check proof of work matches claimed amount //jyan 
-    //if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
-    //    return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
+    // Check proof of work matches claimed amount
+    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
+        return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
 
     return true;
 }

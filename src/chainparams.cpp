@@ -453,8 +453,10 @@ public:
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        //consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        //consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit = uint256S("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimitLegacy = uint256S("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
 
@@ -474,7 +476,8 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        const std::string genesisHashString =  "0xe738ccb74b988c39f0a03938d46e7c831199381d89291c3a12d83ffd5835876b";
+        //const std::string genesisHashString =  "0xe738ccb74b988c39f0a03938d46e7c831199381d89291c3a12d83ffd5835876b";
+        const std::string genesisHashString =  "0xf6aad56a8932a2db092d162c7ec91af1912b3cca59df104eb01b76675de1a701";
         consensus.defaultAssumeValid = uint256S(genesisHashString);
 
         pchMessageStart[0] = 0xfa;
@@ -495,7 +498,7 @@ public:
             1517433514,
             uint256S("0x000000000000000000000000000000000000000000000000000000000000000a"),
             ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
-            0x2007ffff, 1, 50 * COIN );
+            0x20ffffff, 1, 50 * COIN );
 
         //jyan consensus.hashGenesisBlock = genesis.GetHash();
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
