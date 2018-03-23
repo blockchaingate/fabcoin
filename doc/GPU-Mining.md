@@ -1,106 +1,75 @@
-# Block and Transaction Broadcasting with ZeroMQ
+# Fabcoin GPU mining 
 
-[ZeroMQ](http://zeromq.org/) is a lightweight wrapper around TCP
-connections, inter-process communication, and shared-memory,
-providing various message-oriented semantics such as publish/subscribe,
-request/reply, and push/pull.
+# Why Equihash?
 
-The Fabcoin Core daemon can be configured to act as a trusted "border
-router", implementing the fabcoin wire protocol and relay, making
-consensus decisions, maintaining the local blockchain database,
-broadcasting locally generated transactions into the network, and
-providing a queryable RPC interface to interact on a polled basis for
-requesting blockchain related data. However, there exists only a
-limited service to notify external software of events like the arrival
-of new blocks or transactions.
 
-The ZeroMQ facility implements a notification interface through a set
-of specific notifiers. Currently there are notifiers that publish
-blocks and transactions. This read-only facility requires only the
-connection of a corresponding ZeroMQ subscriber port in receiving
-software; it is not authenticated nor is there any two-way protocol
-involvement. Therefore, subscribers should validate the received data
-since it may be out of date, incomplete or even invalid.
+we have started using Equihash as the proof-of-work for block mining in Fabcoin .
 
-ZeroMQ sockets are self-connecting and self-healing; that is,
-connections made between two endpoints will be automatically restored
-after an outage, and either end may be freely started or stopped in
-any order.
+Equihash is a Proof-of-Work algorithm devised by Alex Biryukov and Dmitry Khovratovich. It is based on a computer science and cryptography concept called the Generalized Birthday Problem.  https://en.wikipedia.org/wiki/Equihash
 
-Because ZeroMQ is message oriented, subscribers receive transactions
-and blocks all-at-once and do not need to implement any sort of
-buffering or reassembly.
+# WHY ARE WE USING IT?
+Equihash has very efficient verification. This could in the future be important for light clients on constrained devices, or for implementing a Fabcoin client inside Ethereum (like BTC Relay, but for Fabcoin ).
 
-## Prerequisites
+Equihash is a memory-oriented Proof-of-Work, which means how much mining you can do is mostly determined by how much RAM you have. We think it is unlikely that anyone will be able to build cost-effective custom hardware (ASICs) for mining in the foreseeable future.
 
-The ZeroMQ feature in Fabcoin Core requires ZeroMQ API version 4.x or
-newer. Typically, it is packaged by distributions as something like
-*libzmq3-dev*. The C++ wrapper for ZeroMQ is *not* needed.
+We also think it is unlikely that there will be any major optimizations of Equihash which would give the miners who know the optimization an advantage. This is because the Generalized Birthday Problem has been widely studied by computer scientists and cryptographers, and Equihash is close to the Generalized Birthday Problem. That is: it looks like a successful optimization of Equihash would be likely also an optimization of the Generalized Birthday Problem.
 
-In order to run the example Python client scripts in contrib/ one must
-also install *python3-zmq*, though this is not necessary for daemon
-operation.
+Nevertheless, we can’t know for certain that Equihash is safe against these issues, and we may change the Proof-of-Work again, if we find some flaw in Equihash or if we find another Proof-of-Work algorithm which offers higher assurance.
 
-## Enabling
+#HOW CAN I MINE?
+The same way as before! Just add gen=1 to your config file, or run ./src/fabcoindd -gen, this will start cpu mining process. And for better result, should choose GPU mining. 
 
-By default, the ZeroMQ feature is automatically compiled in if the
-necessary prerequisites are found.  To disable, use --disable-zmq
-during the *configure* step of building fabcoind:
+ 
+  
+## GPU mining hardware requirement  
 
-    $ ./configure --disable-zmq (other options)
+We developed GPU mining in OpenCL and Ubuntu 16.04 system, and has been tested on AMD Rx480 and Nvidia 1080 graphic card , it could used on other graphic card which support OpenCL and in other OS envirment. 
+ 
 
-To actually enable operation, one must set the appropriate options on
-the command line or in the configuration file.
+## Graphic card driver and OpenCl installation
 
-## Usage
+1.Configure 
+ 
+Ensure that your user account is a member of the "video" group prior to using the  driver. You can find which groups you are a member of with the following command:
 
-Currently, the following notifications are supported:
+$ groups
+           
+To add yourself to the video group you will need the sudo password and can use the following command:
 
-    -zmqpubhashtx=address
-    -zmqpubhashblock=address
-    -zmqpubrawblock=address
-    -zmqpubrawtx=address
+$ sudo usermod -a -G video $LOGNAME 
 
-The socket type is PUB and the address must be a valid ZeroMQ socket
-address. The same address can be used in more than one notification.
+You will need to log out and in again to activate this change.
 
-For instance:
+2. Install graphic card driver and Open CL
+OpenCL support comes with the graphic card driver. Please check your graphic card vendor website, and found out how to install your   graphic card driver and Open Cl.
 
-    $ fabcoind -zmqpubhashtx=tcp://127.0.0.1:28667 \
-               -zmqpubrawtx=ipc:///tmp/fabcoind.tx.raw
+Read the appropriate subsection below:
 
-Each PUB notification has a topic and body, where the header
-corresponds to the notification type. For instance, for the
-notification `-zmqpubhashtx` the topic is `hashtx` (no null
-terminator) and the body is the hexadecimal transaction hash (32
-bytes).
+Ubuntu 16.04 / amdgpu
+$ sudo apt-get install amdgpu-pro
 
-These options can also be provided in fabcoin.conf.
+Ubuntu 16.04 / Nvidia
+$ sudo apt-get install nvidia-open-dev nvidia-361
 
-ZeroMQ endpoint specifiers for TCP (and others) are documented in the
-[ZeroMQ API](http://api.zeromq.org/4-0:_start).
+## Compilation and installation Fabcoin code
 
-Client side, then, the ZeroMQ subscriber socket must have the
-ZMQ_SUBSCRIBE option set to one or either of these prefixes (for
-instance, just `hash`); without doing so will result in no messages
-arriving. Please see `contrib/zmq/zmq_sub.py` for a working example.
+Compile and make fabcoin with option --enable-gpu, gpu mining is default disable on makefile.
+$ cd ~/fabcoin
+$ ./autogen.sh
+$ ./configure --enable-gpu
+$ make 
 
-## Remarks
-
-From the perspective of fabcoind, the ZeroMQ socket is write-only; PUB
-sockets don't even have a read function. Thus, there is no state
-introduced into fabcoind directly. Furthermore, no information is
-broadcast that wasn't already received from the public P2P network.
-
-No authentication or authorization is done on connecting clients; it
-is assumed that the ZeroMQ port is exposed only to trusted entities,
-using other means such as firewalling.
-
-Note that when the block chain tip changes, a reorganisation may occur
-and just the tip will be notified. It is up to the subscriber to
-retrieve the chain from the last known block to the new tip.
-
-There are several possibilities that ZMQ notification can get lost
-during transmission depending on the communication type your are
-using. Fabcoind appends an up-counting sequence number to each
-notification which allows listeners to detect lost notifications.
+ 
+4. Run Mining  
+call fabcoind or fabcoin-qt  with option -gen  -G -allgpu will start GPU mining 
+  
+$ fabcoind \
+         -gen \       # -gen will enable mining process. without -G , it will using CPU mining .
+         -genproclimit  # Set threads numbers for CPU mining  (-1 = all cores, default 1) .
+         -G   \         # -G , Enable GPU mining  (default: false, don't use GPU)
+         -device=<id> \ # If -G is enabled this specifies the GPU device number to use(default: 0)
+         -allgpu        # If -G is enabled this will mine on all available GPU devices (default: false)
+ 
+example :
+$ fabcoind -testnet -daemon -gen -G -allgpu      # start GPU mining on all GPU card on testnet.
+ 
