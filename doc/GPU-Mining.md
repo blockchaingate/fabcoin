@@ -16,11 +16,10 @@ We also think it is unlikely that there will be any major optimizations of Equih
 
 Nevertheless, we can’t know for certain that Equihash is safe against these issues, and we may change the Proof-of-Work again, if we find some flaw in Equihash or if we find another Proof-of-Work algorithm which offers higher assurance.
 
-#HOW CAN I MINE?
+# HOW CAN I MINE?
 The same way as before! Just add gen=1 to your config file, or run ./src/fabcoindd -gen, this will start cpu mining process. And for better result, should choose GPU mining. 
 
- 
-  
+   
 ## GPU mining hardware requirement  
 
 We developed GPU mining in OpenCL and Ubuntu 16.04 system, and has been tested on AMD Rx480 and Nvidia 1080 graphic card , it could used on other graphic card which support OpenCL and in other OS envirment. 
