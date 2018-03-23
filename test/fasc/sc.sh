@@ -35,7 +35,7 @@ echo
 echo
 echo "Test: generate ..."
 
-fab_mining $DAEMON_NUM $FAB_ROOT $RPC_PORT 6
+fab_mining $DAEMON_NUM $FAB_ROOT $RPC_PORT 10
 
 #### END Case : generate #######################
 
