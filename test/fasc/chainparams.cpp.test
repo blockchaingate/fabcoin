@@ -479,7 +479,7 @@ public:
 
         // By default assume that the signatures in ancestors of this block are valid.
         //const std::string genesisHashString =  "0xe738ccb74b988c39f0a03938d46e7c831199381d89291c3a12d83ffd5835876b";
-        const std::string genesisHashString =  "0x073fe2eaeff656e348bc84dbd7e8ee24be8f6daf60757260cd998b27cfcdf62a";
+        const std::string genesisHashString =  "0xf6aad56a8932a2db092d162c7ec91af1912b3cca59df104eb01b76675de1a701";
         consensus.defaultAssumeValid = uint256S(genesisHashString);
 
         pchMessageStart[0] = 0xfa;
@@ -496,15 +496,13 @@ public:
 
         // 1517433514 2018.1.31
         // jyan genesis = CreateGenesisBlock_legacy(1296688602, 2, 0x207fffff, 1, 50 * COIN);
-        genesis = CreateGenesisBlock(
-            1517433514,
-            uint256S("0x0000000000000000000000000000000000000000000000000000000000000001"),
-            ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
-            0x207fffff, 1, 50 * COIN );
-	
-	/* Search nNonce, which is need to change src/Makefile.am to include pow.cpp in LIB_COMMON */
-	/*
+        //genesis = CreateGenesisBlock(
+        //    1517433514,
+        //    uint256S("0x000000000000000000000000000000000000000000000000000000000000000a"),
+        //    ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
+        //    0x207fffff, 1, 50 * COIN );
 	int iii = 0;
+
 	auto nNonce  = uint256();
 	while (iii < (1<<20) ) {
 	iii++;
@@ -518,7 +516,6 @@ public:
 	 const Consensus::Params param = consensus;
 	 if (CheckProofOfWork(genesis.GetHash(consensus), 0x207fffff,  postfork, param) ) break;
 	 }
-	 */
 
         //jyan consensus.hashGenesisBlock = genesis.GetHash();
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
