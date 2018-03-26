@@ -33,6 +33,7 @@ echo $SC_4
 echo
 echo "Contract address is " $ADDR_SC_4
 
+sleep 5
 fab_mining_one 5 $FAB_ROOT $RPC_PORT 25 
 sleep 5
 
@@ -84,6 +85,9 @@ cat client_command.template|sed -e "s?FAB_ROOT?${FAB_ROOT}?"|sed -e "s?PORT_RPC?
 echo "node 4 send to contact created by node 4 "
 bash tmp_send_contract.sr
 sleep 1
+
+fab_mining_one 5 $FAB_ROOT $RPC_PORT 25 
+sleep 2
 
 fab_bal $DAEMON_NUM 
 echo
