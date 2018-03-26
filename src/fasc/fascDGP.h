@@ -25,10 +25,12 @@ static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP = 1000000000;
 static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP = 40000000;
 
 class FascDGP {
-    
+
 public:
 
-    FascDGP(FascState* _state, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) { initDataEIP158(); }
+    FascDGP(FascState* _state, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) {
+        initDataEIP158();
+    }
 
     dev::eth::EVMSchedule getGasSchedule(unsigned int blockHeight);
 
@@ -59,7 +61,7 @@ private:
     uint64_t getUint64FromDGP(unsigned int blockHeight, const dev::Address& contract, std::vector<unsigned char> data);
 
     void parseStorageScheduleContract(std::vector<uint32_t>& uint32Values);
-    
+
     void parseDataScheduleContract(std::vector<uint32_t>& uint32Values);
 
     void parseStorageOneUint64(uint64_t& blockSize);
@@ -68,7 +70,7 @@ private:
 
     dev::eth::EVMSchedule createEVMSchedule();
 
-    void clear();    
+    void clear();
 
 
 

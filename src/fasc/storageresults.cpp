@@ -1,67 +1,67 @@
 #include <fasc/storageresults.h>
 
-StorageResults::StorageResults(std::string const& _path){
-	path = _path + "/resultsDB";
+StorageResults::StorageResults(std::string const& _path) {
+    path = _path + "/resultsDB";
 }
 
-void StorageResults::addResult(dev::h256 hashTx, std::vector<TransactionReceiptInfo>& result){
-	m_cache_result.insert(std::make_pair(hashTx, result));
+void StorageResults::addResult(dev::h256 hashTx, std::vector<TransactionReceiptInfo>& result) {
+    m_cache_result.insert(std::make_pair(hashTx, result));
 }
 
-void StorageResults::wipeResults(){
-	leveldb::Status result = leveldb::DestroyDB(path, leveldb::Options());
+void StorageResults::wipeResults() {
+    leveldb::Status result = leveldb::DestroyDB(path, leveldb::Options());
 }
 
-void StorageResults::deleteResults(std::vector<CTransactionRef> const& txs){
+void StorageResults::deleteResults(std::vector<CTransactionRef> const& txs) {
     leveldb::DB* db;
     leveldb::Options options;
     options.create_if_missing = true;
     leveldb::Status status = leveldb::DB::Open(options, path, &db);
     assert(status.ok());
 
-    for(CTransactionRef tx : txs){
+    for(CTransactionRef tx : txs) {
         dev::h256 hashTx = uintToh256(tx->GetHash());
         m_cache_result.erase(hashTx);
 
         std::string keyTemp = hashTx.hex();
-	    leveldb::Slice key(keyTemp);
+        leveldb::Slice key(keyTemp);
         status = db->Delete(leveldb::WriteOptions(), key);
         assert(status.ok());
     }
     delete db;
 }
 
-std::vector<TransactionReceiptInfo> StorageResults::getResult(dev::h256 const& hashTx){
+std::vector<TransactionReceiptInfo> StorageResults::getResult(dev::h256 const& hashTx) {
     std::vector<TransactionReceiptInfo> result;
-	auto it = m_cache_result.find(hashTx);
-	if (it == m_cache_result.end()){
-		if(readResult(hashTx, result))
-			m_cache_result.insert(std::make_pair(hashTx, result));
+    auto it = m_cache_result.find(hashTx);
+    if (it == m_cache_result.end()) {
+        if(readResult(hashTx, result))
+            m_cache_result.insert(std::make_pair(hashTx, result));
     } else {
-		result = it->second;
+        result = it->second;
     }
-	return result;
+    return result;
 }
 
-void StorageResults::commitResults(){
-    if(m_cache_result.size()){
+void StorageResults::commitResults() {
+    if(m_cache_result.size()) {
         leveldb::DB* db;
         leveldb::Options options;
         options.create_if_missing = true;
         leveldb::Status status = leveldb::DB::Open(options, path, &db);
         assert(status.ok());
 
-        for (auto const& i: m_cache_result){
+        for (auto const& i: m_cache_result) {
             std::string valueTemp;
             std::string keyTemp = i.first.hex();
             leveldb::Slice key(keyTemp);
             status = db->Get(leveldb::ReadOptions(), key, &valueTemp);
 
-            if(status.IsNotFound()){
+            if(status.IsNotFound()) {
 
                 TransactionReceiptInfoSerialized tris;
 
-                for(size_t j = 0; j < i.second.size(); j++){
+                for(size_t j = 0; j < i.second.size(); j++) {
                     tris.blockHashes.push_back(uintToh256(i.second[j].blockHash));
                     tris.blockNumbers.push_back(i.second[j].blockNumber);
                     tris.transactionHashes.push_back(uintToh256(i.second[j].transactionHash));
@@ -91,27 +91,27 @@ void StorageResults::commitResults(){
     }
 }
 
-bool StorageResults::readResult(dev::h256 const& _key, std::vector<TransactionReceiptInfo>& _result){
+bool StorageResults::readResult(dev::h256 const& _key, std::vector<TransactionReceiptInfo>& _result) {
     leveldb::DB* db;
-	leveldb::Options options;
-	options.create_if_missing = true;
-	leveldb::Status status = leveldb::DB::Open(options, path, &db);
-	assert(status.ok());
+    leveldb::Options options;
+    options.create_if_missing = true;
+    leveldb::Status status = leveldb::DB::Open(options, path, &db);
+    assert(status.ok());
 
-	std::string value;
-	std::string keyTemp = _key.hex();
-	leveldb::Slice key(keyTemp);
-	leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &value);
-	delete db;
+    std::string value;
+    std::string keyTemp = _key.hex();
+    leveldb::Slice key(keyTemp);
+    leveldb::Status s = db->Get(leveldb::ReadOptions(), key, &value);
+    delete db;
 
-	if(!s.IsNotFound() && s.ok()){
-        
+    if(!s.IsNotFound() && s.ok()) {
+
         TransactionReceiptInfoSerialized tris;
 
-		dev::RLP state(value);
+        dev::RLP state(value);
         tris.blockHashes = state[0].toVector<dev::h256>();
-		tris.blockNumbers = state[1].toVector<uint32_t>();
-		tris.transactionHashes = state[2].toVector<dev::h256>();
+        tris.blockNumbers = state[1].toVector<uint32_t>();
+        tris.transactionHashes = state[2].toVector<dev::h256>();
         tris.transactionIndexes = state[3].toVector<uint32_t>();
         tris.senders = state[4].toVector<dev::h160>();
         tris.receivers = state[5].toVector<dev::h160>();
@@ -122,30 +122,30 @@ bool StorageResults::readResult(dev::h256 const& _key, std::vector<TransactionRe
         if(state.itemCount() == 11)
             tris.excepted = state[10].toVector<uint32_t>();
 
-        for(size_t j = 0; j < tris.blockHashes.size(); j++){
+        for(size_t j = 0; j < tris.blockHashes.size(); j++) {
             TransactionReceiptInfo tri{h256Touint(tris.blockHashes[j]), tris.blockNumbers[j], h256Touint(tris.transactionHashes[j]), tris.transactionIndexes[j], tris.senders[j],
-                                       tris.receivers[j], uint64_t(tris.cumulativeGasUsed[j]), uint64_t(tris.gasUsed[j]), tris.contractAddresses[j], logEntriesDeserialize(tris.logs[j]), 
+                                       tris.receivers[j], uint64_t(tris.cumulativeGasUsed[j]), uint64_t(tris.gasUsed[j]), tris.contractAddresses[j], logEntriesDeserialize(tris.logs[j]),
                                        state.itemCount() == 11 ? static_cast<dev::eth::TransactionException>(tris.excepted[j]) : dev::eth::TransactionException::NoInformation
-                                    };
+                                      };
             _result.push_back(tri);
         }
-		return true;
-	}
-	return false;
+        return true;
+    }
+    return false;
 }
 
-logEntriesSerializ StorageResults::logEntriesSerialization(dev::eth::LogEntries const& _logs){
-	logEntriesSerializ result;
-	for(dev::eth::LogEntry i : _logs){
-		result.push_back(std::make_pair(i.address, std::make_pair(i.topics, i.data)));
-	}
-	return result;
+logEntriesSerializ StorageResults::logEntriesSerialization(dev::eth::LogEntries const& _logs) {
+    logEntriesSerializ result;
+    for(dev::eth::LogEntry i : _logs) {
+        result.push_back(std::make_pair(i.address, std::make_pair(i.topics, i.data)));
+    }
+    return result;
 }
 
-dev::eth::LogEntries StorageResults::logEntriesDeserialize(logEntriesSerializ const& _logs){
-	dev::eth::LogEntries result;
-	for(std::pair<dev::Address, std::pair<dev::h256s, dev::bytes>> i : _logs){
-		result.push_back(dev::eth::LogEntry(i.first, i.second.first, dev::bytes(i.second.second)));
-	}
-	return result;
+dev::eth::LogEntries StorageResults::logEntriesDeserialize(logEntriesSerializ const& _logs) {
+    dev::eth::LogEntries result;
+    for(std::pair<dev::Address, std::pair<dev::h256s, dev::bytes>> i : _logs) {
+        result.push_back(dev::eth::LogEntry(i.first, i.second.first, dev::bytes(i.second.second)));
+    }
+    return result;
 }

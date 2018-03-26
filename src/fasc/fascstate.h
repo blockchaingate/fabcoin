@@ -11,53 +11,53 @@
 #include <libethereum/Executive.h>
 #include <libethcore/SealEngine.h>
 
-using OnOpFunc = std::function<void(uint64_t, uint64_t, dev::eth::Instruction, dev::bigint, dev::bigint, 
-    dev::bigint, dev::eth::VM*, dev::eth::ExtVMFace const*)>;
+using OnOpFunc = std::function<void(uint64_t, uint64_t, dev::eth::Instruction, dev::bigint, dev::bigint,
+                                    dev::bigint, dev::eth::VM*, dev::eth::ExtVMFace const*)>;
 using plusAndMinus = std::pair<dev::u256, dev::u256>;
 using valtype = std::vector<unsigned char>;
 
-struct TransferInfo{
+struct TransferInfo {
     dev::Address from;
     dev::Address to;
     dev::u256 value;
 };
 
-struct Vin{
+struct Vin {
     dev::h256 hash;
     uint32_t nVout;
     dev::u256 value;
     uint8_t alive;
 };
 
-struct ResultExecute{
+struct ResultExecute {
     dev::eth::ExecutionResult execRes;
     dev::eth::TransactionReceipt txRec;
     CTransaction tx;
 };
 
-namespace fasc{
-    template <class DB>
-    dev::AddressHash commit(std::unordered_map<dev::Address, Vin> const& _cache, dev::eth::SecureTrieDB<dev::Address, DB>& _state, std::unordered_map<dev::Address, dev::eth::Account> const& _cacheAcc)
-    {
-        dev::AddressHash ret;
-        for (auto const& i: _cache){
-            if(i.second.alive == 0){
-                 _state.remove(i.first);
-            } else {
-                dev::RLPStream s(4);
-                s << i.second.hash << i.second.nVout << i.second.value << i.second.alive;
-                _state.insert(i.first, &s.out());
-            }
-            ret.insert(i.first);
+namespace fasc {
+template <class DB>
+dev::AddressHash commit(std::unordered_map<dev::Address, Vin> const& _cache, dev::eth::SecureTrieDB<dev::Address, DB>& _state, std::unordered_map<dev::Address, dev::eth::Account> const& _cacheAcc)
+{
+    dev::AddressHash ret;
+    for (auto const& i: _cache) {
+        if(i.second.alive == 0) {
+            _state.remove(i.first);
+        } else {
+            dev::RLPStream s(4);
+            s << i.second.hash << i.second.nVout << i.second.value << i.second.alive;
+            _state.insert(i.first, &s.out());
         }
-        return ret;
+        ret.insert(i.first);
     }
+    return ret;
+}
 }
 
 class CondensingTX;
 
 class FascState : public dev::eth::State {
-    
+
 public:
 
     FascState();
@@ -66,19 +66,30 @@ public:
 
     ResultExecute execute(dev::eth::EnvInfo const& _envInfo, dev::eth::SealEngineFace const& _sealEngine, FascTransaction const& _t, dev::eth::Permanence _p = dev::eth::Permanence::Committed, dev::eth::OnOpFunc const& _onOp = OnOpFunc());
 
-    void setRootUTXO(dev::h256 const& _r) { cacheUTXO.clear(); stateUTXO.setRoot(_r); }
+    void setRootUTXO(dev::h256 const& _r) {
+        cacheUTXO.clear();
+        stateUTXO.setRoot(_r);
+    }
 
-    void setCacheUTXO(dev::Address const& address, Vin const& vin) { cacheUTXO.insert(std::make_pair(address, vin)); }
+    void setCacheUTXO(dev::Address const& address, Vin const& vin) {
+        cacheUTXO.insert(std::make_pair(address, vin));
+    }
 
-    dev::h256 rootHashUTXO() const { return stateUTXO.root(); }
+    dev::h256 rootHashUTXO() const {
+        return stateUTXO.root();
+    }
 
     std::unordered_map<dev::Address, Vin> vins() const; // temp
 
-    dev::OverlayDB const& dbUtxo() const { return dbUTXO; }
+    dev::OverlayDB const& dbUtxo() const {
+        return dbUTXO;
+    }
 
-	dev::OverlayDB& dbUtxo() { return dbUTXO; }
+    dev::OverlayDB& dbUtxo() {
+        return dbUTXO;
+    }
 
-    virtual ~FascState(){}
+    virtual ~FascState() {}
 
     friend CondensingTX;
 
@@ -110,29 +121,29 @@ private:
 
     dev::OverlayDB dbUTXO;
 
-	dev::eth::SecureTrieDB<dev::Address, dev::OverlayDB> stateUTXO;
+    dev::eth::SecureTrieDB<dev::Address, dev::OverlayDB> stateUTXO;
 
-	std::unordered_map<dev::Address, Vin> cacheUTXO;
+    std::unordered_map<dev::Address, Vin> cacheUTXO;
 };
 
 
-struct TemporaryState{
+struct TemporaryState {
     std::unique_ptr<FascState>& globalStateRef;
     dev::h256 oldHashStateRoot;
     dev::h256 oldHashUTXORoot;
 
-    TemporaryState(std::unique_ptr<FascState>& _globalStateRef) : 
+    TemporaryState(std::unique_ptr<FascState>& _globalStateRef) :
         globalStateRef(_globalStateRef),
-        oldHashStateRoot(globalStateRef->rootHash()), 
+        oldHashStateRoot(globalStateRef->rootHash()),
         oldHashUTXORoot(globalStateRef->rootHashUTXO()) {}
-                
+
     void SetRoot(dev::h256 newHashStateRoot, dev::h256 newHashUTXORoot)
     {
         globalStateRef->setRoot(newHashStateRoot);
         globalStateRef->setRootUTXO(newHashUTXORoot);
     }
 
-    ~TemporaryState(){
+    ~TemporaryState() {
         globalStateRef->setRoot(oldHashStateRoot);
         globalStateRef->setRootUTXO(oldHashUTXORoot);
     }
@@ -145,17 +156,19 @@ struct TemporaryState{
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-class CondensingTX{
+class CondensingTX {
 
 public:
 
-    CondensingTX(FascState* _state, const std::vector<TransferInfo>& _transfers, const FascTransaction& _transaction, std::set<dev::Address> _deleteAddresses = std::set<dev::Address>()) : transfers(_transfers), deleteAddresses(_deleteAddresses), transaction(_transaction), state(_state){}
+    CondensingTX(FascState* _state, const std::vector<TransferInfo>& _transfers, const FascTransaction& _transaction, std::set<dev::Address> _deleteAddresses = std::set<dev::Address>()) : transfers(_transfers), deleteAddresses(_deleteAddresses), transaction(_transaction), state(_state) {}
 
     CTransaction createCondensingTX();
 
     std::unordered_map<dev::Address, Vin> createVin(const CTransaction& tx);
 
-    bool reachedVoutLimit(){ return voutOverflow; }
+    bool reachedVoutLimit() {
+        return voutOverflow;
+    }
 
 private:
 

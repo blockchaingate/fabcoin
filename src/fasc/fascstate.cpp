@@ -9,9 +9,9 @@ using namespace dev;
 using namespace dev::eth;
 
 FascState::FascState(u256 const& _accountStartNonce, OverlayDB const& _db, const string& _path, BaseState _bs) :
-        State(_accountStartNonce, _db, _bs) {
-            dbUTXO = FascState::openDB(_path + "/fascDB", sha3(rlp("")), WithExisting::Trust);
-	        stateUTXO = SecureTrieDB<Address, OverlayDB>(&dbUTXO);
+    State(_accountStartNonce, _db, _bs) {
+    dbUTXO = FascState::openDB(_path + "/fascDB", sha3(rlp("")), WithExisting::Trust);
+    stateUTXO = SecureTrieDB<Address, OverlayDB>(&dbUTXO);
 }
 
 FascState::FascState() : dev::eth::State(dev::Invalid256, dev::OverlayDB(), dev::eth::BaseState::PreExisting) {
@@ -19,7 +19,7 @@ FascState::FascState() : dev::eth::State(dev::Invalid256, dev::OverlayDB(), dev:
     stateUTXO = SecureTrieDB<Address, OverlayDB>(&dbUTXO);
 }
 
-ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& _sealEngine, FascTransaction const& _t, Permanence _p, OnOpFunc const& _onOp){
+ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& _sealEngine, FascTransaction const& _t, Permanence _p, OnOpFunc const& _onOp) {
 
     assert(_t.getVersion().toRaw() == VersionVM::GetEVMDefault().toRaw());
 
@@ -31,27 +31,27 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
     h256 oldStateRoot = rootHash();
     bool voutLimit = false;
 
-	auto onOp = _onOp;
+    auto onOp = _onOp;
 #if ETH_VMTRACE
-	if (isChannelVisible<VMTraceChannel>())
-		onOp = Executive::simpleTrace(); // override tracer
+    if (isChannelVisible<VMTraceChannel>())
+        onOp = Executive::simpleTrace(); // override tracer
 #endif
-	// Create and initialize the executive. This will throw fairly cheaply and quickly if the
-	// transaction is bad in any way.
-	Executive e(*this, _envInfo, _sealEngine);
-	ExecutionResult res;
-	e.setResultRecipient(res);
+    // Create and initialize the executive. This will throw fairly cheaply and quickly if the
+    // transaction is bad in any way.
+    Executive e(*this, _envInfo, _sealEngine);
+    ExecutionResult res;
+    e.setResultRecipient(res);
 
     CTransactionRef tx;
     u256 startGasUsed;
-    try{
+    try {
         if (_t.isCreation() && _t.value())
             BOOST_THROW_EXCEPTION(CreateWithValue());
 
         e.initialize(_t);
         // OK - transaction looks valid - execute.
         startGasUsed = _envInfo.gasUsed();
-        if (!e.execute()){
+        if (!e.execute()) {
             e.go(onOp);
         } else {
 
@@ -59,15 +59,15 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             throw Exception();
         }
         e.finalize();
-        if (_p == Permanence::Reverted){
+        if (_p == Permanence::Reverted) {
             m_cache.clear();
             cacheUTXO.clear();
         } else {
             deleteAccounts(_sealEngine.deleteAddresses);
-            if(res.excepted == TransactionException::None){
+            if(res.excepted == TransactionException::None) {
                 CondensingTX ctx(this, transfers, _t, _sealEngine.deleteAddresses);
                 tx = MakeTransactionRef(ctx.createCondensingTX());
-                if(ctx.reachedVoutLimit()){
+                if(ctx.reachedVoutLimit()) {
 
                     voutLimit = true;
                     e.revert();
@@ -78,38 +78,38 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             } else {
                 printfErrorLog(res.excepted);
             }
-            
+
             fasc::commit(cacheUTXO, stateUTXO, m_cache);
             cacheUTXO.clear();
             bool removeEmptyAccounts = _envInfo.number() >= _sealEngine.chainParams().u256Param("EIP158ForkBlock");
             commit(removeEmptyAccounts ? State::CommitBehaviour::RemoveEmptyAccounts : State::CommitBehaviour::KeepEmptyAccounts);
         }
     }
-    catch(Exception const& _e){
+    catch(Exception const& _e) {
 
         printfErrorLog(dev::eth::toTransactionException(_e));
         res.excepted = dev::eth::toTransactionException(_e);
         res.gasUsed = _t.gas();
-	/*
-        const Consensus::Params& consensusParams = Params().GetConsensus();
-        if(chainActive.Height() < consensusParams.nFixUTXOCacheHFHeight  && _p != Permanence::Reverted){
-            deleteAccounts(_sealEngine.deleteAddresses);
-            commit(CommitBehaviour::RemoveEmptyAccounts);
-        } else {
-            m_cache.clear();
-            cacheUTXO.clear();
-        }
-	*/ //jyan
-            m_cache.clear();
-            cacheUTXO.clear();
-	    //jyan
+        /*
+            const Consensus::Params& consensusParams = Params().GetConsensus();
+            if(chainActive.Height() < consensusParams.nFixUTXOCacheHFHeight  && _p != Permanence::Reverted){
+                deleteAccounts(_sealEngine.deleteAddresses);
+                commit(CommitBehaviour::RemoveEmptyAccounts);
+            } else {
+                m_cache.clear();
+                cacheUTXO.clear();
+            }
+        */ //jyan
+        m_cache.clear();
+        cacheUTXO.clear();
+        //jyan
     }
 
     if(!_t.isCreation())
         res.newAddress = _t.receiveAddress();
     newAddress = dev::Address();
     transfers.clear();
-    if(voutLimit){
+    if(voutLimit) {
         //use old and empty states to create virtual Out Of Gas exception
         LogEntries logs;
         u256 gas = _t.gas();
@@ -127,7 +127,7 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
         }
         //make sure to use empty transaction if no vouts made
         return ResultExecute{ex, dev::eth::TransactionReceipt(oldStateRoot, gas, e.logs()), refund.vout.empty() ? CTransaction() : CTransaction(refund)};
-    }else{
+    } else {
         return ResultExecute{res, dev::eth::TransactionReceipt(rootHash(), startGasUsed + e.gasUsed(), e.logs()), tx ? *tx : CTransaction()};
     }
 }
@@ -139,7 +139,7 @@ std::unordered_map<dev::Address, Vin> FascState::vins() const // temp
         if (i.second.alive)
             ret[i.first] = i.second;
     auto addrs = addresses();
-    for (auto& i : addrs){
+    for (auto& i : addrs) {
         if (cacheUTXO.find(i.first) == cacheUTXO.end() && vin(i.first))
             ret[i.first] = *vin(i.first);
     }
@@ -161,17 +161,17 @@ Vin const* FascState::vin(dev::Address const& _a) const
 Vin* FascState::vin(dev::Address const& _addr)
 {
     auto it = cacheUTXO.find(_addr);
-    if (it == cacheUTXO.end()){
+    if (it == cacheUTXO.end()) {
         std::string stateBack = stateUTXO.at(_addr);
         if (stateBack.empty())
             return nullptr;
-            
+
         dev::RLP state(stateBack);
         auto i = cacheUTXO.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(_addr),
-            std::forward_as_tuple(Vin{state[0].toHash<dev::h256>(), state[1].toInt<uint32_t>(), state[2].toInt<dev::u256>(), state[3].toInt<uint8_t>()})
-        );
+                     std::piecewise_construct,
+                     std::forward_as_tuple(_addr),
+                     std::forward_as_tuple(Vin{state[0].toHash<dev::h256>(), state[1].toInt<uint32_t>(), state[2].toInt<dev::u256>(), state[3].toInt<uint8_t>()})
+                 );
         return &i.first->second;
     }
     return &it->second;
@@ -184,7 +184,7 @@ Vin* FascState::vin(dev::Address const& _addr)
 
 //     fasc::commit(cacheUTXO, stateUTXO, m_cache);
 //     cacheUTXO.clear();
-        
+
 //     m_touched += dev::eth::commit(m_cache, m_state);
 //     m_changeLog.clear();
 //     m_cache.clear();
@@ -204,23 +204,23 @@ void FascState::addBalance(dev::Address const& _id, dev::u256 const& _amount)
 {
     if (dev::eth::Account* a = account(_id))
     {
-            // Log empty account being touched. Empty touched accounts are cleared
-            // after the transaction, so this event must be also reverted.
-            // We only log the first touch (not dirty yet), and only for empty
-            // accounts, as other accounts does not matter.
-            // TODO: to save space we can combine this event with Balance by having
-            //       Balance and Balance+Touch events.
+        // Log empty account being touched. Empty touched accounts are cleared
+        // after the transaction, so this event must be also reverted.
+        // We only log the first touch (not dirty yet), and only for empty
+        // accounts, as other accounts does not matter.
+        // TODO: to save space we can combine this event with Balance by having
+        //       Balance and Balance+Touch events.
         if (!a->isDirty() && a->isEmpty())
             m_changeLog.emplace_back(dev::eth::detail::Change::Touch, _id);
 
-            // Increase the account balance. This also is done for value 0 to mark
-            // the account as dirty. Dirty account are not removed from the cache
-            // and are cleared if empty at the end of the transaction.
+        // Increase the account balance. This also is done for value 0 to mark
+        // the account as dirty. Dirty account are not removed from the cache
+        // and are cleared if empty at the end of the transaction.
         a->addBalance(_amount);
     }
     else
     {
-        if(!addressInUse(newAddress) && newAddress != dev::Address()){
+        if(!addressInUse(newAddress) && newAddress != dev::Address()) {
             const_cast<dev::Address&>(_id) = newAddress;
             newAddress = dev::Address();
         }
@@ -231,25 +231,25 @@ void FascState::addBalance(dev::Address const& _id, dev::u256 const& _amount)
         m_changeLog.emplace_back(dev::eth::detail::Change::Balance, _id, _amount);
 }
 
-dev::Address FascState::createFascAddress(dev::h256 hashTx, uint32_t voutNumber){
+dev::Address FascState::createFascAddress(dev::h256 hashTx, uint32_t voutNumber) {
     uint256 hashTXid(h256Touint(hashTx));
-	std::vector<unsigned char> txIdAndVout(hashTXid.begin(), hashTXid.end());
-	std::vector<unsigned char> voutNumberChrs;
-	if (voutNumberChrs.size() < sizeof(voutNumber))voutNumberChrs.resize(sizeof(voutNumber));
-	std::memcpy(voutNumberChrs.data(), &voutNumber, sizeof(voutNumber));
-	txIdAndVout.insert(txIdAndVout.end(),voutNumberChrs.begin(),voutNumberChrs.end());
-		
-	std::vector<unsigned char> SHA256TxVout(32);
+    std::vector<unsigned char> txIdAndVout(hashTXid.begin(), hashTXid.end());
+    std::vector<unsigned char> voutNumberChrs;
+    if (voutNumberChrs.size() < sizeof(voutNumber))voutNumberChrs.resize(sizeof(voutNumber));
+    std::memcpy(voutNumberChrs.data(), &voutNumber, sizeof(voutNumber));
+    txIdAndVout.insert(txIdAndVout.end(),voutNumberChrs.begin(),voutNumberChrs.end());
+
+    std::vector<unsigned char> SHA256TxVout(32);
     CSHA256().Write(txIdAndVout.data(), txIdAndVout.size()).Finalize(SHA256TxVout.data());
 
-	std::vector<unsigned char> hashTxIdAndVout(20);
+    std::vector<unsigned char> hashTxIdAndVout(20);
     CRIPEMD160().Write(SHA256TxVout.data(), SHA256TxVout.size()).Finalize(hashTxIdAndVout.data());
-		
-	return dev::Address(hashTxIdAndVout);
+
+    return dev::Address(hashTxIdAndVout);
 }
 
-void FascState::deleteAccounts(std::set<dev::Address>& addrs){
-    for(dev::Address addr : addrs){
+void FascState::deleteAccounts(std::set<dev::Address>& addrs) {
+    for(dev::Address addr : addrs) {
         dev::eth::Account* acc = const_cast<dev::eth::Account*>(account(addr));
         if(acc)
             acc->kill();
@@ -259,11 +259,11 @@ void FascState::deleteAccounts(std::set<dev::Address>& addrs){
     }
 }
 
-void FascState::updateUTXO(const std::unordered_map<dev::Address, Vin>& vins){
-    for(auto& v : vins){
+void FascState::updateUTXO(const std::unordered_map<dev::Address, Vin>& vins) {
+    for(auto& v : vins) {
         Vin* vi = const_cast<Vin*>(vin(v.first));
 
-        if(vi){
+        if(vi) {
             vi->hash = v.second.hash;
             vi->nVout = v.second.nVout;
             vi->value = v.second.value;
@@ -274,14 +274,14 @@ void FascState::updateUTXO(const std::unordered_map<dev::Address, Vin>& vins){
     }
 }
 
-void FascState::printfErrorLog(const dev::eth::TransactionException er){
+void FascState::printfErrorLog(const dev::eth::TransactionException er) {
     std::stringstream ss;
     ss << er;
     clog(ExecutiveWarnChannel) << "VM exception:" << ss.str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-CTransaction CondensingTX::createCondensingTX(){
+CTransaction CondensingTX::createCondensingTX() {
     selectionVin();
     calculatePlusAndMinus();
     if(!createNewBalances())
@@ -292,13 +292,13 @@ CTransaction CondensingTX::createCondensingTX(){
     return !tx.vin.size() || !tx.vout.size() ? CTransaction() : CTransaction(tx);
 }
 
-std::unordered_map<dev::Address, Vin> CondensingTX::createVin(const CTransaction& tx){
+std::unordered_map<dev::Address, Vin> CondensingTX::createVin(const CTransaction& tx) {
     std::unordered_map<dev::Address, Vin> vins;
-    for(auto& b : balances){
+    for(auto& b : balances) {
         if(b.first == transaction.sender())
             continue;
 
-        if(b.second > 0){
+        if(b.second > 0) {
             vins[b.first] = Vin{uintToh256(tx.GetHash()), nVouts[b.first], b.second, 1};
         } else {
             vins[b.first] = Vin{uintToh256(tx.GetHash()), 0, 0, 0};
@@ -307,32 +307,32 @@ std::unordered_map<dev::Address, Vin> CondensingTX::createVin(const CTransaction
     return vins;
 }
 
-void CondensingTX::selectionVin(){
-    for(const TransferInfo& ti : transfers){
-        if(!vins.count(ti.from)){
+void CondensingTX::selectionVin() {
+    for(const TransferInfo& ti : transfers) {
+        if(!vins.count(ti.from)) {
             if(auto a = state->vin(ti.from))
                 vins[ti.from] = *a;
-            if(ti.from == transaction.sender() && transaction.value() > 0){
+            if(ti.from == transaction.sender() && transaction.value() > 0) {
                 vins[ti.from] = Vin{transaction.getHashWith(), transaction.getNVout(), transaction.value(), 1};
             }
         }
 
-        if(!vins.count(ti.to)){
+        if(!vins.count(ti.to)) {
             if(auto a = state->vin(ti.to))
                 vins[ti.to] = *a;
         }
     }
 }
 
-void CondensingTX::calculatePlusAndMinus(){
-    for(const TransferInfo& ti : transfers){
-        if(!plusMinusInfo.count(ti.from)){
+void CondensingTX::calculatePlusAndMinus() {
+    for(const TransferInfo& ti : transfers) {
+        if(!plusMinusInfo.count(ti.from)) {
             plusMinusInfo[ti.from] = std::make_pair(0, ti.value);
         } else {
             plusMinusInfo[ti.from] = std::make_pair(plusMinusInfo[ti.from].first, plusMinusInfo[ti.from].second + ti.value);
         }
 
-        if(!plusMinusInfo.count(ti.to)){
+        if(!plusMinusInfo.count(ti.to)) {
             plusMinusInfo[ti.to] = std::make_pair(ti.value, 0);
         } else {
             plusMinusInfo[ti.to] = std::make_pair(plusMinusInfo[ti.to].first + ti.value, plusMinusInfo[ti.to].second);
@@ -340,10 +340,10 @@ void CondensingTX::calculatePlusAndMinus(){
     }
 }
 
-bool CondensingTX::createNewBalances(){
-    for(auto& p : plusMinusInfo){
+bool CondensingTX::createNewBalances() {
+    for(auto& p : plusMinusInfo) {
         dev::u256 balance = 0;
-        if((vins.count(p.first) && vins[p.first].alive) || (!vins[p.first].alive && !checkDeleteAddress(p.first))){
+        if((vins.count(p.first) && vins[p.first].alive) || (!vins[p.first].alive && !checkDeleteAddress(p.first))) {
             balance = vins[p.first].value;
         }
         balance += p.second.first;
@@ -355,23 +355,23 @@ bool CondensingTX::createNewBalances(){
     return true;
 }
 
-std::vector<CTxIn> CondensingTX::createVins(){
+std::vector<CTxIn> CondensingTX::createVins() {
     std::vector<CTxIn> ins;
-    for(auto& v : vins){
+    for(auto& v : vins) {
         if((v.second.value > 0 && v.second.alive) || (v.second.value > 0 && !vins[v.first].alive && !checkDeleteAddress(v.first)))
             ins.push_back(CTxIn(h256Touint(v.second.hash), v.second.nVout, CScript() << OP_SPEND));
     }
     return ins;
 }
 
-std::vector<CTxOut> CondensingTX::createVout(){
+std::vector<CTxOut> CondensingTX::createVout() {
     size_t count = 0;
     std::vector<CTxOut> outs;
-    for(auto& b : balances){
-        if(b.second > 0){
+    for(auto& b : balances) {
+        if(b.second > 0) {
             CScript script;
             auto* a = state->account(b.first);
-            if(a && a->isAlive()){
+            if(a && a->isAlive()) {
                 //create a no-exec contract output
                 script = CScript() << valtype{0} << valtype{0} << valtype{0} << valtype{0} << b.first.asBytes() << OP_CALL;
             } else {
@@ -381,7 +381,7 @@ std::vector<CTxOut> CondensingTX::createVout(){
             nVouts[b.first] = count;
             count++;
         }
-        if(count > MAX_CONTRACT_VOUTS){
+        if(count > MAX_CONTRACT_VOUTS) {
             voutOverflow=true;
             return outs;
         }
@@ -389,7 +389,7 @@ std::vector<CTxOut> CondensingTX::createVout(){
     return outs;
 }
 
-bool CondensingTX::checkDeleteAddress(dev::Address addr){
+bool CondensingTX::checkDeleteAddress(dev::Address addr) {
     return deleteAddresses.count(addr) != 0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
