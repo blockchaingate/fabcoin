@@ -68,7 +68,8 @@ class MiningTest(FabcoinTestFramework):
         assert_template(node, block, None)
 
         self.log.info("submitblock: Test block decode failure")
-        assert_raises_rpc_error(-22, "Block decode failed", node.submitblock, b2x(block.serialize()[:-15]))
+        assert_raises_rpc_error(-22, "Block decode failed", 
+                              node.submitblock, b2x(block.serialize()[:-15]), '', True)
 
         self.log.info("getblocktemplate: Test bad input hash for coinbase transaction")
         bad_block = copy.deepcopy(block)
@@ -77,10 +78,12 @@ class MiningTest(FabcoinTestFramework):
         assert_template(node, bad_block, 'bad-cb-missing')
 
         self.log.info("submitblock: Test invalid coinbase transaction")
-        assert_raises_rpc_error(-22, "Block does not start with a coinbase", node.submitblock, b2x(bad_block.serialize()))
+        assert_raises_rpc_error(-22, "Block does not start with a coinbase",
+                              node.submitblock, b2x(bad_block.serialize()), '', True)
 
         self.log.info("getblocktemplate: Test truncated final transaction")
-        assert_raises_rpc_error(-22, "Block decode failed", node.getblocktemplate, {'data': b2x(block.serialize()[:-1]), 'mode': 'proposal_legacy'})
+        assert_raises_rpc_error(-22, "Block decode failed", node.getblocktemplate,
+                              {'data': b2x(block.serialize()[:-1]), 'mode': 'proposal_legacy'})
 
         self.log.info("getblocktemplate: Test duplicate transaction")
         bad_block = copy.deepcopy(block)
@@ -107,7 +110,8 @@ class MiningTest(FabcoinTestFramework):
         bad_block_sn = bytearray(block.serialize())
         assert_equal(bad_block_sn[TX_COUNT_OFFSET], 1)
         bad_block_sn[TX_COUNT_OFFSET] += 1
-        assert_raises_rpc_error(-22, "Block decode failed", node.getblocktemplate, {'data': b2x(bad_block_sn), 'mode': 'proposal_legacy'})
+        assert_raises_rpc_error(-22, "Block decode failed", node.getblocktemplate,
+                              {'data': b2x(bad_block_sn), 'mode': 'proposal_legacy'})
 
         self.log.info("getblocktemplate: Test bad bits")
         bad_block = copy.deepcopy(block)
@@ -130,6 +134,8 @@ class MiningTest(FabcoinTestFramework):
         bad_block = copy.deepcopy(block)
         bad_block.hashPrevBlock = 123
         assert_template(node, bad_block, 'inconclusive-not-best-prevblk')
+
+        # TODO(h4x3rotab): Test new block format.
 
 if __name__ == '__main__':
     MiningTest().main()
