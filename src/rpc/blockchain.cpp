@@ -134,7 +134,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
-	result.push_back(Pair("hashStateRoot", blockindex->hashStateRoot.GetHex())); // fasc
+    result.push_back(Pair("hashStateRoot", blockindex->hashStateRoot.GetHex())); // fasc
     result.push_back(Pair("hashUTXORoot", blockindex->hashUTXORoot.GetHex())); // fasc
     result.push_back(Pair("time", (int64_t)blockindex->nTime));
     result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
@@ -169,7 +169,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
              (int)::GetSerializeSize(block, SER_NETWORK,
                                      PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS | ser_flags)));
     result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | ser_flags)));
-	result.push_back(Pair("weight", (int)::GetBlockWeight(block)));
+    result.push_back(Pair("weight", (int)::GetBlockWeight(block)));
     result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
@@ -1576,48 +1576,48 @@ UniValue gettransactionreceipt(const JSONRPCRequest& request)
 
 UniValue listcontracts(const JSONRPCRequest& request)
 {
-	if (request.fHelp)
-		throw std::runtime_error(
-				"listcontracts (start maxDisplay)\n"
-				"\nArgument:\n"
-				"1. start     (numeric or string, optional) The starting account index, default 1\n"
-				"2. maxDisplay       (numeric or string, optional) Max accounts to list, default 20\n"
-		);
+    if (request.fHelp)
+        throw std::runtime_error(
+                "listcontracts (start maxDisplay)\n"
+                "\nArgument:\n"
+                "1. start     (numeric or string, optional) The starting account index, default 1\n"
+                "2. maxDisplay       (numeric or string, optional) Max accounts to list, default 20\n"
+        );
 
-	LOCK(cs_main);
+    LOCK(cs_main);
 
-	int start=1;
-	if (request.params.size() > 0){
-		start = request.params[0].get_int();
-		if (start<= 0)
-			throw JSONRPCError(RPC_TYPE_ERROR, "Invalid start, min=1");
-	}
+    int start=1;
+    if (request.params.size() > 0){
+        start = request.params[0].get_int();
+        if (start<= 0)
+            throw JSONRPCError(RPC_TYPE_ERROR, "Invalid start, min=1");
+    }
 
-	int maxDisplay=20;
-	if (request.params.size() > 1){
-		maxDisplay = request.params[1].get_int();
-		if (maxDisplay <= 0)
-			throw JSONRPCError(RPC_TYPE_ERROR, "Invalid maxDisplay");
-	}
+    int maxDisplay=20;
+    if (request.params.size() > 1){
+        maxDisplay = request.params[1].get_int();
+        if (maxDisplay <= 0)
+            throw JSONRPCError(RPC_TYPE_ERROR, "Invalid maxDisplay");
+    }
 
-	UniValue result(UniValue::VOBJ);
+    UniValue result(UniValue::VOBJ);
 
-	auto map = globalState->addresses();
-	int contractsCount=(int)map.size();
+    auto map = globalState->addresses();
+    int contractsCount=(int)map.size();
 
-	if (contractsCount>0 && start > contractsCount)
-		throw JSONRPCError(RPC_TYPE_ERROR, "start greater than max index "+ itostr(contractsCount));
+    if (contractsCount>0 && start > contractsCount)
+        throw JSONRPCError(RPC_TYPE_ERROR, "start greater than max index "+ itostr(contractsCount));
 
-	int itStartPos=std::min(start-1,contractsCount);
-	int i=0;
-	for (auto it = std::next(map.begin(),itStartPos); it!=map.end(); it++)
-	{
-		result.push_back(Pair(it->first.hex(),ValueFromAmount(CAmount(globalState->balance(it->first)))));
-		i++;
-		if(i==maxDisplay)break;
-	}
+    int itStartPos=std::min(start-1,contractsCount);
+    int i=0;
+    for (auto it = std::next(map.begin(),itStartPos); it!=map.end(); it++)
+    {
+        result.push_back(Pair(it->first.hex(),ValueFromAmount(CAmount(globalState->balance(it->first)))));
+        i++;
+        if(i==maxDisplay)break;
+    }
 
-	return result;
+    return result;
 }
 
 
@@ -2410,7 +2410,7 @@ static const CRPCCommand commands[] =
     { "hidden",             "waitfornewblock",        &waitfornewblock,        true,  {"timeout"} },
     { "hidden",             "waitforblock",           &waitforblock,           true,  {"blockhash","timeout"} },
     { "hidden",             "waitforblockheight",     &waitforblockheight,     true,  {"height","timeout"} },
-	{ "blockchain",         "listcontracts",          &listcontracts,          true,  {"start", "maxDisplay"} },
+    { "blockchain",         "listcontracts",          &listcontracts,          true,  {"start", "maxDisplay"} },
     { "blockchain",         "gettransactionreceipt",  &gettransactionreceipt,  true,  {"hash"} },
     { "blockchain",         "searchlogs",             &searchlogs,             true,  {"fromBlock", "toBlock", "address", "topics"} },
     { "blockchain",         "waitforlogs",            &waitforlogs,            true,  {"fromBlock", "nblocks", "address", "topics"} },

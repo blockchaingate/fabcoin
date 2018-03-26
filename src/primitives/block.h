@@ -35,7 +35,7 @@ public:
     int32_t nVersion;
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
-	uint256 hashStateRoot; // fasc
+    uint256 hashStateRoot; // fasc
     uint256 hashUTXORoot; // fasc
     uint32_t nHeight;
     uint32_t nReserved[7];
@@ -83,7 +83,7 @@ public:
         nVersion = 0;
         hashPrevBlock.SetNull();
         hashMerkleRoot.SetNull();
-		hashStateRoot.SetNull(); // fasc
+        hashStateRoot.SetNull(); // fasc
         hashUTXORoot.SetNull(); // fasc
         nHeight = 0;
         memset(nReserved, 0, sizeof(nReserved));
@@ -100,12 +100,12 @@ public:
 
     uint256 GetHash() const;
     uint256 GetHash(const Consensus::Params& params) const;
-	uint256 GetHashWithoutSign() const;
+    uint256 GetHashWithoutSign() const;
 
     int64_t GetBlockTime() const
     {
         return (int64_t)nTime;
-	}
+    }
     CBlockHeader& operator=(const CBlockHeader& other) //fasc
     {
         if (this != &other)
@@ -165,7 +165,7 @@ public:
         block.nVersion       = nVersion;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
-		block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashStateRoot  = hashStateRoot; // fasc
         block.hashUTXORoot   = hashUTXORoot; // fasc
         block.nHeight        = nHeight;
         memcpy(block.nReserved, nReserved, sizeof(block.nReserved));

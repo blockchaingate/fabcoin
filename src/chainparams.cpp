@@ -501,24 +501,24 @@ public:
             uint256S("0x0000000000000000000000000000000000000000000000000000000000000001"),
             ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
             0x207fffff, 1, 50 * COIN );
-	
-	/* Search nNonce, which is need to change src/Makefile.am to include pow.cpp in LIB_COMMON */
-	/*
-	int iii = 0;
-	auto nNonce  = uint256();
-	while (iii < (1<<20) ) {
-	iii++;
-	nNonce = ArithToUint256(UintToArith256(nNonce) + 1);
+    
+    /* Search nNonce, which is need to change src/Makefile.am to include pow.cpp in LIB_COMMON */
+    /*
+    int iii = 0;
+    auto nNonce  = uint256();
+    while (iii < (1<<20) ) {
+    iii++;
+    nNonce = ArithToUint256(UintToArith256(nNonce) + 1);
         genesis = CreateGenesisBlock(
             1517433514,
-	    nNonce,
+            nNonce,
             ParseHex("02e95dd630c7a59cd3256a2e7fd385e30dbf14aad14f6585c7abf63c2b4ff418c786bf70"),
             0x207fffff, 1, 50 * COIN );
-	 bool postfork = true;
-	 const Consensus::Params param = consensus;
-	 if (CheckProofOfWork(genesis.GetHash(consensus), 0x207fffff,  postfork, param) ) break;
-	 }
-	 */
+     bool postfork = true;
+     const Consensus::Params param = consensus;
+     if (CheckProofOfWork(genesis.GetHash(consensus), 0x207fffff,  postfork, param) ) break;
+     }
+     */
 
         //jyan consensus.hashGenesisBlock = genesis.GetHash();
         consensus.hashGenesisBlock = genesis.GetHash(consensus);

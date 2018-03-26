@@ -2954,7 +2954,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
     if (gArgs.GetBoolArg("-walletrejectlongchains", DEFAULT_WALLET_REJECT_LONG_CHAINS)) {
         // Lastly, ensure this tx will pass the mempool's chain limits
         LockPoints lp;
-		CTxMemPoolEntry entry(wtxNew.tx, 0, 0, 0, 0, 0, false, 0, lp);
+        CTxMemPoolEntry entry(wtxNew.tx, 0, 0, 0, 0, 0, false, 0, lp);
         CTxMemPool::setEntries setAncestors;
         size_t nLimitAncestors = gArgs.GetArg("-limitancestorcount", DEFAULT_ANCESTOR_LIMIT);
         size_t nLimitAncestorSize = gArgs.GetArg("-limitancestorsize", DEFAULT_ANCESTOR_SIZE_LIMIT)*1000;
@@ -3079,7 +3079,7 @@ CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, const CCoinControl& coin_c
         if (coin_control.m_fee_mode == FeeEstimateMode::CONSERVATIVE) conservative_estimate = true;
         else if (coin_control.m_fee_mode == FeeEstimateMode::ECONOMICAL) conservative_estimate = false;
 
-		fee_needed = 0;
+        fee_needed = 0;
         fee_needed = estimator.estimateSmartFee(target, feeCalc, conservative_estimate).GetFee(nTxBytes);
         if (fee_needed == 0) {
             // if we don't have enough data for estimateSmartFee, then use fallbackFee

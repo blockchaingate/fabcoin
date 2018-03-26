@@ -365,7 +365,7 @@ bool RPCIsInWarmup(std::string *outStatus)
 }
 
 JSONRPCRequest::JSONRPCRequest(HTTPRequest *_req): JSONRPCRequest() {
-	req = _req;
+    req = _req;
 }
 
 void JSONRPCRequest::parse(const UniValue& valRequest)

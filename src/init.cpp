@@ -248,8 +248,8 @@ void Shutdown()
         pcoinsdbview = nullptr;
         delete pblocktree;
         pblocktree = nullptr;
-		delete pstorageresult;
-		pstorageresult = nullptr;
+        delete pstorageresult;
+        pstorageresult = nullptr;
         delete globalState.release();
         globalSealEngine.reset();
     }
@@ -1502,7 +1502,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 dev::eth::ChainParams cp((dev::eth::genesisInfo(dev::eth::Network::fascMainNetwork)));
                 globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
 
-				pstorageresult = new StorageResults(fascStateDir.string());
+                pstorageresult = new StorageResults(fascStateDir.string());
                 if(chainActive.Tip() != NULL){
                     globalState->setRoot(uintToh256(chainActive.Tip()->hashStateRoot));
                     globalState->setRootUTXO(uintToh256(chainActive.Tip()->hashUTXORoot));
@@ -1788,7 +1788,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 #else
     conf.useGPU = false;
 #endif
-	GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams, conf);
+    GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams, conf);
 #endif
 
     // ********************************************************* Step 12: finished

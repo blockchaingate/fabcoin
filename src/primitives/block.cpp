@@ -48,7 +48,7 @@ std::string CBlock::ToString() const
         nVersion,
         hashPrevBlock.ToString(),
         hashMerkleRoot.ToString(),
-		hashStateRoot.ToString(), // fasc
+        hashStateRoot.ToString(), // fasc
         hashUTXORoot.ToString(), // fasc
         nHeight, nTime, nBits, nNonce.GetHex(),
         HexStr(nSolution.begin(), nSolution.end()),

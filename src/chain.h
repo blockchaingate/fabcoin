@@ -246,9 +246,9 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = uint256();
-		hashStateRoot  = uint256(); // fasc
+      hashStateRoot  = uint256(); // fasc
         hashUTXORoot   = uint256(); // fasc
-		//nMoneySupply = 0;
+      //nMoneySupply = 0;
         nSolution.clear();
     }
 
@@ -269,7 +269,7 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
-		//nMoneySupply   = 0;
+        //nMoneySupply   = 0;
         hashStateRoot  = block.hashStateRoot; // fasc
         hashUTXORoot   = block.hashUTXORoot; // fasc
         nSolution      = block.nSolution;
@@ -305,7 +305,7 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
-		block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashStateRoot  = hashStateRoot; // fasc
         block.hashUTXORoot   = hashUTXORoot; // fasc
         block.nSolution      = nSolution;
         return block;
@@ -430,7 +430,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-		READWRITE(hashStateRoot); // fasc
+        READWRITE(hashStateRoot); // fasc
         READWRITE(hashUTXORoot); // fasc
         READWRITE(nSolution);
     }
@@ -446,7 +446,7 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-		block.hashStateRoot   = hashStateRoot; // fasc
+        block.hashStateRoot   = hashStateRoot; // fasc
         block.hashUTXORoot    = hashUTXORoot; // fasc
         block.nSolution       = nSolution;
         return block.GetHash();

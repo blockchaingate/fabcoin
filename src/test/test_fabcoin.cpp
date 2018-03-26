@@ -234,10 +234,10 @@ CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CMutableTransaction &tx) {
 CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CTransaction &txn) {
     /*return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, nHeight,
                            spendsCoinbase, sigOpCost, lp);*/
-	//CAmount inChainValue = pool && pool->HasNoInputsOf(txn) ? txn.GetValueOut() : 0;
+    //CAmount inChainValue = pool && pool->HasNoInputsOf(txn) ? txn.GetValueOut() : 0;
 
-	CAmount inChainValue =  0;
-	double dPriority = 0.0;
-	return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, dPriority, nHeight,
-		inChainValue, spendsCoinbase, sigOpCost, lp);
+    CAmount inChainValue =  0;
+    double dPriority = 0.0;
+    return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, dPriority, nHeight,
+        inChainValue, spendsCoinbase, sigOpCost, lp);
 }

@@ -255,7 +255,7 @@ private:
     bool AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64_t minGasPrice);
 
     // Methods for how to add transactions to a block.
-	/** Add transactions based on tx "priority" */
+    /** Add transactions based on tx "priority" */
     void addPriorityTxs(uint64_t minGasPrice);
     /** Add transactions based on feerate including unconfirmed ancestors */
     void addPackageTxs(uint64_t minGasPrice);

@@ -177,8 +177,8 @@ inline dev::h256 uintToh256(const uint256& in)
 
 inline uint256 h256Touint(const dev::h256& in)
 {
-	std::vector<unsigned char> vHashBlock = in.asBytes();
-	return uint256(vHashBlock);
+    std::vector<unsigned char> vHashBlock = in.asBytes();
+    return uint256(vHashBlock);
 }
 
 inline dev::u256 uintTou256(const uint256& in)
@@ -192,7 +192,7 @@ inline uint256 u256Touint(const dev::u256& in)
 {
     std::vector<unsigned char> rawValue(32, 0);
     dev::toBigEndian<dev::u256, dev::bytes>(in, rawValue);
-	return uint256(rawValue);
+    return uint256(rawValue);
 }
 //////////////////////////////////////////////////////
 

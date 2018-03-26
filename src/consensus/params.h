@@ -72,8 +72,8 @@ struct Params {
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
-	
-	int nFixUTXOCacheHFHeight; //fasc
+    
+    int nFixUTXOCacheHFHeight; //fasc
 
     //Zcash logic for diff adjustment
     int64_t nPowAveragingWindow;
