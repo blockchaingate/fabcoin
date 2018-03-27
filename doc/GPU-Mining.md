@@ -35,7 +35,9 @@ $ groups
            
 To add yourself to the video group you will need the sudo password and can use the following command:
 
-$ sudo usermod -a -G video $LOGNAME 
+
+   $ sudo usermod -a -G video $LOGNAME 
+
 
 You will need to log out and in again to activate this change.
 
@@ -45,24 +47,29 @@ OpenCL support comes with the graphic card driver. Please check your graphic car
 Read the appropriate subsection below:
 
 Ubuntu 16.04 / amdgpu
-$ sudo apt-get install amdgpu-pro
+
+   $ sudo apt-get install amdgpu-pro
 
 Ubuntu 16.04 / Nvidia
-$ sudo apt-get install nvidia-open-dev nvidia-361
+
+   $ sudo apt-get install nvidia-open-dev nvidia-361
+
 
 ## Compilation and installation Fabcoin code
 
 Compile and make fabcoin with option --enable-gpu, gpu mining is default disable on makefile.
-$ cd ~/fabcoin
-$ ./autogen.sh
-$ ./configure --enable-gpu
-$ make 
+
+    $ cd ~/fabcoin
+    $ ./autogen.sh
+    $ ./configure --enable-gpu
+    $ make 
+
 
  
 ### Run Mining  
 call fabcoind or fabcoin-qt  with option -gen  -G -allgpu will start GPU mining 
   
-$ fabcoind \
+   $ fabcoind \
          -gen \       # -gen will enable mining process. without -G , it will using CPU mining .
          -genproclimit  # Set threads numbers for CPU mining  (-1 = all cores, default 1) .
          -G   \         # -G , Enable GPU mining  (default: false, don't use GPU)
@@ -70,5 +77,7 @@ $ fabcoind \
          -allgpu        # If -G is enabled this will mine on all available GPU devices (default: false)
  
 example :
-$ fabcoind -testnet -daemon -gen -G -allgpu      # start GPU mining on all GPU card on testnet.
+
+   $ fabcoind -testnet -daemon -gen -G -allgpu      # start GPU mining on all GPU card on testnet.
+
  
