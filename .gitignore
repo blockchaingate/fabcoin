@@ -1,5 +1,7 @@
 *.tar.gz
 
+.vs/
+
 *.exe
 src/fabcoin
 src/fabcoind
