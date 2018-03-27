@@ -57,6 +57,7 @@ protected:
     virtual int64_t EndTime(const Consensus::Params& params) const =0;
     virtual int Period(const Consensus::Params& params) const =0;
     virtual int Threshold(const Consensus::Params& params) const =0;
+    virtual int Getbit(const Consensus::Params params) const =0;
 
 public:
     BIP9Stats GetStateStatisticsFor(const CBlockIndex* pindex, const Consensus::Params& params) const;
