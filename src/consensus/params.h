@@ -50,6 +50,8 @@ struct Params {
     int FABHeight;
     /** Block height before which the coinbase subsidy will be locked for the same period */
     int CoinbaseLock;
+    /** whether segwit is active */
+    bool ForceSegwit;
 
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
