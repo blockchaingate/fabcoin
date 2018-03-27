@@ -5,28 +5,28 @@
 """Test logic for skipping signature validation on old blocks.
 
 Test logic for skipping signature validation on blocks which we've assumed
-valid (https://github.com/blockchaingate/fabcoin/pull/9484)
+valid (https://github.com/bitcoin/bitcoin/pull/9484)
 
 We build a chain that includes and invalid signature for one of the
 transactions:
 
     0:        genesis block
     1:        block 1 with coinbase transaction output.
-    2-101:    bury that block with 100 blocks so the coinbase transaction
+    2-801:    bury that block with 800 blocks so the coinbase transaction
               output can be spent
-    102:      a block containing a transaction spending the coinbase
+    802:      a block containing a transaction spending the coinbase
               transaction output. The transaction has an invalid signature.
-    103-2202: bury the bad block with just over two weeks' worth of blocks
-              (2100 blocks)
+    803-17602: bury the bad block with just over two weeks' worth of blocks
+              (2100 *8 blocks)
 
 Start three nodes:
 
-    - node0 has no -assumevalid parameter. Try to sync to block 2202. It will
-      reject block 102 and only sync as far as block 101
-    - node1 has -assumevalid set to the hash of block 102. Try to sync to
-      block 2202. node1 will sync all the way to block 2202.
-    - node2 has -assumevalid set to the hash of block 102. Try to sync to
-      block 200. node2 will reject block 102 since it's assumed valid, but it
+    - node0 has no -assumevalid parameter. Try to sync to block 17602. It will
+      reject block 802 and only sync as far as block 801
+    - node1 has -assumevalid set to the hash of block 802. Try to sync to
+      block 17602. node1 will sync all the way to block 17602.
+    - node2 has -assumevalid set to the hash of block 802. Try to sync to
+      block 900. node2 will reject block 802 since it's assumed valid, but it
       isn't buried by at least two weeks' work.
 """
 import time
@@ -142,19 +142,19 @@ class AssumeValidTest(FabcoinTestFramework):
         tx.vout.append(CTxOut(24 * 100000000, CScript([OP_TRUE])))
         tx.calc_sha256()
 
-        block102 = create_block(self.tip, create_coinbase(height), self.block_time)
+        block802 = create_block(self.tip, create_coinbase(height), self.block_time)
         self.block_time += 1
-        block102.vtx.extend([tx])
-        block102.hashMerkleRoot = block102.calc_merkle_root()
-        block102.rehash()
-        block102.solve()
-        self.blocks.append(block102)
-        self.tip = block102.sha256
+        block802.vtx.extend([tx])
+        block802.hashMerkleRoot = block802.calc_merkle_root()
+        block802.rehash()
+        block802.solve()
+        self.blocks.append(block802)
+        self.tip = block802.sha256
         self.block_time += 1
         height += 1
 
-        # Bury the assumed valid block 2100 deep
-        for i in range(2100):
+        # Bury the assumed valid block 2100*8 deep
+        for i in range(16800):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
             block.nVersion = 4
             block.solve()
@@ -163,40 +163,48 @@ class AssumeValidTest(FabcoinTestFramework):
             self.block_time += 1
             height += 1
 
+        print( "prepared Block tip=%s height=%d"%(self.tip, height) )
+  
         # Start node1 and node2 with assumevalid so they accept a block with a bad signature.
-        self.start_node(1, extra_args=["-assumevalid=" + hex(block102.sha256)])
+        self.start_node(1, extra_args=["-assumevalid=" + hex(block802.sha256)])
         node1 = BaseNode()  # connects to node1
         connections.append(NodeConn('127.0.0.1', p2p_port(1), self.nodes[1], node1))
         node1.add_connection(connections[1])
         node1.wait_for_verack()
 
-        self.start_node(2, extra_args=["-assumevalid=" + hex(block102.sha256)])
+        self.start_node(2, extra_args=["-assumevalid=" + hex(block802.sha256)])
         node2 = BaseNode()  # connects to node2
         connections.append(NodeConn('127.0.0.1', p2p_port(2), self.nodes[2], node2))
         node2.add_connection(connections[2])
         node2.wait_for_verack()
 
-        # send header lists to all three nodes
+        # send header lists to nodes
         node0.send_header_for_blocks(self.blocks[0:2000])
-        node0.send_header_for_blocks(self.blocks[2000:])
-        node1.send_header_for_blocks(self.blocks[0:2000])
-        node1.send_header_for_blocks(self.blocks[2000:])
-        node2.send_header_for_blocks(self.blocks[0:200])
-
         # Send blocks to node0. Block 802 will be rejected.
         self.send_blocks_until_disconnected(node0)
         self.assert_blockchain_height(self.nodes[0], 801)
 
-        # Send all blocks to node1. All blocks will be accepted.
-        for i in range(2202):
-            node1.send_message(msg_block(self.blocks[i]))
-        # Syncing 2200 blocks can take a while on slow systems. Give it plenty of time to sync.
-        node1.sync_with_ping(240)
-        assert_equal(self.nodes[1].getblock(self.nodes[1].getbestblockhash())['height'], 2202)
-
-        # Send blocks to node2. Block 102 will be rejected.
+        # Send blocks to node2. Block 802 will be rejected.
+        node2.send_header_for_blocks(self.blocks[0:900])
         self.send_blocks_until_disconnected(node2)
-        self.assert_blockchain_height(self.nodes[2], 101)
+        self.assert_blockchain_height(self.nodes[2], 801)
+
+
+        # Send all blocks to node1. All blocks will be accepted.
+        for i in range (8) :
+            node1.send_header_for_blocks(self.blocks[i*2000:(i+1)*2000])
+            for j in range(2000):
+                 node1.send_message(msg_block(self.blocks[i*2000+j]))
+            node1.sync_with_ping(240)
+
+        node1.send_header_for_blocks(self.blocks[16000:17602])
+        for i in range(162):
+            node1.send_message(msg_block(self.blocks[i]))
+
+        # Syncing 17602 blocks can take a while on slow systems. Give it plenty of time to sync.
+        node1.sync_with_ping(240*8)
+        assert_equal(self.nodes[1].getblock(self.nodes[1].getbestblockhash())['height'], 17602)
+
 
 if __name__ == '__main__':
     AssumeValidTest().main()

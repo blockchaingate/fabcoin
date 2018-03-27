@@ -108,23 +108,23 @@ class SegWitTest(FabcoinTestFramework):
         sync_blocks(self.nodes)
 
     def run_test(self):
-        self.nodes[0].generate(861) #block 161
+        self.nodes[0].generate(861) #block 161 - 861
 
         self.log.info("Verify sigops are counted in GBT with pre-BIP141 rules before the fork")
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
         tmpl = self.nodes[0].getblocktemplate({})
-        assert(tmpl['sizelimit'] == 4000000)    #MAX_BLOCK_WEIGHT 4000000
+        assert(tmpl['sizelimit'] == 1000000)    
         #assert('weightlimit' not in tmpl)
-        assert(tmpl['sigoplimit'] == 80000)     #MAX_BLOCK_SIGOPS_COST
+        assert(tmpl['sigoplimit'] == 20000)     
         assert(tmpl['transactions'][0]['hash'] == txid)
-        assert(tmpl['transactions'][0]['sigops'] == 8)
+        assert(tmpl['transactions'][0]['sigops'] == 2)
         tmpl = self.nodes[0].getblocktemplate({'rules':['segwit']})
-        assert(tmpl['sizelimit'] == 4000000)
+        assert(tmpl['sizelimit'] == 1000000)
         #assert('weightlimit' not in tmpl)
-        assert(tmpl['sigoplimit'] == 80000)
+        assert(tmpl['sigoplimit'] == 20000)
         assert(tmpl['transactions'][0]['hash'] == txid)
-        assert(tmpl['transactions'][0]['sigops'] == 8)
-        self.nodes[0].generate(1) #block 162
+        assert(tmpl['transactions'][0]['sigops'] == 2)
+        self.nodes[0].generate(1) #block 162 - 862
 
         balance_presetup = self.nodes[0].getbalance()
         self.pubkey = []
@@ -156,7 +156,7 @@ class SegWitTest(FabcoinTestFramework):
         assert_equal(self.nodes[1].getbalance(), 20*Decimal("24.999"))
         assert_equal(self.nodes[2].getbalance(), 20*Decimal("24.999"))
 
-        self.nodes[0].generate(260) #block 423
+        self.nodes[0].generate(1660) #block 423 - 2523        
         sync_blocks(self.nodes)
 
         self.log.info("Verify default node can't accept any witness format txs before fork")
@@ -175,28 +175,28 @@ class SegWitTest(FabcoinTestFramework):
         self.fail_accept(self.nodes[0], "no-witness-yet", p2sh_ids[NODE_0][WIT_V1][0], True)
 
         self.log.info("Verify witness txs are skipped for mining before the fork")
-        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][0], True) #block 424
-        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][0], True) #block 425
-        self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][0], True) #block 426
+        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][0], True) #block 424 
+        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][0], True) #block 425 
+        self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][0], True) #block 425
         self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][0], True) #block 427
 
         # TODO: An old node would see these txs without witnesses and be able to mine them
 
         self.log.info("Verify unsigned bare witness txs in versionbits-setting blocks are valid before the fork")
-        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][1], False) #block 428
-        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][1], False) #block 429
+        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][1], False) #block 428 
+        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][1], False) #block 429 
 
         self.log.info("Verify unsigned p2sh witness txs without a redeem script are invalid")
         self.fail_accept(self.nodes[2], "mandatory-script-verify-flag", p2sh_ids[NODE_2][WIT_V0][1], False)
         self.fail_accept(self.nodes[2], "mandatory-script-verify-flag", p2sh_ids[NODE_2][WIT_V1][1], False)
 
         self.log.info("Verify unsigned p2sh witness txs with a redeem script in versionbits-settings blocks are valid before the fork")
-        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][1], False, witness_script(False, self.pubkey[2])) #block 430
-        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][1], False, witness_script(True, self.pubkey[2])) #block 431
+        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][1], False, witness_script(False, self.pubkey[2])) #block 430 -2530
+        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][1], False, witness_script(True, self.pubkey[2])) #block 431 -2531
 
         self.log.info("Verify previous witness txs skipped for mining can now be mined")
         assert_equal(len(self.nodes[2].getrawmempool()), 4)
-        block = self.nodes[2].generate(1) #block 432 (first block with new rules; 432 = 144 * 3)
+        block = self.nodes[2].generate(1) #block 432 - 2532 (first block with new rules; 2532 = 844 * 3)
         sync_blocks(self.nodes)
         assert_equal(len(self.nodes[2].getrawmempool()), 0)
         segwit_tx_list = self.nodes[2].getblock(block[0])["tx"]
