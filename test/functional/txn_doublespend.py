@@ -30,7 +30,7 @@ class TxnMallTest(FabcoinTestFramework):
         
         # Assign coins to foo and bar accounts:
         node0_address_foo = self.nodes[0].getnewaddress("foo")
-        fund_foo_txid = self.nodes[0].sendfrom("", node0_address_foo, 509)
+        fund_foo_txid = self.nodes[0].sendfrom("", node0_address_foo, 309)
         fund_foo_tx = self.nodes[0].gettransaction(fund_foo_txid)
 
         node0_address_bar = self.nodes[0].getnewaddress("bar")
@@ -38,7 +38,7 @@ class TxnMallTest(FabcoinTestFramework):
         fund_bar_tx = self.nodes[0].gettransaction(fund_bar_txid)
 
         assert_equal(self.nodes[0].getbalance(""),
-                     starting_balance - 509 - 29 + fund_foo_tx["fee"] + fund_bar_tx["fee"])
+                     starting_balance - 309 - 29 + fund_foo_tx["fee"] + fund_bar_tx["fee"])
 
         # Coins are sent to node1_address
         node1_address = self.nodes[1].getnewaddress("from0")
@@ -48,7 +48,7 @@ class TxnMallTest(FabcoinTestFramework):
         doublespend_fee = Decimal('-.02')
         rawtx_input_0 = {}
         rawtx_input_0["txid"] = fund_foo_txid
-        rawtx_input_0["vout"] = find_output(self.nodes[0], fund_foo_txid, 509)
+        rawtx_input_0["vout"] = find_output(self.nodes[0], fund_foo_txid, 309)
         rawtx_input_1 = {}
         rawtx_input_1["txid"] = fund_bar_txid
         rawtx_input_1["vout"] = find_output(self.nodes[0], fund_bar_txid, 29)
@@ -56,12 +56,12 @@ class TxnMallTest(FabcoinTestFramework):
         change_address = self.nodes[0].getnewaddress()
         outputs = {}
         outputs[node1_address] = 615
-        outputs[change_address] = 623 - 615 + doublespend_fee
+        outputs[change_address] = 624 - 615 + doublespend_fee
         rawtx = self.nodes[0].createrawtransaction(inputs, outputs)
         doublespend = self.nodes[0].signrawtransaction(rawtx)
         assert_equal(doublespend["complete"], True)
 
-        # Create two spends using 1 50 FAB coin each
+        # Create two spends using each
         txid1 = self.nodes[0].sendfrom("foo", node1_address, 20, 0)
         txid2 = self.nodes[0].sendfrom("bar", node1_address, 10, 0)
         
@@ -76,13 +76,13 @@ class TxnMallTest(FabcoinTestFramework):
         # Node0's balance should be starting balance, plus 50FAB for another
         # matured block, minus 20, minus 10, and minus transaction fees:
         expected = starting_balance + fund_foo_tx["fee"] + fund_bar_tx["fee"]
-        if self.options.mine_block: expected += 50
+        if self.options.mine_block: expected += 25
         expected += tx1["amount"] + tx1["fee"]
         expected += tx2["amount"] + tx2["fee"]
         assert_equal(self.nodes[0].getbalance(), expected)
 
         # foo and bar accounts should be debited:
-        assert_equal(self.nodes[0].getbalance("foo", 0), 509+tx1["amount"]+tx1["fee"])
+        assert_equal(self.nodes[0].getbalance("foo", 0), 309+tx1["amount"]+tx1["fee"])
         assert_equal(self.nodes[0].getbalance("bar", 0), 29+tx2["amount"]+tx2["fee"])
 
         if self.options.mine_block:
@@ -115,19 +115,19 @@ class TxnMallTest(FabcoinTestFramework):
         assert_equal(tx1["confirmations"], -2)
         assert_equal(tx2["confirmations"], -2)
 
-        # Node0's total balance should be starting balance, plus 50FAB for 
+        # Node0's total balance should be starting balance, plus 25FAB for 
         # two more matured blocks, minus 615 for the double-spend, plus fees (which are
         # negative):
-        expected = starting_balance + 50 - 615 + fund_foo_tx["fee"] + fund_bar_tx["fee"] + doublespend_fee
+        expected = starting_balance + 25 - 615 + fund_foo_tx["fee"] + fund_bar_tx["fee"] + doublespend_fee
         assert_equal(self.nodes[0].getbalance(), expected)
         assert_equal(self.nodes[0].getbalance("*"), expected)
 
         # Final "" balance is starting_balance - amount moved to accounts - doublespend + subsidies +
         # fees (which are negative)
-        assert_equal(self.nodes[0].getbalance("foo"), 509)
+        assert_equal(self.nodes[0].getbalance("foo"), 309)
         assert_equal(self.nodes[0].getbalance("bar"), 29)
         assert_equal(self.nodes[0].getbalance(""), starting_balance
-                                                              -509
+                                                              -309
                                                               -  29
                                                               - 615
                                                               + 50 

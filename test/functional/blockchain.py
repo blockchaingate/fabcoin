@@ -33,7 +33,7 @@ from test_framework.util import (
 class BlockchainTest(FabcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
-        self.extra_args = [['-stopatheight=207']]
+        self.extra_args = [['-stopatheight=907']]
 
     def run_test(self):
         self._test_getchaintxstats()
@@ -46,25 +46,25 @@ class BlockchainTest(FabcoinTestFramework):
 
     def _test_getchaintxstats(self):
         chaintxstats = self.nodes[0].getchaintxstats(1)
-        # 200 txs plus genesis tx
-        assert_equal(chaintxstats['txcount'], 201)
-        # tx rate should be 1 per 10 minutes, or 1/600
+        # 900 txs plus genesis tx
+        assert_equal(chaintxstats['txcount'], 901)
+        # tx rate should be 1 per 75 second, or 1/75
         # we have to round because of binary math
-        assert_equal(round(chaintxstats['txrate'] * 600, 10), Decimal(1))
+        assert_equal(round(chaintxstats['txrate'] * 75, 10), Decimal(1))
 
     def _test_gettxoutsetinfo(self):
         node = self.nodes[0]
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('8725.00000000'))
-        assert_equal(res['transactions'], 200)
-        assert_equal(res['height'], 200)
-        assert_equal(res['txouts'], 200)
-        assert_equal(res['bogosize'], 17000),
-        assert_equal(res['bestblock'], node.getblockhash(200))
+        assert_equal(res['total_amount'], Decimal('7358.20312500'))
+        assert_equal(res['transactions'], 900)
+        assert_equal(res['height'], 900)
+        assert_equal(res['txouts'], 900)
+        assert_equal(res['bogosize'], 76500),
+        assert_equal(res['bestblock'], node.getblockhash(900))
         size = res['disk_size']
         assert size > 6400
-        assert size < 64000
+        assert size < 64000/2*9
         assert_equal(len(res['bestblock']), 64)
         assert_equal(len(res['hash_serialized_2']), 64)
 
@@ -100,11 +100,11 @@ class BlockchainTest(FabcoinTestFramework):
                               node.getblockheader, "nonsense")
 
         besthash = node.getbestblockhash()
-        secondbesthash = node.getblockhash(199)
+        secondbesthash = node.getblockhash(899)
         header = node.getblockheader(besthash)
 
         assert_equal(header['hash'], besthash)
-        assert_equal(header['height'], 200)
+        assert_equal(header['height'], 900)
         assert_equal(header['confirmations'], 1)
         assert_equal(header['previousblockhash'], secondbesthash)
         assert_is_hex_string(header['chainwork'])
@@ -114,7 +114,7 @@ class BlockchainTest(FabcoinTestFramework):
         assert_is_hash_string(header['bits'], length=None)
         assert isinstance(header['time'], int)
         assert isinstance(header['mediantime'], int)
-        assert isinstance(header['nonce'], int)
+        assert_is_hex_string(header['nonce'])
         assert isinstance(header['version'], int)
         assert isinstance(int(header['versionHex'], 16), int)
         assert isinstance(header['difficulty'], Decimal)
@@ -127,13 +127,13 @@ class BlockchainTest(FabcoinTestFramework):
 
     def _test_getnetworkhashps(self):
         hashes_per_second = self.nodes[0].getnetworkhashps()
-        # This should be 2 hashes every 10 minutes or 1/300
-        assert abs(hashes_per_second * 300 - 1) < 0.0001
+        # This should be 2 hashes every 75 second or 2/75
+        assert abs(hashes_per_second /2 * 75 - 1) < 0.0001
 
     def _test_stopatheight(self):
-        assert_equal(self.nodes[0].getblockcount(), 200)
+        assert_equal(self.nodes[0].getblockcount(), 900)
         self.nodes[0].generate(6)
-        assert_equal(self.nodes[0].getblockcount(), 206)
+        assert_equal(self.nodes[0].getblockcount(), 906)
         self.log.debug('Node should not stop at this height')
         assert_raises(subprocess.TimeoutExpired, lambda: self.nodes[0].process.wait(timeout=3))
         try:
@@ -143,7 +143,7 @@ class BlockchainTest(FabcoinTestFramework):
         self.log.debug('Node should stop at this height...')
         self.nodes[0].wait_until_stopped()
         self.start_node(0)
-        assert_equal(self.nodes[0].getblockcount(), 207)
+        assert_equal(self.nodes[0].getblockcount(), 907)
 
 
 if __name__ == '__main__':

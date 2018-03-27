@@ -1,6 +1,6 @@
 Travis CI
 =========
-
+.
 Support for using travis-ci has been added in order to automate pull-testing.
 See [travis-ci.org](https://travis-ci.org/) for more info
 
@@ -19,12 +19,11 @@ than a single pass/fail. This helps to catch build failures and logic errors
 that present on platforms other than the ones the author has tested. This
 matrix is defined in the build script and can be changed at any time.
 
-All builders use the dependency-generator in the [depends dir](/depends), rather than
-using apt-get to install build dependencies. This guarantees that the tester
-is using the same versions as Gitian, so the build results are nearly identical
-to what would be found in a final release. However, this also means that builds
-will fail if new dependencies are introduced without being added to the
-dependency generator.
+All builders use the dependency-generator rather than using apt-get to install 
+build dependencies. This guarantees that the tester is using the same versions 
+as Gitian, so the build results are nearly identical to what would be found in 
+a final release. However, this also means that builds will fail if new 
+dependencies are introduced without being added to the dependency generator.
 
 In order to avoid rebuilding all dependencies for each build, the binaries are
 cached and re-used when possible. Changes in the dependency-generator will

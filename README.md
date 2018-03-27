@@ -15,8 +15,7 @@ out collectively by the network. Fabcoin Core is the name of open source
 software which enables the use of this currency.
 
 For more information, as well as an immediately useable, binary version of
-the Fabcoin Core software, see https://fabcoin.org/en/download, or read the
-[original whitepaper](https://fabcoincore.org/fabcoin.pdf).
+the Fabcoin Core software, see https://fa.biz/download/fab-en.pdf, or read the.
 
 License
 -------
@@ -33,11 +32,6 @@ regularly to indicate new official, stable release versions of Fabcoin Core.
 
 The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The developer [mailing list](https://lists.linuxfoundation.org/mailman/listinfo/fabcoin-dev)
-should be used to discuss complicated or controversial changes before working
-on a patch set.
-
-Developer IRC can be found on Freenode at #fabcoin-core-dev.
 
 Testing
 -------
@@ -69,9 +63,6 @@ not straightforward.
 
 Translations
 ------------
-
-Changes to translations as well as new translations can be submitted to
-[Fabcoin Core's Transifex page](https://www.transifex.com/projects/p/fabcoin/).
 
 Translations are periodically pulled from Transifex and merged into the git repository. See the
 [translation process](doc/translation_process.md) for details on how this works.
