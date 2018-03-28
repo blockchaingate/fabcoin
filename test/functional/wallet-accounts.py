@@ -103,13 +103,13 @@ class WalletAccountsTest(FabcoinTestFramework):
 
         node.generate(801)
         
-        expected_account_balances = {"": 7186.71875000}
+        expected_account_balances = {"": 20100}
         for account in accounts:
             expected_account_balances[account] = 0
         
         assert_equal(node.listaccounts(), expected_account_balances)
         
-        assert_equal(node.getbalance(""), 7186.71875000 )
+        assert_equal(node.getbalance(""), 20100)
         
         for account in accounts:
             address = node.getaccountaddress("")

@@ -543,8 +543,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     unsigned int n = chainparams.EquihashN();
     unsigned int k = chainparams.EquihashK();
 
-    uint8_t * header = NULL;
 #ifdef ENABLE_GPU
+    uint8_t * header = NULL;
     GPUSolver * g_solver = NULL;
     if(conf.useGPU) 
     {

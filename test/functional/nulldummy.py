@@ -6,11 +6,11 @@
 
 Connect to a single node.
 Generate 2 blocks (save the coinbases for later).
-Generate 1027 more blocks.
-[Policy/Consensus] Check that NULLDUMMY compliant transactions are accepted in the 1030th block.
+Generate 2527 more blocks.
+[Policy/Consensus] Check that NULLDUMMY compliant transactions are accepted in the 2530th block.
 [Policy] Check that non-NULLDUMMY transactions are rejected before activation.
-[Consensus] Check that the new NULLDUMMY rules are not enforced on the 1031st block.
-[Policy/Consensus] Check that the new NULLDUMMY rules are enforced on the 1032nd block.
+[Consensus] Check that the new NULLDUMMY rules are not enforced on the 2531st block.
+[Policy/Consensus] Check that the new NULLDUMMY rules are enforced on the 2532nd block.
 """
 
 from test_framework.test_framework import FabcoinTestFramework
@@ -53,13 +53,13 @@ class NULLDUMMYTest(FabcoinTestFramework):
         coinbase_txid = []
         for i in self.coinbase_blocks:
             coinbase_txid.append(self.nodes[0].getblock(i)['tx'][0])
-        self.nodes[0].generate(1027) # Block 1029
+        self.nodes[0].generate(2527) # Block 2529
         self.lastblockhash = self.nodes[0].getbestblockhash()
         self.tip = int("0x" + self.lastblockhash, 0)
-        self.lastblockheight = 1029
-        self.lastblocktime = int(time.time()) + 1029
+        self.lastblockheight = 2529
+        self.lastblocktime = int(time.time()) + 2529
 
-        self.log.info("Test 1: NULLDUMMY compliant base transactions should be accepted to mempool and mined before activation [1030]")
+        self.log.info("Test 1: NULLDUMMY compliant base transactions should be accepted to mempool and mined before activation [2530]")
         test1txs = [self.create_transaction(self.nodes[0], coinbase_txid[0], self.ms_address, 24.9)]
         txid1 = self.nodes[0].sendrawtransaction(bytes_to_hex_str(test1txs[0].serialize_with_witness()), True)
         test1txs.append(self.create_transaction(self.nodes[0], txid1, self.ms_address, 24.8))
@@ -73,7 +73,7 @@ class NULLDUMMYTest(FabcoinTestFramework):
         trueDummy(test2tx)
         assert_raises_rpc_error(-26, NULLDUMMY_ERROR, self.nodes[0].sendrawtransaction, bytes_to_hex_str(test2tx.serialize_with_witness()), True)
 
-        self.log.info("Test 3: Non-NULLDUMMY base transactions should be accepted in a block before activation [1031]")
+        self.log.info("Test 3: Non-NULLDUMMY base transactions should be accepted in a block before activation [2531]")
         self.block_submit(self.nodes[0], [test2tx], False, True)
 
         self.log.info("Test 4: Non-NULLDUMMY base multisig transaction is invalid after activation")
@@ -90,7 +90,7 @@ class NULLDUMMYTest(FabcoinTestFramework):
         assert_raises_rpc_error(-26, NULLDUMMY_ERROR, self.nodes[0].sendrawtransaction, bytes_to_hex_str(test5tx.serialize_with_witness()), True)
         self.block_submit(self.nodes[0], [test5tx], True)
 
-        self.log.info("Test 6: NULLDUMMY compliant base/witness transactions should be accepted to mempool and in block after activation [1032]")
+        self.log.info("Test 6: NULLDUMMY compliant base/witness transactions should be accepted to mempool and in block after activation [2532]")
         for i in test6txs:
             self.nodes[0].sendrawtransaction(bytes_to_hex_str(i.serialize_with_witness()), True)
         self.block_submit(self.nodes[0], test6txs, True, True)

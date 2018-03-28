@@ -142,8 +142,8 @@ class WalletTest(FabcoinTestFramework):
         self.sync_all([self.nodes[0:3]])
 
         assert_equal(self.nodes[0].getbalance(), 0)
-        assert_equal(self.nodes[2].getbalance(), 24.78125000 )
-        assert_equal(self.nodes[2].getbalance("from1"), 24.78125000-21)
+        assert_equal(self.nodes[2].getbalance(), 49)
+        assert_equal(self.nodes[2].getbalance("from1"), 49-21)
 
 
         # Send 5 FAB normal
@@ -153,7 +153,7 @@ class WalletTest(FabcoinTestFramework):
         txid = self.nodes[2].sendtoaddress(address, 5, "", "", False)
         self.nodes[2].generate(1)
         self.sync_all([self.nodes[0:3]])
-        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), Decimal('24.78125000')-5, fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
+        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), Decimal('49')-5, fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
         assert_equal(self.nodes[0].getbalance(), Decimal('5'))
 
 

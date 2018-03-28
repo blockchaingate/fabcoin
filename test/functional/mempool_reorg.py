@@ -47,7 +47,9 @@ class MempoolCoinbaseTest(FabcoinTestFramework):
         timelock_tx = self.nodes[0].createrawtransaction([{"txid": coinbase_txids[0], "vout": 0}], {node0_address: 24.99})
         # Set the time lock
         timelock_tx = timelock_tx.replace("ffffffff", "11111191", 1)
-        timelock_tx = timelock_tx[:-8] + hex(self.nodes[0].getblockcount() + 2)[2:] + "00000"
+
+        #block 904+2 = b'\x8A\x03\x00\x00\x00\x00\x00\x00'
+        timelock_tx = timelock_tx[:-8] + "8A030000"
         timelock_tx = self.nodes[0].signrawtransaction(timelock_tx)["hex"]
         # This will raise an exception because the timelock transaction is too immature to spend
         assert_raises_rpc_error(-26, "non-final", self.nodes[0].sendrawtransaction, timelock_tx)
