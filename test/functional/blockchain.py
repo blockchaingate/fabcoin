@@ -56,7 +56,7 @@ class BlockchainTest(FabcoinTestFramework):
         node = self.nodes[0]
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('7358.20312500'))
+        assert_equal(res['total_amount'], Decimal('21862.5'))
         assert_equal(res['transactions'], 900)
         assert_equal(res['height'], 900)
         assert_equal(res['txouts'], 900)
