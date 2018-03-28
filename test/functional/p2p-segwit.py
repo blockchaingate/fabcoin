@@ -1936,14 +1936,6 @@ class SegWitTest(FabcoinTestFramework):
         self.test_block_relay(segwit_activated=True)
         self.test_tx_relay_after_segwit_activation()
         self.test_standardness_v0(segwit_activated=True)
-        self.test_segwit_versions()
-        self.test_premature_coinbase_witness_spend()
-        self.test_uncompressed_pubkey()
-        self.test_signature_version_1()
-        self.test_non_standard_witness()
-        sync_blocks(self.nodes)
-        self.test_upgrade_after_activation(node_id=2)
-        self.test_witness_sigops()
 
 
 if __name__ == '__main__':

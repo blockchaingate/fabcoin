@@ -368,7 +368,7 @@ class FabcoinTestFramework(object):
             rpc_handler.setLevel(logging.DEBUG)
             rpc_logger.addHandler(rpc_handler)
 
-    def _initialize_chain(self):
+    def _initialize_chain(self, blocknum=900):
         """Initialize a pre-mined blockchain for use by the test.
 
         Create a cache of a 900-block-long chain (with wallet) for MAX_NODES
