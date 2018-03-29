@@ -280,7 +280,7 @@ public:
         vSeeds.clear();
 #endif
 
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
+//        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,0);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,5);
@@ -295,7 +295,10 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                { 0, uint256S("0x03292eeaf1835cffc791e15b05f558adc080f85b3c54e351c1010a2699d2fc48")},            }
+                { 0,    uint256S("0x03292eeaf1835cffc791e15b05f558adc080f85b3c54e351c1010a2699d2fc48")},            
+                { 1388, uint256S("0x000048a31f2269d3dbc2a9c70d39eeeb155f435f00f65a0681cedc558f05ecd2")},            
+                { 1398, uint256S("0x00017f30bd3c67005fb37d7c9c3d31df571699710126ae23137bddaee9d4ae70")},            
+            }
         };
 
         chainTxData = ChainTxData{
