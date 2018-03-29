@@ -1,9 +1,7 @@
 Fabcoin Core integration/staging tree
 =====================================
 
-[![Build Status](https://travis-ci.org/fabcoin/fabcoin.svg?branch=master)](https://travis-ci.org/fabcoin/fabcoin)
-
-https://fabcoincore.org
+Download windows and ubuntu binary fabcoin code from http://13.59.134.49/en/released/
 
 What is Fabcoin?
 ----------------
