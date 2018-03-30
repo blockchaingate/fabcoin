@@ -4,7 +4,7 @@ Fabcoin Core version *0.15.1* is now available from:
 
 or
 
-  <https://fabcoin.org/bin/fabcoin-core-0.15.1/>
+  <https://fabcoin.pro/bin/fabcoin-core-0.15.1/>
 
 This is a first major version release of FAB foundation chain which is derivated from Bitcoin 0.15.1.
 
