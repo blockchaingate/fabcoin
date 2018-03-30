@@ -272,13 +272,8 @@ public:
         assert(consensus.hashGenesisBlock == uint256S("0x03292eeaf1835cffc791e15b05f558adc080f85b3c54e351c1010a2699d2fc48"));
         assert(genesis.hashMerkleRoot == uint256S("0xe89cf9aeaa7b90a0c6695946bf23a41447c4ade44a63e6fa40481e35957e69aa"));
 
-#if 0
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("seed.fabexplorer.info", true); 
-#else
-        vFixedSeeds.clear();
-        vSeeds.clear();
-#endif
+        vSeeds.emplace_back("dnsseed.fabnetwork.info", true);  // only supports x1, x5, x9, and xd
 
 //        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
@@ -387,12 +382,8 @@ public:
         assert(consensus.hashGenesisBlock == uint256S("0x0500238931fa06c38381611e9244d9523926d6dc501664de27d1bff4e22b9afa"));
         assert(genesis.hashMerkleRoot == uint256S("0x3725088af50d5bfa636f5c051887e35b4a117a7c2a46944897e6e91efbe24eb5"));
 
-        vFixedSeeds.clear();
-        vSeeds.clear();
-#if 0
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("testnet-seed.fabexplorer.info", true); 
-#endif
+        vSeeds.emplace_back("testnet-seed.fabnetwork.info", true); 
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
@@ -400,7 +391,7 @@ public:
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
+//        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
 
         fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
