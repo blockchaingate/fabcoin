@@ -20,8 +20,8 @@ Summary:	Peer to Peer Cryptographic Currency
 
 Group:		Applications/System
 License:	MIT
-URL:		https://fabcoin.org/
-Source0:	https://fabcoin.org/bin/fabcoin-core-%{version}/fabcoin-%{version}.tar.gz
+URL:		https://fabcoin.pro/
+Source0:	https://fabcoin.pro/bin/fabcoin-core-%{version}/fabcoin-%{version}.tar.gz
 Source1:	http://download.oracle.com/berkeley-db/db-%{bdbv}.NC.tar.gz
 
 Source10:	https://raw.githubusercontent.com/fabcoin/fabcoin/v%{version}/contrib/debian/examples/fabcoin.conf
