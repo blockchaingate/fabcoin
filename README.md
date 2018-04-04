@@ -1,10 +1,3 @@
-Fabcoin Core Binary Package 
-=====================================
-
-Download [ Fabcoin windows10 Binary Package ]( 18.188.158.172/en/released/Fabcoin-v150201-Win10.zip ) with windows wallet and CPU mining.
-    
-Download [ Fabcoin ubuntu16.04 Binary Package ]( 18.188.158.172/en/released/Fabcoin-v150201-Ubuntu16.04.tar.Z ) with GUI wallet and GPU mining.
-
 
 What is Fabcoin?
 ----------------
@@ -17,6 +10,12 @@ software which enables the use of this currency.
 
 For more information, as well as an immediately useable, binary version of
 the Fabcoin Core software, see https://fa.biz/download/fab-en.pdf, or read the.
+
+Fabcoin Core Binary Package 
+=====================================
+
+Download Fabcoin Binary Package from fabcoin.pro/runtime.html
+
 
 License
 -------
