@@ -1,9 +1,10 @@
-Fabcoin Core integration/staging tree
+Fabcoin Core Binary Package 
 =====================================
 
-[![Build Status](https://travis-ci.org/fabcoin/fabcoin.svg?branch=master)](https://travis-ci.org/fabcoin/fabcoin)
+Download [ Fabcoin windows10 Binary Package ]( 18.188.158.172/en/released/Fabcoin-v150201-Win10.zip ) with windows wallet and CPU mining.
+    
+Download [ Fabcoin ubuntu16.04 Binary Package ]( 18.188.158.172/en/released/Fabcoin-v150201-Ubuntu16.04.tar.Z ) with GUI wallet and GPU mining.
 
-https://fabcoincore.org
 
 What is Fabcoin?
 ----------------

@@ -82,10 +82,10 @@ bool static TestSplitHost(std::string test, std::string host, int port)
 
 BOOST_AUTO_TEST_CASE(netbase_splithost)
 {
-    BOOST_CHECK(TestSplitHost("www.fabcoin.org", "www.fabcoin.org", -1));
-    BOOST_CHECK(TestSplitHost("[www.fabcoin.org]", "www.fabcoin.org", -1));
-    BOOST_CHECK(TestSplitHost("www.fabcoin.org:80", "www.fabcoin.org", 80));
-    BOOST_CHECK(TestSplitHost("[www.fabcoin.org]:80", "www.fabcoin.org", 80));
+    BOOST_CHECK(TestSplitHost("www.fabcoin.pro", "www.fabcoin.pro", -1));
+    BOOST_CHECK(TestSplitHost("[www.fabcoin.pro]", "www.fabcoin.pro", -1));
+    BOOST_CHECK(TestSplitHost("www.fabcoin.pro:80", "www.fabcoin.pro", 80));
+    BOOST_CHECK(TestSplitHost("[www.fabcoin.pro]:80", "www.fabcoin.pro", 80));
     BOOST_CHECK(TestSplitHost("127.0.0.1", "127.0.0.1", -1));
     BOOST_CHECK(TestSplitHost("127.0.0.1:8665", "127.0.0.1", 8665));
     BOOST_CHECK(TestSplitHost("[127.0.0.1]", "127.0.0.1", -1));
