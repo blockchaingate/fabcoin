@@ -55,9 +55,9 @@ class RESTTest (FabcoinTestFramework):
         url = urllib.parse.urlparse(self.nodes[0].url)
         self.log.info("Mining blocks...")
 
-        self.nodes[0].generate(1)
+        self.nodes[0].generate(2)
         self.sync_all()
-        self.nodes[2].generate(100)
+        self.nodes[2].generate(800)
         self.sync_all()
 
         assert_equal(self.nodes[0].getbalance(), 50)
@@ -139,7 +139,7 @@ class RESTTest (FabcoinTestFramework):
         hashFromBinResponse = hex(deser_uint256(output))[2:].zfill(64)
 
         assert_equal(bb_hash, hashFromBinResponse) #check if getutxo's chaintip during calculation was fine
-        assert_equal(chainHeight, 102) #chain height must be 102
+        assert_equal(chainHeight, 803) #chain height must be 803
 
 
         ############################
@@ -210,9 +210,10 @@ class RESTTest (FabcoinTestFramework):
         # compare with block header
         response_header = http_get_call(url.hostname, url.port, '/rest/headers/1/'+bb_hash+self.FORMAT_SEPARATOR+"bin", True)
         assert_equal(response_header.status, 200)
-        assert_equal(int(response_header.getheader('content-length')), 80)
+        response_header_length = int(response_header.getheader('content-length'))
+        assert_greater_than(response_header_length, 80)
         response_header_str = response_header.read()
-        assert_equal(response_str[0:80], response_header_str)
+        assert_equal(response_str[0:response_header_length], response_header_str)
 
         # check block hex format
         response_hex = http_get_call(url.hostname, url.port, '/rest/block/'+bb_hash+self.FORMAT_SEPARATOR+"hex", True)

@@ -48,6 +48,73 @@ Only supports JSON as output format.
 * softforks : (array) status of softforks in progress
 * bip9_softforks : (object) status of BIP9 softforks in progress
 
+Example：
+```
+{
+	"hash":"00181b0a140c08733873939c72cc4ea5761ff1f766951bfd49bec9e1edbcee0f",
+	"confirmations":1,
+	"strippedsize":1635,
+	"size":1635,
+	"weight":6540,
+	"height":1481,
+	"version":536870912,
+	"versionHex":"20000000",
+	"merkleroot":"ff1da78a9de216b9e6c23de214684c2987f7f0cc8b6cdd5ec8ee7e9aaf4fbb37",
+	"tx":
+		[
+			{
+				"txid":"ff1da78a9de216b9e6c23de214684c2987f7f0cc8b6cdd5ec8ee7e9aaf4fbb37",
+				"hash":"ff1da78a9de216b9e6c23de214684c2987f7f0cc8b6cdd5ec8ee7e9aaf4fbb37",
+				"version":2,
+				"size":147,
+				"vsize":147,
+				"locktime":0,
+				"vin":
+					[
+						{"
+							coinbase":"02c9050101","sequence":4294967295
+						}
+					],
+				"vout":
+					[
+						{
+							"value":25.00000000,
+							"n":0,
+							"scriptPubKey":
+								{
+									"asm":"03f69bfa6a3caca2593fcb3191d0252babfda708b7c525a632047fea420186ae09 OP_CHECKSIG",
+									"hex":"2103f69bfa6a3caca2593fcb3191d0252babfda708b7c525a632047fea420186ae09ac",
+									"reqSigs":1,
+									"type":"pubkey",
+									"addresses":["n2tQoaZ5z3nXq7w4GSUUq1XL2L1t8fshd7"]
+								}
+						},
+						{
+							"value":0.00000000,
+							"n":1,
+							"scriptPubKey":
+								{
+									"asm":"OP_RETURN aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf9",
+									"hex":"6a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf9",
+									"type":"nulldata"
+								}
+						}
+					],
+				"hex":"02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0502c9050101ffffffff0200f9029500000000232103f69bfa6a3caca2593fcb3191d0252babfda708b7c525a632047fea420186ae09ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf900000000"
+			}
+		],
+	"time":1521142483,
+	"mediantime":1521142282,
+	"nonceUint32":1068,
+	"nonce":"000000000000000000000000d7f4456e203898cd8c4bcc214143dea30000042c",
+	"bits":"1f24d40c",
+	"difficulty":55.6092907630988,
+	"chainwork":"00000000000000000000000000000000000000000000000000000000002952a3",
+	"previousblockhash":"002463057ca0961fee53a74a6d5fcc39c19dc1529e2c399a0bb052f708ae9751"
+}
+
+
+
 ####Query UTXO set
 `GET /rest/getutxos/<checkmempool>/<txid>-<n>/<txid>-<n>/.../<txid>-<n>.<bin|hex|json>`
 

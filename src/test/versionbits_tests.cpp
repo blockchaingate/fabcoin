@@ -12,7 +12,7 @@
 #include <boost/test/unit_test.hpp>
 
 /* Define a virtual block time, one block per 10 minutes after Nov 14 2014, 0:55:36am */
-int32_t TestTime(int nHeight) { return 1415926536 + 600 * nHeight; }
+int32_t TestTime(int nHeight) { return 1415926536 + 75 * nHeight; }
 
 static const Consensus::Params paramsDummy = Consensus::Params();
 
@@ -26,8 +26,6 @@ public:
     int64_t EndTime(const Consensus::Params& params) const override { return TestTime(20000); }
     int Period(const Consensus::Params& params) const override { return 1000; }
     int Threshold(const Consensus::Params& params) const override { return 900; }
-    int Getbit(const Consensus::Params params) const override { return 0; }
-
     bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const override { return (pindex->nVersion & 0x100); }
 
     ThresholdState GetStateFor(const CBlockIndex* pindexPrev) const { return AbstractThresholdConditionChecker::GetStateFor(pindexPrev, paramsDummy, cache); }
@@ -284,7 +282,7 @@ BOOST_AUTO_TEST_CASE(versionbits_computeblockversion)
     BOOST_CHECK_EQUAL(ComputeBlockVersion(lastBlock, mainnetParams) & VERSIONBITS_TOP_MASK, VERSIONBITS_TOP_BITS);
 
     // Check that ComputeBlockVersion will set the bit until nTimeout
-    nTime += 600;
+    nTime += 75;
     int blocksToMine = 4032; // test blocks for up to 2 time periods
     int nHeight = 6048;
     // These blocks are all before nTimeout is reached.
@@ -293,7 +291,7 @@ BOOST_AUTO_TEST_CASE(versionbits_computeblockversion)
         BOOST_CHECK((ComputeBlockVersion(lastBlock, mainnetParams) & (1<<bit)) != 0);
         BOOST_CHECK_EQUAL(ComputeBlockVersion(lastBlock, mainnetParams) & VERSIONBITS_TOP_MASK, VERSIONBITS_TOP_BITS);
         blocksToMine--;
-        nTime += 600;
+        nTime += 75;
         nHeight += 1;
     }
 
