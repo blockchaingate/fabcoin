@@ -1621,7 +1621,6 @@ public:
     int64_t EndTime(const Consensus::Params& params) const override { return std::numeric_limits<int64_t>::max(); }
     int Period(const Consensus::Params& params) const override { return params.nMinerConfirmationWindow; }
     int Threshold(const Consensus::Params& params) const override { return params.nRuleChangeActivationThreshold; }
-    int Getbit(const Consensus::Params params) const override { return 0; }
 
     bool Condition(const CBlockIndex* pindex, const Consensus::Params& params) const override
     {
@@ -3083,10 +3082,6 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
                 return state.DoS(100, false, REJECT_INVALID, "bad-witness-merkle-match", true, strprintf("%s : witness merkle commitment mismatch", __func__));
             }
             fHaveWitness = true;
-        }
-        else
-        {
-            return state.DoS(100, false, REJECT_INVALID, "bad-block", true, strprintf("%s : no witness commitment found", __func__));
         }
     }
 

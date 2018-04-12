@@ -20,8 +20,8 @@ class MempoolCoinbaseTest(FabcoinTestFramework):
     alert_filename = None  # Set by setup_network
 
     def run_test(self):
-        # Start with a 200 block chain
-        assert_equal(self.nodes[0].getblockcount(), 200)
+        # Start with a 900 chain
+        assert_equal(self.nodes[0].getblockcount(), 900)
 
         # Mine four blocks. After this, nodes[0] blocks
         # 101, 102, and 103 are spend-able.
@@ -39,15 +39,17 @@ class MempoolCoinbaseTest(FabcoinTestFramework):
         # and make sure the mempool code behaves correctly.
         b = [ self.nodes[0].getblockhash(n) for n in range(101, 105) ]
         coinbase_txids = [ self.nodes[0].getblock(h)['tx'][0] for h in b ]
-        spend_101_raw = create_tx(self.nodes[0], coinbase_txids[1], node1_address, 49.99)
-        spend_102_raw = create_tx(self.nodes[0], coinbase_txids[2], node0_address, 49.99)
-        spend_103_raw = create_tx(self.nodes[0], coinbase_txids[3], node0_address, 49.99)
+        spend_101_raw = create_tx(self.nodes[0], coinbase_txids[1], node1_address, 24.99)
+        spend_102_raw = create_tx(self.nodes[0], coinbase_txids[2], node0_address, 24.99)
+        spend_103_raw = create_tx(self.nodes[0], coinbase_txids[3], node0_address, 24.99)
 
         # Create a transaction which is time-locked to two blocks in the future
-        timelock_tx = self.nodes[0].createrawtransaction([{"txid": coinbase_txids[0], "vout": 0}], {node0_address: 49.99})
+        timelock_tx = self.nodes[0].createrawtransaction([{"txid": coinbase_txids[0], "vout": 0}], {node0_address: 24.99})
         # Set the time lock
         timelock_tx = timelock_tx.replace("ffffffff", "11111191", 1)
-        timelock_tx = timelock_tx[:-8] + hex(self.nodes[0].getblockcount() + 2)[2:] + "000000"
+
+        #block 904+2 = b'\x8A\x03\x00\x00\x00\x00\x00\x00'
+        timelock_tx = timelock_tx[:-8] + "8A030000"
         timelock_tx = self.nodes[0].signrawtransaction(timelock_tx)["hex"]
         # This will raise an exception because the timelock transaction is too immature to spend
         assert_raises_rpc_error(-26, "non-final", self.nodes[0].sendrawtransaction, timelock_tx)
@@ -60,8 +62,8 @@ class MempoolCoinbaseTest(FabcoinTestFramework):
         assert_raises_rpc_error(-26,'non-final', self.nodes[0].sendrawtransaction, timelock_tx)
 
         # Create 102_1 and 103_1:
-        spend_102_1_raw = create_tx(self.nodes[0], spend_102_id, node1_address, 49.98)
-        spend_103_1_raw = create_tx(self.nodes[0], spend_103_id, node1_address, 49.98)
+        spend_102_1_raw = create_tx(self.nodes[0], spend_102_id, node1_address, 24.98)
+        spend_103_1_raw = create_tx(self.nodes[0], spend_103_id, node1_address, 24.98)
 
         # Broadcast and mine 103_1:
         spend_103_1_id = self.nodes[0].sendrawtransaction(spend_103_1_raw)

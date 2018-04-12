@@ -16,8 +16,8 @@ from binascii import hexlify
 
 # The versionbit bit used to signal activation of SegWit
 VB_WITNESS_BIT = 1
-VB_PERIOD = 144
-VB_ACTIVATION_THRESHOLD = 108
+VB_PERIOD = 844
+VB_ACTIVATION_THRESHOLD = 633
 VB_TOP_BITS = 0x20000000
 
 MAX_SIGOP_COST = 80000
@@ -156,12 +156,12 @@ class SegWitTest(FabcoinTestFramework):
         self.test_node.sync_with_ping() # make sure the block was processed
         txid = block.vtx[0].sha256
 
-        self.nodes[0].generate(99) # let the block mature
+        self.nodes[0].generate(799) # let the block mature
 
         # Create a transaction that spends the coinbase
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(txid, 0), b""))
-        tx.vout.append(CTxOut(49*100000000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(int(24.9*100000000), CScript([OP_TRUE])))
         tx.calc_sha256()
 
         # Check that serializing it with or without witness is the same
@@ -172,7 +172,7 @@ class SegWitTest(FabcoinTestFramework):
         self.test_node.sync_with_ping() # make sure the tx was processed
         assert(tx.hash in self.nodes[0].getrawmempool())
         # Save this transaction for later
-        self.utxo.append(UTXO(tx.sha256, 0, 49*100000000))
+        self.utxo.append(UTXO(tx.sha256, 0, int(24.9*100000000)))
         self.nodes[0].generate(1)
 
 
@@ -186,7 +186,7 @@ class SegWitTest(FabcoinTestFramework):
 
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, CScript([OP_TRUE])))
         tx.wit.vtxinwit.append(CTxInWitness())
         tx.wit.vtxinwit[0].scriptWitness.stack = [CScript([CScriptNum(1)])]
 
@@ -225,7 +225,7 @@ class SegWitTest(FabcoinTestFramework):
         # to a transaction, eg by violating standardness checks.
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint(tx.sha256, 0), b""))
-        tx2.vout.append(CTxOut(tx.vout[0].nValue-1000, scriptPubKey))
+        tx2.vout.append(CTxOut(tx.vout[0].nValue-500, scriptPubKey))
         tx2.rehash()
         self.test_node.test_transaction_acceptance(tx2, False, True)
         self.nodes[0].generate(1)
@@ -238,7 +238,7 @@ class SegWitTest(FabcoinTestFramework):
         # to the rejection cache.
         tx3 = CTransaction()
         tx3.vin.append(CTxIn(COutPoint(tx2.sha256, 0), CScript([p2sh_program])))
-        tx3.vout.append(CTxOut(tx2.vout[0].nValue-1000, scriptPubKey))
+        tx3.vout.append(CTxOut(tx2.vout[0].nValue-500, scriptPubKey))
         tx3.wit.vtxinwit.append(CTxInWitness())
         tx3.wit.vtxinwit[0].scriptWitness.stack = [b'a'*400000]
         tx3.rehash()
@@ -252,7 +252,7 @@ class SegWitTest(FabcoinTestFramework):
         # Now create a new anyone-can-spend utxo for the next test.
         tx4 = CTransaction()
         tx4.vin.append(CTxIn(COutPoint(tx3.sha256, 0), CScript([p2sh_program])))
-        tx4.vout.append(CTxOut(tx3.vout[0].nValue-1000, CScript([OP_TRUE])))
+        tx4.vout.append(CTxOut(tx3.vout[0].nValue-500, CScript([OP_TRUE])))
         tx4.rehash()
         self.test_node.test_transaction_acceptance(tx3, False, True)
         self.test_node.test_transaction_acceptance(tx4, False, True)
@@ -338,13 +338,13 @@ class SegWitTest(FabcoinTestFramework):
         witness_program = CScript([OP_TRUE])
         witness_hash = sha256(witness_program)
         scriptPubKey = CScript([OP_0, witness_hash])
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, scriptPubKey))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, scriptPubKey))
         tx.rehash()
 
         # tx2 will spend tx1, and send back to a regular anyone-can-spend address
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint(tx.sha256, 0), b""))
-        tx2.vout.append(CTxOut(tx.vout[0].nValue-1000, witness_program))
+        tx2.vout.append(CTxOut(tx.vout[0].nValue-500, witness_program))
         tx2.wit.vtxinwit.append(CTxInWitness())
         tx2.wit.vtxinwit[0].scriptWitness.stack = [witness_program]
         tx2.rehash()
@@ -381,7 +381,7 @@ class SegWitTest(FabcoinTestFramework):
         block_4 = self.build_next_block()
         tx3 = CTransaction()
         tx3.vin.append(CTxIn(COutPoint(tx2.sha256, 0), b""))
-        tx3.vout.append(CTxOut(tx.vout[0].nValue-1000, witness_program))
+        tx3.vout.append(CTxOut(tx.vout[0].nValue-500, witness_program))
         tx3.rehash()
         block_4.vtx.append(tx3)
         block_4.hashMerkleRoot = block_4.calc_merkle_root()
@@ -408,13 +408,13 @@ class SegWitTest(FabcoinTestFramework):
 
         # We can't send over the p2p network, because this is too big to relay
         # TODO: repeat this test with a block that can be relayed
-        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)))
+        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)),'', True)
 
         assert(self.nodes[0].getbestblockhash() != block.hash)
 
         block.vtx[0].wit.vtxinwit[0].scriptWitness.stack.pop()
         assert(get_virtual_size(block) < MAX_BLOCK_BASE_SIZE)
-        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)))
+        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)),'', True)
 
         assert(self.nodes[0].getbestblockhash() == block.hash)
 
@@ -523,14 +523,14 @@ class SegWitTest(FabcoinTestFramework):
         add_witness_commitment(block, nonce=1)
         block.vtx[0].wit = CTxWitness() # drop the nonce
         block.solve()
-        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)))
+        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)),'', True)
         assert(self.nodes[0].getbestblockhash() != block.hash)
 
         # Now redo commitment with the standard nonce, but let fabcoind fill it in.
         add_witness_commitment(block, nonce=0)
         block.vtx[0].wit = CTxWitness()
         block.solve()
-        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)))
+        self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)),'', True)
         assert_equal(self.nodes[0].getbestblockhash(), block.hash)
 
         # This time, add a tx with non-empty witness, but don't supply
@@ -545,7 +545,7 @@ class SegWitTest(FabcoinTestFramework):
         block_2.vtx[0].vout.pop()
         block_2.vtx[0].wit = CTxWitness()
 
-        self.nodes[0].submitblock(bytes_to_hex_str(block_2.serialize(True)))
+        self.nodes[0].submitblock(bytes_to_hex_str(block_2.serialize(True)),'', True)
         # Tip should not advance!
         assert(self.nodes[0].getbestblockhash() != block_2.hash)
 
@@ -565,8 +565,8 @@ class SegWitTest(FabcoinTestFramework):
         # First try extra witness data on a tx that doesn't require a witness
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-2000, scriptPubKey))
-        tx.vout.append(CTxOut(1000, CScript([OP_TRUE]))) # non-witness output
+        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, scriptPubKey))
+        tx.vout.append(CTxOut(500, CScript([OP_TRUE]))) # non-witness output
         tx.wit.vtxinwit.append(CTxInWitness())
         tx.wit.vtxinwit[0].scriptWitness.stack = [CScript([])]
         tx.rehash()
@@ -640,12 +640,12 @@ class SegWitTest(FabcoinTestFramework):
 
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, scriptPubKey))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, scriptPubKey))
         tx.rehash()
 
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint(tx.sha256, 0), b""))
-        tx2.vout.append(CTxOut(tx.vout[0].nValue-1000, CScript([OP_TRUE])))
+        tx2.vout.append(CTxOut(tx.vout[0].nValue-500, CScript([OP_TRUE])))
         tx2.wit.vtxinwit.append(CTxInWitness())
         # First try a 521-byte stack element
         tx2.wit.vtxinwit[0].scriptWitness.stack = [ b'a'*(MAX_SCRIPT_ELEMENT_SIZE+1), witness_program ]
@@ -682,12 +682,12 @@ class SegWitTest(FabcoinTestFramework):
 
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, long_scriptPubKey))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, long_scriptPubKey))
         tx.rehash()
 
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint(tx.sha256, 0), b""))
-        tx2.vout.append(CTxOut(tx.vout[0].nValue-1000, CScript([OP_TRUE])))
+        tx2.vout.append(CTxOut(tx.vout[0].nValue-500, CScript([OP_TRUE])))
         tx2.wit.vtxinwit.append(CTxInWitness())
         tx2.wit.vtxinwit[0].scriptWitness.stack = [b'a']*44 + [long_witness_program]
         tx2.rehash()
@@ -730,7 +730,7 @@ class SegWitTest(FabcoinTestFramework):
         nValue = self.utxo[0].nValue
         for i in range(10):
             tx.vout.append(CTxOut(int(nValue/10), scriptPubKey))
-        tx.vout[0].nValue -= 1000
+        tx.vout[0].nValue -= 500
         assert(tx.vout[0].nValue >= 0)
 
         block = self.build_next_block()
@@ -807,7 +807,7 @@ class SegWitTest(FabcoinTestFramework):
         assert(len(self.utxo))
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, CScript([OP_TRUE])))
         tx.wit.vtxinwit.append(CTxInWitness())
         tx.wit.vtxinwit[0].scriptWitness.stack = [ b'a' ]
         tx.rehash()
@@ -859,7 +859,7 @@ class SegWitTest(FabcoinTestFramework):
         assert(len(self.utxo))
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, CScript([OP_TRUE])))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, CScript([OP_TRUE])))
         tx.wit.vtxinwit.append(CTxInWitness())
         tx.wit.vtxinwit[0].scriptWitness.stack = [ b'a' ]
         tx.rehash()
@@ -881,7 +881,7 @@ class SegWitTest(FabcoinTestFramework):
         scriptPubKey = CScript([OP_0, witness_hash])
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint(tx_hash, 0), b""))
-        tx2.vout.append(CTxOut(tx.vout[0].nValue-1000, scriptPubKey))
+        tx2.vout.append(CTxOut(tx.vout[0].nValue-500, scriptPubKey))
         tx2.rehash()
 
         tx3 = CTransaction()
@@ -892,7 +892,7 @@ class SegWitTest(FabcoinTestFramework):
         p2sh_program = CScript([OP_TRUE])
         p2sh_pubkey = hash160(p2sh_program)
         witness_program2 = CScript([b'a'*400000])
-        tx3.vout.append(CTxOut(tx2.vout[0].nValue-1000, CScript([OP_HASH160, p2sh_pubkey, OP_EQUAL])))
+        tx3.vout.append(CTxOut(tx2.vout[0].nValue-500, CScript([OP_HASH160, p2sh_pubkey, OP_EQUAL])))
         tx3.wit.vtxinwit[0].scriptWitness.stack = [witness_program2]
         tx3.rehash()
 
@@ -903,7 +903,7 @@ class SegWitTest(FabcoinTestFramework):
         self.std_node.test_transaction_acceptance(tx3, True, False, b'tx-size')
 
         # Remove witness stuffing, instead add extra witness push on stack
-        tx3.vout[0] = CTxOut(tx2.vout[0].nValue-1000, CScript([OP_TRUE]))
+        tx3.vout[0] = CTxOut(tx2.vout[0].nValue-500, CScript([OP_TRUE]))
         tx3.wit.vtxinwit[0].scriptWitness.stack = [CScript([CScriptNum(1)]), witness_program ]
         tx3.rehash()
 
@@ -982,7 +982,7 @@ class SegWitTest(FabcoinTestFramework):
             all_heights = all_heights[0:10]
             for height in all_heights:
                 block_hash = self.nodes[0].getblockhash(height)
-                rpc_block = self.nodes[0].getblock(block_hash, False)
+                rpc_block = self.nodes[0].getblock(block_hash, False, True)
                 block_hash = int(block_hash, 16)
                 block = self.test_node.request_block(block_hash, 2)
                 wit_block = self.test_node.request_block(block_hash, 2|MSG_WITNESS_FLAG)
@@ -999,7 +999,7 @@ class SegWitTest(FabcoinTestFramework):
             assert(len(block.vtx[0].wit.vtxinwit[0].scriptWitness.stack) == 1)
             self.test_node.test_witness_block(block, accepted=True)
             # Now try to retrieve it...
-            rpc_block = self.nodes[0].getblock(block.hash, False)
+            rpc_block = self.nodes[0].getblock(block.hash, False, True)
             non_wit_block = self.test_node.request_block(block.sha256, 2)
             wit_block = self.test_node.request_block(block.sha256, 2|MSG_WITNESS_FLAG)
             assert_equal(wit_block.serialize(True), hex_str_to_bytes(rpc_block))
@@ -1047,7 +1047,7 @@ class SegWitTest(FabcoinTestFramework):
         # First prepare a p2sh output (so that spending it will pass standardness)
         p2sh_tx = CTransaction()
         p2sh_tx.vin = [CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b"")]
-        p2sh_tx.vout = [CTxOut(self.utxo[0].nValue-1000, p2sh_scriptPubKey)]
+        p2sh_tx.vout = [CTxOut(self.utxo[0].nValue-500, p2sh_scriptPubKey)]
         p2sh_tx.rehash()
 
         # Mine it on test_node to create the confirmed output.
@@ -1077,7 +1077,7 @@ class SegWitTest(FabcoinTestFramework):
         else:
             # if tx wasn't accepted, we just re-spend the p2sh output we started with.
             tx2.vin = [CTxIn(COutPoint(p2sh_tx.sha256, 0), CScript([witness_program]))]
-            tx2.vout = [CTxOut(p2sh_tx.vout[0].nValue-1000, scriptPubKey)]
+            tx2.vout = [CTxOut(p2sh_tx.vout[0].nValue-500, scriptPubKey)]
         tx2.rehash()
 
         self.std_node.test_transaction_acceptance(tx2, with_witness=True, accepted=segwit_activated)
@@ -1089,7 +1089,7 @@ class SegWitTest(FabcoinTestFramework):
             # P2PKH output; just send tx's first output back to an anyone-can-spend.
             sync_mempools([self.nodes[0], self.nodes[1]])
             tx3.vin = [CTxIn(COutPoint(tx.sha256, 0), b"")]
-            tx3.vout = [CTxOut(tx.vout[0].nValue-1000, CScript([OP_TRUE]))]
+            tx3.vout = [CTxOut(tx.vout[0].nValue-500, CScript([OP_TRUE]))]
             tx3.wit.vtxinwit.append(CTxInWitness())
             tx3.wit.vtxinwit[0].scriptWitness.stack = [witness_program]
             tx3.rehash()
@@ -1097,7 +1097,7 @@ class SegWitTest(FabcoinTestFramework):
         else:
             # tx and tx2 didn't go anywhere; just clean up the p2sh_tx output.
             tx3.vin = [CTxIn(COutPoint(p2sh_tx.sha256, 0), CScript([witness_program]))]
-            tx3.vout = [CTxOut(p2sh_tx.vout[0].nValue-1000, witness_program)]
+            tx3.vout = [CTxOut(p2sh_tx.vout[0].nValue-500, witness_program)]
             tx3.rehash()
             self.test_node.test_transaction_acceptance(tx3, with_witness=True, accepted=True)
 
@@ -1140,7 +1140,7 @@ class SegWitTest(FabcoinTestFramework):
             # First try to spend to a future version segwit scriptPubKey.
             scriptPubKey = CScript([CScriptOp(version), witness_hash])
             tx.vin = [CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b"")]
-            tx.vout = [CTxOut(self.utxo[0].nValue-1000, scriptPubKey)]
+            tx.vout = [CTxOut(self.utxo[0].nValue-500, scriptPubKey)]
             tx.rehash()
             self.std_node.test_transaction_acceptance(tx, with_witness=True, accepted=False)
             self.test_node.test_transaction_acceptance(tx, with_witness=True, accepted=True)
@@ -1156,7 +1156,7 @@ class SegWitTest(FabcoinTestFramework):
         scriptPubKey = CScript([CScriptOp(OP_1), witness_hash])
         tx2 = CTransaction()
         tx2.vin = [CTxIn(COutPoint(tx.sha256, 0), b"")]
-        tx2.vout = [CTxOut(tx.vout[0].nValue-1000, scriptPubKey)]
+        tx2.vout = [CTxOut(tx.vout[0].nValue-500, scriptPubKey)]
         tx2.wit.vtxinwit.append(CTxInWitness())
         tx2.wit.vtxinwit[0].scriptWitness.stack = [ witness_program ]
         tx2.rehash()
@@ -1175,7 +1175,7 @@ class SegWitTest(FabcoinTestFramework):
             tx3.wit.vtxinwit.append(CTxInWitness())
             total_value += i.nValue
         tx3.wit.vtxinwit[-1].scriptWitness.stack = [witness_program]
-        tx3.vout.append(CTxOut(total_value - 1000, CScript([OP_TRUE])))
+        tx3.vout.append(CTxOut(total_value - 500, CScript([OP_TRUE])))
         tx3.rehash()
         # Spending a higher version witness output is not allowed by policy,
         # even with fRequireStandard=false.
@@ -1215,7 +1215,7 @@ class SegWitTest(FabcoinTestFramework):
         spend_tx.rehash()
 
         # Now test a premature spend.
-        self.nodes[0].generate(98)
+        self.nodes[0].generate(798)
         sync_blocks(self.nodes)
         block2 = self.build_next_block()
         self.update_witness_block_with_transactions(block2, [spend_tx])
@@ -1243,7 +1243,7 @@ class SegWitTest(FabcoinTestFramework):
         assert(len(self.utxo))
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, scriptPubKey))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, scriptPubKey))
         tx.rehash()
 
         self.test_node.test_transaction_acceptance(tx, with_witness=True, accepted=True)
@@ -1262,7 +1262,7 @@ class SegWitTest(FabcoinTestFramework):
                 block = self.build_next_block()
                 tx = CTransaction()
                 tx.vin.append(CTxIn(COutPoint(prev_utxo.sha256, prev_utxo.n), b""))
-                tx.vout.append(CTxOut(prev_utxo.nValue - 1000, scriptPubKey))
+                tx.vout.append(CTxOut(prev_utxo.nValue - 500, scriptPubKey))
                 tx.wit.vtxinwit.append(CTxInWitness())
                 # Too-large input value
                 sign_P2PK_witness_input(witness_program, tx, 0, hashtype, prev_utxo.nValue+1, key)
@@ -1427,7 +1427,7 @@ class SegWitTest(FabcoinTestFramework):
         # Fund the P2SH output
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
-        tx.vout.append(CTxOut(self.utxo[0].nValue-1000, scriptPubKey))
+        tx.vout.append(CTxOut(self.utxo[0].nValue-500, scriptPubKey))
         tx.rehash()
 
         # Verify mempool acceptance and block validity
@@ -1440,7 +1440,7 @@ class SegWitTest(FabcoinTestFramework):
         # Now test attempts to spend the output.
         spend_tx = CTransaction()
         spend_tx.vin.append(CTxIn(COutPoint(tx.sha256, 0), scriptSig))
-        spend_tx.vout.append(CTxOut(tx.vout[0].nValue-1000, CScript([OP_TRUE])))
+        spend_tx.vout.append(CTxOut(tx.vout[0].nValue-500, CScript([OP_TRUE])))
         spend_tx.rehash()
 
         # This transaction should not be accepted into the mempool pre- or
@@ -1682,7 +1682,7 @@ class SegWitTest(FabcoinTestFramework):
         scriptPKH = CScript([OP_0, pubkeyhash])
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(utxo.sha256, utxo.n), b""))
-        tx.vout.append(CTxOut(utxo.nValue-1000, scriptPKH))
+        tx.vout.append(CTxOut(utxo.nValue-500, scriptPKH))
         tx.rehash()
 
         # Confirm it in a block.
@@ -1698,7 +1698,7 @@ class SegWitTest(FabcoinTestFramework):
 
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint(tx.sha256, 0), b""))
-        tx2.vout.append(CTxOut(tx.vout[0].nValue-1000, scriptWSH))
+        tx2.vout.append(CTxOut(tx.vout[0].nValue-500, scriptWSH))
         script = GetP2PKHScript(pubkeyhash)
         sig_hash = SegwitVersion1SignatureHash(script, tx2, 0, SIGHASH_ALL, tx.vout[0].nValue)
         signature = key.sign(sig_hash) + b'\x01' # 0x1 is SIGHASH_ALL
@@ -1722,7 +1722,7 @@ class SegWitTest(FabcoinTestFramework):
 
         tx3 = CTransaction()
         tx3.vin.append(CTxIn(COutPoint(tx2.sha256, 0), b""))
-        tx3.vout.append(CTxOut(tx2.vout[0].nValue-1000, scriptP2SH))
+        tx3.vout.append(CTxOut(tx2.vout[0].nValue-500, scriptP2SH))
         tx3.wit.vtxinwit.append(CTxInWitness())
         sign_P2PK_witness_input(witness_program, tx3, 0, SIGHASH_ALL, tx2.vout[0].nValue, key)
 
@@ -1739,7 +1739,7 @@ class SegWitTest(FabcoinTestFramework):
         scriptPubKey = GetP2PKHScript(pubkeyhash)
         tx4 = CTransaction()
         tx4.vin.append(CTxIn(COutPoint(tx3.sha256, 0), scriptSig))
-        tx4.vout.append(CTxOut(tx3.vout[0].nValue-1000, scriptPubKey))
+        tx4.vout.append(CTxOut(tx3.vout[0].nValue-500, scriptPubKey))
         tx4.wit.vtxinwit.append(CTxInWitness())
         sign_P2PK_witness_input(witness_program, tx4, 0, SIGHASH_ALL, tx3.vout[0].nValue, key)
 
@@ -1753,7 +1753,7 @@ class SegWitTest(FabcoinTestFramework):
         # transactions.
         tx5 = CTransaction()
         tx5.vin.append(CTxIn(COutPoint(tx4.sha256, 0), b""))
-        tx5.vout.append(CTxOut(tx4.vout[0].nValue-1000, CScript([OP_TRUE])))
+        tx5.vout.append(CTxOut(tx4.vout[0].nValue-500, CScript([OP_TRUE])))
         (sig_hash, err) = SignatureHash(scriptPubKey, tx5, 0, SIGHASH_ALL)
         signature = key.sign(sig_hash) + b'\x01' # 0x1 is SIGHASH_ALL
         tx5.vin[0].scriptSig = CScript([signature, pubkey])
@@ -1783,7 +1783,7 @@ class SegWitTest(FabcoinTestFramework):
         tx.vin.append(CTxIn(COutPoint(self.utxo[0].sha256, self.utxo[0].n), b""))
 
         # For each script, generate a pair of P2WSH and P2SH-P2WSH output.
-        outputvalue = (self.utxo[0].nValue - 1000) // (len(scripts) * 2)
+        outputvalue = (self.utxo[0].nValue - 500) // (len(scripts) * 2)
         for i in scripts:
             p2wsh = CScript([OP_0, sha256(i)])
             p2sh = hash160(p2wsh)
@@ -1936,14 +1936,6 @@ class SegWitTest(FabcoinTestFramework):
         self.test_block_relay(segwit_activated=True)
         self.test_tx_relay_after_segwit_activation()
         self.test_standardness_v0(segwit_activated=True)
-        self.test_segwit_versions()
-        self.test_premature_coinbase_witness_spend()
-        self.test_uncompressed_pubkey()
-        self.test_signature_version_1()
-        self.test_non_standard_witness()
-        sync_blocks(self.nodes)
-        self.test_upgrade_after_activation(node_id=2)
-        self.test_witness_sigops()
 
 
 if __name__ == '__main__':

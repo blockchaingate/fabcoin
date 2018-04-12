@@ -13,7 +13,7 @@ class ListSinceBlockTest (FabcoinTestFramework):
         self.setup_clean_chain = True
 
     def run_test(self):
-        self.nodes[2].generate(101)
+        self.nodes[2].generate(801)
         self.sync_all()
 
         self.test_no_blockhash()

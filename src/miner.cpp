@@ -181,8 +181,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     const Consensus::Params& params = chainparams.GetConsensus();
     int ser_flags = (nHeight < params.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
     uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
-    LogPrintf("CreateNewBlock(): total size: %u block weight: %u txs: %u fees: %ld sigops %d\n",
-              nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
+    LogPrintf("CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", 
+           nHeight, nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
 
     arith_uint256 nonce;
     if (nHeight >= params.FABHeight) {
@@ -543,8 +543,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     unsigned int n = chainparams.EquihashN();
     unsigned int k = chainparams.EquihashK();
 
-    uint8_t * header = NULL;
 #ifdef ENABLE_GPU
+    uint8_t * header = NULL;
     GPUSolver * g_solver = NULL;
     if(conf.useGPU) 
     {
@@ -597,8 +597,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
             CBlock *pblock = &pblocktemplate->block;
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-            LogPrintf("Running FabcoinMiner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
-                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
+            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
+                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
 
             //
             // Search
@@ -668,9 +668,6 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 
                     // Found a solution
                     SetThreadPriority(THREAD_PRIORITY_NORMAL);
-                    LogPrintf("FabcoinMiner:\n");
-                    LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
-                    LogPrintf("Block ------------------ \n%s\n ----------------", pblock->ToString());
 
                     if (ProcessBlockFound(pblock, chainparams)) 
                     {
@@ -977,7 +974,9 @@ void Scan_nNonce_nSolution(CBlock *pblock, unsigned int n, unsigned int k )
             // If we find a valid block, we rebuild
             bool found = EhOptimisedSolve(n, k, curr_state, validBlock, cancelled);
             if (found) {
-                pblock->ToString();
+                LogPrintf("FabcoinMiner:\n");
+                LogPrintf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", pblock->GetHash().GetHex(), hashTarget.GetHex());
+                LogPrintf("Block ------------------ \n%s\n ----------------", pblock->ToString());
  
                 break;
             }

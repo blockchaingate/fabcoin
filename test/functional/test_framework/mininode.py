@@ -54,7 +54,7 @@ NODE_WITNESS = (1 << 3)
 NODE_UNSUPPORTED_SERVICE_BIT_5 = (1 << 5)
 NODE_UNSUPPORTED_SERVICE_BIT_7 = (1 << 7)
 
-FAB_REGTEST_HARDFORK_HEIGHT = 3000
+FAB_REGTEST_HARDFORK_HEIGHT = 24000
 
 logger = logging.getLogger("TestFramework.mininode")
 
@@ -519,7 +519,7 @@ class CTransaction(object):
     def is_valid(self):
         self.calc_sha256()
         for tout in self.vout:
-            if tout.nValue < 0 or tout.nValue > 21000000 * COIN:
+            if tout.nValue < 0 or tout.nValue > 168000000 * COIN:
                 return False
         return True
 
