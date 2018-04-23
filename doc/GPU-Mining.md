@@ -23,47 +23,70 @@ The same way as before! Just add gen=1 to your config file, or run ./src/fabcoin
 ## GPU mining hardware requirement  
 
 We developed GPU mining in OpenCL and Ubuntu 16.04 system, and has been tested on AMD Rx480 and Nvidia 1080 graphic card , it could used on other graphic card which support OpenCL and in other OS envirment. 
- 
 
 ## Graphic card driver and OpenCl installation
 
-### Configure 
- 
-Ensure that your user account is a member of the "video" group prior to using the  driver. You can find which groups you are a member of with the following command:
+You need a graphic card to start. We developed GPU mining module based on OenCL , and Nvidia 1080 and AMD Rx480, we also tested a group of other cards, like Nvidia 1060, 760, K2000 , and AMD Rx 580 etc.
+
+But, not all GPU cards are supported by Ubuntu system, and how to install the GPU ubuntu drivers and OpenCl also varied.
+
+We setup GPU card and install opencl as below steps, but it may not fit your situation, you may need find better way to resolve issues meet.
+
+Configure
+make sure that your user account is a member of the "video" group prior to using the driver. You can find which groups you are a member of with the following command:
 
     $ groups
-           
 To add yourself to the video group you will need the sudo password and can use the following command:
 
-
-    $ sudo usermod -a -G video $LOGNAME 
-
-
+   $ sudo usermod -a -G video $LOGNAME 
 You will need to log out and in again to activate this change.
 
-### Install graphic card driver and Open CL
-OpenCL support comes with the graphic card driver. Please check your graphic card vendor website, and found out how to install your   graphic card driver and Open Cl.
+Install graphic card driver and OpenCL
+OpenCL support comes with the graphic card driver. Please check your graphic card vendor website, and found out how to install your graphic card driver and Open Cl.
+#### Ubuntu 16.04 / amdgpu
+ 
+install amdgpu-pro and AMD APP SDK.  reference https://gist.github.com/daveselinger/8cba6d41eaa70b220725091390ff52c1
 
-Read the appropriate subsection below:
+ #### Nvidia
 
-Ubuntu 16.04 / amdgpu
-
-    $ sudo apt-get install amdgpu-pro
-
-Ubuntu 16.04 / Nvidia
-
-    $ sudo apt-get install nvidia-open-dev nvidia-361
+ please refer  install-proprietary-nvidia-gpu-drivers-on-ubuntu-16-04 , you need do more research to find out what's the best version for your graphic card. 
 
 
+    $sudo apt-get install nvidia-opencl-dev 
+    $sudo apt-get install nvidia-361
+
+   
+ ### GPU driver and opencl check 
+
+    #check hardware installed, you should see your device below
+    $ lspci |grep VGA   
+
+    #check opencl, you should see OpenCL information below.
+    $ clinfo 
+
+    #check GPU status (for Nvidia) , you will see your graphic card status regardless fabcoin system.
+    $ nvidia-smi 
+
+
+ Run Fabcoin GPU mining 
+
+    $cd ~/fabcoin/bin
+    $./fabcoind -daemon -gen -G -allgpu 
+
+    # check you GPU status, you should see GPU is busy.
+    $nvidia-smi
+
+    # check debug.log, you should see "FabcoinMiner GPU platform=0 " information
+    $tail -f ~/.fabcoin/debug.log
+  
 ## Compilation and installation Fabcoin code
 
 Compile and make fabcoin with option --enable-gpu, gpu mining is default disable on makefile.
 
-    $ cd ~/fabcoin
-    $ ./autogen.sh
-    $ ./configure --enable-gpu
-    $ make 
-
+    cd ~/fabcoin
+    ./autogen.sh
+    ./configure --enable-gpu
+    make 
 
  
 ### Run Mining  
@@ -78,6 +101,5 @@ call fabcoind or fabcoin-qt  with option -gen  -G -allgpu will start GPU mining
  
 example :
 
-    $ fabcoind -testnet -daemon -gen -G -allgpu      # start GPU mining on all GPU card on testnet.
-
+     $ fabcoind -testnet -daemon -gen -G -allgpu      # start GPU mining on all GPU card on testnet.
  
