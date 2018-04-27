@@ -46,7 +46,8 @@
 
 std::mutex g_cs;
 bool g_cancelSolver = false;
-int g_nSols[128] = {0};
+
+int g_nSols[256] = {0}; 
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -534,9 +535,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
     int nCounter = 0;
 
     if(conf.useGPU)
-        LogPrintf("FabcoinMiner started on GPU device: %u\n", conf.currentDevice);
+        LogPrintf("FabcoinMiner thread(%d@%u-%u) started on GPU device. \n", thr_id, conf.currentPlatform, conf.currentDevice);
     else
-        LogPrintf("FabcoinMiner started on CPU \n");
+        LogPrintf("FabcoinMiner thread(%d) started on CPU \n", thr_id);
 
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("fabcoin-miner");
@@ -605,8 +606,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
             CBlock *pblock = &pblocktemplate->block;
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
-                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
+            //LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) %d@(%s-%u-%u)  \n", pblock->vtx.size(),
+            //    ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), thr_id, conf.useGPU?"GPU":"CPU", conf.currentPlatform, conf.currentDevice );
 
             //
             // Search
@@ -617,7 +618,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 
             nCounter = 0;
             if (conf.useGPU)
-               LogPrint(BCLog::POW, "Equihash solver in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+               LogPrint(BCLog::POW, "Equihash solver in %d @GPU (%u-%u) with nNonce = %s hashTarget=%s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
             else LogPrint(BCLog::POW, "Equihash solver in CPU with nNonce = %s hashTarget=%s\n", pblock->nNonce.ToString(), hashTarget.GetHex());
   
             double secs, solps;
@@ -662,7 +663,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
                 }                
 
                 // (x_1, x_2, ...) = A(I, V, n, k)
-                //LogPrint(BCLog::POW, "Running Equihash solver in %u %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
+                //LogPrint(BCLog::POW, "Running Equihash solver in %d@%u-%u with nNonce = %s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
 
                 std::function<bool(std::vector<unsigned char>)> validBlock =
                     [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams,thr_id](std::vector<unsigned char> soln) 
@@ -670,7 +671,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
                     // Write the solution to the hash and compute the result.
                     //LogPrint(BCLog::POW, "- Checking solution against target\n");
 
-                    g_nSols[thr_id]++;
+                    g_nSols[thr_id] ++ ;
 
                     pblock->nSolution = soln;
 
@@ -765,7 +766,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
             auto milis = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
             secs = (1.0 * milis)/1000;
             solps = (double)g_nSols[thr_id] / secs;
-            LogPrintf("%d solutions in %.2f s (%.2f Sol/s)\n", g_nSols[thr_id], secs, solps);
+            LogPrintf("Thread(%d@%u-%u) - %d solutions in %.2f s (%.2f Sol/s)\n", thr_id, conf.currentPlatform, conf.currentDevice, g_nSols[thr_id], secs, solps);
         }
     }
     catch (const boost::thread_interrupted&)
@@ -840,10 +841,10 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
     static const unsigned int nInnerLoopCount = 0x0FFFFFFF;
     unsigned int nCounter = 0;
 
-    LogPrintf("FabcoinMiner started on GPU device (CUDA): %u\n", conf.currentDevice);
+    LogPrintf("FabcoinMiner thread(%d@%u-%u) started on GPU device(CUDA) \n", thr_id, conf.currentPlatform, conf.currentDevice);
 
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
-    RenameThread("fabcoin-miner");
+    RenameThread("fabcoin-miner-cuda");
 
     unsigned int nExtraNonce = 0;
     std::shared_ptr<CReserveScript> coinbaseScript;
@@ -908,14 +909,14 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
             if (!pblocktemplate.get())
             {
-                LogPrintf("Error in FabcoinMiner: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
+                LogPrintf("Error in FabcoinMinerCuda: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
                 return;
             }
             CBlock *pblock = &pblocktemplate->block;
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
-                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
+            //LogPrintf("FabcoinMinerCuda mining   with %u transactions in block (%u bytes) @(%s-%d)  \n", pblock->vtx.size(),
+            //    ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU", thr_id );
 
             //
             // Search
@@ -925,7 +926,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             uint256 hash;
 
             nCounter = 0;
-            LogPrint(BCLog::POW, "Equihash solver in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+            LogPrint(BCLog::POW, "Equihash solver in (%d@%u-%u) with nNonce = %s hashTarget=%s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
 
             double secs, solps;
             g_nSols[thr_id] = 0;
@@ -989,12 +990,12 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             auto milis = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
             secs = (1.0 * milis)/1000;
             solps = (double)g_nSols[thr_id] / secs;
-            LogPrintf("%d solutions in %.2f s (%.2f Sol/s)\n", g_nSols[thr_id], secs, solps);
+            LogPrintf("Thread(%d@%u-%u) CUDA- %d solutions in %.2f s (%.2f Sol/s)\n", thr_id, conf.currentPlatform, conf.currentDevice, g_nSols[thr_id], secs, solps);
         }
     }
     catch (const boost::thread_interrupted&)
     {
-        LogPrintf("FabcoinMiner terminated\n");
+        LogPrintf("FabcoinMinerCuda terminated\n");
 #ifdef ENABLE_GPU
         delete g_solver;
         free(header);
@@ -1003,7 +1004,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
     }
     catch (const std::runtime_error &e)
     {
-        LogPrintf("FabcoinMiner runtime error: %s\n", e.what());
+        LogPrintf("FabcoinMinerCuda runtime error: %s\n", e.what());
 #ifdef ENABLE_GPU
         delete g_solver;
         free(header);
@@ -1040,8 +1041,12 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
 void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainparams, GPUConfig conf)
 {
-    if (nThreads < 0)
-        nThreads = GetNumCores();
+    if (nThreads < 0) {
+        if(conf.useGPU) {
+           nThreads = 16;   // limit max GPU thread per device 16;  
+        }
+        else nThreads = GetNumCores();
+    }
 
     if (minerThreads != NULL)
     {
@@ -1055,11 +1060,12 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
         return;
 
     minerThreads = new boost::thread_group();
+    int  thread_sequence = 0;
 
     // If using GPU
     if(conf.useGPU) {
 #ifdef ENABLE_GPU
-        conf.currentPlatform = 0;
+        conf.currentPlatform = conf.sel_platform;
         conf.currentDevice = conf.selGPU;
 
         std::vector<cl::Platform> platforms = cl_gpuminer::getPlatforms();
@@ -1085,6 +1091,8 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                 std::vector<cl::Device> devices = cl_gpuminer::getDevices(platforms, platform);
                 unsigned noDevices = devices.size();
                 devicesFound += noDevices;
+
+
                 for(unsigned device = 0; device < noDevices; ++device) {
 
                     conf.currentPlatform = platform;
@@ -1095,26 +1103,31 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
                     int maxThreads = nThreads;
                     if (!conf.forceGenProcLimit) {
-                        if (result > 7500000000) {
-                            maxThreads = std::min(4, nThreads);
-                        } else if (result > 5500000000) {
-                            maxThreads = std::min(3, nThreads);
-                        } else if (result > 3500000000) {
-                            maxThreads = std::min(2, nThreads);
-                        } else {
-                            maxThreads = std::min(1, nThreads);
-                        }
+                        int ThreadsMem = 1750000000;
+#ifdef USE_CUDA
+                        if( bNvidiaDev && conf.useCUDA )
+                           ThreadsMem =  500000000;
+#endif
+                        maxThreads = std::min( (int) (result / ThreadsMem ), nThreads);
                     }
 
+                    LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) maxThread =%d.\n", conf.currentPlatform, conf.currentDevice, maxThreads );
+
                     for (int i = 0; i < maxThreads; i++){
-                        LogPrintf("FabcoinMiner GPU platform=%d device=%d thread=%d!\n", conf.currentPlatform, conf.currentDevice, i);
+                        if ( thread_sequence > 255 ){
+                           LogPrintf("GenerateFabcoins reached GPU threads limit 255.\n", conf.currentPlatform, conf.currentDevice, i);
+                           break;
+                        }
+
+                        thread_sequence ++;
+                        LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) starting thread=%d...\n", conf.currentPlatform, conf.currentDevice, thread_sequence);
 #ifdef USE_CUDA
-                        if( bNvidiaDev )
-                            minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf,i));
+                        if( bNvidiaDev && conf.useCUDA )
+                            minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf, thread_sequence  ));
                         else
-                            minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf, i));
+                            minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
 #else
-                        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf, i ));
+                        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence   ));
 #endif
                     }
 
@@ -1122,12 +1135,14 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
             }
 
             if (devicesFound <= 0) {
-                LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
+                LogPrintf("GenerateFabcoins ERROR, No OpenCL devices found!\n");
             }
 
         } 
         else
         {
+            LogPrintf("GenerateFabcoins GPU @(platform=%d device=%d) only!\n", conf.currentPlatform, conf.currentDevice );
+
             std::string info = cl_gpuminer::platform_info(conf.currentPlatform);
             std::string infolow;
             bool bNvidiaDev = false;
@@ -1147,32 +1162,44 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                 devices[conf.currentDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
 
                 int maxThreads = nThreads;
+
                 if (!conf.forceGenProcLimit) {
-                    if (result > 7500000000) {
-                        maxThreads = std::min(4, nThreads);
-                    } else if (result > 5500000000) {
-                        maxThreads = std::min(3, nThreads);
-                    } else if (result > 3500000000) {
-                        maxThreads = std::min(2, nThreads);
-                    } else {
-                        maxThreads = std::min(1, nThreads);
-                    }
+                    int ThreadsMem = 1750000000;
+#ifdef USE_CUDA
+                    if (bNvidiaDev && conf.useCUDA )
+                        ThreadsMem =  500000000;
+#else
+
+#endif
+                    maxThreads = std::min( (int) (result / ThreadsMem ), nThreads);
                 }
 
+
+                LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) maxThread =%d!\n", conf.currentPlatform, conf.currentDevice, maxThreads );
+
                 for (int i = 0; i < maxThreads; i++) {
+
+                    if ( thread_sequence > 255 ){
+                           LogPrintf("GenerateFabcoins reached GPU threads limit 255.\n", conf.currentPlatform, conf.currentDevice, i);
+                           break;
+                    }
+
+                    thread_sequence ++;
+
+                    LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) starting thread=%d...\n", conf.currentPlatform, conf.currentDevice, thread_sequence);
 #ifdef USE_CUDA
-                    if( bNvidiaDev )
-                        minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf,i));
+                    if( bNvidiaDev && conf.useCUDA )
+                        minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf, thread_sequence  ));
                     else
-                        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf, i));
+                        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
 #else
-                    minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf, i));
+                    minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
 #endif
                 }
             } 
             else 
             {
-                LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
+                LogPrintf("GenerateFabcoins ERROR, No OpenCL devices found!\n");
             }
         }
 #endif
@@ -1180,7 +1207,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
     else
     {
         for (int i = 0; i < nThreads; i++){
-            LogPrintf("FabcoinMiner CPU, thread=%d!\n",  i);
+            LogPrintf("GenerateFabcoins CPU, thread=%d!\n",  i);
             minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf, i));    
         }
     }
