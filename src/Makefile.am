@@ -189,7 +189,7 @@ obj/build.h: FORCE
 libfabcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
 # server: shared between fabcoind and fabcoin-qt
-libfabcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(FABCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+libfabcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(FABCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) @CUDA_INCLUDES@
 libfabcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libfabcoin_server_a_SOURCES = \
   addrdb.cpp \
@@ -234,6 +234,11 @@ libfabcoin_server_a_SOURCES = \
 if ENABLE_GPU
 libgpusolver_SOURCES = libgpusolver/libgpusolver.cpp libgpusolver/libclwrapper.cpp libgpusolver/blake.cpp $(LIBGPUSOLVER_H) 
 libfabcoin_server_a_SOURCES += $(libgpusolver_SOURCES)
+endif
+
+if USE_CUDA
+libcuda_SOURCES = cuda/cuda.cpp cuda/blake2/blake2bx.cpp cuda/cuda_equi.cu 
+libfabcoin_server_a_SOURCES += $(libcuda_SOURCES)
 endif
 
 if ENABLE_ZMQ
@@ -510,6 +515,24 @@ clean-local:
 	-rm -f leveldb/*/*.gcda leveldb/*/*.gcno leveldb/helpers/memenv/*.gcda leveldb/helpers/memenv/*.gcno
 	-rm -f config.h
 	-rm -rf test/__pycache__
+
+if USE_CUDA
+nvcc_ARCH :=
+nvcc_ARCH += -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+nvcc_ARCH += -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+
+nvcc_FLAGS = $(nvcc_ARCH) @CUDA_INCLUDES@ -I. @CUDA_CFLAGS@
+nvcc_FLAGS += $(JANSSON_INCLUDES) --ptxas-options="-v"
+endif
+
+if USE_CUDA
+# we're now targeting all major compute architectures within one binary.
+.cu.o:
+	$(NVCC) $(nvcc_FLAGS) --maxrregcount=128 -o $@ -c $<
+
+cuda/cuda_equi.o: cuda/cuda_equi.cu
+	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
+endif
 
 .rc.o:
 	@test -f $(WINDRES)
