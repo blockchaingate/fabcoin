@@ -84,7 +84,7 @@ Ensure gitian-builder is up-to-date:
 
     pushd ./gitian-builder
     mkdir -p inputs
-    wget -P inputs https://fabcoincore.org/cfields/osslsigncode-Backports-to-1.7.1.patch
+    wget -P inputs https://fabcoin.pro/cfields/osslsigncode-Backports-to-1.7.1.patch
     wget -P inputs http://downloads.sourceforge.net/project/osslsigncode/osslsigncode/osslsigncode-1.7.1.tar.gz
     popd
 
@@ -292,9 +292,9 @@ fabcoin.pro (see below for fabcoin.pro update instructions).
 
   - fabcoin-dev and fabcoin-core-dev mailing list
 
-  - Fabcoin Core announcements list https://fabcoincore.org/en/list/announcements/join/
+  - Fabcoin Core announcements list https://fabcoin.pro/en/list/announcements/join/
 
-  - fabcoincore.org blog post
+  - fabcoin.pro blog post
 
   - Update title of #fabcoin on Freenode IRC
 
