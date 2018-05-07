@@ -112,10 +112,10 @@ class FullBlockTest(ComparisonTestFramework):
         if spend == None:
             block = create_block(base_block_hash, coinbase, block_time)
         else:
-            coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one satoshi to fees
+            coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one liu to fees
             coinbase.rehash()
             block = create_block(base_block_hash, coinbase, block_time)
-            tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 satoshi
+            tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 liu
             self.sign_tx(tx, spend.tx, spend.n)
             self.add_transactions_to_block(block, [tx])
             block.hashMerkleRoot = block.calc_merkle_root()
@@ -509,7 +509,7 @@ class FullBlockTest(ComparisonTestFramework):
         redeem_script_hash = hash160(redeem_script)
         p2sh_script = CScript([OP_HASH160, redeem_script_hash, OP_EQUAL])
 
-        # Create a transaction that spends one satoshi to the p2sh_script, the rest to OP_TRUE
+        # Create a transaction that spends one liu to the p2sh_script, the rest to OP_TRUE
         # This must be signed because it is spending a coinbase
         spend = out[11]
         tx = create_tx(spend.tx, spend.n, 1, p2sh_script)
@@ -519,7 +519,7 @@ class FullBlockTest(ComparisonTestFramework):
         b39 = update_block(39, [tx])
         b39_outputs += 1
 
-        # Until block is full, add tx's with 1 satoshi to p2sh_script, the rest to OP_TRUE
+        # Until block is full, add tx's with 1 liu to p2sh_script, the rest to OP_TRUE
         tx_new = None
         tx_last = tx
         total_size=len(b39.serialize())
@@ -968,11 +968,11 @@ class FullBlockTest(ComparisonTestFramework):
         # -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20)
         #                                                                                    \-> b68 (20)
         #
-        # b68 - coinbase with an extra 10 satoshis,
-        #       creates a tx that has 9 satoshis from out[20] go to fees
-        #       this fails because the coinbase is trying to claim 1 satoshi too much in fees
+        # b68 - coinbase with an extra 10 liu,
+        #       creates a tx that has 9 liu from out[20] go to fees
+        #       this fails because the coinbase is trying to claim 1 liu too much in fees
         #
-        # b69 - coinbase with extra 10 satoshis, and a tx that gives a 10 satoshi fee
+        # b69 - coinbase with extra 10 lius, and a tx that gives a 10 liu fee
         #       this succeeds
         #
         tip(65)

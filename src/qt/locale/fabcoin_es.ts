@@ -687,8 +687,8 @@
         <translation>Esta etiqueta se vuelve roja si algún destinatario recibe una cantidad inferior a la actual puerta polvorienta.</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation>Puede variar +/- %1 satoshi(s) por entrada.</translation>
+        <source>Can vary +/- %1 liu(s) per input.</source>
+        <translation>Puede variar +/- %1 liu(s) por entrada.</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2025,8 +2025,8 @@
         <translation>por kilobyte</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then "per kilobyte" only pays 250 satoshis in fee, while "total at least" pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Si la comisión se establece en 1000 satoshis y la transacción está a sólo 250 bytes, entonces "por kilobyte" sólo paga 250 satoshis de cuota, mientras que "el mínimo total" pagaría 1.000 satoshis. Para las transacciones más grandes que un kilobyte ambos pagan por kilobyte</translation>
+        <source>If the custom fee is set to 1000 lius and the transaction is only 250 bytes, then "per kilobyte" only pays 250 lius in fee, while "total at least" pays 1000 lius. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>Si la comisión se establece en 1000 lius y la transacción está a sólo 250 bytes, entonces "por kilobyte" sólo paga 250 lius de cuota, mientras que "el mínimo total" pagaría 1.000 lius. Para las transacciones más grandes que un kilobyte ambos pagan por kilobyte</translation>
     </message>
     <message>
         <source>Hide</source>
