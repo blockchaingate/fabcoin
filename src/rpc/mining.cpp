@@ -340,7 +340,7 @@ UniValue getmininginfo(const JSONRPCRequest& request)
 }
 
 
-// NOTE: Unlike wallet RPC (which use FAB values), mining RPCs follow GBT (BIP 22) in using satoshi amounts
+// NOTE: Unlike wallet RPC (which use FAB values), mining RPCs follow GBT (BIP 22) in using liu amounts
 UniValue prioritisetransaction(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
@@ -351,7 +351,7 @@ UniValue prioritisetransaction(const JSONRPCRequest& request)
             "1. \"txid\"       (string, required) The transaction id.\n"
             "2. dummy          (numeric, optional) API-Compatibility for previous API. Must be zero or null.\n"
             "                  DEPRECATED. For forward compatibility use named arguments and omit this parameter.\n"
-            "3. fee_delta      (numeric, required) The fee value (in satoshis) to add (or subtract, if negative).\n"
+            "3. fee_delta      (numeric, required) The fee value (in lius) to add (or subtract, if negative).\n"
             "                  The fee is not actually paid, only the algorithm for selecting transactions into a block\n"
             "                  considers the transaction as it would have paid a higher (or lower) fee.\n"
             "\nResult:\n"
@@ -901,7 +901,7 @@ UniValue getblocksubsidy(const JSONRPCRequest& request)
       "1. height          (numeric, optional) The block height. If not provided, defaults to the current height of the chain.\n"
       "\nResult:\n"
       "{\n"
-      "\"miner\": n,    (numeric) The mining reward amount in satoshis.\n"
+      "\"miner\": n,    (numeric) The mining reward amount in lius.\n"
       "\"founders\": f, (numeric) Always 0, for Zcash mining compatibility.\n"
       "}\n"
       "\nExamples:\n"

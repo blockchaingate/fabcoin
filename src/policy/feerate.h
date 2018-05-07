@@ -14,25 +14,25 @@
 extern const std::string CURRENCY_UNIT;
 
 /**
- * Fee rate in satoshis per kilobyte: CAmount / kB
+ * Fee rate in liu per kilobyte: CAmount / kB
  */
 class CFeeRate
 {
 private:
-    CAmount nSatoshisPerK; // unit is satoshis-per-1,000-bytes
+    CAmount nSatoshisPerK; // unit is liu-per-1,000-bytes
 public:
-    /** Fee rate of 0 satoshis per kB */
+    /** Fee rate of 0 liu per kB */
     CFeeRate() : nSatoshisPerK(0) { }
     explicit CFeeRate(const CAmount& _nSatoshisPerK): nSatoshisPerK(_nSatoshisPerK) { }
-    /** Constructor for a fee rate in satoshis per kB. The size in bytes must not exceed (2^63 - 1)*/
+    /** Constructor for a fee rate in liu per kB. The size in bytes must not exceed (2^63 - 1)*/
     CFeeRate(const CAmount& nFeePaid, size_t nBytes);
     CFeeRate(const CFeeRate& other) { nSatoshisPerK = other.nSatoshisPerK; }
     /**
-     * Return the fee in satoshis for the given size in bytes.
+     * Return the fee in liu for the given size in bytes.
      */
     CAmount GetFee(size_t nBytes) const;
     /**
-     * Return the fee in satoshis for a size of 1000 bytes
+     * Return the fee in liu for a size of 1000 bytes
      */
     CAmount GetFeePerK() const { return GetFee(1000); }
     friend bool operator<(const CFeeRate& a, const CFeeRate& b) { return a.nSatoshisPerK < b.nSatoshisPerK; }

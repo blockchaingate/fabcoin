@@ -683,8 +683,8 @@
         <translation>ei</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation>Saattaa vaihdella +/- %1 satoshia per syöte.</translation>
+        <source>Can vary +/- %1 liu(s) per input.</source>
+        <translation>Saattaa vaihdella +/- %1 liua per syöte.</translation>
     </message>
     <message>
         <source>(no label)</source>
