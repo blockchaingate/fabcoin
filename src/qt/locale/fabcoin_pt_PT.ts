@@ -687,8 +687,8 @@
         <translation>Esta etiqueta fica vermelha se qualquer recipiente receber uma quantia menor que o limite da poeira.</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation>Pode variar +/- %1 satoshi(s) por input.</translation>
+        <source>Can vary +/- %1 liu(s) per input.</source>
+        <translation>Pode variar +/- %1 liu(s) por input.</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2018,8 +2018,8 @@
         <translation>por kilobyte</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then "per kilobyte" only pays 250 satoshis in fee, while "total at least" pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
-        <translation>Se a taxa personalizada estiver definida para 1.000 satoshis e a transação é de apenas 250 bytes, então paga apenas 250 satoshis "por kilobyte" na taxa, enquanto em "total pelo menos" paga 1.000 satoshis. Para transações superiores a um kilobyte ambos pagam por kilobyte.</translation>
+        <source>If the custom fee is set to 1000 lius and the transaction is only 250 bytes, then "per kilobyte" only pays 250 lius in fee, while "total at least" pays 1000 lius. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <translation>Se a taxa personalizada estiver definida para 1.000 lius e a transação é de apenas 250 bytes, então paga apenas 250 lius "por kilobyte" na taxa, enquanto em "total pelo menos" paga 1.000 lius. Para transações superiores a um kilobyte ambos pagam por kilobyte.</translation>
     </message>
     <message>
         <source>Hide</source>

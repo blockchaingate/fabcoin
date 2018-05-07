@@ -8,13 +8,13 @@
 
 #include <stdint.h>
 
-/** Amount in satoshis (Can be negative) */
+/** Amount in liu (Can be negative) */
 typedef int64_t CAmount;
 
 static const CAmount COIN = 100000000;
 static const CAmount CENT = 1000000;
 
-/** No amount larger than this (in satoshi) is valid.
+/** No amount larger than this (in liu) is valid.
  *
  * Note that this constant is *not* the total money supply, which in Fabcoin
  * currently happens to be less than 168,000,000 FAB for various reasons, but
