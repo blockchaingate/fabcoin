@@ -1051,13 +1051,13 @@ UniValue gettxoutset(const JSONRPCRequest& request)
             {
                 for( const CTxDestination addr: addresses )
                 {
-                    strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue/100000000.0 ;
+                    strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
                     ret.push_back(Pair("UTXO", strUtxo.str()));
                 }
             }
             else
             {
-                strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue/100000000.0 ;
+                strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue ;
                 ret.push_back(Pair("UTXO", strUtxo.str()));
             }
             outputs[key.n] = std::move(coin);
