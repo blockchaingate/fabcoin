@@ -25,6 +25,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "hash.h"
+#include "base58.h"
 
 #include <stdint.h>
 
@@ -1009,6 +1010,70 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
     return ret;
 }
 
+UniValue gettxoutset(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+        "gettxoutset\n"
+        "\nReturns the unspent transaction output set.\n"
+        "Note this call may take some time.\n"
+        "\nResult:\n"
+        "{\n"
+        "  \"UTXO\": \"height, address, amount\"\n"
+        "}\n"
+        "\nExamples:\n"
+        + HelpExampleCli("gettxoutset", "")
+        + HelpExampleRpc("gettxoutset", "")
+        );
+
+    UniValue ret(UniValue::VOBJ);
+
+    std::unique_ptr<CCoinsViewCursor> pcursor(pcoinsdbview->Cursor());
+
+    uint256 prevkey;
+    std::map<uint32_t, Coin> outputs;
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        COutPoint key;
+        Coin coin;
+        
+        if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
+            if (!outputs.empty() && key.hash != prevkey) {
+                outputs.clear();
+            }
+            prevkey = key.hash;
+            txnouttype type;
+            std::vector<CTxDestination> addresses;
+            int nRequired;
+            std::stringstream strUtxo;
+            if( ExtractDestinations(coin.out.scriptPubKey, type, addresses, nRequired))
+            {
+                for( const CTxDestination addr: addresses )
+                {
+                    strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue/100000000.0 ;
+                    ret.push_back(Pair("UTXO", strUtxo.str()));
+                }
+            }
+            else
+            {
+                strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue/100000000.0 ;
+                ret.push_back(Pair("UTXO", strUtxo.str()));
+            }
+            outputs[key.n] = std::move(coin);
+        } 
+        else 
+        {
+            ret.push_back(Pair("ERROR: ", "unable to read value"));
+            return ret;
+        }
+        pcursor->Next();
+    }
+
+    return ret;
+}
+
+
 UniValue gettxout(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
@@ -1623,6 +1688,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getrawmempool",          &getrawmempool,          true,  {"verbose"} },
     { "blockchain",         "gettxout",               &gettxout,               true,  {"txid","n","include_mempool"} },
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true,  {} },
+    { "blockchain",         "gettxoutset",            &gettxoutset,            true,  {} },
     { "blockchain",         "pruneblockchain",        &pruneblockchain,        true,  {"height"} },
     { "blockchain",         "verifychain",            &verifychain,            true,  {"checklevel","nblocks"} },
 
