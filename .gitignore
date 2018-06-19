@@ -2,6 +2,8 @@
 
 .vs/
 
+test/config.ini
+
 *.exe
 src/fabcoin
 src/fabcoind

@@ -1,0 +1,1 @@
+cmd='./configure;--prefix=<INSTALL_DIR>;--host=;--enable-module-ecdh;--enable-experimental;--disable-shared;--with-pic;--with-bignum=no;--enable-module-recovery'
