@@ -501,6 +501,65 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
 }
 
 
+// ========= Smart Contracct ======================
+
+bool base58toVMAddress(std::string& strAddr, std::vector<unsigned char>& contractAddress)
+{
+    /*if (strAddr.size() != 34)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");*/
+
+    CFabcoinAddress address(strAddr);
+    if (!address.IsValid())
+        return false;
+
+    contractAddress = ToByteVector(boost::get<CKeyID>(address.Get()));
+
+    return true;
+}
+
+UniValue getvmaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1)
+        throw std::runtime_error(
+            "getvmaddress \"address\" \n"
+            "\nArgument:\n"
+            "1. \"address\"          (string, required) The account address\n"
+        );
+
+    std::string strAddr = request.params[0].get_str();
+    std::vector<unsigned char> contractAddress(20);
+    if (!base58toVMAddress(strAddr, contractAddress))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
+    UniValue result(UniValue::VOBJ);
+    result.push_back(Pair("addressinvm", HexStr(contractAddress)));
+
+    return result;
+}
+
+UniValue getfabaddressbyvm(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1)
+        throw std::runtime_error(
+            "getfabaddressbyvm \"vmaddress\" \n"
+            "\nArgument:\n"
+            "1. \"vmaddress\"          (string, required) The VM account address\n");
+
+    std::string strAddr = request.params[0].get_str();
+    uint160 u(ParseHex(strAddr));
+
+    CFabcoinAddress fabAddress;
+    CKeyID keyid(u);
+    fabAddress.Set(keyid);
+
+    if (!fabAddress.IsValid())
+        return false;
+
+    UniValue result(UniValue::VOBJ);
+    result.push_back(Pair("fabaddressbyvm", fabAddress.ToString()));
+
+    return result;
+}
+
 UniValue createcontract(const JSONRPCRequest& request) {
 
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -3621,6 +3680,8 @@ static const CRPCCommand commands[] =
     { "wallet",             "removeprunedfunds",        &removeprunedfunds,        true,   {"txid"} },
 
     { "generating",         "generate",                 &generate,                 true,   {"nblocks","maxtries"} },
+    { "wallet",             "getvmaddress",             &getvmaddress,             true,   {"contractaddress" } },
+    { "wallet",             "getfabaddressbyvm",        &getfabaddressbyvm,        true,   {"contractaddress"}},
     { "wallet",             "createcontract",           &createcontract,           false,  {"bytecode", "gasLimit", "gasPrice", "senderAddress", "broadcast", "changeToSender"} },
     { "wallet",             "sendtocontract",           &sendtocontract,           false,  {"contractaddress", "bytecode", "amount", "gasLimit", "gasPrice", "senderAddress", "broadcast", "changeToSender"} },
 };
