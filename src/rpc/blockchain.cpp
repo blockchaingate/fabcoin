@@ -1027,7 +1027,10 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         );
 
     UniValue ret(UniValue::VOBJ);
-
+    
+    CCoinsStats stats;
+    FlushStateToDisk();
+    
     std::unique_ptr<CCoinsViewCursor> pcursor(pcoinsdbview->Cursor());
 
     uint256 prevkey;
