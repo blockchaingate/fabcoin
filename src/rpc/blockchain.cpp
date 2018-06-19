@@ -1051,7 +1051,10 @@ UniValue gettxoutset(const JSONRPCRequest& request)
             {
                 for( const CTxDestination addr: addresses )
                 {
-                    strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+                    //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
+                    strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
                     ret.push_back(Pair("UTXO", strUtxo.str()));
                 }
             }
