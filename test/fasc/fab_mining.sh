@@ -15,7 +15,7 @@ fab_mining() {
     do
       port_rpc=$(( $RPC_PORT + $j ))
       TR=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} generate 1`
-      #sleep 1
+      sleep 1
   
      if [  "$COUNTER" == "$round_num" ]; then 
         port_rpc=$(($RPC_PORT + $j))
@@ -25,7 +25,7 @@ fab_mining() {
         echo "node: " $j "   block #: " $BLOCK_NUM "   balance=" $BALANCE_NUM
       fi
     done
-    #sleep 1
+    sleep 1
   done
   echo
 }
