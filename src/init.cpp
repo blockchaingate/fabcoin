@@ -419,6 +419,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-timeout=<n>", strprintf(_("Specify connection timeout in milliseconds (minimum: 1, default: %d)"), DEFAULT_CONNECT_TIMEOUT));
     strUsage += HelpMessageOpt("-torcontrol=<ip>:<port>", strprintf(_("Tor control port to use if onion listening enabled (default: %s)"), DEFAULT_TOR_CONTROL));
     strUsage += HelpMessageOpt("-torpassword=<pass>", _("Tor control port password (default: empty)"));
+    strUsage += HelpMessageOpt("-dgpstorage", _("Receiving data from DGP via storage (default: -dgpevm)"));
+    strUsage += HelpMessageOpt("-dgpevm", _("Receiving data from DGP via a contract call (default: -dgpevm)"));
 #ifdef USE_UPNP
 #if USE_UPNP
     strUsage += HelpMessageOpt("-upnp", _("Use UPnP to map the listening port (default: 1 when listening and no -proxy)"));
@@ -1446,26 +1448,18 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 delete pcoinsdbview;
                 delete pcoinscatcher;
                 delete pblocktree;
+                delete pstorageresult;
+                globalState.reset();
+                globalSealEngine.reset();
 
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReset);
-                pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex || fReindexChainState);
-                pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
-                pcoinsTip = new CCoinsViewCache(pcoinscatcher);
 
                 if (fReset) {
-                    boost::filesystem::path stateDir = GetDataDir() / "stateFasc";
-                    StorageResults storageRes(stateDir.string());
-                    storageRes.wipeResults();
                     pblocktree->WriteReindexing(true);
                     //If we're reindexing in prune mode, wipe away unusable block files and all undo data files
                     if (fPruneMode)
                         CleanupBlockRevFiles();
-                } else {
-                    if (!pcoinsdbview->Upgrade()) {
-                        strLoadError = _("Error upgrading chainstate database");
-                        break;
-                    }
-                }
+                } 
 
                 if (fRequestShutdown) break;
 
@@ -1503,6 +1497,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
 
                 pstorageresult = new StorageResults(fascStateDir.string());
+
+                if (fReset) {
+                    pstorageresult->wipeResults();
+                }
                 if(chainActive.Tip() != NULL){
                     globalState->setRoot(uintToh256(chainActive.Tip()->hashStateRoot));
                     globalState->setRootUTXO(uintToh256(chainActive.Tip()->hashUTXORoot));
@@ -1517,6 +1515,21 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 fRecordLogOpcodes = gArgs.IsArgSet("-record-log-opcodes");
                 fIsVMlogFile = boost::filesystem::exists(GetDataDir() / "vmExecLogs.json");
                 ///////////////////////////////////////////////////////////
+
+
+                // Check for changed -logevents state
+                if (fLogEvents != gArgs.GetBoolArg("-logevents", DEFAULT_LOGEVENTS) && !fLogEvents) {
+                    strLoadError = _("You need to rebuild the database using -reindex-chainstate to enable -logevents");
+                    break;
+                }
+
+                if (!gArgs.GetBoolArg("-logevents", DEFAULT_LOGEVENTS)) {
+                    pstorageresult->wipeResults();
+                    pblocktree->WipeHeightIndex();
+                    fLogEvents = false;
+                    pblocktree->WriteFlag("logevents", fLogEvents);
+                }
+
                 // Check for changed -txindex state
                 if (fTxIndex != gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX)) {
                     strLoadError = _("You need to rebuild the database using -reindex to change -txindex");

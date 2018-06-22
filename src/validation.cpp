@@ -526,7 +526,7 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
 
 static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool& pool, CValidationState& state, const CTransactionRef& ptx, bool fLimitFree,
                               bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
-                              bool fOverrideMempoolLimit, const CAmount& nAbsurdFee, std::vector<COutPoint>& coins_to_uncache)
+                              bool fOverrideMempoolLimit, const CAmount& nAbsurdFee, std::vector<COutPoint>& coins_to_uncache, bool rawTx)
 {
     const CTransaction& tx = *ptx;
     const uint256 hash = tx.GetHash();
@@ -756,6 +756,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
             if(count > fascTransactions.size())
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-incorrect-format");
+
+            if (rawTx && nAbsurdFee && dev::u256(nFees) > dev::u256(nAbsurdFee) + sumGas)
+                return state.Invalid(false,
+                    REJECT_HIGHFEE, "absurdly-high-fee",
+                    strprintf("%d > %d", nFees, nAbsurdFee));
         }
         ////////////////////////////////////////////////////////////
         // nModifiedFees includes any fee deltas from PrioritiseTransaction
@@ -816,7 +821,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             dFreeCount += nSize;
         }
 
-        if (!tx.HasCreateOrCall() && nAbsurdFee && nFees > nAbsurdFee)
+        if (!tx.HasCreateOrCall() && nAbsurdFee && nFees > nAbsurdFee) 
             return state.Invalid(false,
                 REJECT_HIGHFEE, "absurdly-high-fee",
                 strprintf("%d > %d", nFees, nAbsurdFee));
@@ -1069,10 +1074,10 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 /** (try to) add transaction to memory pool with a specified acceptance time **/
 static bool AcceptToMemoryPoolWithTime(const CChainParams& chainparams, CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
                         bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced,
-                        bool fOverrideMempoolLimit, const CAmount nAbsurdFee)
+                        bool fOverrideMempoolLimit, const CAmount nAbsurdFee, bool rawTx = false)
 {
     std::vector<COutPoint> coins_to_uncache;
-    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, fLimitFree, pfMissingInputs, nAcceptTime, plTxnReplaced, fOverrideMempoolLimit, nAbsurdFee, coins_to_uncache);
+    bool res = AcceptToMemoryPoolWorker(chainparams, pool, state, tx, fLimitFree, pfMissingInputs, nAcceptTime, plTxnReplaced, fOverrideMempoolLimit, nAbsurdFee, coins_to_uncache, rawTx);
     if (!res) {
         for (const COutPoint& hashTx : coins_to_uncache)
             pcoinsTip->Uncache(hashTx);
@@ -1097,10 +1102,10 @@ bool IsConfirmedInNPrevBlocks(const CDiskTxPos& txindex, const CBlockIndex* pind
 
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
                         bool* pfMissingInputs, std::list<CTransactionRef>* plTxnReplaced,
-                        bool fOverrideMempoolLimit, const CAmount nAbsurdFee)
+                        bool fOverrideMempoolLimit, const CAmount nAbsurdFee, bool rawTx)
 {
     const CChainParams& chainparams = Params();
-    return AcceptToMemoryPoolWithTime(chainparams, pool, state, tx, fLimitFree, pfMissingInputs, GetTime(), plTxnReplaced, fOverrideMempoolLimit, nAbsurdFee);
+    return AcceptToMemoryPoolWithTime(chainparams, pool, state, tx, fLimitFree, pfMissingInputs, GetTime(), plTxnReplaced, fOverrideMempoolLimit, nAbsurdFee, rawTx);
 }
 
 /** Return transaction in txOut, and if it was found inside a block, its hash is placed in hashBlock */
@@ -2213,7 +2218,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
             countCumulativeGasUsed += bcer.usedGas;
             std::vector<TransactionReceiptInfo> tri;
-            if (fLogEvents)
+            if (fLogEvents && !fJustCheck)
             {
                 for (size_t k = 0; k < resultConvertFascTX.first.size(); k++) {
                     dev::Address key = resultExec[k].execRes.newAddress;
@@ -2919,7 +2924,7 @@ dev::eth::EnvInfo ByteCodeExec::BuildEVMEnvironment(){
     env.setLastHashes(std::move(lh));
     env.setGasLimit(blockGasLimit);
 
-        env.setAuthor(EthAddrFromScript(block.vtx[0]->vout[0].scriptPubKey));
+    env.setAuthor(EthAddrFromScript(block.vtx[0]->vout[0].scriptPubKey));
     return env;
 }
 
@@ -3144,6 +3149,7 @@ bool static ConnectTip(CValidationState& state, const CChainParams& chainparams,
                 InvalidBlockFound(pindexNew, state);
             globalState->setRoot(oldHashStateRoot); // fasc 
             globalState->setRootUTXO(oldHashUTXORoot); // fasc
+            pstorageresult->clearCacheResult();
             return error("ConnectTip(): ConnectBlock %s failed", pindexNew->GetBlockHash().ToString());
         }
         nTime3 = GetTimeMicros(); nTimeConnectTotal += nTime3 - nTime2;
@@ -4289,6 +4295,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 
         globalState->setRoot(oldHashStateRoot); // fasc
         globalState->setRootUTXO(oldHashUTXORoot); // fasc
+        pstorageresult->clearCacheResult();
 
         return false;
     }
@@ -4770,6 +4777,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
 
                 globalState->setRoot(oldHashStateRoot); // fasc
                 globalState->setRootUTXO(oldHashUTXORoot); // fasc
+                pstorageresult->clearCacheResult();
 
                 return error("VerifyDB(): *** found unconnectable block at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
             }

@@ -1,7 +1,8 @@
-#include <uint256.h>
-#include <primitives/transaction.h>
+#include "util.h"
 #include <libethereum/State.h>
 #include <libethereum/Transaction.h>
+#include <primitives/transaction.h>
+#include <uint256.h>
 
 using logEntriesSerializ = std::vector<std::pair<dev::Address, std::pair<dev::h256s, dev::bytes>>>;
 
@@ -33,11 +34,11 @@ struct TransactionReceiptInfoSerialized {
     std::vector<uint32_t> excepted;
 };
 
-class StorageResults {
-
+class StorageResults
+{
 public:
-
     StorageResults(std::string const& _path);
+    ~StorageResults();
 
     void addResult(dev::h256 hashTx, std::vector<TransactionReceiptInfo>& result);
 
@@ -47,10 +48,11 @@ public:
 
     void commitResults();
 
+    void clearCacheResult();
+
     void wipeResults();
 
 private:
-
     bool readResult(dev::h256 const& _key, std::vector<TransactionReceiptInfo>& _result);
 
     logEntriesSerializ logEntriesSerialization(dev::eth::LogEntries const& _logs);
@@ -58,6 +60,10 @@ private:
     dev::eth::LogEntries logEntriesDeserialize(logEntriesSerializ const& _logs);
 
     std::string path;
+
+    leveldb::DB* db;
+
+    leveldb::Options options;
 
     std::unordered_map<dev::h256, std::vector<TransactionReceiptInfo>> m_cache_result;
 };

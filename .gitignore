@@ -6,6 +6,8 @@ test/config.ini
 test/fasc/tmp*.sr
 test/fasc02/tmp*.sr
 
+src/cpp-ethereum/deps
+
 *.exe
 src/fabcoin
 src/fabcoind
