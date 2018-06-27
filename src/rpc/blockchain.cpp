@@ -1352,9 +1352,6 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
 
     LOCK(cs_main);
 
-    boost::filesystem::path stateDir = GetDataDir() / "stateFasc";
-    StorageResults storageRes(stateDir.string());
-
     UniValue jsonLogs(UniValue::VARR);
 
     for (const auto& txHashes : hashesToBlock) {
@@ -1484,8 +1481,6 @@ UniValue searchlogs(const JSONRPCRequest& request)
     }
 
     UniValue result(UniValue::VARR);
-    boost::filesystem::path stateDir = GetDataDir() / "stateFasc";
-    StorageResults storageRes(stateDir.string());
 
     auto topics = params.topics;
 
@@ -1558,9 +1553,6 @@ UniValue gettransactionreceipt(const JSONRPCRequest& request)
     }
     
     uint256 hash(uint256S(hashTemp));
-
-    boost::filesystem::path stateDir = GetDataDir() / "stateFasc";
-    StorageResults storageRes(stateDir.string());
 
     std::vector<TransactionReceiptInfo> transactionReceiptInfo = pstorageresult->getResult(uintToh256(hash));
 
