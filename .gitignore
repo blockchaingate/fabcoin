@@ -4,9 +4,17 @@
 
 test/config.ini
 test/fasc/tmp*.sr
-test/fasc02/tmp*.sr
+test/fasc02/tmp*.src
 
-**/deps
+
+src/cpp-ethereum/deps/src/cryptopp-stamp/download-cryptopp.cmake
+src/cpp-ethereum/deps/src/cryptopp-stamp/extract-cryptopp.cmake
+src/cpp-ethereum/deps/src/jsoncpp-stamp/download-jsoncpp.cmake
+src/cpp-ethereum/deps/src/jsoncpp-stamp/extract-jsoncpp.cmake
+src/cpp-ethereum/deps/src/secp256k1-stamp/download-secp256k1.cmake
+src/cpp-ethereum/deps/src/secp256k1-stamp/extract-secp256k1.cmake
+src/cpp-ethereum/deps/tmp/cryptopp-cfgcmd.txt
+src/cpp-ethereum/deps/tmp/jsoncpp-cfgcmd.txt
 
 *.exe
 src/fabcoin
