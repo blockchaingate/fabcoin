@@ -687,7 +687,7 @@
         <translation>수령인이 현재 더스트 임계값보다 작은 양을 수신하면 이 라벨이 빨간색으로 변합니다.</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
+        <source>Can vary +/- %1 liu(s) per input.</source>
         <translation>입력마다 +/- %1 사토시(s)가 변할 수 있습니다.</translation>
     </message>
     <message>
@@ -2025,7 +2025,7 @@
         <translation>킬로바이트 당</translation>
     </message>
     <message>
-        <source>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then "per kilobyte" only pays 250 satoshis in fee, while "total at least" pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</source>
+        <source>If the custom fee is set to 1000 lius and the transaction is only 250 bytes, then "per kilobyte" only pays 250 lius in fee, while "total at least" pays 1000 lius. For transactions bigger than a kilobyte both pay by kilobyte.</source>
         <translation>사용자 정의 수수료가 1000사토시로 지정된 경우 거래의 크기가 250바이트 일 경우 1킬로바이트당 250사토시만 지불되지만 "최소 수수료"에선 1000사토시가 지불됩니다. 1킬로바이트가 넘는 거래인 경우 어떠한 경우에든 1킬로바이트 기준으로 지불됩니다.</translation>
     </message>
     <message>

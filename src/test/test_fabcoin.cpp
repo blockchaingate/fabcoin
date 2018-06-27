@@ -83,22 +83,6 @@ TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(cha
         pblocktree = new CBlockTreeDB(1 << 20, true);
         pcoinsdbview = new CCoinsViewDB(1 << 23, true);
         pcoinsTip = new CCoinsViewCache(pcoinsdbview);
-
-
-        ////////////////////////////////////////////////////////////// fasc
-        dev::eth::Ethash::init();    
-        //boost::filesystem::path pathTemp =  / strprintf("test_bitcoin_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
-        //boost::filesystem::create_directories(pathTemp);
-        const dev::h256 hashDB(dev::sha3(dev::rlp("")));
-        globalState = std::unique_ptr<FascState>(new FascState(dev::u256(0), FascState::openDB(pathTemp.string(), hashDB, dev::WithExisting::Trust), pathTemp.string(), dev::eth::BaseState::Empty));
-        dev::eth::ChainParams cp((dev::eth::genesisInfo(dev::eth::Network::fascTestNetwork)));
-        globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
-        globalState->populateFrom(cp.genesisState);
-        globalState->setRootUTXO(uintToh256(chainparams.GenesisBlock().hashUTXORoot));
-        globalState->db().commit();
-        globalState->dbUtxo().commit();
-        //////////////////////////////////////////////////////////////
-
         if (!LoadGenesisBlock(chainparams)) {
             throw std::runtime_error("LoadGenesisBlock failed.");
         }
@@ -232,12 +216,6 @@ CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CMutableTransaction &tx) {
 }
 
 CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CTransaction &txn) {
-    /*return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, nHeight,
-                           spendsCoinbase, sigOpCost, lp);*/
-    //CAmount inChainValue = pool && pool->HasNoInputsOf(txn) ? txn.GetValueOut() : 0;
-
-    CAmount inChainValue =  0;
-    double dPriority = 0.0;
-    return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, dPriority, nHeight,
-        inChainValue, spendsCoinbase, sigOpCost, lp);
+    return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, nHeight,
+                           spendsCoinbase, sigOpCost, lp);
 }

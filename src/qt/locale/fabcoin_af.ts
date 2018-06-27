@@ -521,8 +521,8 @@
         <translation>nee</translation>
     </message>
     <message>
-        <source>Can vary +/- %1 satoshi(s) per input.</source>
-        <translation>Kan verskil met +/- %1 satoshi(s) per invoer.</translation>
+        <source>Can vary +/- %1 liu(s) per input.</source>
+        <translation>Kan verskil met +/- %1 liu(s) per invoer.</translation>
     </message>
     <message>
         <source>(no label)</source>

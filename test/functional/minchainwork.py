@@ -83,8 +83,13 @@ class MinimumChainWorkTest(FabcoinTestFramework):
         # continue the test.
         # NOTE: before commit 44407100ff9b478d6131a1c38ee993b50b1830df, regtest
         # connections were not manual, so the reconnect is necessary.
+
+
         if (len(self.nodes[0].getpeerinfo()) == 0):
             connect_nodes(self.nodes[1], 0)
+
+        if (len(self.nodes[2].getpeerinfo()) == 0):
+            connect_nodes(self.nodes[2], 0)
 
         self.sync_all()
         self.log.info("Blockcounts: %s", [n.getblockcount() for n in self.nodes])
