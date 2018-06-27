@@ -173,7 +173,7 @@ CFeeBumper::CFeeBumper(const CWallet *pWallet, const uint256 txidIn, const CCoin
         // walletIncrementalRelayFee.GetFeePerK() should be exact, because it's initialized
         // in that unit (fee per kb).
         // However, nOldFeeRate is a calculated value from the tx fee/size, so
-        // add 1 satoshi to the result, because it may have been rounded down.
+        // add 1 liu to the result, because it may have been rounded down.
         if (nNewFeeRate.GetFeePerK() < nOldFeeRate.GetFeePerK() + 1 + walletIncrementalRelayFee.GetFeePerK()) {
             nNewFeeRate = CFeeRate(nOldFeeRate.GetFeePerK() + 1 + walletIncrementalRelayFee.GetFeePerK());
             nNewFee = nNewFeeRate.GetFee(maxNewTxSize);
