@@ -1,6 +1,7 @@
 *.tar.gz
 
 .vs/
+.vscode/
 
 test/config.ini
 test/fasc/tmp*.sr

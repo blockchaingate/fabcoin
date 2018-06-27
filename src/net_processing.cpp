@@ -2546,6 +2546,11 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::HEADERS && !fImporting && !fReindex) // Ignore headers received while importing
     {
+        // Deserialize in legacy format.
+        int legacy_block_flag = pfrom->IsLegacyBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
+        int original_version = vRecv.GetVersion();
+        vRecv.SetVersion(original_version | legacy_block_flag);
+        
         std::vector<CBlockHeader> headers;
 
         // Bypass the normal CBlock deserialization, as we don't want to risk deserializing 2000 full blocks.
