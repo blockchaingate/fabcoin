@@ -25,7 +25,7 @@ class BIP68Test(FabcoinTestFramework):
         self.relayfee = self.nodes[0].getnetworkinfo()["relayfee"]
 
         # Generate some coins
-        self.nodes[0].generate(110)
+        self.nodes[0].generate(810)
 
         self.log.info("Running test disable flag")
         self.test_disable_flag()
@@ -105,7 +105,7 @@ class BIP68Test(FabcoinTestFramework):
         addresses = []
         while len(addresses) < max_outputs:
             addresses.append(self.nodes[0].getnewaddress())
-        while len(self.nodes[0].listunspent()) < 200:
+        while len(self.nodes[0].listunspent()) < 900:
             import random
             random.shuffle(addresses)
             num_outputs = random.randint(1, max_outputs)
@@ -242,9 +242,9 @@ class BIP68Test(FabcoinTestFramework):
         self.nodes[0].prioritisetransaction(txid=tx2.hash, fee_delta=int(-self.relayfee*COIN))
         cur_time = int(time.time())
         for i in range(10):
-            self.nodes[0].setmocktime(cur_time + 600)
+            self.nodes[0].setmocktime(cur_time + 75)
             self.nodes[0].generate(1)
-            cur_time += 600
+            cur_time += 75
 
         assert(tx2.hash in self.nodes[0].getrawmempool())
 
@@ -255,7 +255,7 @@ class BIP68Test(FabcoinTestFramework):
         self.nodes[0].prioritisetransaction(txid=tx2.hash, fee_delta=int(self.relayfee*COIN))
 
         # Advance the time on the node so that we can test timelocks
-        self.nodes[0].setmocktime(cur_time+600)
+        self.nodes[0].setmocktime(cur_time+75)
         self.nodes[0].generate(1)
         assert(tx2.hash not in self.nodes[0].getrawmempool())
 
@@ -308,7 +308,7 @@ class BIP68Test(FabcoinTestFramework):
             block.solve()
             tip = block.sha256
             height += 1
-            self.nodes[0].submitblock(ToHex(block))
+            self.nodes[0].submitblock(ToHex(block), '', True)
             cur_time += 1
 
         mempool = self.nodes[0].getrawmempool()
@@ -364,7 +364,7 @@ class BIP68Test(FabcoinTestFramework):
         block.rehash()
         block.solve()
 
-        self.nodes[0].submitblock(ToHex(block))
+        self.nodes[0].submitblock(ToHex(block),'', True)
         assert_equal(self.nodes[0].getbestblockhash(), block.hash)
 
     def activateCSV(self):

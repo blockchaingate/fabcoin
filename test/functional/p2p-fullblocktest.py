@@ -87,7 +87,8 @@ class FullBlockTest(ComparisonTestFramework):
         if (scriptPubKey[0] == OP_TRUE):  # an anyone-can-spend
             tx.vin[0].scriptSig = CScript()
             return
-        (sighash, err) = SignatureHash(spend_tx.vout[n].scriptPubKey, tx, 0, SIGHASH_ALL)
+        #(sighash, err) = SignatureHash(spend_tx.vout[n].scriptPubKey, tx, 0, SIGHASH_ALL)
+        sighash = SegwitVersion1SignatureHash(spend_tx.vout[n].scriptPubKey, tx, 0, SIGHASH_ALL, spend_tx.vout[n].nValue)
         tx.vin[0].scriptSig = CScript([self.coinbase_key.sign(sighash) + bytes(bytearray([SIGHASH_ALL]))])
 
     def create_and_sign_transaction(self, spend_tx, n, value, script=CScript([OP_TRUE])):
@@ -111,10 +112,10 @@ class FullBlockTest(ComparisonTestFramework):
         if spend == None:
             block = create_block(base_block_hash, coinbase, block_time)
         else:
-            coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one satoshi to fees
+            coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one liu to fees
             coinbase.rehash()
             block = create_block(base_block_hash, coinbase, block_time)
-            tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 satoshi
+            tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 liu
             self.sign_tx(tx, spend.tx, spend.n)
             self.add_transactions_to_block(block, [tx])
             block.hashMerkleRoot = block.calc_merkle_root()
@@ -508,7 +509,7 @@ class FullBlockTest(ComparisonTestFramework):
         redeem_script_hash = hash160(redeem_script)
         p2sh_script = CScript([OP_HASH160, redeem_script_hash, OP_EQUAL])
 
-        # Create a transaction that spends one satoshi to the p2sh_script, the rest to OP_TRUE
+        # Create a transaction that spends one liu to the p2sh_script, the rest to OP_TRUE
         # This must be signed because it is spending a coinbase
         spend = out[11]
         tx = create_tx(spend.tx, spend.n, 1, p2sh_script)
@@ -518,7 +519,7 @@ class FullBlockTest(ComparisonTestFramework):
         b39 = update_block(39, [tx])
         b39_outputs += 1
 
-        # Until block is full, add tx's with 1 satoshi to p2sh_script, the rest to OP_TRUE
+        # Until block is full, add tx's with 1 liu to p2sh_script, the rest to OP_TRUE
         tx_new = None
         tx_last = tx
         total_size=len(b39.serialize())
@@ -552,6 +553,8 @@ class FullBlockTest(ComparisonTestFramework):
         assert_equal(numTxes <= b39_outputs, True)
 
         lastOutpoint = COutPoint(b40.vtx[1].sha256, 0)
+        lastOutAmount = b40.vtx[1].vout[0].nValue
+
         new_txs = []
         for i in range(1, numTxes+1):
             tx = CTransaction()
@@ -560,7 +563,8 @@ class FullBlockTest(ComparisonTestFramework):
             # second input is corresponding P2SH output from b39
             tx.vin.append(CTxIn(COutPoint(b39.vtx[i].sha256, 0), b''))
             # Note: must pass the redeem_script (not p2sh_script) to the signature hash function
-            (sighash, err) = SignatureHash(redeem_script, tx, 1, SIGHASH_ALL)
+            #(sighash, err) = SignatureHash(redeem_script, tx, 1, SIGHASH_ALL)
+            sighash = SegwitVersion1SignatureHash(redeem_script, tx, 1, SIGHASH_ALL, lastOutAmount)
             sig = self.coinbase_key.sign(sighash) + bytes(bytearray([SIGHASH_ALL]))
             scriptSig = CScript([sig, redeem_script])
 
@@ -568,6 +572,7 @@ class FullBlockTest(ComparisonTestFramework):
             tx.rehash()
             new_txs.append(tx)
             lastOutpoint = COutPoint(tx.sha256, 0)
+            lastOutAmount = tx.vout[0].nValue
 
         b40_sigops_to_fill = MAX_BLOCK_SIGOPS - (numTxes * b39_sigops_per_output + sigops) + 1
         tx = CTransaction()
@@ -963,11 +968,11 @@ class FullBlockTest(ComparisonTestFramework):
         # -> b43 (13) -> b53 (14) -> b55 (15) -> b57 (16) -> b60 (17) -> b64 (18) -> b65 (19) -> b69 (20)
         #                                                                                    \-> b68 (20)
         #
-        # b68 - coinbase with an extra 10 satoshis,
-        #       creates a tx that has 9 satoshis from out[20] go to fees
-        #       this fails because the coinbase is trying to claim 1 satoshi too much in fees
+        # b68 - coinbase with an extra 10 liu,
+        #       creates a tx that has 9 liu from out[20] go to fees
+        #       this fails because the coinbase is trying to claim 1 liu too much in fees
         #
-        # b69 - coinbase with extra 10 satoshis, and a tx that gives a 10 satoshi fee
+        # b69 - coinbase with extra 10 lius, and a tx that gives a 10 liu fee
         #       this succeeds
         #
         tip(65)

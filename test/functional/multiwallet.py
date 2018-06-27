@@ -46,7 +46,7 @@ class MultiWalletTest(FabcoinTestFramework):
         w3 = self.nodes[0].get_wallet_rpc("w3")
         wallet_bad = self.nodes[0].get_wallet_rpc("bad")
 
-        w1.generate(1)
+        w1.generate(2)
 
         # accessing invalid wallet fails
         assert_raises_rpc_error(-18, "Requested wallet does not exist or is not loaded", wallet_bad.getwalletinfo)
@@ -71,7 +71,7 @@ class MultiWalletTest(FabcoinTestFramework):
 
         assert_equal({"w1", "w2", "w3"}, {w1_name, w2_name, w3_name})
 
-        w1.generate(101)
+        w1.generate(802)
         assert_equal(w1.getbalance(), 100)
         assert_equal(w2.getbalance(), 0)
         assert_equal(w3.getbalance(), 0)

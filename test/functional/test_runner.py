@@ -57,9 +57,9 @@ BASE_SCRIPTS= [
     'wallet-hd.py',
     'walletbackup.py',
     # vv Tests less than 5m vv
-    'p2p-fullblocktest.py',
+
     'fundrawtransaction.py',
-    'p2p-compactblocks.py',
+
     'segwit.py',
     # vv Tests less than 2m vv
     'wallet.py',
@@ -75,7 +75,7 @@ BASE_SCRIPTS= [
     'merkle_blocks.py',
     'receivedby.py',
     'abandonconflict.py',
-    'bip68-112-113-p2p.py',
+
     'rawtransactions.py',
     'reindex.py',
     # vv Tests less than 30s vv
@@ -84,7 +84,7 @@ BASE_SCRIPTS= [
     'fabcoin_cli.py',
     'mempool_resurrect_test.py',
     'txn_doublespend.py --mineblock',
-    'txn_clone.py',
+
     'getchaintips.py',
     'rest.py',
     'mempool_spendcoinbase.py',

@@ -5,7 +5,7 @@
 
 test/config.ini
 test/fasc/tmp*.sr
-test/fasc02/tmp*.src
+test/fasc02/tmp*.sr
 
 
 src/cpp-ethereum/deps/src/cryptopp-stamp/download-cryptopp.cmake

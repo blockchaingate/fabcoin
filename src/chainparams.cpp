@@ -337,6 +337,7 @@ public:
             0,
             0
         };
+        consensus.nFixUTXOCacheHFHeight=100000;
     }
 };
 
@@ -471,6 +472,7 @@ public:
             0,
             0
         };
+        consensus.nFixUTXOCacheHFHeight=84500;
 
     }
 };
@@ -600,6 +602,7 @@ public:
             0,
             0
         };
+        consensus.nFixUTXOCacheHFHeight=0;
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);

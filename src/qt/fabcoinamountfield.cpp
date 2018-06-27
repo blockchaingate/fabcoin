@@ -25,7 +25,7 @@ public:
     explicit AmountSpinBox(QWidget *parent):
         QAbstractSpinBox(parent),
         currentUnit(FabcoinUnits::FAB),
-        singleStep(100000) // satoshis
+        singleStep(100000) // lius
     {
         setAlignment(Qt::AlignRight);
 

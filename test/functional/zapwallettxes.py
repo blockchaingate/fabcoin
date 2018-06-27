@@ -30,17 +30,17 @@ class ZapWalletTXesTest (FabcoinTestFramework):
         self.log.info("Mining blocks...")
         self.nodes[0].generate(1)
         self.sync_all()
-        self.nodes[1].generate(100)
+        self.nodes[1].generate(800)
         self.sync_all()
 
         # This transaction will be confirmed
-        txid1 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 10)
+        txid1 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 5)
 
         self.nodes[0].generate(1)
         self.sync_all()
 
         # This transaction will not be confirmed
-        txid2 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 20)
+        txid2 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 10)
 
         # Confirmed and unconfirmed transactions are now in the wallet.
         assert_equal(self.nodes[0].gettransaction(txid1)['txid'], txid1)
