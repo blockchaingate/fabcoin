@@ -1453,6 +1453,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 globalSealEngine.reset();
 
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReset);
+                pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex || fReindexChainState);
+                pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
+                pcoinsTip = new CCoinsViewCache(pcoinscatcher);
+
 
                 if (fReset) {
                     pblocktree->WriteReindexing(true);
