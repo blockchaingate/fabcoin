@@ -548,7 +548,7 @@ CBlockPolicyEstimator::CBlockPolicyEstimator()
     longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 }
 
-CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee) //jyan
+CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee)
     : nBestSeenHeight(0), firstRecordedHeight(0), historicalFirst(0), historicalBest(0), trackedTxs(0), untrackedTxs(0)
 {
     static_assert(MIN_BUCKET_FEERATE > 0, "Min feerate must be nonzero");
