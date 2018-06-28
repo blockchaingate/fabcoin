@@ -19,6 +19,7 @@ namespace Consensus {
 };
 
 static const int SERIALIZE_BLOCK_LEGACY = 0x04000000;
+static const int SERIALIZE_BLOCK_NO_CONTRACT = 0x08000000;
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -55,11 +56,14 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
         bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
+        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
-        READWRITE(hashStateRoot); // fasc
-        READWRITE(hashUTXORoot); // fasc
+        if (has_contract) {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
         if (new_format) {
             READWRITE(nHeight);
             for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {

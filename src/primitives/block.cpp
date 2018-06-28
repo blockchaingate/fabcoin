@@ -24,6 +24,11 @@ uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
     } else {
         version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
     }
+
+    if ( (uint32_t) -1 == (uint32_t)params.ContractHeight || nHeight < (uint32_t)params.ContractHeight) {
+        version |= SERIALIZE_BLOCK_NO_CONTRACT;
+    }
+
     CHashWriter writer(SER_GETHASH, version);
     ::Serialize(writer, *this);
     return writer.GetHash();

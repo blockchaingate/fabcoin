@@ -48,6 +48,8 @@ struct Params {
     int BIP66Height;
     /** Block height at which Fabcoin GPU hard fork becomes active */
     int FABHeight;
+    /** Block height at which Fabcoin Smart Contract fork becomes active */
+    int ContractHeight;
         /** Block height before which the coinbase subsidy will be locked for the same period */
     int CoinbaseLock;
     /** whether segwit is active */

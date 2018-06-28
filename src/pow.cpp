@@ -103,9 +103,9 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, bool postfork, const Con
 
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
-    if (1==1) return true; //jyan
+    //if (1==1) return true; //jyan
     // Check range
-    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
+    if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.PowLimit(postfork)))
         return false;
 
     // Check proof of work matches claimed amount
