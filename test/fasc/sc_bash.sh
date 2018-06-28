@@ -6,6 +6,7 @@ source "./fab_mining.sh"
 source "./fab_info.sh"
 source "./fab_acct.sh"
 source "./fab_bal.sh"
+source "./fab_blockheight.sh"
 
 export DAEMON_NUM=5
 
@@ -57,8 +58,39 @@ echo "address node 4 " ${ADDR_4}
 port_rpc=$(($RPC_PORT + 5 ))
 export ADDR_5=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getaccountaddress ""`
 echo "address node 5 " ${ADDR_5}
+
 echo
 echo
+echo "get VM contract address =================================================="
+
+port_rpc=$(($RPC_PORT + 1 ))
+export VMADDR_1=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getvmaddress ${ADDR_1}`
+export VMADDR_1=`echo ${VMADDR_1}|jq -r '.addressinvm'`
+echo "VM address node 1 " ${VMADDR_1}
+
+port_rpc=$(($RPC_PORT + 2 ))
+export VMADDR_2=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getvmaddress ${ADDR_2}`
+export VMADDR_2=`echo ${VMADDR_2}|jq -r '.addressinvm'`
+echo "VM address node 2 " ${VMADDR_2}
+
+port_rpc=$(($RPC_PORT + 3 ))
+export VMADDR_3=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getvmaddress ${ADDR_3}`
+export VMADDR_3=`echo ${VMADDR_3}|jq -r '.addressinvm'`
+echo "VM address node 3 " ${VMADDR_3}
+
+port_rpc=$(($RPC_PORT + 4 ))
+export VMADDR_4=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getvmaddress ${ADDR_4}`
+export VMADDR_4=`echo ${VMADDR_4}|jq -r '.addressinvm'`
+echo "VM address node 4 " ${VMADDR_4}
+
+port_rpc=$(($RPC_PORT + 5 ))
+export VMADDR_5=`${FAB_ROOT}/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:${port_rpc} getvmaddress ${ADDR_5}`
+export VMADDR_5=`echo ${VMADDR_5}|jq -r '.addressinvm'`
+echo "VM address node 5 " ${VMADDR_5}
+
+echo
+
+
 
 #### END: Set  account address #######################
 
