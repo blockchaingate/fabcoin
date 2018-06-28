@@ -186,7 +186,7 @@ enum opcodetype
     OP_CALL = 0xc2,
     OP_SPEND = 0xc3,
 
-    // template matching params - new jyan
+    // template matching params
     OP_GAS_PRICE = 0xf5,
     OP_VERSION = 0xf6,
     OP_GAS_LIMIT = 0xf7,
