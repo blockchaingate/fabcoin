@@ -122,6 +122,8 @@ public:
             this->nNonce         = other.nNonce;
             this->hashStateRoot  = other.hashStateRoot;
             this->hashUTXORoot   = other.hashUTXORoot;
+            memcpy(this->nReserved, other.nReserved, sizeof(other.nReserved));
+            this->nSolution      = other.nSolution;
         }
         return *this;
     }
