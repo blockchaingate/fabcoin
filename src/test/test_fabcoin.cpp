@@ -216,6 +216,6 @@ CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CMutableTransaction &tx) {
 }
 
 CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CTransaction &txn) {
-    return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, nHeight,
-                           spendsCoinbase, sigOpCost, lp);
+    return CTxMemPoolEntry(MakeTransactionRef(txn), nFee, nTime, .0, nHeight,
+                           spendsCoinbase, false, sigOpCost, lp);
 }
