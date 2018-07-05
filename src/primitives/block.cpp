@@ -25,7 +25,8 @@ uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
         version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
     }
 
-    if ( (uint32_t) -1 == (uint32_t)params.ContractHeight || nHeight < (uint32_t)params.ContractHeight) {
+    //if ( (uint32_t) -1 == (uint32_t)params.ContractHeight || nHeight < (uint32_t)params.ContractHeight) 
+    if ( nHeight == 0 ) {
         version |= SERIALIZE_BLOCK_NO_CONTRACT;
     }
 
