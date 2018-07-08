@@ -1278,12 +1278,15 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
         }
 
         uint256 hashLastBlock;
+        int ii = 0; 
         for (const CBlockHeader& header : headers) {
             if (!hashLastBlock.IsNull() && header.hashPrevBlock != hashLastBlock) {
+                LogPrintf("height %d : header size %d :  hash %s vs %s header index %d\n", header.nHeight, headers.size(), header.hashPrevBlock.ToString(),  hashLastBlock.ToString(), ii);
                 Misbehaving(pfrom->GetId(), 20);
                 return error("non-continuous headers sequence");
             }
             hashLastBlock = header.GetHash();
+            ii++;
         }
 
         // If we don't have the last header, then they'll have given us
@@ -2562,7 +2565,16 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         headers.resize(nCount);
         for (unsigned int n = 0; n < nCount; n++) {
-            vRecv >> headers[n];
+            CBlockHeaderNoContract headerNoContract;
+            vRecv >> headerNoContract;
+            headers[n] = headerNoContract;
+            //LogPrintf("jyan nHeight %d n %d ncount %d\n", headerNoContract.nHeight, n, nCount);
+            //CBlock dumpBlock(headers[n]);
+            //LogPrintf("jyan nHeight %d n %d Others %s\n", headerNoContract.nHeight, n, dumpBlock.ToString());
+            if (headerNoContract.nHeight >= chainparams.GetConsensus().ContractHeight || chainparams.GetConsensus().ContractHeight == 10) {
+                headers[n].hashStateRoot = ReadUint256(vRecv);
+                headers[n].hashUTXORoot = ReadUint256(vRecv);
+            }
             ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
         }
 

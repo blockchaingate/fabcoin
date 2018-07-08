@@ -28,16 +28,14 @@ static const int SERIALIZE_BLOCK_NO_CONTRACT = 0x08000000;
  * in the block is a special one that creates a new coin owned by the creator
  * of the block.
  */
-class CBlockHeader
+class CBlockHeaderNoContract
 {
 public:
-    static const size_t HEADER_SIZE = 4+32+32+32+32+4+28+4+4+32;  // Excluding Equihash solution
+    static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
     // header
     int32_t nVersion;
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
-    uint256 hashStateRoot; // fasc
-    uint256 hashUTXORoot; // fasc
     uint32_t nHeight;
     uint32_t nReserved[7];
     uint32_t nTime;
@@ -45,7 +43,7 @@ public:
     uint256 nNonce;
     std::vector<unsigned char> nSolution;  // Equihash solution.
 
-    CBlockHeader()
+    CBlockHeaderNoContract()
     {
         SetNull();
     }
@@ -56,14 +54,9 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
         bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
-        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
-        if (has_contract) {
-            READWRITE(hashStateRoot); // fasc
-            READWRITE(hashUTXORoot); // fasc
-        }
         if (new_format) {
             READWRITE(nHeight);
             for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
@@ -87,14 +80,82 @@ public:
         nVersion = 0;
         hashPrevBlock.SetNull();
         hashMerkleRoot.SetNull();
-        hashStateRoot.SetNull(); // fasc
-        hashUTXORoot.SetNull(); // fasc
         nHeight = 0;
         memset(nReserved, 0, sizeof(nReserved));
         nTime = 0;
         nBits = 0;
         nNonce.SetNull();
         nSolution.clear();
+    }
+};
+
+class CBlockHeader
+{
+public:
+    static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32+32+32;  // Excluding Equihash solution
+    // header
+    int32_t nVersion;
+    uint256 hashPrevBlock;
+    uint256 hashMerkleRoot;
+    uint32_t nHeight;
+    uint32_t nReserved[7];
+    uint32_t nTime;
+    uint32_t nBits;
+    uint256 nNonce;
+    std::vector<unsigned char> nSolution;  // Equihash solution.
+    uint256 hashStateRoot; // fasc
+    uint256 hashUTXORoot; // fasc
+
+    CBlockHeader()
+    {
+        SetNull();
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action)
+    {
+        bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
+        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
+        READWRITE(this->nVersion);
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        if (new_format) {
+            READWRITE(nHeight);
+            for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
+                READWRITE(nReserved[i]);
+            }
+        }
+        READWRITE(nTime);
+        READWRITE(nBits);
+        if (new_format) {
+            READWRITE(nNonce);
+            READWRITE(nSolution);
+        } else {
+            uint32_t legacy_nonce = (uint32_t)nNonce.GetUint64(0);
+            READWRITE(legacy_nonce);
+            nNonce = ArithToUint256(arith_uint256(legacy_nonce));
+        }
+        if (has_contract) {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
+    }
+
+    void SetNull()
+    {
+        nVersion = 0;
+        hashPrevBlock.SetNull();
+        hashMerkleRoot.SetNull();
+        nHeight = 0;
+        memset(nReserved, 0, sizeof(nReserved));
+        nTime = 0;
+        nBits = 0;
+        nNonce.SetNull();
+        nSolution.clear();
+        hashStateRoot.SetNull(); // fasc
+        hashUTXORoot.SetNull(); // fasc
     }
 
     bool IsNull() const
@@ -120,11 +181,27 @@ public:
             this->nTime          = other.nTime;
             this->nBits          = other.nBits;
             this->nNonce         = other.nNonce;
-            this->hashStateRoot  = other.hashStateRoot;
-            this->hashUTXORoot   = other.hashUTXORoot;
+            this->nHeight        = other.nHeight;
             memcpy(this->nReserved, other.nReserved, sizeof(other.nReserved));
             this->nSolution      = other.nSolution;
+            this->hashStateRoot  = other.hashStateRoot;
+            this->hashUTXORoot   = other.hashUTXORoot;
         }
+        return *this;
+    }
+
+    CBlockHeader& operator=(const CBlockHeaderNoContract& other) //fasc
+    {
+        this->nVersion       = other.nVersion;
+        this->hashPrevBlock  = other.hashPrevBlock;
+        this->hashMerkleRoot = other.hashMerkleRoot;
+        this->nTime          = other.nTime;
+        this->nBits          = other.nBits;
+        this->nNonce         = other.nNonce;
+        this->nHeight        = other.nHeight;
+        memcpy(this->nReserved, other.nReserved, sizeof(other.nReserved));
+        this->nSolution      = other.nSolution;
+
         return *this;
     }
 };
@@ -171,14 +248,14 @@ public:
         block.nVersion       = nVersion;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
-        block.hashStateRoot  = hashStateRoot; // fasc
-        block.hashUTXORoot   = hashUTXORoot; // fasc
         block.nHeight        = nHeight;
         memcpy(block.nReserved, nReserved, sizeof(block.nReserved));
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
         block.nSolution      = nSolution;
+        block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashUTXORoot   = hashUTXORoot; // fasc
         return block;
     }
 
@@ -246,5 +323,6 @@ struct CBlockLocator
         return vHave.empty();
     }
 };
+
 
 #endif // FABCOIN_PRIMITIVES_BLOCK_H

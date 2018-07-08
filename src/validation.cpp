@@ -2301,11 +2301,13 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
     checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
     checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
+    checkBlock.nHeight = block.nHeight;
 
 
     if ((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
     {
         LogPrintf("Actual block data does not match block expected by AAL\n");
+        LogPrintf("height %d vs %d\n", checkBlock.nHeight, block.nHeight);
         //Something went wrong with AAL, compare different elements and determine what the problem is
         if (checkBlock.hashMerkleRoot != block.hashMerkleRoot) {
             //there is a mismatched tx, so go through and determine which txs
@@ -3749,8 +3751,11 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     }
 
     // Check proof of work matches claimed amount
-    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams))
+    if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams)) {
+        CBlock dumpBlock(block); 
+        LogPrintf("Dump block: Height %d, others ==   %s \n", block.nHeight, dumpBlock.ToString());
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
+    }
 
     return true;
 }
@@ -3927,9 +3932,9 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
     }
 
-    // Check block height for blocks after FAB fork.
-    if (nHeight >= consensusParams.FABHeight && block.nHeight != (uint32_t)nHeight)
-        return state.Invalid(false, REJECT_INVALID, "bad-height", "incorrect block height");
+    // Check block height for blocks after FAB fork. jyan
+    //if (nHeight >= consensusParams.FABHeight && block.nHeight != (uint32_t)nHeight)
+    //    return state.Invalid(false, REJECT_INVALID, "bad-height", "incorrect block height");
 
     // Check timestamp against prev
     if (block.GetBlockTime() <= pindexPrev->GetMedianTimePast())

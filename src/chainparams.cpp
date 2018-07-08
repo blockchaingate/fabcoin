@@ -325,7 +325,7 @@ public:
 
         consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
-        consensus.ContractHeight = 10;
+        consensus.ContractHeight = 3000;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -441,7 +441,7 @@ public:
         consensus.BIP34Hash = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.FABHeight = 24000;
+        consensus.FABHeight = -1;
         consensus.ContractHeight = 10;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;

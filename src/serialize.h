@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "prevector.h"
+#include "uint256.h"
 
 static const unsigned int MAX_SIZE = 0x02000000;
 
@@ -115,6 +116,14 @@ template<typename Stream> inline uint32_t ser_readdata32be(Stream &s)
     uint32_t obj;
     s.read((char*)&obj, 4);
     return be32toh(obj);
+}
+
+template<typename Stream> inline uint256 ser_readdata256(Stream &s)
+{
+    uint256 obj;
+    s.read((char*)&obj, 32);
+    //return le64toh(obj);
+    return obj;
 }
 ////////////////////////////////////////////////////////////////////
 
@@ -289,6 +298,12 @@ uint64_t ReadCompactSize(Stream& is)
     if (nSizeRet > (uint64_t)MAX_SIZE)
         throw std::ios_base::failure("ReadCompactSize(): size too large");
     return nSizeRet;
+}
+
+template<typename Stream>
+uint256 ReadUint256(Stream& is)
+{
+    return ser_readdata256(is);
 }
 
 /**
