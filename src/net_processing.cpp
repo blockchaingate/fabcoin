@@ -2551,8 +2551,9 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     {
         // Deserialize in legacy format.
         int legacy_block_flag = pfrom->IsLegacyBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
+        int no_contract_block_flag = pfrom->IsNoContractBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
         int original_version = vRecv.GetVersion();
-        vRecv.SetVersion(original_version | legacy_block_flag);
+        vRecv.SetVersion(original_version | legacy_block_flag | no_contract_block_flag);
         
         std::vector<CBlockHeader> headers;
 
@@ -2565,19 +2566,23 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         headers.resize(nCount);
         for (unsigned int n = 0; n < nCount; n++) {
+/*
             CBlockHeaderNoContract headerNoContract;
             vRecv >> headerNoContract;
             headers[n] = headerNoContract;
-            //LogPrintf("jyan nHeight %d n %d ncount %d\n", headerNoContract.nHeight, n, nCount);
-            //CBlock dumpBlock(headers[n]);
-            //LogPrintf("jyan nHeight %d n %d Others %s\n", headerNoContract.nHeight, n, dumpBlock.ToString());
+            LogPrintf("jyan nHeight %d n %d ncount %d\n", headerNoContract.nHeight, n, nCount);
+            CBlock dumpBlock(headers[n]);
+            LogPrintf("jyan nHeight %d n %d Others %s\n", headerNoContract.nHeight, n, dumpBlock.ToString());
             if (headerNoContract.nHeight >= chainparams.GetConsensus().ContractHeight || chainparams.GetConsensus().ContractHeight == 10) {
                 headers[n].hashStateRoot = ReadUint256(vRecv);
                 headers[n].hashUTXORoot = ReadUint256(vRecv);
             }
+*/
+            vRecv >> headers[n];
             ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
         }
 
+        vRecv.SetVersion(original_version);
         // Headers received via a HEADERS message should be valid, and reflect
         // the chain the peer is on. If we receive a known-invalid header,
         // disconnect the peer if it is using one of our outbound connection
@@ -2590,8 +2595,9 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     {
         // Deserialize in legacy format.
         int legacy_block_flag = pfrom->IsLegacyBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
+        int no_contract_block_flag = pfrom->IsNoContractBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
         int original_version = vRecv.GetVersion();
-        vRecv.SetVersion(original_version | legacy_block_flag);
+        vRecv.SetVersion(original_version | legacy_block_flag | no_contract_block_flag);
 
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;

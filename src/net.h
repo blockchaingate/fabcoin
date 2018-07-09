@@ -852,6 +852,7 @@ public:
     void MaybeSetAddrName(const std::string& addrNameIn);
 
     bool IsLegacyBlockHeader(int version) { return version < FAB_HARD_FORK_VERSION; };
+    bool IsNoContractBlockHeader(int version) { return version < FAB_CONTRACT_VERSION; };
 };
 
 

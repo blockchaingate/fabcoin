@@ -28,66 +28,6 @@ static const int SERIALIZE_BLOCK_NO_CONTRACT = 0x08000000;
  * in the block is a special one that creates a new coin owned by the creator
  * of the block.
  */
-class CBlockHeaderNoContract
-{
-public:
-    static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
-    // header
-    int32_t nVersion;
-    uint256 hashPrevBlock;
-    uint256 hashMerkleRoot;
-    uint32_t nHeight;
-    uint32_t nReserved[7];
-    uint32_t nTime;
-    uint32_t nBits;
-    uint256 nNonce;
-    std::vector<unsigned char> nSolution;  // Equihash solution.
-
-    CBlockHeaderNoContract()
-    {
-        SetNull();
-    }
-
-    ADD_SERIALIZE_METHODS;
-
-    template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action)
-    {
-        bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
-        READWRITE(this->nVersion);
-        READWRITE(hashPrevBlock);
-        READWRITE(hashMerkleRoot);
-        if (new_format) {
-            READWRITE(nHeight);
-            for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
-                READWRITE(nReserved[i]);
-            }
-        }
-        READWRITE(nTime);
-        READWRITE(nBits);
-        if (new_format) {
-            READWRITE(nNonce);
-            READWRITE(nSolution);
-        } else {
-            uint32_t legacy_nonce = (uint32_t)nNonce.GetUint64(0);
-            READWRITE(legacy_nonce);
-            nNonce = ArithToUint256(arith_uint256(legacy_nonce));
-        }
-    }
-
-    void SetNull()
-    {
-        nVersion = 0;
-        hashPrevBlock.SetNull();
-        hashMerkleRoot.SetNull();
-        nHeight = 0;
-        memset(nReserved, 0, sizeof(nReserved));
-        nTime = 0;
-        nBits = 0;
-        nNonce.SetNull();
-        nSolution.clear();
-    }
-};
 
 class CBlockHeader
 {
@@ -187,21 +127,6 @@ public:
             this->hashStateRoot  = other.hashStateRoot;
             this->hashUTXORoot   = other.hashUTXORoot;
         }
-        return *this;
-    }
-
-    CBlockHeader& operator=(const CBlockHeaderNoContract& other) //fasc
-    {
-        this->nVersion       = other.nVersion;
-        this->hashPrevBlock  = other.hashPrevBlock;
-        this->hashMerkleRoot = other.hashMerkleRoot;
-        this->nTime          = other.nTime;
-        this->nBits          = other.nBits;
-        this->nNonce         = other.nNonce;
-        this->nHeight        = other.nHeight;
-        memcpy(this->nReserved, other.nReserved, sizeof(other.nReserved));
-        this->nSolution      = other.nSolution;
-
         return *this;
     }
 };
