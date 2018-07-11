@@ -241,8 +241,7 @@ public:
     BlockAssembler(const CChainParams& params, const Options& options);
 
     /** Construct a new block template with coinbase to scriptPubKeyIn */
-    std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, int64_t* pTotalFees = 0, int32_t nTime=0, int32_t nTimeLimit=0);
-    std::unique_ptr<CBlockTemplate> CreateEmptyBlock(const CScript& scriptPubKeyIn, int64_t* pTotalFees = 0, int32_t nTime=0);
+    std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx=true, int64_t* pTotalFees = 0, int32_t nTime=0, int32_t nTimeLimit=0);
 
 
 private:
