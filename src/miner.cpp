@@ -264,9 +264,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxFees[0] = -nFees;
 
-    auto adjustedVersion = (pindexPrev->nHeight + 1 < chainparams.GetConsensus().ContractHeight ? SERIALIZE_BLOCK_NO_CONTRACT : 0 );
-    uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | adjustedVersion);
-    LogPrintChar("miner", "CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", nHeight, nSerializeSize, GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
+    auto params = chainparams.GetConsensus();
+    int ser_flags = (nHeight < params.ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
+    uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+    LogPrintChar("miner", "CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", nHeight, nSerializeSize, GetBlockWeight(*pblock, params), nBlockTx, nFees, nBlockSigOpsCost);
 
     // The total fee is the Fees minus the Refund
     if (pTotalFees)
@@ -639,8 +640,7 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
     pblocktemplate->vTxFees.push_back(iter->GetFee());
     pblocktemplate->vTxSigOpsCost.push_back(iter->GetSigOpCost());
     if (fNeedSizeAccounting) {
-        auto adjustedVersion = (pblock->nHeight < chainparams.GetConsensus().ContractHeight ? SERIALIZE_BLOCK_NO_CONTRACT : 0 );
-        nBlockSize += ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION | adjustedVersion);
+        nBlockSize += ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION);
     }
     nBlockWeight += iter->GetTxWeight();
     ++nBlockTx;
@@ -1243,8 +1243,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
             {
                 // I = the block header minus nonce and solution.
                 CEquihashInput I{*pblock};
-                auto adjustedVersion = (pblock->nHeight < chainparams.GetConsensus().ContractHeight ? SERIALIZE_BLOCK_NO_CONTRACT : 0 );
-                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | adjustedVersion);
+                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                 ss << I;
 
                 // Hash state
@@ -1562,7 +1561,7 @@ void Scan_nNonce_nSolution(CBlock *pblock, unsigned int n, unsigned int k )
 
         // I = the block header minus nonce and solution.
         CEquihashInput I{*pblock};
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_BLOCK_NO_CONTRACT );
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
         ss << I;
 
         // H(I||...

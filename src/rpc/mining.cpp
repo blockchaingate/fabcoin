@@ -421,7 +421,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. template_request         (json object, optional) A json object in the following spec\n"
             "     {\n"
-            "       \"mode\":\"template\"    (string, optional) This must be set to \"template\", \"proposal\" (see BIP 23), \"proposal_legacy\", or omitted\n"
+            "       \"mode\":\"template\"    (string, optional) This must be set to \"template\", \"proposal\" (see BIP 23), \"proposal_legacy\",  \"proposal_no_contract\", or omitted\n"
             "       \"capabilities\":[     (array, optional) A list of strings\n"
             "           \"support\"          (string) client side supported feature, 'longpoll', 'coinbasetxn', 'coinbasevalue', 'proposal', 'serverlist', 'workid'\n"
             "           ,...\n"
@@ -504,7 +504,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
 
-        if (strMode == "proposal" || strMode == "proposal_legacy")
+        if (strMode == "proposal" || strMode == "proposal_legacy"  || strMode == "proposal_no_contract")
         {
             const UniValue& dataval = find_value(oparam, "data");
             if (!dataval.isStr())
@@ -512,7 +512,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
             CBlock block;
             bool legacy_format = (strMode == "proposal_legacy");
-            if (!DecodeHexBlk(block, dataval.get_str(), legacy_format))
+            bool no_contract_format = (strMode == "proposal_no_contract");
+            if (!DecodeHexBlk(block, dataval.get_str(), legacy_format, no_contract_format))
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
 
             uint256 hash = block.GetHash();
@@ -530,7 +531,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             // TestBlockValidity only supports blocks built on the current Tip
             if (block.hashPrevBlock != pindexPrev->GetBlockHash())
                 return "inconclusive-not-best-prevblk";
-            if (!legacy_format && block.nHeight != (uint32_t)pindexPrev->nHeight + 1)
+            if (!legacy_format && !no_contract_format && block.nHeight != (uint32_t)pindexPrev->nHeight + 1)
                 return "inconclusive-bad-height";
             CValidationState state;
             TestBlockValidity(state, Params(), block, pindexPrev, false, true);
@@ -820,7 +821,7 @@ protected:
 UniValue submitblock(const JSONRPCRequest& request)
 {
     // We allow 2 arguments for compliance with BIP22. Argument 2 is ignored.
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 4) {
         throw std::runtime_error(
             "submitblock \"hexdata\"  ( \"dummy\" \"legacy\" )\n"
             "\nAttempts to submit new block to network.\n"
@@ -830,6 +831,7 @@ UniValue submitblock(const JSONRPCRequest& request)
             "1. \"hexdata\"        (string, required) the hex-encoded block data to submit\n"
             "2. \"dummy\"          (optional) dummy value, for compatibility with BIP22. This value is ignored.\n"
             "3. \"legacy\"         (boolean, optional) indicates if the block is in legacy foramt. default: false.\n"
+            "4. \"non_contract\"   (boolean, optional) indicates if the block is in non-contract foramt. default: false.\n"
             "\nResult:\n"
             "\nExamples:\n"
             + HelpExampleCli("submitblock", "\"mydata\"")
@@ -840,10 +842,15 @@ UniValue submitblock(const JSONRPCRequest& request)
     std::shared_ptr<CBlock> blockptr = std::make_shared<CBlock>();
     CBlock& block = *blockptr;
     bool legacy_format = false;
-    if (request.params.size() == 3 && request.params[2].get_bool() == true) {
+    if (request.params.size() >= 3 && request.params[2].get_bool() == true) {
         legacy_format = true;
     }
-    if (!DecodeHexBlk(block, request.params[0].get_str(), legacy_format)) {
+    bool no_contract_format = false;
+    if (request.params.size() == 4 && request.params[3].get_bool() == true) {
+        no_contract_format = true;
+    }
+
+    if (!DecodeHexBlk(block, request.params[0].get_str(), legacy_format, no_contract_format)) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 

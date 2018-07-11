@@ -137,6 +137,7 @@ static bool rest_headers(HTTPRequest* req,
     }                           //use old rule if URI=/legacy/<COUNT>/<BLOCK-HASH>
     std::string headerCount,hashStr;
     bool legacy_format = false;
+    bool no_contract_format = false;
     if (path.size() == 2) {
         headerCount = path[0];
         hashStr = path[1];
@@ -145,6 +146,7 @@ static bool rest_headers(HTTPRequest* req,
         headerCount = path[1];
         hashStr = path[2];
         legacy_format = true;
+        no_contract_format = true;
     }
     long count = strtol(headerCount.c_str(), nullptr, 10);
     if (count < 1 || count > 2000)
@@ -169,6 +171,7 @@ static bool rest_headers(HTTPRequest* req,
         }
     }
     int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
+    ser_flags = no_contract_format ? (ser_flags | SERIALIZE_BLOCK_NO_CONTRACT) : 0;
     CDataStream ssHeader(SER_NETWORK, PROTOCOL_VERSION | ser_flags);
     for (const CBlockIndex *pindex : headers) {
         ssHeader << pindex->GetBlockHeader();
@@ -221,11 +224,13 @@ static bool rest_block(HTTPRequest* req,
     std::vector<std::string> path;
     boost::split(path, param, boost::is_any_of("/"));
     bool legacy_format = false;
+    bool no_contract_format = false;
     if (path.size() == 1) {          
         hashStr = path[0];
     }
     else {
         legacy_format = true;  //use old rule if URI=/legacy/<BLOCK-HASH>
+        no_contract_format = true;  //use old rule if URI=/legacy/<BLOCK-HASH>
         hashStr = path[1];
     }
 
@@ -248,6 +253,7 @@ static bool rest_block(HTTPRequest* req,
             return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not found");
     }
     int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
+    ser_flags = no_contract_format ? (ser_flags | SERIALIZE_BLOCK_NO_CONTRACT) : 0;
     CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags() | ser_flags);
     ssBlock << block;
 

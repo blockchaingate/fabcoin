@@ -1932,11 +1932,16 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     /////////////////////////////////////////////////
 
     // Move this check from CheckBlock to ConnectBlock as it depends on DGP values
-    if (block.vtx.empty() || block.vtx.size() > dgpMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > dgpMaxBlockSize) // fasc
+    int serialization_flags = SERIALIZE_TRANSACTION_NO_WITNESS;
+    auto params = chainparams.GetConsensus();
+    if (block.nHeight < (uint32_t)params.ContractHeight) {
+        serialization_flags |= SERIALIZE_BLOCK_NO_CONTRACT;
+    }
+    if (block.vtx.empty() || block.vtx.size() > dgpMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | serialization_flags) > dgpMaxBlockSize) // fasc
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
 
     // Move this check from ContextualCheckBlock to ConnectBlock as it depends on DGP values
-    if (GetBlockWeight(block) > dgpMaxBlockWeight) {
+    if (GetBlockWeight(block, params) > dgpMaxBlockWeight) {
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-weight", false, strprintf("%s : weight limit failed", __func__));
     }
     // Check it again in case a previous version let a bad block in
