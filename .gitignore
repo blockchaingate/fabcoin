@@ -24,6 +24,7 @@ src/fabcoin-cli
 src/fabcoin-tx
 src/test/test_fabcoin
 src/qt/test/test_fabcoin-qt
+src/test/test_fabcoin_fuzzy
 
 # autoreconf
 Makefile.in

@@ -180,7 +180,7 @@ bool GPUSolver::GPUSolve200_9(uint8_t *header, size_t header_len, uint256 &nonce
             	index_vector[i] = indices->values[s-1][i];
             }
             std::vector<unsigned char> sol_char = GetMinimalFromIndices(index_vector, DIGITBITS_S);
-            LogPrint(BCLog::POW, "Checking with = %s, %d sols\n",nNonce.ToString(), n_sol);
+            // jyan LogPrint(BCLog::POW, "Checking with = %s, %d sols\n",nNonce.ToString(), n_sol);
 #ifdef DEBUG
             bool isValid;
             EhIsValidSolution(200, 9, base_state, sol_char, isValid);
