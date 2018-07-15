@@ -566,7 +566,7 @@ fs::path GetDefaultDataDir()
     // Unix: ~/.fabcoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Fabcoin";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Fabcoinsc";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -576,10 +576,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/Fabcoin";
+    return pathRet / "Library/Application Support/Fabcoinsc";
 #else
     // Unix
-    return pathRet / ".fabcoin";
+    return pathRet / ".fabcoinsc";
 #endif
 #endif
 }
