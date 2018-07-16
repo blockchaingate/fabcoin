@@ -94,10 +94,10 @@ public:
         nBits = 0;
         nNonce.SetNull();
         nSolution.clear();
-        //hashStateRoot.SetNull(); // fasc
-        //hashUTXORoot.SetNull(); // fasc
-        hashStateRoot = uint256S("9514771014c9ae803d8cea2731b2063e83de44802b40dce2d06acd02d0ff65e9");
-        hashUTXORoot = uint256S("21b463e3b52f6201c0ad6c991be0485b6ef8c092e64583ffa655cc1b171fe856");
+        hashStateRoot.SetNull(); // fasc
+        hashUTXORoot.SetNull(); // fasc
+        //hashStateRoot = uint256S("9514771014c9ae803d8cea2731b2063e83de44802b40dce2d06acd02d0ff65e9");
+        //hashUTXORoot = uint256S("21b463e3b52f6201c0ad6c991be0485b6ef8c092e64583ffa655cc1b171fe856");
     }
 
     bool IsNull() const

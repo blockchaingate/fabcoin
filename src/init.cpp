@@ -1548,7 +1548,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                     pstorageresult->wipeResults();
                 }
 
-                if(chainActive.Tip() != nullptr){
+                if(chainActive.Tip() != nullptr && !chainActive.Tip()->hashStateRoot.IsNull() && !chainActive.Tip()->hashUTXORoot.IsNull() ){
                     globalState->setRoot(uintToh256(chainActive.Tip()->hashStateRoot));
                     globalState->setRootUTXO(uintToh256(chainActive.Tip()->hashUTXORoot));
                 } else {
