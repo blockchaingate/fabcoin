@@ -170,6 +170,8 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
                 --nMaxTries;
             }
+            if ((int)pblock->nNonce.GetUint64(0) == nInnerLoopCount) 
+                continue;
         } else {
             // Solve Equihash.
             // I = the block header minus nonce and solution.
