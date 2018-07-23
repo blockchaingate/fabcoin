@@ -625,8 +625,10 @@ bool Equihash<N,K>::OptimisedSolve(const eh_HashState& base_state,
                 i += j;
                 if (cancelled(FinalColliding)) throw solver_cancelled;
             }
-        } else
+        } else{
             LogPrint(BCLog::POW, "- List is empty\n");
+        }
+      
 
     } // Ensure Xt goes out of scope and is destroyed
 

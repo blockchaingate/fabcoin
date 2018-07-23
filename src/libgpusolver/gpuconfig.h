@@ -31,8 +31,10 @@ public:
     //~GPUConfig();
 
     bool useGPU;
+    unsigned sel_platform;
     unsigned selGPU;
     bool allGPU;
+    bool useCUDA;
     bool forceGenProcLimit;
     unsigned currentPlatform;
     unsigned currentDevice;
