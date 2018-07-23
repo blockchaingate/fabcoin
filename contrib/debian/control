@@ -26,7 +26,7 @@ Build-Depends: debhelper,
  python,
  libzmq3-dev
 Standards-Version: 3.9.2
-Homepage: https://fabcoincore.org/
+Homepage: https://bitcoincore.org/
 Vcs-Git: git://github.com/blockchaingate/fabcoin.git
 Vcs-Browser: https://github.com/blockchaingate/fabcoin
 

@@ -1,0 +1,920 @@
+Running 11 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "addrman_tests"
+Entering test case "addrman_simple"
+Leaving test case "addrman_simple"; testing time: 17440mks
+Entering test case "addrman_ports"
+Leaving test case "addrman_ports"; testing time: 3893mks
+Entering test case "addrman_select"
+Leaving test case "addrman_select"; testing time: 23718mks
+Entering test case "addrman_new_collisions"
+Leaving test case "addrman_new_collisions"; testing time: 2973mks
+Entering test case "addrman_tried_collisions"
+Leaving test case "addrman_tried_collisions"; testing time: 179865mks
+Entering test case "addrman_find"
+Leaving test case "addrman_find"; testing time: 2819mks
+Entering test case "addrman_create"
+Leaving test case "addrman_create"; testing time: 2774mks
+Entering test case "addrman_delete"
+Leaving test case "addrman_delete"; testing time: 2766mks
+Entering test case "addrman_getaddr"
+Leaving test case "addrman_getaddr"; testing time: 572479mks
+Entering test case "caddrinfo_get_tried_bucket"
+Leaving test case "caddrinfo_get_tried_bucket"; testing time: 7652mks
+Entering test case "caddrinfo_get_new_bucket"
+Leaving test case "caddrinfo_get_new_bucket"; testing time: 17180mks
+Leaving test suite "addrman_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 3 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "allocator_tests"
+Entering test case "arena_tests"
+Leaving test case "arena_tests"; testing time: 18662mks
+Entering test case "lockedpool_tests_mock"
+Leaving test case "lockedpool_tests_mock"; testing time: 2881mks
+Entering test case "lockedpool_tests_live"
+Leaving test case "lockedpool_tests_live"; testing time: 2723mks
+Leaving test suite "allocator_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 4 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "amount_tests"
+Entering test case "MoneyRangeTest"
+Leaving test case "MoneyRangeTest"; testing time: 16171mks
+Entering test case "GetFeeTest"
+Leaving test case "GetFeeTest"; testing time: 2805mks
+Entering test case "BinaryOperatorTest"
+Leaving test case "BinaryOperatorTest"; testing time: 2701mks
+Entering test case "ToStringTest"
+Leaving test case "ToStringTest"; testing time: 2702mks
+Leaving test suite "amount_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 11 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "arith_uint256_tests"
+Entering test case "basics"
+Leaving test case "basics"; testing time: 17632mks
+Entering test case "shifts"
+Leaving test case "shifts"; testing time: 3924mks
+Entering test case "unaryOperators"
+Leaving test case "unaryOperators"; testing time: 2842mks
+Entering test case "bitwiseOperators"
+Leaving test case "bitwiseOperators"; testing time: 2696mks
+Entering test case "comparison"
+Leaving test case "comparison"; testing time: 3264mks
+Entering test case "plusMinus"
+Leaving test case "plusMinus"; testing time: 3583mks
+Entering test case "multiply"
+Leaving test case "multiply"; testing time: 2731mks
+Entering test case "divide"
+Leaving test case "divide"; testing time: 2886mks
+Entering test case "methods"
+Leaving test case "methods"; testing time: 2866mks
+Entering test case "bignum_SetCompact"
+Leaving test case "bignum_SetCompact"; testing time: 2784mks
+Entering test case "getmaxcoverage"
+Leaving test case "getmaxcoverage"; testing time: 2693mks
+Leaving test suite "arith_uint256_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "base32_tests"
+Entering test case "base32_testvectors"
+Leaving test case "base32_testvectors"; testing time: 16355mks
+Leaving test suite "base32_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 5 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "base58_tests"
+Entering test case "base58_EncodeBase58"
+Leaving test case "base58_EncodeBase58"; testing time: 16258mks
+Entering test case "base58_DecodeBase58"
+Leaving test case "base58_DecodeBase58"; testing time: 2865mks
+Entering test case "base58_keys_valid_parse"
+Leaving test case "base58_keys_valid_parse"; testing time: 5722mks
+Entering test case "base58_keys_valid_gen"
+Leaving test case "base58_keys_valid_gen"; testing time: 5420mks
+Entering test case "base58_keys_invalid"
+Leaving test case "base58_keys_invalid"; testing time: 3649mks
+Leaving test suite "base58_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "base64_tests"
+Entering test case "base64_testvectors"
+Leaving test case "base64_testvectors"; testing time: 16294mks
+Leaving test suite "base64_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 3 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "bip32_tests"
+Entering test case "bip32_test1"
+Leaving test case "bip32_test1"; testing time: 17954mks
+Entering test case "bip32_test2"
+Leaving test case "bip32_test2"; testing time: 4549mks
+Entering test case "bip32_test3"
+Leaving test case "bip32_test3"; testing time: 3322mks
+Leaving test suite "bip32_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 5 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "blockencodings_tests"
+Entering test case "SimpleRoundTripTest"
+unknown location(0): fatal error in "SimpleRoundTripTest": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "SimpleRoundTripTest"; testing time: 17150mks
+Leaving test suite "blockencodings_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 12 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "bloom_tests"
+Entering test case "bloom_create_insert_serialize"
+Leaving test case "bloom_create_insert_serialize"; testing time: 16806mks
+Entering test case "bloom_create_insert_serialize_with_tweak"
+Leaving test case "bloom_create_insert_serialize_with_tweak"; testing time: 2827mks
+Entering test case "bloom_create_insert_key"
+Leaving test case "bloom_create_insert_key"; testing time: 2777mks
+Entering test case "bloom_match"
+Leaving test case "bloom_match"; testing time: 2776mks
+Entering test case "merkle_block_1"
+unknown location(0): fatal error in "merkle_block_1": std::runtime_error: CDataStream::read(): end of data: iostream error
+Leaving test case "merkle_block_1"; testing time: 3067mks
+Entering test case "merkle_block_2"
+unknown location(0): fatal error in "merkle_block_2": std::runtime_error: ReadCompactSize(): size too large: iostream error
+Leaving test case "merkle_block_2"; testing time: 2806mks
+Entering test case "merkle_block_2_with_update_none"
+unknown location(0): fatal error in "merkle_block_2_with_update_none": std::runtime_error: ReadCompactSize(): size too large: iostream error
+Leaving test case "merkle_block_2_with_update_none"; testing time: 2854mks
+Entering test case "merkle_block_3_and_serialize"
+unknown location(0): fatal error in "merkle_block_3_and_serialize": std::runtime_error: CDataStream::read(): end of data: iostream error
+Leaving test case "merkle_block_3_and_serialize"; testing time: 2867mks
+Entering test case "merkle_block_4"
+unknown location(0): fatal error in "merkle_block_4": std::runtime_error: CDataStream::read(): end of data: iostream error
+Leaving test case "merkle_block_4"; testing time: 2775mks
+Entering test case "merkle_block_4_test_p2pubkey_only"
+unknown location(0): fatal error in "merkle_block_4_test_p2pubkey_only": std::runtime_error: CDataStream::read(): end of data: iostream error
+Leaving test case "merkle_block_4_test_p2pubkey_only"; testing time: 2762mks
+Entering test case "merkle_block_4_test_update_none"
+unknown location(0): fatal error in "merkle_block_4_test_update_none": std::runtime_error: CDataStream::read(): end of data: iostream error
+Leaving test case "merkle_block_4_test_update_none"; testing time: 2761mks
+Entering test case "rolling_bloom"
+RollingBloomFilter got 112 false positives (~100 expected)
+RollingBloomFilter got 4 false positives (~5 expected)
+Leaving test case "rolling_bloom"; testing time: 6806mks
+Leaving test suite "bloom_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "bswap_tests"
+Entering test case "bswap_tests"
+Leaving test case "bswap_tests"; testing time: 16181mks
+Leaving test suite "bswap_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 10 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "checkqueue_tests"
+Entering test case "test_CheckQueue_Correct_Zero"
+unknown location(0): fatal error in "test_CheckQueue_Correct_Zero": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "test_CheckQueue_Correct_Zero"; testing time: 19454mks
+Leaving test suite "checkqueue_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 7 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "coins_tests"
+Entering test case "coins_cache_simulation_test"
+Leaving test case "coins_cache_simulation_test"; testing time: 2441580mks
+Entering test case "updatecoins_simulation_test"
+Leaving test case "updatecoins_simulation_test"; testing time: 1763791mks
+Entering test case "ccoins_serialization"
+Leaving test case "ccoins_serialization"; testing time: 9060mks
+Entering test case "ccoins_access"
+Leaving test case "ccoins_access"; testing time: 2939mks
+Entering test case "ccoins_spend"
+Leaving test case "ccoins_spend"; testing time: 2902mks
+Entering test case "ccoins_add"
+Leaving test case "ccoins_add"; testing time: 3155mks
+Entering test case "ccoins_write"
+Leaving test case "ccoins_write"; testing time: 3510mks
+Leaving test suite "coins_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "compress_tests"
+Entering test case "compress_amounts"
+Leaving test case "compress_amounts"; testing time: 935666mks
+Leaving test suite "compress_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 10 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "crypto_tests"
+Entering test case "ripemd160_testvectors"
+Leaving test case "ripemd160_testvectors"; testing time: 245745mks
+Entering test case "sha1_testvectors"
+Leaving test case "sha1_testvectors"; testing time: 176321mks
+Entering test case "sha256_testvectors"
+Leaving test case "sha256_testvectors"; testing time: 420201mks
+Entering test case "sha512_testvectors"
+Leaving test case "sha512_testvectors"; testing time: 278142mks
+Entering test case "hmac_sha256_testvectors"
+Leaving test case "hmac_sha256_testvectors"; testing time: 5386mks
+Entering test case "hmac_sha512_testvectors"
+Leaving test case "hmac_sha512_testvectors"; testing time: 6290mks
+Entering test case "aes_testvectors"
+Leaving test case "aes_testvectors"; testing time: 2783mks
+Entering test case "aes_cbc_testvectors"
+Leaving test case "aes_cbc_testvectors"; testing time: 3434mks
+Entering test case "chacha20_testvector"
+Leaving test case "chacha20_testvector"; testing time: 2694mks
+Entering test case "countbits_tests"
+Leaving test case "countbits_tests"; testing time: 15125mks
+Leaving test suite "crypto_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 5 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "cuckoocache_tests"
+Entering test case "test_cuckoocache_no_fakes"
+Leaving test case "test_cuckoocache_no_fakes"; testing time: 65363mks
+Entering test case "cuckoocache_hit_rate_ok"
+Leaving test case "cuckoocache_hit_rate_ok"; testing time: 137180mks
+Entering test case "cuckoocache_erase_ok"
+Leaving test case "cuckoocache_erase_ok"; testing time: 45530mks
+Entering test case "cuckoocache_erase_parallel_ok"
+Leaving test case "cuckoocache_erase_parallel_ok"; testing time: 44325mks
+Entering test case "cuckoocache_generations"
+Leaving test case "cuckoocache_generations"; testing time: 428275mks
+Leaving test suite "cuckoocache_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 7 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "dbwrapper_tests"
+Entering test case "dbwrapper"
+Leaving test case "dbwrapper"; testing time: 16555mks
+Entering test case "dbwrapper_batch"
+Leaving test case "dbwrapper_batch"; testing time: 3038mks
+Entering test case "dbwrapper_iterator"
+Leaving test case "dbwrapper_iterator"; testing time: 2970mks
+Entering test case "existing_data_no_obfuscate"
+Leaving test case "existing_data_no_obfuscate"; testing time: 4579mks
+Entering test case "existing_data_reindex"
+Leaving test case "existing_data_reindex"; testing time: 6105mks
+Entering test case "iterator_ordering"
+Leaving test case "iterator_ordering"; testing time: 5638mks
+Entering test case "iterator_string_ordering"
+Leaving test case "iterator_string_ordering"; testing time: 7645mks
+Leaving test suite "dbwrapper_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 6 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "DoS_tests"
+Entering test case "outbound_slow_chain_eviction"
+unknown location(0): fatal error in "outbound_slow_chain_eviction": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "outbound_slow_chain_eviction"; testing time: 19546mks
+Leaving test suite "DoS_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "equihash_tests"
+Entering test case "solver_testvectors"
+Running solver: n = 96, k = 5, I = block header, V = 0000000000000000000000000000000000000000000000000000000000000000
+[Basic] Number of solutions: 5
+{
+  {976, 126621, 100174, 123328, 38477, 105390, 38834, 90500, 6411, 116489, 51107, 129167, 25557, 92292, 38525, 56514, 1110, 98024, 15426, 74455, 3185, 84007, 24328, 36473, 17427, 129451, 27556, 119967, 31704, 62448, 110460, 117894},
+  {1008, 18280, 34711, 57439, 3903, 104059, 81195, 95931, 58336, 118687, 67931, 123026, 64235, 95595, 84355, 122946, 8131, 88988, 45130, 58986, 59899, 78278, 94769, 118158, 25569, 106598, 44224, 96285, 54009, 67246, 85039, 127667},
+  {1278, 107636, 80519, 127719, 19716, 130440, 83752, 121810, 15337, 106305, 96940, 117036, 46903, 101115, 82294, 118709, 4915, 70826, 40826, 79883, 37902, 95324, 101092, 112254, 15536, 68760, 68493, 125640, 67620, 108562, 68035, 93430},
+  {3976, 108868, 80426, 109742, 33354, 55962, 68338, 80112, 26648, 28006, 64679, 130709, 41182, 126811, 56563, 129040, 4013, 80357, 38063, 91241, 30768, 72264, 97338, 124455, 5607, 36901, 67672, 87377, 17841, 66985, 77087, 85291},
+  {5970, 21862, 34861, 102517, 11849, 104563, 91620, 110653, 7619, 52100, 21162, 112513, 74964, 79553, 105558, 127256, 21905, 112672, 81803, 92086, 43695, 97911, 66587, 104119, 29017, 61613, 97690, 106345, 47428, 98460, 53655, 109002}
+}
+[Optimised] Number of solutions: 5
+{
+  {976, 126621, 100174, 123328, 38477, 105390, 38834, 90500, 6411, 116489, 51107, 129167, 25557, 92292, 38525, 56514, 1110, 98024, 15426, 74455, 3185, 84007, 24328, 36473, 17427, 129451, 27556, 119967, 31704, 62448, 110460, 117894},
+  {1008, 18280, 34711, 57439, 3903, 104059, 81195, 95931, 58336, 118687, 67931, 123026, 64235, 95595, 84355, 122946, 8131, 88988, 45130, 58986, 59899, 78278, 94769, 118158, 25569, 106598, 44224, 96285, 54009, 67246, 85039, 127667},
+  {1278, 107636, 80519, 127719, 19716, 130440, 83752, 121810, 15337, 106305, 96940, 117036, 46903, 101115, 82294, 118709, 4915, 70826, 40826, 79883, 37902, 95324, 101092, 112254, 15536, 68760, 68493, 125640, 67620, 108562, 68035, 93430},
+  {3976, 108868, 80426, 109742, 33354, 55962, 68338, 80112, 26648, 28006, 64679, 130709, 41182, 126811, 56563, 129040, 4013, 80357, 38063, 91241, 30768, 72264, 97338, 124455, 5607, 36901, 67672, 87377, 17841, 66985, 77087, 85291},
+  {5970, 21862, 34861, 102517, 11849, 104563, 91620, 110653, 7619, 52100, 21162, 112513, 74964, 79553, 105558, 127256, 21905, 112672, 81803, 92086, 43695, 97911, 66587, 104119, 29017, 61613, 97690, 106345, 47428, 98460, 53655, 109002}
+}
+Running solver: n = 96, k = 5, I = block header, V = 0000000000000000000000000000000000000000000000000000000000000001
+[Basic] Number of solutions: 1
+{
+  {1911, 96020, 94086, 96830, 7895, 51522, 56142, 62444, 15441, 100732, 48983, 64776, 27781, 85932, 101138, 114362, 4497, 14199, 36249, 41817, 23995, 93888, 35798, 96337, 5530, 82377, 66438, 85247, 39332, 78978, 83015, 123505}
+}
+[Optimised] Number of solutions: 1
+{
+  {1911, 96020, 94086, 96830, 7895, 51522, 56142, 62444, 15441, 100732, 48983, 64776, 27781, 85932, 101138, 114362, 4497, 14199, 36249, 41817, 23995, 93888, 35798, 96337, 5530, 82377, 66438, 85247, 39332, 78978, 83015, 123505}
+}
+Running solver: n = 96, k = 5, I = block header, V = 0000000000000000000000000000000000000000000000000000000000000002
+[Basic] Number of solutions: 1
+{
+  {165, 27290, 87424, 123403, 5344, 35125, 49154, 108221, 8882, 90328, 77359, 92348, 54692, 81690, 115200, 121929, 18968, 122421, 32882, 128517, 56629, 88083, 88022, 102461, 35665, 62833, 95988, 114502, 39965, 119818, 45010, 94889}
+}
+[Optimised] Number of solutions: 1
+{
+  {165, 27290, 87424, 123403, 5344, 35125, 49154, 108221, 8882, 90328, 77359, 92348, 54692, 81690, 115200, 121929, 18968, 122421, 32882, 128517, 56629, 88083, 88022, 102461, 35665, 62833, 95988, 114502, 39965, 119818, 45010, 94889}
+}
+Running solver: n = 96, k = 5, I = block header, V = 000000000000000000000000000000000000000000000000000000000000000a
+[Basic] Number of solutions: 2
+{
+  {1855, 37525, 81472, 112062, 11831, 38873, 45382, 82417, 11571, 47965, 71385, 119369, 13049, 64810, 26995, 34659, 6423, 67533, 88972, 105540, 30672, 80244, 39493, 94598, 17858, 78496, 35376, 118645, 50186, 51838, 70421, 103703},
+  {3671, 125813, 31502, 78587, 25500, 83138, 74685, 98796, 8873, 119842, 21142, 55332, 25571, 122204, 31433, 80719, 3955, 49477, 4225, 129562, 11837, 21530, 75841, 120644, 4653, 101217, 19230, 113175, 16322, 24384, 21271, 96965}
+}
+[Optimised] Number of solutions: 2
+{
+  {1855, 37525, 81472, 112062, 11831, 38873, 45382, 82417, 11571, 47965, 71385, 119369, 13049, 64810, 26995, 34659, 6423, 67533, 88972, 105540, 30672, 80244, 39493, 94598, 17858, 78496, 35376, 118645, 50186, 51838, 70421, 103703},
+  {3671, 125813, 31502, 78587, 25500, 83138, 74685, 98796, 8873, 119842, 21142, 55332, 25571, 122204, 31433, 80719, 3955, 49477, 4225, 129562, 11837, 21530, 75841, 120644, 4653, 101217, 19230, 113175, 16322, 24384, 21271, 96965}
+}
+Running solver: n = 96, k = 5, I = block header, V = 000000000000000000000000000000000000000000000000000000000000000b
+[Basic] Number of solutions: 1
+{
+  {2570, 20946, 61727, 130667, 16426, 62291, 107177, 112384, 18464, 125099, 120313, 127545, 35035, 73082, 118591, 120800, 13800, 32837, 23607, 86516, 17339, 114578, 22053, 85510, 14913, 42826, 25168, 121262, 33673, 114773, 77592, 83471}
+}
+[Optimised] Number of solutions: 1
+{
+  {2570, 20946, 61727, 130667, 16426, 62291, 107177, 112384, 18464, 125099, 120313, 127545, 35035, 73082, 118591, 120800, 13800, 32837, 23607, 86516, 17339, 114578, 22053, 85510, 14913, 42826, 25168, 121262, 33673, 114773, 77592, 83471}
+}
+Running solver: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000000
+[Basic] Number of solutions: 2
+{
+  {3130, 83179, 30454, 107686, 71240, 88412, 109700, 114639, 10024, 32706, 38019, 113013, 18399, 92942, 21094, 112263, 4146, 30807, 10631, 73192, 22216, 90216, 45581, 125042, 11256, 119455, 93603, 110112, 59851, 91545, 97403, 111102},
+  {3822, 35317, 47508, 119823, 37652, 117039, 69087, 72058, 13147, 111794, 65435, 124256, 22247, 66272, 30298, 108956, 13157, 109175, 37574, 50978, 31258, 91519, 52568, 107874, 14999, 103687, 27027, 109468, 36918, 109660, 42196, 100424}
+}
+[Optimised] Number of solutions: 2
+{
+  {3130, 83179, 30454, 107686, 71240, 88412, 109700, 114639, 10024, 32706, 38019, 113013, 18399, 92942, 21094, 112263, 4146, 30807, 10631, 73192, 22216, 90216, 45581, 125042, 11256, 119455, 93603, 110112, 59851, 91545, 97403, 111102},
+  {3822, 35317, 47508, 119823, 37652, 117039, 69087, 72058, 13147, 111794, 65435, 124256, 22247, 66272, 30298, 108956, 13157, 109175, 37574, 50978, 31258, 91519, 52568, 107874, 14999, 103687, 27027, 109468, 36918, 109660, 42196, 100424}
+}
+Running solver: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001
+[Basic] Number of solutions: 2
+{
+  {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+  {16700, 46276, 21232, 43153, 22398, 58511, 47922, 71816, 23370, 26222, 39248, 40137, 65375, 85794, 69749, 73259, 23599, 72821, 42250, 52383, 35267, 75893, 52152, 57181, 27137, 101117, 45804, 92838, 29548, 29574, 37737, 113624}
+}
+[Optimised] Number of solutions: 2
+{
+  {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568},
+  {16700, 46276, 21232, 43153, 22398, 58511, 47922, 71816, 23370, 26222, 39248, 40137, 65375, 85794, 69749, 73259, 23599, 72821, 42250, 52383, 35267, 75893, 52152, 57181, 27137, 101117, 45804, 92838, 29548, 29574, 37737, 113624}
+}
+Running solver: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000002
+[Basic] Number of solutions: 1
+{
+  {6005, 59843, 55560, 70361, 39140, 77856, 44238, 57702, 32125, 121969, 108032, 116542, 37925, 75404, 48671, 111682, 6937, 93582, 53272, 77545, 13715, 40867, 73187, 77853, 7348, 70313, 24935, 24978, 25967, 41062, 58694, 110036}
+}
+[Optimised] Number of solutions: 1
+{
+  {6005, 59843, 55560, 70361, 39140, 77856, 44238, 57702, 32125, 121969, 108032, 116542, 37925, 75404, 48671, 111682, 6937, 93582, 53272, 77545, 13715, 40867, 73187, 77853, 7348, 70313, 24935, 24978, 25967, 41062, 58694, 110036}
+}
+Running solver: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 000000000000000000000000000000000000000000000000000000000000000a
+[Basic] Number of solutions: 4
+{
+  {968, 90691, 70664, 112581, 17233, 79239, 66772, 92199, 27801, 44198, 58712, 122292, 28227, 126747, 70925, 118108, 2876, 76082, 39335, 113764, 26643, 60579, 50853, 70300, 19640, 31848, 28672, 87870, 33574, 50308, 40291, 61593},
+  {1181, 61261, 75793, 96302, 36209, 113590, 79236, 108781, 8275, 106510, 11877, 74550, 45593, 80595, 71247, 95783, 2991, 99117, 56413, 71287, 10235, 68286, 22016, 104685, 51588, 53344, 56822, 63386, 63527, 75772, 93100, 108542},
+  {2229, 30387, 14573, 115700, 20018, 124283, 84929, 91944, 26341, 64220, 69433, 82466, 29778, 101161, 59334, 79798, 2533, 104985, 50731, 111094, 10619, 80909, 15555, 119911, 29028, 42966, 51958, 86784, 34561, 97709, 77126, 127250},
+  {15465, 59017, 93851, 112478, 24940, 128791, 26154, 107289, 24050, 78626, 51948, 111573, 35117, 113754, 36317, 67606, 21508, 91486, 28293, 126983, 23989, 39722, 60567, 97243, 26720, 56243, 60444, 107530, 40329, 56467, 91943, 93737}
+}
+[Optimised] Number of solutions: 4
+{
+  {968, 90691, 70664, 112581, 17233, 79239, 66772, 92199, 27801, 44198, 58712, 122292, 28227, 126747, 70925, 118108, 2876, 76082, 39335, 113764, 26643, 60579, 50853, 70300, 19640, 31848, 28672, 87870, 33574, 50308, 40291, 61593},
+  {1181, 61261, 75793, 96302, 36209, 113590, 79236, 108781, 8275, 106510, 11877, 74550, 45593, 80595, 71247, 95783, 2991, 99117, 56413, 71287, 10235, 68286, 22016, 104685, 51588, 53344, 56822, 63386, 63527, 75772, 93100, 108542},
+  {2229, 30387, 14573, 115700, 20018, 124283, 84929, 91944, 26341, 64220, 69433, 82466, 29778, 101161, 59334, 79798, 2533, 104985, 50731, 111094, 10619, 80909, 15555, 119911, 29028, 42966, 51958, 86784, 34561, 97709, 77126, 127250},
+  {15465, 59017, 93851, 112478, 24940, 128791, 26154, 107289, 24050, 78626, 51948, 111573, 35117, 113754, 36317, 67606, 21508, 91486, 28293, 126983, 23989, 39722, 60567, 97243, 26720, 56243, 60444, 107530, 40329, 56467, 91943, 93737}
+}
+Running solver: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 000000000000000000000000000000000000000000000000000000000000000b
+[Basic] Number of solutions: 1
+{
+  {1120, 77433, 58243, 76860, 11411, 96068, 13150, 35878, 15049, 88928, 20101, 104706, 29215, 73328, 39498, 83529, 9233, 124174, 66731, 97423, 10823, 92444, 25647, 127742, 12207, 46292, 22018, 120758, 14411, 46485, 21828, 57591}
+}
+[Optimised] Number of solutions: 1
+{
+  {1120, 77433, 58243, 76860, 11411, 96068, 13150, 35878, 15049, 88928, 20101, 104706, 29215, 73328, 39498, 83529, 9233, 124174, 66731, 97423, 10823, 92444, 25647, 127742, 12207, 46292, 22018, 120758, 14411, 46485, 21828, 57591}
+}
+Running solver: n = 96, k = 5, I = Test case with 3+-way collision in the final round., V = 00000000000000000000000000000000000000000000000000000000000007f0
+[Basic] Number of solutions: 6
+{
+  {1162, 129543, 57488, 82745, 18311, 115612, 20603, 112899, 5635, 103373, 101651, 125986, 52160, 70847, 65152, 101720, 5810, 43165, 64589, 105333, 11347, 63836, 55495, 96392, 40767, 81019, 53976, 94184, 41650, 114374, 45109, 57038},
+  {2321, 121781, 36792, 51959, 21685, 67596, 27992, 59307, 13462, 118550, 37537, 55849, 48994, 58515, 78703, 100100, 11189, 98120, 45242, 116128, 33260, 47351, 61550, 116649, 11927, 20590, 35907, 107966, 28779, 57407, 54793, 104108},
+  {2321, 121781, 36792, 51959, 21685, 67596, 27992, 59307, 13462, 118550, 37537, 55849, 48994, 78703, 58515, 100100, 11189, 98120, 45242, 116128, 33260, 47351, 61550, 116649, 11927, 20590, 35907, 107966, 28779, 57407, 54793, 104108},
+  {2321, 121781, 36792, 51959, 21685, 67596, 27992, 59307, 13462, 118550, 37537, 55849, 48994, 100100, 58515, 78703, 11189, 98120, 45242, 116128, 33260, 47351, 61550, 116649, 11927, 20590, 35907, 107966, 28779, 57407, 54793, 104108},
+  {4488, 83544, 24912, 62564, 43206, 62790, 68462, 125162, 6805, 8886, 46937, 54588, 15509, 126232, 19426, 27845, 5959, 56839, 38806, 102580, 11255, 63258, 23442, 39750, 13022, 22271, 24110, 52077, 17422, 124996, 35725, 101509},
+  {8144, 33053, 33933, 77498, 21356, 110495, 42805, 116575, 27360, 48574, 100682, 102629, 50754, 64608, 96899, 120978, 11924, 74422, 49240, 106822, 12787, 68290, 44314, 50005, 38056, 49716, 83299, 95307, 41798, 82309, 94504, 96161}
+}
+[Optimised] Number of solutions: 6
+{
+  {1162, 129543, 57488, 82745, 18311, 115612, 20603, 112899, 5635, 103373, 101651, 125986, 52160, 70847, 65152, 101720, 5810, 43165, 64589, 105333, 11347, 63836, 55495, 96392, 40767, 81019, 53976, 94184, 41650, 114374, 45109, 57038},
+  {2321, 121781, 36792, 51959, 21685, 67596, 27992, 59307, 13462, 118550, 37537, 55849, 48994, 58515, 78703, 100100, 11189, 98120, 45242, 116128, 33260, 47351, 61550, 116649, 11927, 20590, 35907, 107966, 28779, 57407, 54793, 104108},
+  {2321, 121781, 36792, 51959, 21685, 67596, 27992, 59307, 13462, 118550, 37537, 55849, 48994, 78703, 58515, 100100, 11189, 98120, 45242, 116128, 33260, 47351, 61550, 116649, 11927, 20590, 35907, 107966, 28779, 57407, 54793, 104108},
+  {2321, 121781, 36792, 51959, 21685, 67596, 27992, 59307, 13462, 118550, 37537, 55849, 48994, 100100, 58515, 78703, 11189, 98120, 45242, 116128, 33260, 47351, 61550, 116649, 11927, 20590, 35907, 107966, 28779, 57407, 54793, 104108},
+  {4488, 83544, 24912, 62564, 43206, 62790, 68462, 125162, 6805, 8886, 46937, 54588, 15509, 126232, 19426, 27845, 5959, 56839, 38806, 102580, 11255, 63258, 23442, 39750, 13022, 22271, 24110, 52077, 17422, 124996, 35725, 101509},
+  {8144, 33053, 33933, 77498, 21356, 110495, 42805, 116575, 27360, 48574, 100682, 102629, 50754, 64608, 96899, 120978, 11924, 74422, 49240, 106822, 12787, 68290, 44314, 50005, 38056, 49716, 83299, 95307, 41798, 82309, 94504, 96161}
+}
+Leaving test case "solver_testvectors"; testing time: 5732023mks
+Entering test case "validator_testvectors"
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 1, soln =
+  {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {2262, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {45858, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 2261, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {15185, 2261, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {36112, 104243, 2261, 15185, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 104973, 122568, 69567, 114474}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {15972, 115059, 85191, 90330, 68190, 122819, 81830, 91132, 23460, 49807, 52426, 80391, 69567, 114474, 104973, 122568, 2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {2261, 15185, 15972, 23460, 23779, 32642, 36112, 45858, 49807, 52426, 68190, 69567, 69878, 76925, 80080, 80391, 81830, 85191, 90330, 91132, 92842, 104243, 104973, 111026, 114474, 115059, 116805, 118332, 118390, 122568, 122819, 130041}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {2261, 2261, 15185, 15185, 36112, 36112, 104243, 104243, 23779, 23779, 118390, 118390, 118332, 118332, 130041, 130041, 32642, 32642, 69878, 69878, 76925, 76925, 80080, 80080, 45858, 45858, 116805, 116805, 92842, 92842, 111026, 111026}
+Running validator: n = 96, k = 5, I = Equihash is an asymmetric PoW based on the Generalised Birthday problem., V = 0000000000000000000000000000000000000000000000000000000000000001, expected = 0, soln =
+  {2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026, 2261, 15185, 36112, 104243, 23779, 118390, 118332, 130041, 32642, 69878, 76925, 80080, 45858, 116805, 92842, 111026}
+Leaving test case "validator_testvectors"; testing time: 3226mks
+Leaving test suite "equihash_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 5 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "getarg_tests"
+Entering test case "boolarg"
+Leaving test case "boolarg"; testing time: 16285mks
+Entering test case "stringarg"
+Leaving test case "stringarg"; testing time: 2836mks
+Entering test case "intarg"
+Leaving test case "intarg"; testing time: 2717mks
+Entering test case "doubledash"
+Leaving test case "doubledash"; testing time: 2707mks
+Entering test case "boolargno"
+Leaving test case "boolargno"; testing time: 2715mks
+Leaving test suite "getarg_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "hash_tests"
+Entering test case "murmurhash3"
+Leaving test case "murmurhash3"; testing time: 16188mks
+Entering test case "siphash"
+Leaving test case "siphash"; testing time: 2859mks
+Leaving test suite "hash_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "key_tests"
+Entering test case "key_test1"
+Leaving test case "key_test1"; testing time: 65561mks
+Leaving test suite "key_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "limitedmap_tests"
+Entering test case "limitedmap_test"
+Leaving test case "limitedmap_test"; testing time: 16195mks
+Leaving test suite "limitedmap_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 3 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "main_tests"
+Entering test case "block_subsidy_test"
+unknown location(0): fatal error in "block_subsidy_test": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "block_subsidy_test"; testing time: 19397mks
+Leaving test suite "main_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 4 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "mempool_tests"
+Entering test case "MempoolRemoveTest"
+unknown location(0): fatal error in "MempoolRemoveTest": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "MempoolRemoveTest"; testing time: 19489mks
+Leaving test suite "mempool_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "merkle_tests"
+Entering test case "merkle_test"
+unknown location(0): fatal error in "merkle_test": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "merkle_test"; testing time: 19534mks
+Leaving test suite "merkle_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "miner_tests"
+Entering test case "CreateNewBlock_validity"
+unknown location(0): fatal error in "CreateNewBlock_validity": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "CreateNewBlock_validity"; testing time: 19296mks
+Leaving test suite "miner_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 3 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "multisig_tests"
+Entering test case "multisig_verify"
+Leaving test case "multisig_verify"; testing time: 27500mks
+Entering test case "multisig_IsStandard"
+Leaving test case "multisig_IsStandard"; testing time: 3982mks
+Entering test case "multisig_Sign"
+Leaving test case "multisig_Sign"; testing time: 4587mks
+Leaving test suite "multisig_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 7 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "netbase_tests"
+Entering test case "netbase_networks"
+Leaving test case "netbase_networks"; testing time: 16268mks
+Entering test case "netbase_properties"
+Leaving test case "netbase_properties"; testing time: 2817mks
+Entering test case "netbase_splithost"
+Leaving test case "netbase_splithost"; testing time: 2700mks
+Entering test case "netbase_lookupnumeric"
+Leaving test case "netbase_lookupnumeric"; testing time: 2730mks
+Entering test case "onioncat_test"
+Leaving test case "onioncat_test"; testing time: 2683mks
+Entering test case "subnet_test"
+Leaving test case "subnet_test"; testing time: 2938mks
+Entering test case "netbase_getgroup"
+Leaving test case "netbase_getgroup"; testing time: 2710mks
+Leaving test suite "netbase_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 4 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "net_tests"
+Entering test case "cnode_listen_port"
+Leaving test case "cnode_listen_port"; testing time: 16278mks
+Entering test case "caddrdb_read"
+Leaving test case "caddrdb_read"; testing time: 4012mks
+Entering test case "caddrdb_read_corrupted"
+Leaving test case "caddrdb_read_corrupted"; testing time: 3236mks
+Entering test case "cnode_simple_test"
+Leaving test case "cnode_simple_test"; testing time: 3304mks
+Leaving test suite "net_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "pmt_tests"
+Entering test case "pmt_test1"
+Leaving test case "pmt_test1"; testing time: 376606mks
+Entering test case "pmt_malleability"
+Leaving test case "pmt_malleability"; testing time: 2815mks
+Leaving test suite "pmt_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "policyestimator_tests"
+Entering test case "BlockPolicyEstimates"
+unknown location(0): fatal error in "BlockPolicyEstimates": memory access violation at address: 0x7ffde4000000: no mapping at fault address
+test/policyestimator_tests.cpp(178): last checkpoint
+Test is aborted
+Leaving test case "BlockPolicyEstimates"; testing time: 404341mks
+Leaving test suite "policyestimator_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "raii_event_tests"
+Entering test case "raii_event_creation"
+Leaving test case "raii_event_creation"; testing time: 16282mks
+Entering test case "raii_event_order"
+Leaving test case "raii_event_order"; testing time: 2837mks
+Leaving test suite "raii_event_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 3 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "random_tests"
+Entering test case "osrandom_tests"
+Leaving test case "osrandom_tests"; testing time: 16261mks
+Entering test case "fastrandom_tests"
+Leaving test case "fastrandom_tests"; testing time: 2849mks
+Entering test case "fastrandom_randbits"
+Leaving test case "fastrandom_randbits"; testing time: 30322mks
+Leaving test suite "random_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "reverselock_tests"
+Entering test case "reverselock_basics"
+Leaving test case "reverselock_basics"; testing time: 16178mks
+Entering test case "reverselock_errors"
+Leaving test case "reverselock_errors"; testing time: 2903mks
+Leaving test suite "reverselock_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 9 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "rpc_tests"
+Entering test case "rpc_rawparams"
+unknown location(0): fatal error in "rpc_rawparams": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "rpc_rawparams"; testing time: 19261mks
+Leaving test suite "rpc_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "sanity_tests"
+Entering test case "basic_sanity"
+Leaving test case "basic_sanity"; testing time: 16672mks
+Leaving test suite "sanity_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "scheduler_tests"
+Entering test case "manythreads"
+Leaving test case "manythreads"; testing time: 9843mks
+Leaving test suite "scheduler_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "scriptnum_tests"
+Entering test case "creation"
+Leaving test case "creation"; testing time: 18161mks
+Entering test case "operators"
+Leaving test case "operators"; testing time: 14276mks
+Leaving test suite "scriptnum_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 6 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "script_P2SH_tests"
+Entering test case "sign"
+Leaving test case "sign"; testing time: 20587mks
+Entering test case "norecurse"
+Leaving test case "norecurse"; testing time: 2813mks
+Entering test case "set"
+Leaving test case "set"; testing time: 4872mks
+Entering test case "is"
+Leaving test case "is"; testing time: 2696mks
+Entering test case "switchover"
+Leaving test case "switchover"; testing time: 2695mks
+Entering test case "AreInputsStandard"
+Leaving test case "AreInputsStandard"; testing time: 5472mks
+Leaving test suite "script_P2SH_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 6 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "script_standard_tests"
+Entering test case "script_standard_Solver_success"
+Leaving test case "script_standard_Solver_success"; testing time: 16384mks
+Entering test case "script_standard_Solver_failure"
+Leaving test case "script_standard_Solver_failure"; testing time: 2963mks
+Entering test case "script_standard_ExtractDestination"
+Leaving test case "script_standard_ExtractDestination"; testing time: 2812mks
+Entering test case "script_standard_ExtractDestinations"
+Leaving test case "script_standard_ExtractDestinations"; testing time: 2884mks
+Entering test case "script_standard_GetScriptFor_"
+Leaving test case "script_standard_GetScriptFor_"; testing time: 2874mks
+Entering test case "script_standard_IsMine"
+Leaving test case "script_standard_IsMine"; testing time: 4009mks
+Leaving test suite "script_standard_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 11 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "script_tests"
+Entering test case "script_build"
+Leaving test case "script_build"; testing time: 166292mks
+Entering test case "script_json_test"
+Leaving test case "script_json_test"; testing time: 78521mks
+Entering test case "script_PushData"
+Leaving test case "script_PushData"; testing time: 2745mks
+Entering test case "script_CHECKMULTISIG12"
+Leaving test case "script_CHECKMULTISIG12"; testing time: 3928mks
+Entering test case "script_CHECKMULTISIG23"
+Leaving test case "script_CHECKMULTISIG23"; testing time: 6708mks
+Entering test case "script_combineSigs"
+Leaving test case "script_combineSigs"; testing time: 8272mks
+Entering test case "script_standard_push"
+Leaving test case "script_standard_push"; testing time: 83870mks
+Entering test case "script_IsPushOnly_on_invalid_scripts"
+Leaving test case "script_IsPushOnly_on_invalid_scripts"; testing time: 2697mks
+Entering test case "script_GetScriptAsm"
+Leaving test case "script_GetScriptAsm"; testing time: 2763mks
+Entering test case "script_FindAndDelete"
+Leaving test case "script_FindAndDelete"; testing time: 2714mks
+Entering test case "script_HasValidOps"
+Leaving test case "script_HasValidOps"; testing time: 2674mks
+Leaving test suite "script_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 11 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "serialize_tests"
+Entering test case "sizes"
+Leaving test case "sizes"; testing time: 16271mks
+Entering test case "floats_conversion"
+Leaving test case "floats_conversion"; testing time: 2827mks
+Entering test case "doubles_conversion"
+Leaving test case "doubles_conversion"; testing time: 2699mks
+Entering test case "floats"
+Leaving test case "floats"; testing time: 2924mks
+Entering test case "doubles"
+Leaving test case "doubles"; testing time: 2982mks
+Entering test case "varints"
+Leaving test case "varints"; testing time: 45522mks
+Entering test case "varints_bitpatterns"
+Leaving test case "varints_bitpatterns"; testing time: 2717mks
+Entering test case "compactsize"
+Leaving test case "compactsize"; testing time: 2709mks
+Entering test case "noncanonical"
+Leaving test case "noncanonical"; testing time: 2821mks
+Entering test case "insert_delete"
+Leaving test case "insert_delete"; testing time: 2695mks
+Entering test case "class_methods"
+Leaving test case "class_methods"; testing time: 2713mks
+Leaving test suite "serialize_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "sighash_tests"
+Entering test case "sighash_test"
+Leaving test case "sighash_test"; testing time: 641328mks
+Entering test case "sighash_from_data"
+Leaving test case "sighash_from_data"; testing time: 15193mks
+Leaving test suite "sighash_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "sigopcount_tests"
+Entering test case "GetSigOpCount"
+Leaving test case "GetSigOpCount"; testing time: 16383mks
+Entering test case "GetTxSigOpCost"
+Leaving test case "GetTxSigOpCost"; testing time: 3129mks
+Leaving test suite "sigopcount_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 4 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "skiplist_tests"
+Entering test case "skiplist_test"
+Leaving test case "skiplist_test"; testing time: 201053mks
+Entering test case "getlocator_test"
+Leaving test case "getlocator_test"; testing time: 119512mks
+Entering test case "findearliestatleast_test"
+Leaving test case "findearliestatleast_test"; testing time: 77446mks
+Entering test case "findearliestatleast_edge_test"
+Leaving test case "findearliestatleast_edge_test"; testing time: 2852mks
+Leaving test suite "skiplist_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "streams_tests"
+Entering test case "streams_vector_writer"
+Leaving test case "streams_vector_writer"; testing time: 16311mks
+Entering test case "streams_serializedata_xor"
+Leaving test case "streams_serializedata_xor"; testing time: 2818mks
+Leaving test suite "streams_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 1 test case...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "timedata_tests"
+Entering test case "util_MedianFilter"
+Leaving test case "util_MedianFilter"; testing time: 16202mks
+Leaving test suite "timedata_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "torcontrol_tests"
+Entering test case "util_SplitTorReplyLine"
+CheckSplitTorReplyLine(PROTOCOLINFO PIVERSION)
+CheckSplitTorReplyLine(AUTH METHODS=COOKIE,SAFECOOKIE COOKIEFILE="/home/x/.tor/control_auth_cookie")
+CheckSplitTorReplyLine(AUTH METHODS=NULL)
+CheckSplitTorReplyLine(AUTH METHODS=HASHEDPASSWORD)
+CheckSplitTorReplyLine(VERSION Tor="0.2.9.8 (git-a0df013ea241b026)")
+CheckSplitTorReplyLine(AUTHCHALLENGE SERVERHASH=aaaa SERVERNONCE=bbbb)
+CheckSplitTorReplyLine(COMMAND)
+CheckSplitTorReplyLine(COMMAND SOME  ARGS)
+CheckSplitTorReplyLine(COMMAND  ARGS)
+CheckSplitTorReplyLine(COMMAND   EVEN+more  ARGS)
+Leaving test case "util_SplitTorReplyLine"; testing time: 16303mks
+Entering test case "util_ParseTorReplyMapping"
+CheckParseTorReplyMapping(METHODS=COOKIE,SAFECOOKIE COOKIEFILE="/home/x/.tor/control_auth_cookie")
+CheckParseTorReplyMapping(METHODS=NULL)
+CheckParseTorReplyMapping(METHODS=HASHEDPASSWORD)
+CheckParseTorReplyMapping(Tor="0.2.9.8 (git-a0df013ea241b026)")
+CheckParseTorReplyMapping(SERVERHASH=aaaa SERVERNONCE=bbbb)
+CheckParseTorReplyMapping(ServiceID=exampleonion1234)
+CheckParseTorReplyMapping(PrivateKey=RSA1024:BLOB)
+CheckParseTorReplyMapping(ClientAuth=bob:BLOB)
+CheckParseTorReplyMapping(Foo=Bar=Baz Spam=Eggs)
+CheckParseTorReplyMapping(Foo="Bar=Baz")
+CheckParseTorReplyMapping(Foo="Bar Baz")
+CheckParseTorReplyMapping(Foo="Bar\ Baz")
+CheckParseTorReplyMapping(Foo="Bar\Baz")
+CheckParseTorReplyMapping(Foo="Bar\@Baz")
+CheckParseTorReplyMapping(Foo="Bar\"Baz" Spam="\"Eggs\"")
+CheckParseTorReplyMapping(Foo="Bar\\Baz")
+CheckParseTorReplyMapping(Foo="Bar\nBaz\t" Spam="\rEggs" Octals="\1a\11\17\18\81\377\378\400\2222" Final=Check)
+CheckParseTorReplyMapping(Valid=Mapping Escaped="Escape\\")
+CheckParseTorReplyMapping(Valid=Mapping Bare="Escape\")
+CheckParseTorReplyMapping(OneOctal="OneEnd\1" TwoOctal="TwoEnd\11")
+CheckParseTorReplyMapping(Null="\0")
+CheckParseTorReplyMapping(SOME=args,here MORE optional=arguments  here)
+CheckParseTorReplyMapping(ARGS)
+CheckParseTorReplyMapping(MORE ARGS)
+CheckParseTorReplyMapping(MORE  ARGS)
+CheckParseTorReplyMapping(EVEN more=ARGS)
+CheckParseTorReplyMapping(EVEN+more ARGS)
+Leaving test case "util_ParseTorReplyMapping"; testing time: 2951mks
+Leaving test suite "torcontrol_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 7 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "transaction_tests"
+Entering test case "tx_valid"
+Leaving test case "tx_valid"; testing time: 35646mks
+Entering test case "tx_invalid"
+Leaving test case "tx_invalid"; testing time: 12454mks
+Entering test case "basic_transaction_tests"
+Leaving test case "basic_transaction_tests"; testing time: 2726mks
+Entering test case "test_Get"
+Leaving test case "test_Get"; testing time: 3152mks
+Entering test case "test_big_witness_transaction"
+Test case test_big_witness_transaction did not check any assertions
+Leaving test case "test_big_witness_transaction"; testing time: 20474174mks
+Entering test case "test_witness"
+Leaving test case "test_witness"; testing time: 15054mks
+Entering test case "test_IsStandard"
+Leaving test case "test_IsStandard"; testing time: 3288mks
+Leaving test suite "transaction_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 4 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "uint256_tests"
+Entering test case "basics"
+Leaving test case "basics"; testing time: 16372mks
+Entering test case "comparison"
+Leaving test case "comparison"; testing time: 2882mks
+Entering test case "methods"
+Leaving test case "methods"; testing time: 2772mks
+Entering test case "conversion"
+Leaving test case "conversion"; testing time: 2701mks
+Leaving test suite "uint256_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 6 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "univalue_tests"
+Entering test case "univalue_constructor"
+Leaving test case "univalue_constructor"; testing time: 16275mks
+Entering test case "univalue_typecheck"
+Leaving test case "univalue_typecheck"; testing time: 2998mks
+Entering test case "univalue_set"
+Leaving test case "univalue_set"; testing time: 2720mks
+Entering test case "univalue_array"
+Leaving test case "univalue_array"; testing time: 2698mks
+Entering test case "univalue_object"
+Leaving test case "univalue_object"; testing time: 2716mks
+Entering test case "univalue_readwrite"
+Leaving test case "univalue_readwrite"; testing time: 2731mks
+Leaving test suite "univalue_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 22 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "util_tests"
+Entering test case "util_criticalsection"
+Test case util_criticalsection did not check any assertions
+Leaving test case "util_criticalsection"; testing time: 16135mks
+Entering test case "util_ParseHex"
+Leaving test case "util_ParseHex"; testing time: 2804mks
+Entering test case "util_HexStr"
+Leaving test case "util_HexStr"; testing time: 2687mks
+Entering test case "util_DateTimeStrFormat"
+Leaving test case "util_DateTimeStrFormat"; testing time: 2756mks
+Entering test case "util_ParseParameters"
+Leaving test case "util_ParseParameters"; testing time: 2710mks
+Entering test case "util_GetArg"
+Leaving test case "util_GetArg"; testing time: 2690mks
+Entering test case "util_FormatMoney"
+Leaving test case "util_FormatMoney"; testing time: 2723mks
+Entering test case "util_ParseMoney"
+Leaving test case "util_ParseMoney"; testing time: 2695mks
+Entering test case "util_IsHex"
+Leaving test case "util_IsHex"; testing time: 2671mks
+Entering test case "util_IsHexNumber"
+Leaving test case "util_IsHexNumber"; testing time: 2683mks
+Entering test case "util_seed_insecure_rand"
+Leaving test case "util_seed_insecure_rand"; testing time: 4778mks
+Entering test case "util_TimingResistantEqual"
+Leaving test case "util_TimingResistantEqual"; testing time: 2691mks
+Entering test case "strprintf_numbers"
+Leaving test case "strprintf_numbers"; testing time: 2709mks
+Entering test case "gettime"
+Leaving test case "gettime"; testing time: 2671mks
+Entering test case "test_ParseInt32"
+Leaving test case "test_ParseInt32"; testing time: 2701mks
+Entering test case "test_ParseInt64"
+Leaving test case "test_ParseInt64"; testing time: 2691mks
+Entering test case "test_ParseUInt32"
+Leaving test case "test_ParseUInt32"; testing time: 2677mks
+Entering test case "test_ParseUInt64"
+Leaving test case "test_ParseUInt64"; testing time: 2685mks
+Entering test case "test_ParseDouble"
+Leaving test case "test_ParseDouble"; testing time: 2727mks
+Entering test case "test_FormatParagraph"
+Leaving test case "test_FormatParagraph"; testing time: 2707mks
+Entering test case "test_FormatSubVersion"
+Leaving test case "test_FormatSubVersion"; testing time: 2755mks
+Entering test case "test_ParseFixedPoint"
+Leaving test case "test_ParseFixedPoint"; testing time: 2848mks
+Leaving test suite "util_tests"
+Leaving test suite "Fabcoin Test Suite"
+Running 2 test cases...
+Entering test suite "Fabcoin Test Suite"
+Entering test suite "versionbits_tests"
+Entering test case "versionbits_test"
+unknown location(0): fatal error in "versionbits_test": memory access violation at address: 0x000000c8: no mapping at fault address
+Test is aborted
+Leaving test case "versionbits_test"; testing time: 19389mks
+Leaving test suite "versionbits_tests"
+Leaving test suite "Fabcoin Test Suite"

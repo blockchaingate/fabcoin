@@ -8,7 +8,7 @@ define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2018)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Fabcoin Core]])
-AC_INIT([Fabcoin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/blockchaingate/fabcoin/issues],[fabcoin],[https://fabcoincore.org/])
+AC_INIT([Fabcoin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/blockchaingate/fabcoin/issues],[fabcoin],[http://fabcoin.pro/])
 AC_CONFIG_SRCDIR([src/validation.cpp])
 AC_CONFIG_HEADERS([src/config/fabcoin-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -112,6 +112,13 @@ AC_ARG_ENABLE([gpu],
   [enable gpu (disabled by default)])],
   [enable_gpu=$enableval],
   [enable_gpu=no])
+
+# Use cuda
+AC_ARG_WITH([cudalib],
+  [AS_HELP_STRING([--with-cudalib],
+  [use cuda (disabled by default)])],
+  [use_cuda=$enableval],
+  [use_cuda=no])
 
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
@@ -268,6 +275,7 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wself-assign],[CXXFLAGS="$CXXFLAGS -Wno-self-assign"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wunused-local-typedef],[CXXFLAGS="$CXXFLAGS -Wno-unused-local-typedef"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wdeprecated-register],[CXXFLAGS="$CXXFLAGS -Wno-deprecated-register"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough],[CXXFLAGS="$CXXFLAGS -Wno-implicit-fallthrough"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wno-unknown-pragmas],[CXXFLAGS="$CXXFLAGS -Wno-unknown-pragmas"],,[[$CXXFLAG_WERROR]])
 fi
 # Check for optional instruction set support. Enabling these does _not_ imply that all code will
@@ -465,6 +473,7 @@ case $host in
 esac
 
 CRYPTOPP_TARGET_FLAGS=""
+
 if test x$use_pkgconfig = xyes; then
   m4_ifndef([PKG_PROG_PKG_CONFIG], [AC_MSG_ERROR(PKG_PROG_PKG_CONFIG macro not found. Please install pkg-config and re-run autogen.sh.)])
   m4_ifdef([PKG_PROG_PKG_CONFIG], [
@@ -715,11 +724,14 @@ AM_CONDITIONAL([EMBEDDED_LEVELDB],[true])
 AC_SUBST(LEVELDB_CPPFLAGS)
 AC_SUBST(LIBLEVELDB)
 AC_SUBST(LIBMEMENV)
+
+
 CRYPTOPP_CPPFLAGS=
 LIBCRYPTOPP=
 AM_CONDITIONAL([EMBEDDED_CRYPTOPP],[true])
 AC_SUBST(CRYPTOPP_CPPFLAGS)
 AC_SUBST(LIBCRYPTOPP)
+
 
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
@@ -1109,6 +1121,50 @@ else
   AC_MSG_RESULT(no)
 fi
 
+dnl use cuda
+AC_MSG_CHECKING([if cuda should be enabled])
+if test x$use_cuda != xno; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE_UNQUOTED([USE_CUDA],[1],[Define to 1 to use cuda])
+
+else
+  AC_MSG_RESULT(no)
+fi
+
+dnl find out what version we are running
+ARCH=`uname -m`
+if [[ $ARCH == "x86_64" ]];
+then
+  SUFFIX="64"
+else
+  SUFFIX=""
+fi
+
+if test x$have_osx = xtrue
+then
+  SUFFIX=""
+fi
+
+dnl Setup CUDA paths
+AC_ARG_WITH([cuda],
+   [  --with-cuda=PATH    prefix where cuda is installed [default=/usr/local/cuda]])
+
+NVCC="nvcc"
+if test -n "$with_cuda" ; then
+  CUDA_INCLUDES="-I$with_cuda/include"
+  CUDA_CFLAGS="-Xcompiler -fPIC"
+  CUDA_LIBS="-lcuda -lcudart"
+  CUDA_LDFLAGS="-L$with_cuda/lib$SUFFIX"
+  if test -x "$with_cuda/bin/nvcc" ; then
+    NVCC="$with_cuda/bin/nvcc"
+  fi
+else
+  CUDA_INCLUDES="-I/usr/local/cuda/include"
+  CUDA_CFLAGS="-Xcompiler -fPIC"
+  CUDA_LIBS="-lcuda -lcudart -static-libstdc++"
+  CUDA_LDFLAGS="-L/usr/local/cuda/lib$SUFFIX"
+fi
+
 dnl enable upnp support
 AC_MSG_CHECKING([whether to build with support for UPnP])
 if test x$have_miniupnpc = xno; then
@@ -1202,11 +1258,16 @@ if test x$enable_gpu != xno; then
     LIBGPUSOLVER_LIBS="-lOpenCL"
 fi
 
+if test x$use_cuda != xno; then
+    LIBGPUSOLVER_LIBS="$LIBGPUSOLVER_LIBS $CUDA_LDFLAGS $CUDA_LIBS"
+fi
+
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
 AM_CONDITIONAL([ENABLE_GPU],[test x$enable_gpu = xyes])
+AM_CONDITIONAL([USE_CUDA],[test x$use_cuda = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
 AM_CONDITIONAL([ENABLE_QT],[test x$fabcoin_enable_qt = xyes])
 AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
@@ -1267,6 +1328,12 @@ AC_SUBST(ZMQ_LIBS)
 AC_SUBST(PROTOBUF_LIBS)
 AC_SUBST(QR_LIBS)
 AC_SUBST(LIBGPUSOLVER_LIBS)
+
+AC_SUBST(CUDA_CFLAGS)
+AC_SUBST(CUDA_INCLUDES)
+AC_SUBST(CUDA_LIBS)
+AC_SUBST(CUDA_LDFLAGS)
+AC_SUBST(NVCC)
 
 AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist test/config.ini])
 AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/split-debug.sh])
@@ -1330,6 +1397,7 @@ echo
 echo "Options used to compile and link:"
 echo "  with wallet   = $enable_wallet"
 echo "  with gpuminer   = $enable_gpu"
+echo "  with cudalib    = $use_cuda"
 echo "  with gui / qt = $fabcoin_enable_qt"
 if test x$fabcoin_enable_qt != xno; then
     echo "    qt version  = $fabcoin_qt_got_major_vers"
