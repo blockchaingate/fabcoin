@@ -442,7 +442,7 @@ public:
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.FABHeight = -1;
-        consensus.ContractHeight = 10;
+        consensus.ContractHeight = 100000000;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
 
