@@ -222,6 +222,7 @@ public:
 
     /** Process a transaction confirmed in a block*/
     bool processBlockTx(unsigned int nBlockHeight, const CTxMemPoolEntry* entry);
+
     /** Process a transaction accepted to the mempool*/
     void processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate);
 

@@ -14,6 +14,7 @@
 #include "txmempool.h"
 #include "util.h"
 
+//??? static constexpr double INF_FEERATE = 1e99;
 
 
 std::string StringForFeeEstimateHorizon(FeeEstimateHorizon horizon) {
