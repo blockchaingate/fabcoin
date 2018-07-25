@@ -609,7 +609,7 @@ UniValue createcontract(const JSONRPCRequest& request)
             "\nCreate a contract with bytcode.\n" +
             HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
-            "1. \"bytecode\"  (string, required) contract bytcode.\n"
+            "1. \"bytecode\"  (string, required) contract bytecode.\n"
             "2. gasLimit  (numeric or string, optional) gasLimit, default: " +
             i64tostr(DEFAULT_GAS_LIMIT_OP_CREATE) + ", max: " + i64tostr(blockGasLimit) + "\n"
                                                                                           "3. gasPrice  (numeric or string, optional) gasPrice FASC price per gas unit, default: " +
@@ -684,7 +684,7 @@ UniValue createcontract(const JSONRPCRequest& request)
         //find a UTXO with sender address
 
         UniValue results(UniValue::VARR);
-        vector<COutput> vecOutputs;
+        std::vector<COutput> vecOutputs;
 
         coinControl.fAllowOtherInputs = true;
 
@@ -737,7 +737,7 @@ UniValue createcontract(const JSONRPCRequest& request)
     CReserveKey reservekey(pwallet);
     CAmount nFeeRequired;
     std::string strError;
-    vector<CRecipient> vecSend;
+    std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
     CRecipient recipient = {scriptPubKey, 0, false};
     vecSend.push_back(recipient);
@@ -772,8 +772,8 @@ UniValue createcontract(const JSONRPCRequest& request)
         result.push_back(Pair("hash160", HexStr(valtype(keyid.begin(), keyid.end()))));
 
         std::vector<unsigned char> SHA256TxVout(32);
-        vector<unsigned char> contractAddress(20);
-        vector<unsigned char> txIdAndVout(wtx.GetHash().begin(), wtx.GetHash().end());
+        std::vector<unsigned char> contractAddress(20);
+        std::vector<unsigned char> txIdAndVout(wtx.GetHash().begin(), wtx.GetHash().end());
         uint32_t voutNumber = 0;
         for (auto txout : wtx.tx->vout) {
             if (txout.scriptPubKey.HasOpCreate()) {
@@ -902,7 +902,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
 
     if (fHasSender) {
         UniValue results(UniValue::VARR);
-        vector<COutput> vecOutputs;
+        std::vector<COutput> vecOutputs;
 
         coinControl.fAllowOtherInputs = true;
 
@@ -956,7 +956,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
     CReserveKey reservekey(pwallet);
     CAmount nFeeRequired;
     std::string strError;
-    vector<CRecipient> vecSend;
+    std::vector<CRecipient> vecSend;
     int nChangePosRet = -1;
     CRecipient recipient = {scriptPubKey, nAmount, false};
     vecSend.push_back(recipient);
