@@ -100,9 +100,9 @@ arith_uint256 nMinimumChainWork;
 CFeeRate minRelayTxFee = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE);
 CAmount maxTxFee = DEFAULT_TRANSACTION_MAXFEE;
 
-CBlockPolicyEstimator feeEstimator;
-//CTxMemPool mempool(&feeEstimator);
-CTxMemPool mempool(::minRelayTxFee);
+CBlockPolicyEstimator feeEstimator(::minRelayTxFee);
+CTxMemPool mempool(&feeEstimator);
+//CTxMemPool mempool(::minRelayTxFee);
 
 static void CheckBlockIndex(const Consensus::Params& consensusParams);
 static bool UpdateHashProof(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, CBlockIndex* pindex, CCoinsViewCache& view);

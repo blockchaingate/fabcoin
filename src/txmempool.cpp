@@ -360,6 +360,7 @@ CTxMemPool::CTxMemPool(CBlockPolicyEstimator* estimator) :
     // of transactions in the pool
     nCheckFrequency = 0;
 }
+/*
 CTxMemPool::CTxMemPool(const CFeeRate& _minReasonableRelayFee) :
     nTransactionsUpdated(0)
 {
@@ -377,6 +378,7 @@ CTxMemPool::~CTxMemPool()
 {
     delete minerPolicyEstimator;
 }
+*/
 bool CTxMemPool::isSpent(const COutPoint& outpoint)
 {
     LOCK(cs);
