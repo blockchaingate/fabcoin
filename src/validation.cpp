@@ -2312,7 +2312,12 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     if ((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
     {
         LogPrintf("Actual block data does not match block expected by AAL\n");
-        LogPrintf("height %d vs %d\n", checkBlock.nHeight, block.nHeight);
+
+        CBlock dumpBlock(block); 
+        LogPrintf("Dump watched block: Height %d, others ==   %s \n", block.nHeight, dumpBlock.ToString());
+        CBlock dumpCheckBlock(checkBlock); 
+        LogPrintf("Dump Checked block: Height %d, others ==   %s \n", checkBlock.nHeight, dumpCheckBlock.ToString());
+
         //Something went wrong with AAL, compare different elements and determine what the problem is
         if (checkBlock.hashMerkleRoot != block.hashMerkleRoot) {
             //there is a mismatched tx, so go through and determine which txs
