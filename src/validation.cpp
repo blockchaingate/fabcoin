@@ -2873,7 +2873,9 @@ bool ByteCodeExec::performByteCode(dev::eth::Permanence type){
             result.push_back(ResultExecute{execRes, dev::eth::TransactionReceipt(dev::h256(), dev::u256(), dev::eth::LogEntries()), CTransaction()});
             continue;
         }
+        LogPrintf("AAAA pppprev %s \n", h256Touint(globalState->rootHash()).ToString());
         result.push_back(globalState->execute(envInfo, *globalSealEngine.get(), tx, type, OnOpFunc()));
+        LogPrintf("AAAA ppppost %s \n", h256Touint(globalState->rootHash()).ToString());
     }
     globalState->db().commit();
     globalState->dbUtxo().commit();
