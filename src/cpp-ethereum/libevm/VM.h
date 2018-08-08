@@ -43,13 +43,6 @@ inline Address asAddress(u256 _item)
 
 inline u256 fromAddress(Address _a)
 {
-/*
-    byte t[20];
-    byte* p_a = _a.data();
-    for (int i = 0; i < 20; i++)
-        t[i] = *(p_a + 19 - i);
-    return *((u160*)t);
-*/
     return (u160)_a;
 }
 
