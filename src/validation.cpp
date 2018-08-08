@@ -2306,8 +2306,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
     checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
     checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
-    checkBlock.nHeight = block.nHeight;
-
 
     if ((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
     {
@@ -2386,8 +2384,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         return true;
     }
     //////////////////////////////////////////////////////////////////
-    if (fJustCheck)
-        return true;
 
     // Write undo information to disk
     if (pindex->GetUndoPos().IsNull() || !pindex->IsValid(BLOCK_VALID_SCRIPTS))
