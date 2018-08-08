@@ -164,7 +164,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("confirmations", confirmations));
     const Consensus::Params& consensusParams = Params().GetConsensus();
     int ser_flags = (blockindex->nHeight < consensusParams.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
-    ser_flags = (blockindex->nHeight < consensusParams.ContractHeight) ? (ser_flags | SERIALIZE_BLOCK_NO_CONTRACT) : 0;
+    ser_flags |= (blockindex->nHeight < consensusParams.ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
     result.push_back(
         Pair("strippedsize",
              (int)::GetSerializeSize(block, SER_NETWORK,
@@ -906,7 +906,7 @@ UniValue getblockheader(const JSONRPCRequest& request)
     if (!fVerbose)
     {
         int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
-        ser_flags = no_contract_format ? (ser_flags |SERIALIZE_BLOCK_NO_CONTRACT) : 0;
+        ser_flags |= no_contract_format ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | ser_flags);
         ssBlock << pblockindex->GetBlockHeader();
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
@@ -1009,7 +1009,7 @@ UniValue getblock(const JSONRPCRequest& request)
     if (verbosity <= 0)
     {
         int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
-        ser_flags = no_contract_format ? (ser_flags |SERIALIZE_BLOCK_NO_CONTRACT) : 0;
+        ser_flags |= no_contract_format ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | ser_flags | RPCSerializationFlags());
         ssBlock << block;
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());

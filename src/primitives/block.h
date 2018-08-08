@@ -33,6 +33,8 @@ class CBlockHeader
 {
 public:
     static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
+    static const size_t HEADER_NEWSIZE = 4+32+32+4+28+4+4+32+32+32;  // Excluding Equihash solution
+    
     // header
     int32_t nVersion;
     uint256 hashPrevBlock;
@@ -41,10 +43,10 @@ public:
     uint32_t nReserved[7];
     uint32_t nTime;
     uint32_t nBits;
-    uint256 nNonce;
-    std::vector<unsigned char> nSolution;  // Equihash solution.
     uint256 hashStateRoot; // fasc
     uint256 hashUTXORoot; // fasc
+    uint256 nNonce;
+    std::vector<unsigned char> nSolution;  // Equihash solution.
 
     CBlockHeader()
     {
@@ -69,6 +71,10 @@ public:
         }
         READWRITE(nTime);
         READWRITE(nBits);
+        if (has_contract) {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
         if (new_format) {
             READWRITE(nNonce);
             READWRITE(nSolution);
@@ -76,11 +82,6 @@ public:
             uint32_t legacy_nonce = (uint32_t)nNonce.GetUint64(0);
             READWRITE(legacy_nonce);
             nNonce = ArithToUint256(arith_uint256(legacy_nonce));
-        }
-
-        if (has_contract) {
-            READWRITE(hashStateRoot); // fasc
-            READWRITE(hashUTXORoot); // fasc
         }
     }
 
@@ -207,6 +208,8 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
+
+        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
@@ -216,6 +219,10 @@ public:
         }
         READWRITE(nTime);
         READWRITE(nBits);
+        if (has_contract) {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
     }
 };
 

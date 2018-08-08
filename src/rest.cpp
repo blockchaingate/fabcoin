@@ -171,7 +171,7 @@ static bool rest_headers(HTTPRequest* req,
         }
     }
     int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
-    ser_flags = no_contract_format ? (ser_flags | SERIALIZE_BLOCK_NO_CONTRACT) : 0;
+    ser_flags |= no_contract_format ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
     CDataStream ssHeader(SER_NETWORK, PROTOCOL_VERSION | ser_flags);
     for (const CBlockIndex *pindex : headers) {
         ssHeader << pindex->GetBlockHeader();
@@ -253,7 +253,7 @@ static bool rest_block(HTTPRequest* req,
             return RESTERR(req, HTTP_NOT_FOUND, hashStr + " not found");
     }
     int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
-    ser_flags = no_contract_format ? (ser_flags | SERIALIZE_BLOCK_NO_CONTRACT) : 0;
+    ser_flags |= no_contract_format ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
     CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags() | ser_flags);
     ssBlock << block;
 

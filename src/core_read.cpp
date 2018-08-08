@@ -150,7 +150,7 @@ bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk, bool fLegacyForma
 
     std::vector<unsigned char> blockData(ParseHex(strHexBlk));
     int ser_flags = fLegacyFormat ? SERIALIZE_BLOCK_LEGACY : 0;
-    ser_flags = fNoContractFormat ? (ser_flags |SERIALIZE_BLOCK_NO_CONTRACT) : 0;
+    ser_flags |= fNoContractFormat ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
     CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
     try {
         ssBlock >> block;

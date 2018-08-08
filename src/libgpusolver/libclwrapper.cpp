@@ -395,11 +395,14 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
 		size_t          local_ws = 64;
 		size_t		    global_ws;
 
-        assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
-        *ptr = *(uint256 *)(header + CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
+        assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_NEWSIZE);
+        *ptr = *(uint256 *)(header + header_len - FABCOIN_NONCE_LEN);
 
 		zcash_blake2b_init(&blake, FABCOIN_HASH_LEN, PARAM_N, PARAM_K);
-		zcash_blake2b_update(&blake, header, 128, 0);
+
+        zcash_blake2b_update(&blake, header, 128, 0);
+        zcash_blake2b_update(&blake, header+128, header_len-128, 1);
+
 		buf_blake_st = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof (blake.h), NULL, NULL);
 		m_queue.enqueueWriteBuffer(buf_blake_st, true, 0, sizeof(blake.h), blake.h);
 		m_queue.finish();
