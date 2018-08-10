@@ -345,11 +345,11 @@ void createTestContractsAndBlocks(TestChain800Setup* testChain800Setup, valtype&
 
 template <typename T>
 void checkValue(T value, T value1, T value2, T value3, T value4, size_t i, std::function<bool(T&,T&)> func){
-    if(i > COINBASE_MATURITY + 99+2)
+    if(i > COINBASE_MATURITY + 99)
         BOOST_CHECK(func(value, value4));
-    if(COINBASE_MATURITY + 99 +2> i && i > COINBASE_MATURITY + 50+1)
+    if(COINBASE_MATURITY + 99 > i && i > COINBASE_MATURITY + 50)
         BOOST_CHECK(func(value, value3));
-    if(COINBASE_MATURITY + 50 +1> i && i > COINBASE_MATURITY + 1)
+    if(COINBASE_MATURITY + 50 > i && i > COINBASE_MATURITY + 1)
         BOOST_CHECK(func(value, value2));
     if(COINBASE_MATURITY + 1 > i && i > 0) // After initializing the tests, the height of the chain 802
         BOOST_CHECK(func(value, value1));

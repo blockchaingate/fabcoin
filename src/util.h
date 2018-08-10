@@ -125,8 +125,8 @@ std::vector<CLogCategoryActive> ListActiveLogCategories();
 bool GetLogCategory(uint32_t *f, const std::string *str);
 
 /** Send a string to the log output */
-int LogPrintStr(const std::string &str);
-//int LogPrintStr(const std::string &str, bool useVMLog = false); // fasc
+//int LogPrintStr(const std::string &str );
+int LogPrintStr(const std::string &str, bool useVMLog = false); // fasc
 
 /** Get format string from VA_ARGS for error reporting */
 template<typename... Args> std::string FormatStringFromLogArgs(const char *fmt, const Args&... args) { return fmt; }

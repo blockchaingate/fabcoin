@@ -364,9 +364,9 @@ public:
         consensus.BIP34Hash   = uint256();
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        //consensus.FABHeight = -1;   //enable LEGACY MODE for fabcoin
         consensus.FABHeight   = 100000000;   //enable LEGACY MODE for fabcoin
-        consensus.ContractHeight = 100000000;
+        //consensus.ContractHeight = 100000000;
+        consensus.ContractHeight = 1;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
 
