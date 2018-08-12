@@ -18,7 +18,7 @@ namespace Consensus {
     struct Params;
 };
 
-static const int SERIALIZE_BLOCK_LEGACY = 0x04000000;
+static const int SERIALIZE_BLOCK_LEGACY      = 0x04000000;
 static const int SERIALIZE_BLOCK_NO_CONTRACT = 0x08000000;
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
@@ -57,7 +57,13 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
         bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
-        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
+        bool has_contract = !( s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
+
+        // for old fabcoin version 70016 , no smart contract 
+        if ( (s.GetVersion() & 0x00ffffff ) < FAB_CONTRACT_VERSION ){
+           has_contract = false;
+        }
+
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);

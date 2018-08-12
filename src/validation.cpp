@@ -1282,9 +1282,9 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     CAmount nSubsidy = 25 * COIN;
 
     //Pre-mining 
-    bool fRegTest = gArgs.GetBoolArg("-regtest", false);
-
-    if ( nHeight == 2  &&  !fRegTest ) {
+    //bool fRegTest = gArgs.GetBoolArg("-regtest", false);
+    //if ( nHeight == 2  &&  !fRegTest ) {
+    if ( nHeight == 2  ) {
        nSubsidy = 32000000 * COIN;
     }
 

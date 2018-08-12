@@ -847,14 +847,14 @@ UniValue getblockheader(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
-            "getblockheader \"hash\" ( verbose legacy )\n"
+            "getblockheader \"hash\" ( verbose legacy no_contract)\n"
             "\nIf verbose is false, returns a string that is serialized, hex-encoded data for blockheader 'hash'.\n"
             "If verbose is true, returns an Object with information about blockheader <hash>.\n"
             "\nArguments:\n"
             "1. \"hash\"          (string, required) The block hash\n"
             "2. \"verbose\"       (boolean, optional, default=true) true for a json object, false for the hex encoded data\n"
-            "3. \"legacy\"        (boolean, optional, default=false) indicates if the block should be in legacy format\n"
-            "4. \"no_contract\"        (boolean, optional, default=false) indicates if the block should be in non-contract format\n"
+            "3. \"legacy \"        (boolean, optional, default=false) indicates if the block should be in legacy format\n"
+            "4. \"no_contract\"   (boolean, optional, default=false) indicates if the block should be in non-contract format\n"
             "\nResult (for verbose = true):\n"
             "{\n"
             "  \"hash\" : \"hash\",     (string) the block hash (same as provided)\n"
@@ -898,6 +898,7 @@ UniValue getblockheader(const JSONRPCRequest& request)
         no_contract_format = true;
     }
 
+
     if (mapBlockIndex.count(hash) == 0)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
 
@@ -920,7 +921,7 @@ UniValue getblock(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 4)
         throw std::runtime_error(
-            "getblock \"blockhash\" ( verbosity legacy) \n"
+            "getblock \"blockhash\" ( verbosity legacy no_contract) \n"
             "\nIf verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.\n"
             "If verbosity is 1, returns an Object with information about block <hash>.\n"
             "If verbosity is 2, returns an Object with information about block <hash> and information about each transaction. \n"
