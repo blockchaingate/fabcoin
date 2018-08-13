@@ -117,6 +117,7 @@ class FabcoinTestFramework(object):
         try:
             self.setup_chain()
             self.setup_network()
+            
             self.run_test()
             success = TestStatus.PASSED
         except JSONRPCException as e:
@@ -332,8 +333,8 @@ class FabcoinTestFramework(object):
 
         For backwared compatibility of the python scripts with previous
         versions of the cache, this helper function sets mocktime to Jan 1,
-        2014 + (201 * 10 * 60)"""
-        self.mocktime = 1388534400 + (201 * 10 * 60)
+        2014 + (901 * 75 )"""
+        self.mocktime = 1388534400 + (901 * 75 )
 
     def disable_mocktime(self):
         self.mocktime = 0
@@ -411,7 +412,9 @@ class FabcoinTestFramework(object):
             # blocks are created with timestamps 75 seconds apart
             # starting from 901 *75 seconds in the past
             self.enable_mocktime()
-            block_time = self.mocktime - (901 * 75 )
+            block_time = self.mocktime - (901 * 75)
+
+            print( block_time )
 
             for i in range(9):
                 for peer in range(4):
