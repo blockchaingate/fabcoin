@@ -274,10 +274,12 @@ def test_locked_wallet_fails(rbf_node, dest_address):
 def spend_one_input(node, dest_address):
     tx_input = dict(
         sequence=BIP125_SEQUENCE_NUMBER, **next(u for u in node.listunspent() if u["amount"] == Decimal("0.00100000")))
+    #print (tx_input )
     rawtx = node.createrawtransaction(
         [tx_input], {dest_address: Decimal("0.00050000"),
                      node.getrawchangeaddress(): Decimal("0.00049000")})
     signedtx = node.signrawtransaction(rawtx)
+    #print (rawtx)
     txid = node.sendrawtransaction(signedtx["hex"])
     return txid
 
@@ -294,7 +296,7 @@ def submit_block_with_tx(node, tx):
     block.rehash()
     block.hashMerkleRoot = block.calc_merkle_root()
     block.solve()
-    node.submitblock(bytes_to_hex_str(block.serialize(True)), '', True)
+    node.submitblock(bytes_to_hex_str(block.serialize(True, True)), '', True )
     return block
 
 
