@@ -270,7 +270,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         // Randomise nonce for new block foramt.
         nonce = UintToArith256(GetRandHash());
         // Clear the top and bottom 16 bits (for local use as thread flags and counters)
-        nonce >>= 128;
+        nonce >>= 32; //128;
         nonce <<= 32;
     }
 
@@ -934,6 +934,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
 {
     static const int nInnerLoopCount = 0x10000;
     int nCounter = 0;
+    int headerlen = 0;
 
     if(conf.useGPU)
         LogPrintf("FabcoinMiner started on GPU device: %u\n", conf.currentDevice);
@@ -961,7 +962,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
     {
         g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
-        header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
+        header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
     }
 #endif
 
@@ -1011,6 +1012,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
             LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
                 ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
 
+            headerlen = (pblock->nHeight < chainparams.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
             //
             // Search
             //
@@ -1027,8 +1029,10 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
             while (true) 
             {
                 // I = the block header minus nonce and solution.
+                int ser_flags = (pblock->nHeight < chainparams.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
+
                 CEquihashInput I{*pblock};
-                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags );
                 ss << I;
 
                 // Hash state
@@ -1053,7 +1057,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                 {
 #ifdef ENABLE_GPU
                     for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
-                        header[108 + i] = pblock->nNonce.begin()[i];
+                        header[headerlen-32 + i] = pblock->nNonce.begin()[i];
 #endif
                 }
                 else
@@ -1119,7 +1123,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
                     else 
                     {
 #ifdef ENABLE_GPU
-                        bool found = g_solver->run(n, k, header, CBlockHeader::HEADER_SIZE, pblock->nNonce, validBlock, cancelledGPU, curr_state);
+                        bool found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, cancelledGPU, curr_state);
                         if (found)
                             break;
 #endif
