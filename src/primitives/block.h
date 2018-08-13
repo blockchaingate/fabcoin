@@ -32,19 +32,23 @@ static const int SERIALIZE_BLOCK_NO_CONTRACT = 0x08000000;
 class CBlockHeader
 {
 public:
-    static const size_t HEADER_SIZE = 4+32+32+4+28+4+4+32;  // Excluding Equihash solution
+    static const size_t BC_HEADER_SIZE   = 80  ; //4+32+32+4+4+4   Bitcoin SHA256 Header
+    static const size_t BCSC_HEADER_SIZE = 144 ; //4+32+32+32+32+4+4+4  SHA256 + smart contract Header
+    static const size_t HEADER_SIZE      = 140 ; //4+32+32+4+28+4+4+32  Fabcoin Equihash header, add nHeight, nReserved, u256-nNonce  - Excluding Equihash solution
+    static const size_t FASC_HEADER_SIZE = 204 ; //4+32+32+32+32+4+28+4+4+32  Smart Contract Header , add shStateRoot, hashUTXORoot  
+     
     // header
     int32_t nVersion;
     uint256 hashPrevBlock;
     uint256 hashMerkleRoot;
-    uint32_t nHeight;
-    uint32_t nReserved[7];
+    uint256 hashStateRoot;  // fasc
+    uint256 hashUTXORoot;   // fasc
+    uint32_t nHeight;        //Equihash 
+    uint32_t nReserved[7];   //Equihash 
     uint32_t nTime;
     uint32_t nBits;
     uint256 nNonce;
     std::vector<unsigned char> nSolution;  // Equihash solution.
-    uint256 hashStateRoot; // fasc
-    uint256 hashUTXORoot; // fasc
 
     CBlockHeader()
     {
@@ -56,18 +60,20 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
-        bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
+        bool equihash_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
         bool has_contract = !( s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
 
-        // for old fabcoin version 70016 , no smart contract 
-        if ( (s.GetVersion() & 0x00ffffff ) < FAB_CONTRACT_VERSION ){
-           has_contract = false;
-        }
+
 
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
-        if (new_format) {
+        // keep hash together
+        if (has_contract) {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
+        if (equihash_format) {
             READWRITE(nHeight);
             for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
                 READWRITE(nReserved[i]);
@@ -75,7 +81,9 @@ public:
         }
         READWRITE(nTime);
         READWRITE(nBits);
-        if (new_format) {
+
+        // put nonce in the end , but before nSolution 
+        if (equihash_format) {
             READWRITE(nNonce);
             READWRITE(nSolution);
         } else {
@@ -84,10 +92,7 @@ public:
             nNonce = ArithToUint256(arith_uint256(legacy_nonce));
         }
 
-        if (has_contract) {
-            READWRITE(hashStateRoot); // fasc
-            READWRITE(hashUTXORoot); // fasc
-        }
+
     }
 
     void SetNull()
@@ -95,16 +100,17 @@ public:
         nVersion = 0;
         hashPrevBlock.SetNull();
         hashMerkleRoot.SetNull();
+        hashStateRoot.SetNull(); // fasc
+        hashUTXORoot.SetNull(); // fasc
+        //hashStateRoot = uint256S("9514771014c9ae803d8cea2731b2063e83de44802b40dce2d06acd02d0ff65e9");
+        //hashUTXORoot = uint256S("21b463e3b52f6201c0ad6c991be0485b6ef8c092e64583ffa655cc1b171fe856");
         nHeight = 0;
         memset(nReserved, 0, sizeof(nReserved));
         nTime = 0;
         nBits = 0;
         nNonce.SetNull();
         nSolution.clear();
-        hashStateRoot.SetNull(); // fasc
-        hashUTXORoot.SetNull(); // fasc
-        //hashStateRoot = uint256S("9514771014c9ae803d8cea2731b2063e83de44802b40dce2d06acd02d0ff65e9");
-        //hashUTXORoot = uint256S("21b463e3b52f6201c0ad6c991be0485b6ef8c092e64583ffa655cc1b171fe856");
+
     }
 
     bool IsNull() const
@@ -127,14 +133,15 @@ public:
             this->nVersion       = other.nVersion;
             this->hashPrevBlock  = other.hashPrevBlock;
             this->hashMerkleRoot = other.hashMerkleRoot;
+            this->hashStateRoot  = other.hashStateRoot;
+            this->hashUTXORoot   = other.hashUTXORoot;
             this->nTime          = other.nTime;
             this->nBits          = other.nBits;
             this->nNonce         = other.nNonce;
             this->nHeight        = other.nHeight;
             memcpy(this->nReserved, other.nReserved, sizeof(other.nReserved));
             this->nSolution      = other.nSolution;
-            this->hashStateRoot  = other.hashStateRoot;
-            this->hashUTXORoot   = other.hashUTXORoot;
+
         }
         return *this;
     }
@@ -182,14 +189,15 @@ public:
         block.nVersion       = nVersion;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
-        block.nHeight        = nHeight;
-        memcpy(block.nReserved, nReserved, sizeof(block.nReserved));
+        block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashUTXORoot   = hashUTXORoot;  // fasc
+        block.nHeight        = nHeight;                               //equihash
+        memcpy(block.nReserved, nReserved, sizeof(block.nReserved));  //equihash
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
         block.nSolution      = nSolution;
-        block.hashStateRoot  = hashStateRoot; // fasc
-        block.hashUTXORoot   = hashUTXORoot; // fasc
+
         return block;
     }
 
@@ -211,11 +219,18 @@ public:
 
     ADD_SERIALIZE_METHODS;
 
+
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
+        bool has_contract = false; // to do check has_contract or not
+
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
+        if ( has_contract ) {
+            READWRITE(hashStateRoot);
+            READWRITE(hashUTXORoot);
+        }
         READWRITE(nHeight);
         for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
             READWRITE(nReserved[i]);

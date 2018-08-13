@@ -20,7 +20,7 @@
 #include <vector>
 
 // Maximum number of bytes pushable to the stack
-static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 128000;
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 128000; //(128 kb)
 
 // Maximum number of non-push operations per script
 static const int MAX_OPS_PER_SCRIPT = 201;
@@ -29,7 +29,7 @@ static const int MAX_OPS_PER_SCRIPT = 201;
 static const int MAX_PUBKEYS_PER_MULTISIG = 20;
 
 // Maximum script length in bytes
-static const int MAX_SCRIPT_SIZE = 129000;
+static const int MAX_SCRIPT_SIZE = 129000; // (129 kb)
 
 // Maximum number of values on script interpreter stack
 static const int MAX_STACK_SIZE = 1000;
@@ -356,7 +356,7 @@ public:
         return result;
     }
     /////////////////////////////////
-    
+
     static std::vector<unsigned char> serialize(const int64_t& value)
     {
         if(value == 0)
@@ -708,7 +708,7 @@ public:
         return size()==1 && *begin() == OP_SPEND;
     }
     /////////////////////////////////////////
-    
+
     void clear()
     {
         // The default prevector::clear() does not release memory

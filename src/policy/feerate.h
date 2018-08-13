@@ -8,7 +8,7 @@
 
 #include "amount.h"
 
-// check amount.h
+//????   check amount.h
 #if 0
 #include "serialize.h"
 

@@ -128,7 +128,7 @@ TestingSetup::~TestingSetup()
         delete pcoinsTip;
         delete pcoinsdbview;
         delete pblocktree;
- /////////////////////////////////////////////// // qtum
+ /////////////////////////////////////////////// // fasc
         delete globalState.release();
         globalSealEngine.reset();
 ///////////////////////////////////////////////
