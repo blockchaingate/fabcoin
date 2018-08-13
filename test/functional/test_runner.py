@@ -57,14 +57,14 @@ BASE_SCRIPTS= [
     'wallet-hd.py',
     'walletbackup.py',
     # vv Tests less than 5m vv
-
+    'p2p-fullblocktest.py',
     'fundrawtransaction.py',
-
-    'segwit.py',
+    'p2p-compactblocks.py',
+    ###'segwit.py',
     # vv Tests less than 2m vv
     'wallet.py',
     'wallet-accounts.py',
-    'p2p-segwit.py',
+    ###'p2p-segwit.py',
     'wallet-dump.py',
     'listtransactions.py',
     # vv Tests less than 60s vv
@@ -75,7 +75,7 @@ BASE_SCRIPTS= [
     'merkle_blocks.py',
     'receivedby.py',
     'abandonconflict.py',
-
+    'bip68-112-113-p2p.py',
     'rawtransactions.py',
     'reindex.py',
     # vv Tests less than 30s vv
@@ -84,7 +84,7 @@ BASE_SCRIPTS= [
     'fabcoin_cli.py',
     'mempool_resurrect_test.py',
     'txn_doublespend.py --mineblock',
-
+    'txn_clone.py',
     'getchaintips.py',
     'rest.py',
     'mempool_spendcoinbase.py',
@@ -117,18 +117,48 @@ BASE_SCRIPTS= [
     'listsinceblock.py',
     'p2p-leaktests.py',
     'wallet-encryption.py',
-    'bipdersig-p2p.py',
-    'bip65-cltv-p2p.py',
     'uptime.py',
     'resendwallettransactions.py',
     'minchainwork.py',
-    'p2p-acceptblock.py',
+
+    # fabcoin
+    'fabcoin-dgp.py',
+    'fabcoin-opcall.py',
+    'fabcoin-opcreate.py',
+    'fabcoin-8mb-block.py',
+    'fabcoin-gas-limit.py',
+    'fabcoin-searchlog.py',
+    'fabcoin-state-root.py',
+    'fabcoin-evm-globals.py',
+    'fabcoin-null-sender.py',
+    'fabcoin-waitforlogs.py',
+    'fabcoin-block-header.py',
+    'fabcoin-callcontract.py',
+    'fabcoin-spend-op-call.py',
+    'fabcoin-condensing-txs.py',
+    'fabcoin-createcontract.py',
+    'fabcoin-sendtocontract.py',
+    'fabcoin-identical-refunds.py',
+    'fabcoin-create-eth-op-code.py',
+    'fabcoin-gas-limit-overflow.py',
+    'fabcoin-call-empty-contract.py',
+    'fabcoin-dgp-block-size-sync.py',
+    'fabcoin-globals-state-changer.py',
+    'fabcoin-no-exec-call-disabled.py',
+    'fabcoin-soft-block-gas-limits.py',
+    'fabcoin-dgp-block-size-restart.py',
+    'fabcoin-searchlog-restart-node.py',
+    'fabcoin-immature-coinstake-spend.py',
+    'fabcoin-transaction-prioritization.py',
+    'fabcoin-many-value-refunds-from-same-tx.py',
+    'fabcoin-combined-outputs-exceed-gas-limit.py',
+    'fabcoin-dgp-gas-price-lingering-mempool-tx.py',
 ]
 
 EXTENDED_SCRIPTS = [
     # These tests are not run by the travis build process.
     # Longest test should go first, to favor running tests in parallel
-    'pruning.py',
+    #####    'pruning.py',
     # vv Tests less than 20m vv
     'smartfees.py',
     # vv Tests less than 5m vv
@@ -139,6 +169,10 @@ EXTENDED_SCRIPTS = [
     'bip68-sequence.py',
     'getblocktemplate_longpoll.py',
     'p2p-timeouts.py',
+    # Version <4 blocks are never allowed in regtest on fabcoin
+    'bipdersig-p2p.py',
+    'bip65-cltv-p2p.py',
+    'p2p-acceptblock.py',
     # vv Tests less than 60s vv
     'bip9-softforks.py',
     'p2p-feefilter.py',
