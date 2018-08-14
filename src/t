@@ -1,0 +1,1327 @@
+12c12
+< #include "./wallet/wallet.h"
+---
+> //??? #include "./wallet/wallet.h"
+17c17
+< #include "crypto/equihash.h"
+---
+> //??? #include "crypto/equihash.h"
+23a24
+> #include "pos.h"
+32a34,37
+> #if USE_CUDA
+> #include "cuda/eqcuda.hpp"
+> #endif
+> 
+36c41
+< 
+---
+> /*???
+43a49,53
+> std::mutex g_cs;
+> bool g_cancelSolver = false;
+> 
+> int g_nSols[256] = {0}; 
+> */
+56d65
+< uint64_t nLastBlockSize = 0;
+58,69c67,68
+< 
+< 
+< class ScoreCompare
+< {
+< public:
+<     ScoreCompare() {}
+< 
+<     bool operator()(const CTxMemPool::txiter a, const CTxMemPool::txiter b)
+<     {
+<         return CompareTxMemPoolEntryByScore()(*b,*a); // Convert to less than
+<     }
+< };
+---
+> int64_t nLastCoinStakeSearchInterval = 0;
+> unsigned int nMinerSleep = STAKER_POLLING_PERIOD;
+81c80
+<         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, consensusParams);
+---
+>         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, consensusParams,pblock->IsProofOfStake());
+85a85,88
+> BlockAssembler::Options::Options() {
+>     blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+>     nBlockMaxWeight = DEFAULT_BLOCK_MAX_WEIGHT;
+> }
+86a90,97
+> BlockAssembler::BlockAssembler(const CChainParams& params, const Options& options) : chainparams(params)
+> {
+>     blockMinFeeRate = options.blockMinFeeRate;
+>     // Limit weight to between 4K and dgpMaxBlockWeight-4K for sanity:
+>     //???  // Limit weight to between 4K and MAX_BLOCK_WEIGHT-4K for sanity:
+>     nBlockMaxWeight = std::max<size_t>(4000, std::min<size_t>(dgpMaxBlockWeight - 4000, options.nBlockMaxWeight));
+>     //??? nBlockMaxWeight = std::max<size_t>(4000, std::min<size_t>(MAX_BLOCK_WEIGHT - 4000, options.nBlockMaxWeight));
+> }
+88,89c99
+< BlockAssembler::BlockAssembler(const CChainParams& _chainparams)
+<     : chainparams(_chainparams)
+---
+> static BlockAssembler::Options DefaultOptions(const CChainParams& params)
+95,108c105,106
+<     nBlockMaxWeight = DEFAULT_BLOCK_MAX_WEIGHT;
+<     nBlockMaxSize = DEFAULT_BLOCK_MAX_SIZE;
+<     bool fWeightSet = false;
+<     if (gArgs.IsArgSet("-blockmaxweight")) {
+<         nBlockMaxWeight = gArgs.GetArg("-blockmaxweight", DEFAULT_BLOCK_MAX_WEIGHT);
+<         nBlockMaxSize = dgpMaxBlockSerSize;
+<         fWeightSet = true;
+<     }
+<     if (gArgs.IsArgSet("-blockmaxsize")) {
+<         nBlockMaxSize = gArgs.GetArg("-blockmaxsize", DEFAULT_BLOCK_MAX_SIZE);
+<         if (!fWeightSet) {
+<             nBlockMaxWeight = nBlockMaxSize * WITNESS_SCALE_FACTOR;
+<         }
+<     }
+---
+>     BlockAssembler::Options options;
+>     options.nBlockMaxWeight = gArgs.GetArg("-blockmaxweight", DEFAULT_BLOCK_MAX_WEIGHT);
+112c110
+<         blockMinFeeRate = CFeeRate(n);
+---
+>         options.blockMinFeeRate = CFeeRate(n);
+114c112
+<         blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+---
+>         options.blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
+116,122c114
+< 
+<     // Limit weight to between 4K and dgpMaxBlockWeight-4K for sanity:
+<     nBlockMaxWeight = std::max((unsigned int)4000, std::min((unsigned int)(dgpMaxBlockWeight-4000), nBlockMaxWeight));
+<     // Limit size to between 1K and dgpMaxBlockSerSize-1K for sanity:
+<     nBlockMaxSize = std::max((unsigned int)1000, std::min((unsigned int)(dgpMaxBlockSerSize-1000), nBlockMaxSize));
+<     // Whether we need to account for byte usage (in addition to weight usage)
+<     fNeedSizeAccounting = (nBlockMaxSize < dgpMaxBlockSerSize-1000);
+---
+>     return options;
+124a117,118
+> BlockAssembler::BlockAssembler(const CChainParams& params) : BlockAssembler(params, DefaultOptions(params)) {}
+> 
+130d123
+<     nBlockSize = 1000;
+138,140d130
+< 
+<     lastFewTxs = 0;
+<     blockFinished = false;
+145c135,137
+<    
+---
+>     if(pblock->IsProofOfStake()){
+>         refundtx=1; //1 for coinstake in PoS
+>     }
+159c151
+< std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx, int64_t* pTotalFees, int32_t txProofTime, int32_t nTimeLimit)
+---
+> std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx, bool fProofOfStake, int64_t* pTotalFees, int32_t txProofTime, int32_t nTimeLimit)
+161c153
+<     //int64_t nTimeStart = GetTimeMicros();
+---
+>     int64_t nTimeStart = GetTimeMicros();
+174a167,169
+>     // Add dummy coinstake tx as second transaction
+>     if(fProofOfStake)
+>         pblock->vtx.emplace_back();
+188,189c183,193
+<     pblock->nTime = GetAdjustedTime();
+<    
+---
+>     //???pblock->nTime = GetAdjustedTime();
+>     if(txProofTime == 0) {
+>         txProofTime = GetAdjustedTime();
+>     }
+>     if(fProofOfStake)
+>         txProofTime &= ~STAKE_TIMESTAMP_MASK;
+>     pblock->nTime = txProofTime;
+>     if (!fProofOfStake)
+>         UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
+>     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus(),fProofOfStake);
+> 
+203a208,214
+> /* ??? ----
+>     int nPackagesSelected = 0;
+>     int nDescendantsUpdated = 0;
+>     addPackageTxs(nPackagesSelected, nDescendantsUpdated);
+> */
+>     int64_t nTime1 = GetTimeMicros();
+> 
+205d215
+<     nLastBlockSize = nBlockSize;
+213,214c223,224
+<  
+<     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
+---
+> 
+> /* ???    coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
+215a226,237
+> */
+>     if (fProofOfStake)
+>     {
+>         // Make the coinbase tx empty in case of proof of stake
+>         coinbaseTx.vout[0].SetEmpty();
+>     }
+>     else
+>     {
+>         coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
+>         coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+>     }
+> 
+217c239
+<     originalRewardTx = coinbaseTx;
+---
+>     originalRewardTx = coinbaseTx;   // q
+219a242,273
+> /*  ????
+>     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
+>     pblocktemplate->vTxFees[0] = -nFees;
+> 
+>     const Consensus::Params& params = chainparams.GetConsensus();
+>     int ser_flags = (nHeight < params.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
+>     uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+>     LogPrintf("CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", 
+>            nHeight, nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
+> 
+>     arith_uint256 nonce;
+>     if (nHeight >= params.FABHeight) {
+>         // Randomise nonce for new block foramt.
+>         nonce = UintToArith256(GetRandHash());
+>         // Clear the top and bottom 16 bits (for local use as thread flags and counters)
+>         nonce >>= 128;
+>         nonce <<= 32;
+>     }
+> */
+>     // Create coinstake transaction.
+>     if(fProofOfStake)
+>     {
+>         CMutableTransaction coinstakeTx;
+>         coinstakeTx.vout.resize(2);
+>         coinstakeTx.vout[0].SetEmpty();
+>         coinstakeTx.vout[1].scriptPubKey = scriptPubKeyIn;
+>         originalRewardTx = coinstakeTx;
+>         pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
+> 
+>         //this just makes CBlock::IsProofOfStake to return true
+>         //real prevoutstake info is filled in later in SignBlock
+>         pblock->prevoutStake.n=0;
+220a275
+>     }
+222,226c277,281
+<     //////////////////////////////////////////////////////// fasc
+<     FascDGP fascDGP(globalState.get(), fGettingValuesDGP);
+<     globalSealEngine->setFascSchedule(fascDGP.getGasSchedule(nHeight));
+<     uint32_t blockSizeDGP = fascDGP.getBlockSize(nHeight);
+<     minGasPrice = fascDGP.getMinGasPrice(nHeight);
+---
+>     //////////////////////////////////////////////////////// fabcoin
+>     FabcoinDGP fabcoinDGP(globalState.get(), fGettingValuesDGP);
+>     globalSealEngine->setFabcoinSchedule(fabcoinDGP.getGasSchedule(nHeight));
+>     uint32_t blockSizeDGP = fabcoinDGP.getBlockSize(nHeight);
+>     minGasPrice = fabcoinDGP.getMinGasPrice(nHeight);
+233c288
+<     hardBlockGasLimit = fascDGP.getBlockGasLimit(nHeight);
+---
+>     hardBlockGasLimit = fabcoinDGP.getBlockGasLimit(nHeight);
+238c293
+<     nBlockMaxSize = blockSizeDGP ? blockSizeDGP : nBlockMaxSize;
+---
+>     nBlockMaxWeight = blockSizeDGP ? blockSizeDGP * WITNESS_SCALE_FACTOR : nBlockMaxWeight;
+242,245c297,299
+<     addPriorityTxs(minGasPrice);
+< 
+<     addPackageTxs(minGasPrice);
+< 
+---
+>     int nPackagesSelected = 0;
+>     int nDescendantsUpdated = 0;
+>     addPackageTxs(nPackagesSelected, nDescendantsUpdated, minGasPrice);
+256c310
+<     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
+---
+>     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus(), fProofOfStake);
+259,262c313
+<     auto params = chainparams.GetConsensus();
+<     int ser_flags = (nHeight < params.ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
+<     uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+<     LogPrintChar("miner", "CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", nHeight, nSerializeSize, GetBlockWeight(*pblock, params), nBlockTx, nFees, nBlockSigOpsCost);
+---
+>     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
+268,276d318
+<     arith_uint256 nonce;
+<     if (nHeight >= params.FABHeight) {
+<         // Randomise nonce for new block foramt.
+<         nonce = UintToArith256(GetRandHash());
+<         // Clear the top and bottom 16 bits (for local use as thread flags and counters)
+<         nonce >>= 128;
+<         nonce <<= 32;
+<     }
+< 
+278a321,322
+>     pblock->nNonce         = 0;              // q
+> /*
+284a329
+> */
+288c333
+<     if ( !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
+---
+>     if (!fProofOfStake && !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
+290a336,338
+>     int64_t nTime2 = GetTimeMicros();
+> 
+>     LogPrint(BCLog::BENCH, "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
+295c343
+< bool BlockAssembler::isStillDependent(CTxMemPool::txiter iter)
+---
+> std::unique_ptr<CBlockTemplate> BlockAssembler::CreateEmptyBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx, bool fProofOfStake, int64_t* pTotalFees, int32_t nTime)
+297c345,397
+<     for (auto parent: mempool.GetMemPoolParents(iter))
+---
+>     resetBlock();
+> 
+>     pblocktemplate.reset(new CBlockTemplate());
+> 
+>     if(!pblocktemplate.get())
+>         return nullptr;
+>     pblock = &pblocktemplate->block; // pointer for convenience
+> 
+>     // Add dummy coinbase tx as first transaction
+>     pblock->vtx.emplace_back();
+>     // Add dummy coinstake tx as second transaction
+>     if(fProofOfStake)
+>         pblock->vtx.emplace_back();
+>     pblocktemplate->vTxFees.push_back(-1); // updated at end
+>     pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
+> 
+>     LOCK2(cs_main, mempool.cs);
+>     CBlockIndex* pindexPrev = chainActive.Tip();
+>     nHeight = pindexPrev->nHeight + 1;
+> 
+>     pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+>     // -regtest only: allow overriding block.nVersion with
+>     // -blockversion=N to test forking scenarios
+>     if (chainparams.MineBlocksOnDemand())
+>         pblock->nVersion = gArgs.GetArg("-blockversion", pblock->nVersion);
+> 
+>     uint32_t txProofTime = nTime == 0 ? GetAdjustedTime() : nTime;
+>     if(fProofOfStake)
+>         txProofTime &= ~STAKE_TIMESTAMP_MASK;
+>     pblock->nTime = txProofTime;
+>     const int64_t nMedianTimePast = pindexPrev->GetMedianTimePast();
+> 
+>     nLockTimeCutoff = (STANDARD_LOCKTIME_VERIFY_FLAGS & LOCKTIME_MEDIAN_TIME_PAST)
+>                        ? nMedianTimePast
+>                        : pblock->GetBlockTime();
+> 
+>     // Decide whether to include witness transactions
+>     // This is only needed in case the witness softfork activation is reverted
+>     // (which would require a very deep reorganization) or when
+>     // -promiscuousmempoolflags is used.
+>     // TODO: replace this with a call to main to assess validity of a mempool
+>     // transaction (which in most cases can be a no-op).
+>     fIncludeWitness = IsWitnessEnabled(pindexPrev, chainparams.GetConsensus()) && fMineWitnessTx;
+> 
+>     nLastBlockTx = nBlockTx;
+>     nLastBlockWeight = nBlockWeight;
+> 
+>     // Create coinbase transaction.
+>     CMutableTransaction coinbaseTx;
+>     coinbaseTx.vin.resize(1);
+>     coinbaseTx.vin[0].prevout.SetNull();
+>     coinbaseTx.vout.resize(1);
+>     if (fProofOfStake)
+299,301c399,405
+<         if (!inBlock.count(parent)) {
+<             return true;
+<         }
+---
+>         // Make the coinbase tx empty in case of proof of stake
+>         coinbaseTx.vout[0].SetEmpty();
+>     }
+>     else
+>     {
+>         coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
+>         coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+303c407,454
+<     return false;
+---
+>     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+>     originalRewardTx = coinbaseTx;
+>     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
+> 
+>     // Create coinstake transaction.
+>     if(fProofOfStake)
+>     {
+>         CMutableTransaction coinstakeTx;
+>         coinstakeTx.vout.resize(2);
+>         coinstakeTx.vout[0].SetEmpty();
+>         coinstakeTx.vout[1].scriptPubKey = scriptPubKeyIn;
+>         originalRewardTx = coinstakeTx;
+>         pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
+> 
+>         //this just makes CBlock::IsProofOfStake to return true
+>         //real prevoutstake info is filled in later in SignBlock
+>         pblock->prevoutStake.n=0;
+>     }
+> 
+>     //////////////////////////////////////////////////////// fabcoin
+>     //state shouldn't change here for an empty block, but if it's not valid it'll fail in CheckBlock later
+>     pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
+>     pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
+> 
+>     RebuildRefundTransaction();
+>     ////////////////////////////////////////////////////////
+> 
+>     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus(), fProofOfStake);
+>     pblocktemplate->vTxFees[0] = -nFees;
+> 
+>     // The total fee is the Fees minus the Refund
+>     if (pTotalFees)
+>         *pTotalFees = nFees - bceResult.refundSender;
+> 
+>     // Fill in header
+>     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
+>     if (!fProofOfStake)
+>         UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
+>     pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus(),fProofOfStake);
+>     pblock->nNonce         = 0;
+>     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
+> 
+>     CValidationState state;
+>     if (!fProofOfStake && !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
+>         throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
+>     }
+> 
+>     return std::move(pblocktemplate);
+304a456
+> 
+323c475
+<     if (nBlockSigOpsCost + packageSigOpsCost >= MAX_BLOCK_SIGOPS_COST)
+---
+>     if (nBlockSigOpsCost + packageSigOpsCost >= (uint64_t)dgpMaxBlockSigOps)
+343,406d494
+< bool BlockAssembler::TestForBlock(CTxMemPool::txiter iter)
+< {
+<     if (nBlockWeight + iter->GetTxWeight() >= nBlockMaxWeight) {
+<         // If the block is so close to full that no more txs will fit
+<         // or if we've tried more than 50 times to fill remaining space
+<         // then flag that the block is finished
+<         if (nBlockWeight >  nBlockMaxWeight - 400 || lastFewTxs > 50) {
+<              blockFinished = true;
+<              return false;
+<         }
+<         // Once we're within 4000 weight of a full block, only look at 50 more txs
+<         // to try to fill the remaining space.
+<         if (nBlockWeight > nBlockMaxWeight - 4000) {
+<             lastFewTxs++;
+<         }
+<         return false;
+<     }
+< 
+<     if (fNeedSizeAccounting) {
+<         if (nBlockSize + ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION) >= nBlockMaxSize) {
+<             if (nBlockSize >  nBlockMaxSize - 100 || lastFewTxs > 50) {
+<                  blockFinished = true;
+<                  return false;
+<             }
+<             if (nBlockSize > nBlockMaxSize - 1000) {
+<                 lastFewTxs++;
+<             }
+<             return false;
+<         }
+<     }
+< 
+<     if (nBlockSigOpsCost + iter->GetSigOpCost() >= (uint64_t)dgpMaxBlockSigOps) {
+<         // If the block has room for no more sig ops then
+<         // flag that the block is finished
+<         if (nBlockSigOpsCost > (uint64_t)dgpMaxBlockSigOps - 8) {
+<             blockFinished = true;
+<             return false;
+<         }
+<         // Otherwise attempt to find another tx with fewer sigops
+<         // to put in the block.
+<         return false;
+<     }
+< 
+<     // Must check that lock times are still valid
+<     // This can be removed once MTP is always enforced
+<     // as long as reorgs keep the mempool consistent.
+<     if (!IsFinalTx(iter->GetTx(), nHeight, nLockTimeCutoff))
+<         return false;
+< 
+<     return true;
+< }
+< 
+< bool BlockAssembler::CheckBlockBeyondFull()
+< {
+<     if (nBlockSize > dgpMaxBlockSerSize) {
+<         return false;
+<     }
+< 
+<     if (nBlockSigOpsCost * WITNESS_SCALE_FACTOR > (uint64_t)dgpMaxBlockSigOps) {
+<         return false;
+<     }
+<     return true;
+< }
+< 
+420d507
+<     uint64_t nBlockSize = this->nBlockSize;
+423c510
+<     FascTxConverter convert(iter->GetTx(), NULL, &pblock->vtx);
+---
+>     FabcoinTxConverter convert(iter->GetTx(), NULL, &pblock->vtx);
+425,426c512,513
+<     ExtractFascTX resultConverter;
+<     if(!convert.extractionFascTransactions(resultConverter)){
+---
+>     ExtractFabcoinTX resultConverter;
+>     if(!convert.extractionFabcoinTransactions(resultConverter)){
+431c518
+<     std::vector<FascTransaction> fascTransactions = resultConverter.first;
+---
+>     std::vector<FabcoinTransaction> fabcoinTransactions = resultConverter.first;
+433,434c520,521
+<     for(FascTransaction fascTransaction : fascTransactions){
+<         txGas += fascTransaction.gas();
+---
+>     for(FabcoinTransaction fabcoinTransaction : fabcoinTransactions){
+>         txGas += fabcoinTransaction.gas();
+440c527
+<         if(bceResult.usedGas + fascTransaction.gas() > softBlockGasLimit){
+---
+>         if(bceResult.usedGas + fabcoinTransaction.gas() > softBlockGasLimit){
+444c531
+<         if(fascTransaction.gasPrice() < minGasPrice){
+---
+>         if(fabcoinTransaction.gasPrice() < minGasPrice){
+450c537
+<     ByteCodeExec exec(*pblock, fascTransactions, hardBlockGasLimit);
+---
+>     ByteCodeExec exec(*pblock, fabcoinTransactions, hardBlockGasLimit);
+473,475d559
+<     if (fNeedSizeAccounting) {
+<         nBlockSize += ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION);
+<     }
+480,482d563
+<         if (fNeedSizeAccounting) {
+<             nBlockSize += ::GetSerializeSize(t, SER_NETWORK, PROTOCOL_VERSION);
+<         }
+487c568
+<     int proofTx = 0;
+---
+>     int proofTx = pblock->IsProofOfStake() ? 1 : 0;
+508c589
+<             nBlockSize > dgpMaxBlockSerSize) {
+---
+>             nBlockWeight > dgpMaxBlockWeight) {
+526,528d606
+<     if (fNeedSizeAccounting) {
+<         this->nBlockSize += ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION);
+<     }
+537,539d614
+<         if (fNeedSizeAccounting) {
+<             this->nBlockSize += ::GetSerializeSize(t, SER_NETWORK, PROTOCOL_VERSION);
+<         }
+552a628,629
+> 
+> 
+558,560d634
+<     if (fNeedSizeAccounting) {
+<         nBlockSize += ::GetSerializeSize(iter->GetTx(), SER_NETWORK, PROTOCOL_VERSION);
+<     }
+638,641c712
+< 
+< 
+< 
+< void BlockAssembler::addPackageTxs(uint64_t minGasPrice)
+---
+> void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice)
+654a726,732
+> 
+>     // Limit the number of attempts to add transactions to the block when it is
+>     // close to full; this is just a simple heuristic to finish quickly if the
+>     // mempool has a lot of entries.
+>     const int64_t MAX_CONSECUTIVE_FAILURES = 1000;
+>     int64_t nConsecutiveFailed = 0;
+> 
+719a798,805
+> 
+>             ++nConsecutiveFailed;
+> 
+>             if (nConsecutiveFailed > MAX_CONSECUTIVE_FAILURES && nBlockWeight >
+>                     nBlockMaxWeight - 4000) {
+>                 // Give up if we're close to full and haven't succeeded in a while
+>                 break;
+>             }
+739a826,828
+>         // This transaction will make it in; reset the failed counter.
+>         nConsecutiveFailed = 0;
+> 
+744c833
+<         bool wasAdded=true;
+---
+>         bool wasAdded=true; // FABCOIN_INSERT_LINE
+776a866,867
+>         ++nPackagesSelected;
+> 
+778c869
+<         UpdatePackagesForAdded(ancestors, mapModifiedTx);
+---
+>         nDescendantsUpdated += UpdatePackagesForAdded(ancestors, mapModifiedTx);
+782c873
+< void BlockAssembler::addPriorityTxs(uint64_t minGasPrice)
+---
+> void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
+784,790c875,880
+<     // How much of the block should be dedicated to high-priority transactions,
+<     // included regardless of the fees they pay
+<     unsigned int nBlockPrioritySize = gArgs.GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE);
+<     nBlockPrioritySize = std::min(nBlockMaxSize, nBlockPrioritySize);
+< 
+<     if (nBlockPrioritySize == 0) {
+<         return;
+---
+>     // Update nExtraNonce
+>     static uint256 hashPrevBlock;
+>     if (hashPrevBlock != pblock->hashPrevBlock)
+>     {
+>         nExtraNonce = 0;
+>         hashPrevBlock = pblock->hashPrevBlock;
+791a882,886
+>     ++nExtraNonce;
+>     unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
+>     CMutableTransaction txCoinbase(*pblock->vtx[0]);
+>     txCoinbase.vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
+>     assert(txCoinbase.vin[0].scriptSig.size() <= 100);
+793,794c888,890
+<     bool fSizeAccounting = fNeedSizeAccounting;
+<     fNeedSizeAccounting = true;
+---
+>     pblock->vtx[0] = MakeTransactionRef(std::move(txCoinbase));
+>     pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
+> }
+796,812c892,895
+<     // This vector will be sorted into a priority queue:
+<     std::vector<TxCoinAgePriority> vecPriority;
+<     TxCoinAgePriorityCompare pricomparer;
+<     std::map<CTxMemPool::txiter, double, CTxMemPool::CompareIteratorByHash> waitPriMap;
+<     typedef std::map<CTxMemPool::txiter, double, CTxMemPool::CompareIteratorByHash>::iterator waitPriIter;
+<     double actualPriority = -1;
+< 
+<     vecPriority.reserve(mempool.mapTx.size());
+<     for (CTxMemPool::indexed_transaction_set::iterator mi = mempool.mapTx.begin();
+<          mi != mempool.mapTx.end(); ++mi)
+<     {
+<         double dPriority = mi->GetPriority(nHeight);
+<         CAmount dummy;
+<         mempool.ApplyDeltas(mi->GetTx().GetHash(), dPriority, dummy);
+<         vecPriority.push_back(TxCoinAgePriority(dPriority, mi));
+<     }
+<     std::make_heap(vecPriority.begin(), vecPriority.end(), pricomparer);
+---
+> //////////////////////////////////////////////////////////////////////////////
+> //
+> // Proof of Stake miner
+> //
+814,825c897,899
+<     CTxMemPool::txiter iter;
+<     while (!vecPriority.empty() && !blockFinished) { // add a tx from priority queue to fill the blockprioritysize
+<         iter = vecPriority.front().second;
+<         actualPriority = vecPriority.front().first;
+<         std::pop_heap(vecPriority.begin(), vecPriority.end(), pricomparer);
+<         vecPriority.pop_back();
+< 
+<         // If tx already in block, skip
+<         if (inBlock.count(iter)) {
+<             assert(false); // shouldn't happen for priority txs
+<             continue;
+<         }
+---
+> //
+> // Looking for suitable coins for creating new block.
+> //
+827,829c901,904
+<         // cannot accept witness transactions into a non-witness block
+<         if (!fIncludeWitness && iter->GetTx().HasWitness())
+<             continue;
+---
+> bool CheckStake(const std::shared_ptr<const CBlock> pblock, CWallet& wallet)
+> {
+>     uint256 proofHash, hashTarget;
+>     uint256 hashBlock = pblock->GetHash();
+830a906,907
+>     if(!pblock->IsProofOfStake())
+>         return error("CheckStake() : %s is not a proof-of-stake block", hashBlock.GetHex());
+832,835c909,912
+<         if(nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit)
+<         {
+<             break;
+<         }
+---
+>     // verify hash target and signature of coinstake tx
+>     CValidationState state;
+>     if (!CheckProofOfStake(mapBlockIndex[pblock->hashPrevBlock], state, *pblock->vtx[1], pblock->nBits, pblock->nTime, proofHash, hashTarget, *pcoinsTip))
+>         return error("CheckStake() : proof-of-stake checking failed");
+837,842c914,917
+<         // If tx is dependent on other mempool txs which haven't yet been included
+<         // then put it in the waitSet
+<         if (isStillDependent(iter)) {
+<             waitPriMap.insert(std::make_pair(iter, actualPriority));
+<             continue;
+<         }
+---
+>     //// debug print
+>     LogPrint(BCLog::COINSTAKE, "CheckStake() : new proof-of-stake block found  \n  hash: %s \nproofhash: %s  \ntarget: %s\n", hashBlock.GetHex(), proofHash.GetHex(), hashTarget.GetHex());
+>     LogPrint(BCLog::COINSTAKE, "%s\n", pblock->ToString());
+>     LogPrint(BCLog::COINSTAKE, "out %s\n", FormatMoney(pblock->vtx[1]->GetValueOut()));
+844,845c919,923
+<         // If this tx fits in the block add it, otherwise keep looping
+<         if (TestForBlock(iter)) {
+---
+>     // Found a solution
+>     {
+>         LOCK(cs_main);
+>         if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
+>             return error("CheckStake() : generated block is stale");
+847,852c925,927
+<             const CTransaction& tx = iter->GetTx();
+<             bool wasAdded=true;
+<             if(tx.HasCreateOrCall()) {
+<                 wasAdded = AttemptToAddContractToBlock(iter, minGasPrice);
+<             }else {
+<                 AddToBlock(iter);
+---
+>         for(const CTxIn& vin : pblock->vtx[1]->vin) {
+>             if (wallet.IsSpent(vin.prevout.hash, vin.prevout.n)) {
+>                 return error("CheckStake() : generated block became invalid due to stake UTXO being spent");
+853a929
+>         }
+855,858c931,967
+<             // If now that this txs is added we've surpassed our desired priority size
+<             // or have dropped below the AllowFreeThreshold, then we're done adding priority txs
+<             if (nBlockSize >= nBlockPrioritySize || !AllowFree(actualPriority)) {
+<                 break;
+---
+>         // Process this block the same as if we had received it from another node
+>         bool fNewBlock = false;
+>         if (!ProcessNewBlock(Params(), pblock, true, &fNewBlock))
+>             return error("CheckStake() : ProcessBlock, block not accepted");
+>     }
+> 
+>     return true;
+> }
+> 
+> void ThreadStakeMiner(CWallet *pwallet)
+> {
+>     SetThreadPriority(THREAD_PRIORITY_LOWEST);
+> 
+>     // Make this thread recognisable as the mining thread
+>     RenameThread("fabcoincoin-miner");
+> 
+>     CReserveKey reservekey(pwallet);
+> 
+>     bool fTryToSync = true;
+>     bool regtestMode = Params().GetConsensus().fPoSNoRetargeting;
+>     if(regtestMode){
+>         nMinerSleep = 30000; //limit regtest to 30s, otherwise it'll create 2 blocks per second
+>     }
+> 
+>     while (true)
+>     {
+>         while (pwallet->IsLocked())
+>         {
+>             nLastCoinStakeSearchInterval = 0;
+>             MilliSleep(10000);
+>         }
+>         //don't disable PoS mining for no connections if in regtest mode
+>         if(!regtestMode && !gArgs.GetBoolArg("-emergencystaking", false)) {
+>             while (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 || IsInitialBlockDownload()) {
+>                 nLastCoinStakeSearchInterval = 0;
+>                 fTryToSync = true;
+>                 MilliSleep(1000);
+860,868c969,1048
+<             if(wasAdded) {
+<                 // This tx was successfully added, so
+<                 // add transactions that depend on this one to the priority queue to try again
+<                 for (auto child: mempool.GetMemPoolChildren(iter)) {
+<                                 waitPriIter wpiter = waitPriMap.find(child);
+<                                 if (wpiter != waitPriMap.end()) {
+<                                     vecPriority.push_back(TxCoinAgePriority(wpiter->second, child));
+<                                     std::push_heap(vecPriority.begin(), vecPriority.end(), pricomparer);
+<                                     waitPriMap.erase(wpiter);
+---
+>             if (fTryToSync) {
+>                 fTryToSync = false;
+>                 if (g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL) < 3 ||
+>                     pindexBestHeader->GetBlockTime() < GetTime() - 10 * 60) {
+>                     MilliSleep(60000);
+>                     continue;
+>                 }
+>             }
+>         }
+>         //
+>         // Create new block
+>         //
+>         if(pwallet->HaveAvailableCoinsForStaking())
+>         {
+>             int64_t nTotalFees = 0;
+>             // First just create an empty block. No need to process transactions until we know we can create a block
+>             std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateEmptyBlock(reservekey.reserveScript, true, true, &nTotalFees));
+>             if (!pblocktemplate.get())
+>                 return;
+>             CBlockIndex* pindexPrev =  chainActive.Tip();
+> 
+>             uint32_t beginningTime=GetAdjustedTime();
+>             beginningTime &= ~STAKE_TIMESTAMP_MASK;
+>             for(uint32_t i=beginningTime;i<beginningTime + MAX_STAKE_LOOKAHEAD;i+=STAKE_TIMESTAMP_MASK+1) {
+> 
+>                 // The information is needed for status bar to determine if the staker is trying to create block and when it will be created approximately,
+>                 static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // startup timestamp
+>                 // nLastCoinStakeSearchInterval > 0 mean that the staker is running
+>                 nLastCoinStakeSearchInterval = i - nLastCoinStakeSearchTime;
+> 
+>                 // Try to sign a block (this also checks for a PoS stake)
+>                 pblocktemplate->block.nTime = i;
+>                 std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>(pblocktemplate->block);
+>                 if (SignBlock(pblock, *pwallet, nTotalFees, i)) {
+>                     // increase priority so we can build the full PoS block ASAP to ensure the timestamp doesn't expire
+>                     SetThreadPriority(THREAD_PRIORITY_ABOVE_NORMAL);
+> 
+>                     if (chainActive.Tip()->GetBlockHash() != pblock->hashPrevBlock) {
+>                         //another block was received while building ours, scrap progress
+>                         LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid");
+>                         break;
+>                     }
+>                     // Create a block that's properly populated with transactions
+>                     std::unique_ptr<CBlockTemplate> pblocktemplatefilled(
+>                             BlockAssembler(Params()).CreateNewBlock(pblock->vtx[1]->vout[1].scriptPubKey, true, true, &nTotalFees,
+>                                                                     i, FutureDrift(GetAdjustedTime()) - STAKE_TIME_BUFFER));
+>                     if (!pblocktemplatefilled.get())
+>                         return;
+>                     if (chainActive.Tip()->GetBlockHash() != pblock->hashPrevBlock) {
+>                         //another block was received while building ours, scrap progress
+>                         LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid");
+>                         break;
+>                     }
+>                     // Sign the full block and use the timestamp from earlier for a valid stake
+>                     std::shared_ptr<CBlock> pblockfilled = std::make_shared<CBlock>(pblocktemplatefilled->block);
+>                     if (SignBlock(pblockfilled, *pwallet, nTotalFees, i)) {
+>                         // Should always reach here unless we spent too much time processing transactions and the timestamp is now invalid
+>                         // CheckStake also does CheckBlock and AcceptBlock to propogate it to the network
+>                         bool validBlock = false;
+>                         while(!validBlock) {
+>                             if (chainActive.Tip()->GetBlockHash() != pblockfilled->hashPrevBlock) {
+>                                 //another block was received while building ours, scrap progress
+>                                 LogPrintf("ThreadStakeMiner(): Valid future PoS block was orphaned before becoming valid");
+>                                 break;
+>                             }
+>                             //check timestamps
+>                             if (pblockfilled->GetBlockTime() <= pindexPrev->GetBlockTime() ||
+>                                 FutureDrift(pblockfilled->GetBlockTime()) < pindexPrev->GetBlockTime()) {
+>                                 LogPrintf("ThreadStakeMiner(): Valid PoS block took too long to create and has expired");
+>                                 break; //timestamp too late, so ignore
+>                             }
+>                             if (pblockfilled->GetBlockTime() > FutureDrift(GetAdjustedTime())) {
+>                                 if (gArgs.IsArgSet("-aggressive-staking")) {
+>                                     //if being agressive, then check more often to publish immediately when valid. This might allow you to find more blocks, 
+>                                     //but also increases the chance of broadcasting invalid blocks and getting DoS banned by nodes,
+>                                     //or receiving more stale/orphan blocks than normal. Use at your own risk.
+>                                     MilliSleep(100);
+>                                 }else{
+>                                     //too early, so wait 3 seconds and try again
+>                                     MilliSleep(3000);
+869a1050
+>                                 continue;
+870a1052,1063
+>                             validBlock=true;
+>                         }
+>                         if(validBlock) {
+>                             CheckStake(pblockfilled, *pwallet);
+>                             // Update the search time when new valid block is created, needed for status bar icon
+>                             nLastCoinStakeSearchTime = pblockfilled->GetBlockTime();
+>                         }
+>                         break;
+>                     }
+>                     //return back to low priority
+>                     SetThreadPriority(THREAD_PRIORITY_LOWEST);
+>                 }
+872a1066
+>         MilliSleep(nMinerSleep);
+874d1067
+<     fNeedSizeAccounting = fSizeAccounting;
+877c1070
+< void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce)
+---
+> void StakeFabcoins(bool fStake, CWallet *pwallet)
+879,881c1072,1074
+<     // Update nExtraNonce
+<     static uint256 hashPrevBlock;
+<     if (hashPrevBlock != pblock->hashPrevBlock)
+---
+>     static boost::thread_group* stakeThread = NULL;
+> 
+>     if (stakeThread != NULL)
+883,884c1076,1078
+<         nExtraNonce = 0;
+<         hashPrevBlock = pblock->hashPrevBlock;
+---
+>         stakeThread->interrupt_all();
+>         delete stakeThread;
+>         stakeThread = NULL;
+886,890d1079
+<     ++nExtraNonce;
+<     unsigned int nHeight = pindexPrev->nHeight+1; // Height first in coinbase required for block.version=2
+<     CMutableTransaction txCoinbase(*pblock->vtx[0]);
+<     txCoinbase.vin[0].scriptSig = (CScript() << nHeight << CScriptNum(nExtraNonce)) + COINBASE_FLAGS;
+<     assert(txCoinbase.vin[0].scriptSig.size() <= 100);
+892,893c1081,1085
+<     pblock->vtx[0] = MakeTransactionRef(std::move(txCoinbase));
+<     pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
+---
+>     if(fStake)
+>     {
+>         stakeThread = new boost::thread_group();
+>         stakeThread->create_thread(boost::bind(&ThreadStakeMiner, pwallet));
+>     }
+895a1088
+> /* ???????????????????????????????????????????
+933c1126
+< void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf)
+---
+> void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int thr_id)
+935c1128
+<     static const int nInnerLoopCount = 0x10000;
+---
+>     static const unsigned int nInnerLoopCount = 0x0FFFFFFF;
+939c1132
+<         LogPrintf("FabcoinMiner started on GPU device: %u\n", conf.currentDevice);
+---
+>         LogPrintf("FabcoinMiner thread(%d@%u-%u) started on GPU device. \n", thr_id, conf.currentPlatform, conf.currentDevice);
+941c1134
+<         LogPrintf("FabcoinMiner started on CPU \n");
+---
+>         LogPrintf("FabcoinMiner thread(%d) started on CPU \n", thr_id);
+956d1148
+<     
+1011,1012c1203,1204
+<             LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
+<                 ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
+---
+>             //LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) %d@(%s-%u-%u)  \n", pblock->vtx.size(),
+>             //    ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), thr_id, conf.useGPU?"GPU":"CPU", conf.currentPlatform, conf.currentDevice );
+1023c1215
+<                LogPrint(BCLog::POW, "Equihash solver in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+---
+>                LogPrint(BCLog::POW, "Equihash solver in %d @GPU (%u-%u) with nNonce = %s hashTarget=%s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+1026c1218,1220
+< 
+---
+>             double secs, solps;
+>             g_nSols[thr_id] = 0;
+>             auto t = std::chrono::high_resolution_clock::now();
+1066c1260
+<                 // LogPrint(BCLog::POW, "Running Equihash solver in %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
+---
+>                 //LogPrint(BCLog::POW, "Running Equihash solver in %d@%u-%u with nNonce = %s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
+1069c1263
+<                     [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams](std::vector<unsigned char> soln) 
+---
+>                     [&pblock, &hashTarget, &m_cs, &cancelSolver, &chainparams,thr_id](std::vector<unsigned char> soln) 
+1072a1267,1269
+> 
+>                     g_nSols[thr_id] ++ ;
+> 
+1082c1279
+<                    
+---
+> 
+1145a1343
+>                 //LogPrint(BCLog::POW, "solver... nNonce = %s -> Hash = %s \n", pblock->nNonce.ToString(), pblock->GetHash().GetHex());
+1159a1358,1363
+>             // hashrate
+>             auto d = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t);
+>             auto milis = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
+>             secs = (1.0 * milis)/1000;
+>             solps = (double)g_nSols[thr_id] / secs;
+>             LogPrintf("Thread(%d@%u-%u) - %d solutions in %.2f s (%.2f Sol/s)\n", thr_id, conf.currentPlatform, conf.currentDevice, g_nSols[thr_id], secs, solps);
+1191a1396,1616
+> static bool cb_cancel() 
+> {
+>     return g_cancelSolver;
+> }
+> 
+> static bool cb_validate(std::vector<unsigned char> sols, unsigned char *pblockdata, int thrid)
+> {
+>     bool ret = false;
+>     CBlock *pblock = (CBlock *)pblockdata;  
+>     g_nSols[thrid]++;
+> 
+>     g_cs.lock();
+>     do 
+>     {
+>         pblock->nSolution = sols;
+>         CChainParams chainparams = Params();
+>         arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
+>         if (UintToArith256(pblock->GetHash()) > hashTarget) 
+>         {
+>             break;
+>         }
+>         // Found a solution
+>         SetThreadPriority(THREAD_PRIORITY_NORMAL);
+>         if (ProcessBlockFound(pblock, chainparams)) 
+>         {
+>             // Ignore chain updates caused by us
+>             g_cancelSolver = false;
+>         }        
+>         SetThreadPriority(THREAD_PRIORITY_LOWEST);
+>         ret = true;
+>     }while(0);
+> 
+>     g_cs.unlock();
+>     return ret;
+> }
+> 
+> #if USE_CUDA
+> void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, int thr_id)
+> {
+>     static const unsigned int nInnerLoopCount = 0x0FFFFFFF;
+>     unsigned int nCounter = 0;
+> 
+>     LogPrintf("FabcoinMiner thread(%d@%u-%u) started on GPU device(CUDA) \n", thr_id, conf.currentPlatform, conf.currentDevice);
+> 
+>     SetThreadPriority(THREAD_PRIORITY_LOWEST);
+>     RenameThread("fabcoin-miner-cuda");
+> 
+>     unsigned int nExtraNonce = 0;
+>     std::shared_ptr<CReserveScript> coinbaseScript;
+>     if( ::vpwallets.size() > 0 )
+>     {    
+>         GetMainSignals().ScriptForMining(coinbaseScript);
+>     }
+> 
+>     unsigned int n = chainparams.EquihashN();
+>     unsigned int k = chainparams.EquihashK();
+> 
+> #ifdef ENABLE_GPU
+>     uint8_t * header = NULL;
+>     eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
+>     try
+>     {
+>         std::lock_guard<std::mutex> lock{g_cs};
+>         g_solver = new eq_cuda_context<CONFIG_MODE_1>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
+>     }
+>     catch (const std::runtime_error &e)
+>     {
+>         std::lock_guard<std::mutex> lock{g_cs};
+>         g_cancelSolver = false;
+>         return;
+>     }
+>     LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
+>     header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
+> #endif
+> 
+>     //    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
+>     //        [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
+>     //            std::lock_guard<std::mutex> lock{m_cs};
+>     //            cancelSolver = true;
+>     //    }
+>     //    );
+> 
+>     try {
+>         // Throw an error if no script was provided.  This can happen
+>         // due to some internal error but also if the keypool is empty.
+>         // In the latter case, already the pointer is NULL.
+>         if (!coinbaseScript || coinbaseScript->reserveScript.empty())
+>             throw std::runtime_error("No coinbase script available (mining requires a wallet)");
+> 
+>         while (true) {
+>             if (chainparams.MiningRequiresPeers()) {
+>                 // Busy-wait for the network to come online so we don't waste time mining
+>                 // on an obsolete chain. In regtest mode we expect to fly solo.
+>                 do {
+>                     unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
+>                     if ( nNodeCount && !IsInitialBlockDownload())
+>                         break;
+>                     MilliSleep(1000);
+>                 } while (true);
+>             }
+> 
+>             //
+>             // Create new block
+>             //
+>             unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
+>             CBlockIndex* pindexPrev = chainActive.Tip();
+> 
+>             std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
+>             if (!pblocktemplate.get())
+>             {
+>                 LogPrintf("Error in FabcoinMinerCuda: Keypool ran out, please call keypoolrefill before restarting the mining thread\n");
+>                 return;
+>             }
+>             CBlock *pblock = &pblocktemplate->block;
+>             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
+> 
+>             //LogPrintf("FabcoinMinerCuda mining   with %u transactions in block (%u bytes) @(%s-%d)  \n", pblock->vtx.size(),
+>             //    ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU", thr_id );
+> 
+>             //
+>             // Search
+>             //
+>             int64_t nStart = GetTime();
+>             arith_uint256 hashTarget = arith_uint256().SetCompact(pblock->nBits);
+>             uint256 hash;
+> 
+>             nCounter = 0;
+>             LogPrint(BCLog::POW, "Equihash solver in (%d@%u-%u) with nNonce = %s hashTarget=%s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+> 
+>             double secs, solps;
+>             g_nSols[thr_id] = 0;
+>             auto t = std::chrono::high_resolution_clock::now();
+>             while (true) 
+>             {
+>                 // I = the block header minus nonce and solution.
+>                 CEquihashInput I{*pblock};
+>                 CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+>                 ss << I;
+> 
+>                 memcpy(header, &ss[0], ss.size());
+> 
+>                 for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
+>                     header[108 + i] = pblock->nNonce.begin()[i];
+> 
+>                 // (x_1, x_2, ...) = A(I, V, n, k)
+>                 //LogPrint(BCLog::POW, "Running Equihash solver in %u %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
+> 
+> 
+>                 try {
+>                     bool found = g_solver->solve((unsigned char *)pblock, header, 140);
+>                     if (found)
+>                         break;
+>                 } catch (EhSolverCancelledException&) {
+>                     LogPrint(BCLog::POW, "Equihash solver cancelled\n");
+>                     std::lock_guard<std::mutex> lock{g_cs};
+>                     g_cancelSolver = false;
+>                 }
+> 
+>                 // Check for stop or if block needs to be rebuilt
+>                 boost::this_thread::interruption_point();
+>                 // Regtest mode doesn't require peers
+>                 unsigned int nNodeCount = g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL);
+>                 if (nNodeCount == 0 && chainparams.MiningRequiresPeers())
+>                     break;
+>                 if ( nCounter == nInnerLoopCount )
+>                     break;
+>                 if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
+>                     break;
+>                 if (pindexPrev != chainActive.Tip())
+>                     break;
+> 
+>                 //LogPrint(BCLog::POW, "solver... nNonce = %s -> Hash = %s \n", pblock->nNonce.ToString(), pblock->GetHash().GetHex());
+>                 // Update nNonce and nTime
+>                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
+>                 ++nCounter;
+> 
+>                 // Update nTime every few seconds
+>                 if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
+>                     break; // Recreate the block if the clock has run backwards,
+>                 // so that we can use the correct time.
+>                 if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
+>                 {
+>                     // Changing pblock->nTime can change work required on testnet:
+>                     hashTarget.SetCompact(pblock->nBits);
+>                 }
+>             }
+>             // hashrate
+>             auto d = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t);
+>             auto milis = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
+>             secs = (1.0 * milis)/1000;
+>             solps = (double)g_nSols[thr_id] / secs;
+>             LogPrintf("Thread(%d@%u-%u) CUDA- %d solutions in %.2f s (%.2f Sol/s)\n", thr_id, conf.currentPlatform, conf.currentDevice, g_nSols[thr_id], secs, solps);
+>         }
+>     }
+>     catch (const boost::thread_interrupted&)
+>     {
+>         LogPrintf("FabcoinMinerCuda terminated\n");
+> #ifdef ENABLE_GPU
+>         delete g_solver;
+>         free(header);
+> #endif
+>         throw;
+>     }
+>     catch (const std::runtime_error &e)
+>     {
+>         LogPrintf("FabcoinMinerCuda runtime error: %s\n", e.what());
+> #ifdef ENABLE_GPU
+>         delete g_solver;
+>         free(header);
+> #endif
+>         return;
+>     }
+> 
+> #ifdef ENABLE_GPU
+>     delete g_solver;
+>     free(header);
+> #endif
+> 
+>     //    c.disconnect();
+> }
+> #endif
+1196d1620
+< 
+1214,1216c1638,1643
+< 
+<     if (nThreads < 0)
+<         nThreads = GetNumCores();
+---
+>     if (nThreads < 0) {
+>         if(conf.useGPU) {
+>            nThreads = 16;   // limit max GPU thread per device 16;  
+>         }
+>         else nThreads = GetNumCores();
+>     }
+1229a1657
+>     int  thread_sequence = 0;
+1234c1662
+<         conf.currentPlatform = 0;
+---
+>         conf.currentPlatform = conf.sel_platform;
+1245c1673,1683
+<             for(unsigned platform = 0; platform < numPlatforms; ++platform) {
+---
+>             for(unsigned platform = 0; platform < numPlatforms; ++platform) 
+>             {
+>                 std::string info = cl_gpuminer::platform_info(platform);
+>                 std::string infolow;
+>                 bool bNvidiaDev = false;
+> 
+>                 infolow.resize(info.size());
+>                 std::transform(info.begin(),info.end(),infolow.begin(),::tolower);
+>                 if( infolow.find("nvidia") != std::string::npos )
+>                     bNvidiaDev = true;
+> 
+1249a1688,1689
+> 
+> 
+1260,1268c1700,1705
+<                         if (result > 7500000000) {
+<                             maxThreads = std::min(4, nThreads);
+<                         } else if (result > 5500000000) {
+<                             maxThreads = std::min(3, nThreads);
+<                         } else if (result > 3500000000) {
+<                             maxThreads = std::min(2, nThreads);
+<                         } else {
+<                             maxThreads = std::min(1, nThreads);
+<                         }
+---
+>                         int ThreadsMem = 1750000000;
+> #ifdef USE_CUDA
+>                         if( bNvidiaDev && conf.useCUDA )
+>                            ThreadsMem =  500000000;
+> #endif
+>                         maxThreads = std::min( (int) (result / ThreadsMem ), nThreads);
+1270a1708,1709
+>                     LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) maxThread =%d.\n", conf.currentPlatform, conf.currentDevice, maxThreads );
+> 
+1272,1273c1711,1725
+<                         LogPrintf("FabcoinMiner GPU platform=%d device=%d thread=%d!\n", conf.currentPlatform, conf.currentDevice, i);
+<                         minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
+---
+>                         if ( thread_sequence > 255 ){
+>                            LogPrintf("GenerateFabcoins reached GPU threads limit 255.\n", conf.currentPlatform, conf.currentDevice, i);
+>                            break;
+>                         }
+> 
+>                         thread_sequence ++;
+>                         LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) starting thread=%d...\n", conf.currentPlatform, conf.currentDevice, thread_sequence);
+> #ifdef USE_CUDA
+>                         if( bNvidiaDev && conf.useCUDA )
+>                             minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf, thread_sequence  ));
+>                         else
+>                             minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
+> #else
+>                         minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence   ));
+> #endif
+1280c1732
+<                 LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
+---
+>                 LogPrintf("GenerateFabcoins ERROR, No OpenCL devices found!\n");
+1285a1738,1747
+>             LogPrintf("GenerateFabcoins GPU @(platform=%d device=%d) only!\n", conf.currentPlatform, conf.currentDevice );
+> 
+>             std::string info = cl_gpuminer::platform_info(conf.currentPlatform);
+>             std::string infolow;
+>             bool bNvidiaDev = false;
+> 
+>             infolow.resize(info.size());
+>             std::transform(info.begin(),info.end(),infolow.begin(),::tolower);
+>             if( infolow.find("nvidia") != std::string::npos )
+>                 bNvidiaDev = true;
+1296a1759
+> 
+1298,1306c1761,1768
+<                     if (result > 7500000000) {
+<                         maxThreads = std::min(4, nThreads);
+<                     } else if (result > 5500000000) {
+<                         maxThreads = std::min(3, nThreads);
+<                     } else if (result > 3500000000) {
+<                         maxThreads = std::min(2, nThreads);
+<                     } else {
+<                         maxThreads = std::min(1, nThreads);
+<                     }
+---
+>                     int ThreadsMem = 1750000000;
+> #ifdef USE_CUDA
+>                     if (bNvidiaDev && conf.useCUDA )
+>                         ThreadsMem =  500000000;
+> #else
+> 
+> #endif
+>                     maxThreads = std::min( (int) (result / ThreadsMem ), nThreads);
+1308a1771,1773
+> 
+>                 LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) maxThread =%d!\n", conf.currentPlatform, conf.currentDevice, maxThreads );
+> 
+1310c1775,1791
+<                     minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));
+---
+> 
+>                     if ( thread_sequence > 255 ){
+>                            LogPrintf("GenerateFabcoins reached GPU threads limit 255.\n", conf.currentPlatform, conf.currentDevice, i);
+>                            break;
+>                     }
+> 
+>                     thread_sequence ++;
+> 
+>                     LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) starting thread=%d...\n", conf.currentPlatform, conf.currentDevice, thread_sequence);
+> #ifdef USE_CUDA
+>                     if( bNvidiaDev && conf.useCUDA )
+>                         minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf, thread_sequence  ));
+>                     else
+>                         minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
+> #else
+>                     minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
+> #endif
+1315c1796
+<                 LogPrintf("FabcoinMiner ERROR, No OpenCL devices found!\n");
+---
+>                 LogPrintf("GenerateFabcoins ERROR, No OpenCL devices found!\n");
+1323,1324c1804,1805
+<             LogPrintf("FabcoinMiner CPU, thread=%d!\n",  i);
+<             minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf));    
+---
+>             LogPrintf("GenerateFabcoins CPU, thread=%d!\n",  i);
+>             minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf, i));    
+1349c1830
+<         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
+---
+>         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+1393c1874
+< 
+---
+>  
+1440a1922
+> */
+\ No newline at end of file

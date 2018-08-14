@@ -34,6 +34,8 @@ from .util import (
     sync_mempools,
 )
 
+from fabcoinconfig import COINBASE_MATURITY
+
 class TestStatus(Enum):
     PASSED = 1
     FAILED = 2
@@ -333,8 +335,8 @@ class FabcoinTestFramework(object):
 
         For backwared compatibility of the python scripts with previous
         versions of the cache, this helper function sets mocktime to Jan 1,
-        2014 + (901 * 75 )"""
-        self.mocktime = 1388534400 + (901 * 75 )
+        2014 + ((COINBASE_MATURITY+101) * 75 )"""
+        self.mocktime = 1388534400 + ((COINBASE_MATURITY+101) * 75 )
 
     def disable_mocktime(self):
         self.mocktime = 0
@@ -404,19 +406,19 @@ class FabcoinTestFramework(object):
             for node in self.nodes:
                 node.wait_for_rpc_connection()
 
-            # Create a 900-block-long chain; each of the 4 first nodes
+            # Create a COINBASE_MATURITY+100 -block-long chain; each of the 4 first nodes
             # gets 25 mature blocks and 25 immature.
             # Note: To preserve compatibility with older versions of
             # initialize_chain, only 4 nodes will generate coins.
             #
             # blocks are created with timestamps 75 seconds apart
-            # starting from 901 *75 seconds in the past
+            # starting from (COINBASE_MATURITY+101) *75 seconds in the past
             self.enable_mocktime()
-            block_time = self.mocktime - (901 * 75)
+            block_time = self.mocktime - ((COINBASE_MATURITY+101) * 75)
 
             print( block_time )
 
-            for i in range(9):
+            for i in range( (COINBASE_MATURITY+100)/100 ) :
                 for peer in range(4):
                     for j in range(25):
                         set_node_times(self.nodes, block_time)
