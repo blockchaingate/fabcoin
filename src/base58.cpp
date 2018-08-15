@@ -286,6 +286,11 @@ bool CFabcoinAddress::IsScript() const
     return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
 }
 
+bool CFabcoinAddress::IsPubKeyHash() const
+{
+    return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+}
+
 void CFabcoinSecret::SetKey(const CKey& vchSecret)
 {
     assert(vchSecret.IsValid());

@@ -24,7 +24,8 @@
 #include "prevector.h"
 #include "uint256.h"
 
-static const unsigned int MAX_SIZE = 0x02000000;
+static const unsigned int MAX_SIZE = 0x10000000; // Fabcoin: Increase max serialized size to 256mb
+//static const unsigned int MAX_SIZE = 0x02000000;
 
 /**
  * Dummy data type to identify deserializing constructors.
