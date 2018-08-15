@@ -47,7 +47,7 @@ class WalletAccountsTest(FabcoinTestFramework):
             i+=1
             assert_equal(len(address_group), 1)
             assert_equal(len(address_group[0]), 2)
-            #print ( i, address_group ) 
+            print ( i, address_group ) 
             if i == 2 :
                 assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
             else :

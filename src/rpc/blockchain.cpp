@@ -27,6 +27,7 @@
 #include "utilstrencodings.h"
 #include "hash.h"
 #include "libdevcore/CommonData.h"
+#include "txdb.h"
 
 #include <stdint.h>
 
@@ -845,7 +846,7 @@ UniValue getstorage(const JSONRPCRequest& request)
 }
 UniValue getblockheader(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 4)
         throw std::runtime_error(
             "getblockheader \"hash\" ( verbose legacy no_contract)\n"
             "\nIf verbose is false, returns a string that is serialized, hex-encoded data for blockheader 'hash'.\n"
@@ -1311,7 +1312,7 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
 
     WaitForLogsParams params(request.params);
 
-    //request.PollStart();
+    request.PollStart();
 
     std::vector<std::vector<uint256>> hashesToBlock;
 
@@ -1349,7 +1350,7 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
                 std::unique_lock<std::mutex> lock(cs_blockchange);
                 auto blockHeight = latestblock.height;
 
-                //request.PollPing();
+                request.PollPing();
 
                 cond_blockchange.wait_for(lock, std::chrono::milliseconds(1000));
                 if (latestblock.height > blockHeight) {
@@ -1357,7 +1358,7 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
                 }
 
                 // TODO: maybe just merge `IsRPCRunning` this into PollAlive
-                if ( !IsRPCRunning()) {
+                if (!request.PollAlive() || !IsRPCRunning()) {
                     LogPrintf("waitforlogs client disconnected\n");
                     return NullUniValue;
                 }
@@ -1788,6 +1789,76 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
     }
     return ret;
 }
+
+UniValue gettxoutset(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+        "gettxoutset\n"
+        "\nReturns the unspent transaction output set.\n"
+        "Note this call may take some time.\n"
+        "\nResult:\n"
+        "{\n"
+        "  \"UTXO\": \"height, address, amount\"\n"
+        "}\n"
+        "\nExamples:\n"
+        + HelpExampleCli("gettxoutset", "")
+        + HelpExampleRpc("gettxoutset", "")
+        );
+
+    UniValue ret(UniValue::VOBJ);
+    
+    CCoinsStats stats;
+    FlushStateToDisk();
+    
+    std::unique_ptr<CCoinsViewCursor> pcursor(pcoinsdbview->Cursor());
+
+    uint256 prevkey;
+    std::map<uint32_t, Coin> outputs;
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        COutPoint key;
+        Coin coin;
+        
+        if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
+            if (!outputs.empty() && key.hash != prevkey) {
+                outputs.clear();
+            }
+            prevkey = key.hash;
+            txnouttype type;
+            std::vector<CTxDestination> addresses;
+            int nRequired;
+            std::stringstream strUtxo;
+            if( ExtractDestinations(coin.out.scriptPubKey, type, addresses, nRequired))
+            {
+                for( const CTxDestination addr: addresses )
+                {
+                    //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
+                    strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
+                    ret.push_back(Pair("UTXO", strUtxo.str()));
+                }
+            }
+            else
+            {
+                strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue ;
+                ret.push_back(Pair("UTXO", strUtxo.str()));
+            }
+            outputs[key.n] = std::move(coin);
+        } 
+        else 
+        {
+            ret.push_back(Pair("ERROR: ", "unable to read value"));
+            return ret;
+        }
+        pcursor->Next();
+    }
+
+    return ret;
+}
+
 
 UniValue gettxout(const JSONRPCRequest& request)
 {
@@ -2403,6 +2474,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getrawmempool",          &getrawmempool,          true,  {"verbose"} },
     { "blockchain",         "gettxout",               &gettxout,               true,  {"txid","n","include_mempool"} },
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true,  {} },
+    { "blockchain",         "gettxoutset",            &gettxoutset,            true,  {} },
     { "blockchain",         "pruneblockchain",        &pruneblockchain,        true,  {"height"} },
     { "blockchain",         "verifychain",            &verifychain,            true,  {"checklevel","nblocks"} },
     { "blockchain",         "getaccountinfo",         &getaccountinfo,         true,  {"contract_address"} },
@@ -2428,3 +2500,4 @@ void RegisterBlockchainRPCCommands(CRPCTable &t)
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         t.appendCommand(commands[vcidx].name, &commands[vcidx]);
 }
+

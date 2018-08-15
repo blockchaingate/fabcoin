@@ -46,8 +46,8 @@ MY_RELAY = 1 # from version 70001 onwards, fRelay should be appended to version 
 MAX_INV_SZ = 50000
 MAX_BLOCK_BASE_SIZE = 1000000
 
-FASC_LEGACY_HARDFORK_HEIGHT = 100000000
-FASC_SMARTCONTRACT_HARDFORK_HEIGHT = 1
+FAB_REGTEST_HARDFORK_HEIGHT = 1000000
+FAB_SMARTCONTRACT_HARDFORK_HEIGHT = 1
 
 
 COIN = 100000000 # 1 fab in satoshis
@@ -522,7 +522,7 @@ class CTransaction(object):
     def is_valid(self):
         self.calc_sha256()
         for tout in self.vout:
-            if tout.nValue < 0 or tout.nValue > 168000000 * COIN:
+            if tout.nValue < 0 or tout.nValue > 21000000 * COIN:
                 return False
         return True
 
@@ -556,16 +556,17 @@ class CBlockHeader(object):
         self.nVersion = 4
         self.hashPrevBlock = 0
         self.hashMerkleRoot = 0
-        #self.hashStateRoot = INITIAL_HASH_STATE_ROOT
-        #self.hashUTXORoot = INITIAL_HASH_UTXO_ROOT
-        self.hashStateRoot = 0
-        self.hashUTXORoot = 0
-        self.nHeight = 0
-        self.nReserved = [0] * 7
         self.nTime = 0
         self.nBits = 0
         self.nNonce = 0
+        self.nHeight = 0
+        self.nReserved = [0] * 7
         self.nSolution = b""
+
+        self.hashStateRoot = INITIAL_HASH_STATE_ROOT
+        self.hashUTXORoot = INITIAL_HASH_UTXO_ROOT
+        #self.prevoutStake = COutPoint(0, 0xffffffff)
+        #self.vchBlockSig = b""
 
         self.sha256 = None
         self.hash = None
@@ -575,19 +576,19 @@ class CBlockHeader(object):
         self.hashPrevBlock = deser_uint256(f)
         self.hashMerkleRoot = deser_uint256(f)
 
-        if legacy:
-            self.nHeight = 0
-            self.nReserved = [0] * 7
-        else:
-            self.nHeight = struct.unpack("<I", f.read(4))[0]
-            self.nReserved = [struct.unpack("<I", f.read(4))[0] for _ in range(7)]
-
         if has_contract:    
             self.hashStateRoot = deser_uint256(f)
             self.hashUTXORoot = deser_uint256(f)
         else:
             self.hashStateRoot = None
             self.hashUTXORoot = None
+
+        if legacy:
+            self.nHeight = 0
+            self.nReserved = [0] * 7
+        else:
+            self.nHeight = struct.unpack("<I", f.read(4))[0]
+            self.nReserved = [struct.unpack("<I", f.read(4))[0] for _ in range(7)]
 
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
@@ -601,7 +602,8 @@ class CBlockHeader(object):
 
         self.sha256 = None
         self.hash = None
-        print( "debug : deserialize", legacy, has_contract, self)
+
+        print(self)
 
     def serialize_header(self, legacy=True, has_contract=True):
         r = b""
@@ -628,51 +630,24 @@ class CBlockHeader(object):
             r += ser_uint256(self.nNonce)
             r += ser_byte_vector(self.nSolution)
 
-        print ("debug serialize_header", r)
+        print("debug serialize_header", "height=", self.nHeight, "legacy=",legacy, "has_contract", has_contract, "len=", len(r) )
+
         return r
 
-    def getlegacy( nHeight):
-        if self.nHeight <= FASC_LEGACY_HARDFORK_HEIGHT:
-            return True
-        else:
-            return False
-       
-    def serialize(self):
-        if self.nHeight < FASC_LEGACY_HARDFORK_HEIGHT:
-            legacy = True
-        else:
-            legacy = False
- 
-        if self.nHeight < FASC_SMARTCONTRACT_HARDFORK_HEIGHT:
-            has_contract = False
-        else: 
-            has_contract = True
-
-        print("debug block serialize():", legacy , has_contract)
-
-        return self.serialize_header(legacy, has_contract)
-
+    def serialize(self, legacy=True, has_contract=True):
+        return self.serialize_header(legacy=legacy, has_contract=has_contract)
 
 
     def calc_sha256(self):
-        print("debug calc_sha256() ", self.sha256)
 
         if self.sha256 is None:
-            if self.nHeight < FASC_LEGACY_HARDFORK_HEIGHT:
-                legacy = True
+            if self.nHeight < FAB_REGTEST_HARDFORK_HEIGHT:
+                r = self.serialize_header(legacy=True, has_contract=True)
             else:
-                legacy = False
- 
-            if self.nHeight < FASC_SMARTCONTRACT_HARDFORK_HEIGHT:
-                has_contract = False
-            else: 
-                has_contract = True
-
-            r = self.serialize_header(legacy, has_contract)
+                r = self.serialize_header(legacy=False, has_contract=True)
 
             self.sha256 = uint256_from_str(hash256(r))
             self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
-            print("debug calc_sha256() r=", r, "hash=", self.hash )
 
 
     def rehash(self):

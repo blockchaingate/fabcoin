@@ -807,12 +807,11 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
 
-        if (!tx.HasCreateOrCall() && nAbsurdFee && nFees  > nAbsurdFee ) {
+        if (!tx.HasCreateOrCall() && nAbsurdFee && nFees  ) 
             LogPrintf("absurdly-high-fee nAbsurdFee=%d nFees=%d \n", nAbsurdFee , nFees );
             return state.Invalid(false,
                 REJECT_HIGHFEE, "absurdly-high-fee",
                 strprintf("%d > %d", nFees, nAbsurdFee));
-        }
 
         // Calculate in-mempool ancestors, up to a limit.
         CTxMemPool::setEntries setAncestors;
