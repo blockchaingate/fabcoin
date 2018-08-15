@@ -176,6 +176,9 @@ public:
     //! pointer to the index of the predecessor of this block
     CBlockIndex* pprev;
 
+    //! pointer to the index of the successor of this block
+    CBlockIndex* pnext;
+
     //! pointer to the index of some further predecessor of this block
     CBlockIndex* pskip;
 
@@ -228,6 +231,7 @@ public:
     {
         phashBlock = nullptr;
         pprev = nullptr;
+        pnext = nullptr;
         pskip = nullptr;
         nHeight = 0;
         nFile = 0;
@@ -246,7 +250,7 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = uint256();
-      hashStateRoot  = uint256(); // fasc
+        hashStateRoot  = uint256(); // fasc
         hashUTXORoot   = uint256(); // fasc
       //nMoneySupply = 0;
         nSolution.clear();
@@ -263,7 +267,6 @@ public:
 
         nVersion       = block.nVersion;
         hashMerkleRoot = block.hashMerkleRoot;
-        // TODO(h4x3rotab): Copy nHeight or not?
         nHeight        = block.nHeight;
         memcpy(nReserved, block.nReserved, sizeof(nReserved));
         nTime          = block.nTime;
@@ -340,6 +343,16 @@ public:
 
         std::sort(pbegin, pend);
         return pbegin[(pend - pbegin)/2];
+    }
+
+    bool IsProofOfWork() const // fasc
+    {
+        return true;
+    }
+
+    bool IsProofOfStake() const
+    {
+        return false;
     }
 
     std::string ToString() const
@@ -424,14 +437,17 @@ public:
         READWRITE(this->nVersion);
         READWRITE(hashPrev);
         READWRITE(hashMerkleRoot);
+        // keep hashStateRoot & hashUTXORoot on data file  
+        READWRITE(hashStateRoot); // fasc
+        READWRITE(hashUTXORoot);  // fasc
+
         for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
             READWRITE(nReserved[i]);
         }
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        READWRITE(hashStateRoot); // fasc
-        READWRITE(hashUTXORoot); // fasc
+
         READWRITE(nSolution);
     }
 
@@ -441,13 +457,14 @@ public:
         block.nVersion        = nVersion;
         block.hashPrevBlock   = hashPrev;
         block.hashMerkleRoot  = hashMerkleRoot;
+        block.hashStateRoot   = hashStateRoot; // fasc
+        block.hashUTXORoot    = hashUTXORoot; // fasc
         block.nHeight         = nHeight;
         memcpy(block.nReserved, nReserved, sizeof(block.nReserved));
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
-        block.hashStateRoot   = hashStateRoot; // fasc
-        block.hashUTXORoot    = hashUTXORoot; // fasc
+
         block.nSolution       = nSolution;
         return block.GetHash();
     }
