@@ -178,6 +178,11 @@ static FILE* fileout = nullptr;
 static boost::mutex* mutexDebugLog = nullptr;
 static std::list<std::string>* vMsgsBeforeOpenLog;
 
+/////////////////////////////////////////////////////////////////////// // fasc
+static FILE* fileoutVM = nullptr;
+///////////////////////////////////////////////////////////////////////
+
+
 static int FileWriteStr(const std::string &str, FILE *fp)
 {
     return fwrite(str.data(), 1, str.size(), fp);
@@ -196,9 +201,15 @@ void OpenDebugLog()
     boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
 
     assert(fileout == nullptr);
+    assert(fileoutVM == nullptr); // fasc
+
     assert(vMsgsBeforeOpenLog);
     fs::path pathDebug = GetDataDir() / "debug.log";
+    fs::path pathDebugVM = GetDataDir() / "vm.log"; // fasc
+
     fileout = fsbridge::fopen(pathDebug, "a");
+    fileoutVM = fsbridge::fopen(pathDebugVM, "a"); // fasc
+
     if (fileout) {
         setbuf(fileout, nullptr); // unbuffered
         // dump buffered messages from before we opened the log
@@ -207,6 +218,18 @@ void OpenDebugLog()
             vMsgsBeforeOpenLog->pop_front();
         }
     }
+
+    ///////////////////////////////////////////// // fasc
+    if (fileoutVM) {
+        setbuf(fileoutVM, NULL); // unbuffered
+        // dump buffered messages from before we opened the log
+        while (!vMsgsBeforeOpenLog->empty()) {
+            FileWriteStr(vMsgsBeforeOpenLog->front(), fileoutVM);
+            vMsgsBeforeOpenLog->pop_front();
+        }
+    }
+    /////////////////////////////////////////////
+
 
     delete vMsgsBeforeOpenLog;
     vMsgsBeforeOpenLog = nullptr;
@@ -361,8 +384,16 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
     return strStamped;
 }
 
-int LogPrintStr(const std::string &str)
+int LogPrintStr(const std::string &str, bool useVMLog)
 {
+
+//////////////////////////////// // fasc
+    FILE* file = fileout;
+    if(useVMLog){
+        file = fileoutVM;
+    }
+////////////////////////////////
+
     int ret = 0; // Returns total number of characters written
     static std::atomic_bool fStartedNewLine(true);
 
@@ -380,7 +411,7 @@ int LogPrintStr(const std::string &str)
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
 
         // buffer if we haven't opened the log yet
-        if (fileout == nullptr) {
+        if (file == nullptr) {
             assert(vMsgsBeforeOpenLog);
             ret = strTimestamped.length();
             vMsgsBeforeOpenLog->push_back(strTimestamped);
@@ -391,11 +422,11 @@ int LogPrintStr(const std::string &str)
             if (fReopenDebugLog) {
                 fReopenDebugLog = false;
                 fs::path pathDebug = GetDataDir() / "debug.log";
-                if (fsbridge::freopen(pathDebug,"a",fileout) != nullptr)
-                    setbuf(fileout, nullptr); // unbuffered
+                if (fsbridge::freopen(pathDebug,"a",file) != nullptr)
+                    setbuf(file, nullptr); // unbuffered
             }
 
-            ret = FileWriteStr(strTimestamped, fileout);
+            ret = FileWriteStr(strTimestamped, file);
         }
     }
     return ret;

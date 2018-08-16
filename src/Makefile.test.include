@@ -83,7 +83,14 @@ FABCOIN_TESTS =\
   test/uint256_tests.cpp \
   test/univalue_tests.cpp \
   test/equihash_tests.cpp \
-  test/util_tests.cpp
+  test/util_tests.cpp \
+  test/fasctests/fabcointxconverter_tests.cpp \
+  test/fasctests/bytecodeexec_tests.cpp \
+  test/fasctests/condensingtransaction_tests.cpp \
+  test/fasctests/test_utils.cpp \
+  test/fasctests/test_utils.h \
+  test/fasctests/dgp_tests.cpp
+
 
 if ENABLE_WALLET
 FABCOIN_TESTS += \

@@ -847,14 +847,14 @@ UniValue getblockheader(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
-            "getblockheader \"hash\" ( verbose legacy )\n"
+            "getblockheader \"hash\" ( verbose legacy no_contract)\n"
             "\nIf verbose is false, returns a string that is serialized, hex-encoded data for blockheader 'hash'.\n"
             "If verbose is true, returns an Object with information about blockheader <hash>.\n"
             "\nArguments:\n"
             "1. \"hash\"          (string, required) The block hash\n"
             "2. \"verbose\"       (boolean, optional, default=true) true for a json object, false for the hex encoded data\n"
-            "3. \"legacy\"        (boolean, optional, default=false) indicates if the block should be in legacy format\n"
-            "4. \"no_contract\"        (boolean, optional, default=false) indicates if the block should be in non-contract format\n"
+            "3. \"legacy \"        (boolean, optional, default=false) indicates if the block should be in legacy format\n"
+            "4. \"no_contract\"   (boolean, optional, default=false) indicates if the block should be in non-contract format\n"
             "\nResult (for verbose = true):\n"
             "{\n"
             "  \"hash\" : \"hash\",     (string) the block hash (same as provided)\n"
@@ -898,6 +898,7 @@ UniValue getblockheader(const JSONRPCRequest& request)
         no_contract_format = true;
     }
 
+
     if (mapBlockIndex.count(hash) == 0)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
 
@@ -920,7 +921,7 @@ UniValue getblock(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 4)
         throw std::runtime_error(
-            "getblock \"blockhash\" ( verbosity legacy) \n"
+            "getblock \"blockhash\" ( verbosity legacy no_contract) \n"
             "\nIf verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.\n"
             "If verbosity is 1, returns an Object with information about block <hash>.\n"
             "If verbosity is 2, returns an Object with information about block <hash> and information about each transaction. \n"
@@ -1788,6 +1789,76 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
     return ret;
 }
 
+
+UniValue gettxoutset(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+        "gettxoutset\n"
+        "\nReturns the unspent transaction output set.\n"
+        "Note this call may take some time.\n"
+        "\nResult:\n"
+        "{\n"
+        "  \"UTXO\": \"height, address, amount\"\n"
+        "}\n"
+        "\nExamples:\n"
+        + HelpExampleCli("gettxoutset", "")
+        + HelpExampleRpc("gettxoutset", "")
+        );
+
+    UniValue ret(UniValue::VOBJ);
+    
+    CCoinsStats stats;
+    FlushStateToDisk();
+    
+    std::unique_ptr<CCoinsViewCursor> pcursor(pcoinsdbview->Cursor());
+
+    uint256 prevkey;
+    std::map<uint32_t, Coin> outputs;
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        COutPoint key;
+        Coin coin;
+        
+        if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
+            if (!outputs.empty() && key.hash != prevkey) {
+                outputs.clear();
+            }
+            prevkey = key.hash;
+            txnouttype type;
+            std::vector<CTxDestination> addresses;
+            int nRequired;
+            std::stringstream strUtxo;
+            if( ExtractDestinations(coin.out.scriptPubKey, type, addresses, nRequired))
+            {
+                for( const CTxDestination addr: addresses )
+                {
+                    //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
+                    strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
+                    ret.push_back(Pair("UTXO", strUtxo.str()));
+                }
+            }
+            else
+            {
+                strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue ;
+                ret.push_back(Pair("UTXO", strUtxo.str()));
+            }
+            outputs[key.n] = std::move(coin);
+        } 
+        else 
+        {
+            ret.push_back(Pair("ERROR: ", "unable to read value"));
+            return ret;
+        }
+        pcursor->Next();
+    }
+
+    return ret;
+}
+
 UniValue gettxout(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
@@ -2402,6 +2473,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getrawmempool",          &getrawmempool,          true,  {"verbose"} },
     { "blockchain",         "gettxout",               &gettxout,               true,  {"txid","n","include_mempool"} },
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true,  {} },
+    { "blockchain",         "gettxoutset",            &gettxoutset,            true,  {} },
     { "blockchain",         "pruneblockchain",        &pruneblockchain,        true,  {"height"} },
     { "blockchain",         "verifychain",            &verifychain,            true,  {"checklevel","nblocks"} },
     { "blockchain",         "getaccountinfo",         &getaccountinfo,         true,  {"contract_address"} },

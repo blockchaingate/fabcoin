@@ -803,22 +803,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // No transactions are allowed below minRelayTxFee except from disconnected blocks
         if (fLimitFree && nModifiedFees < ::minRelayTxFee.GetFee(nSize))
         {
-            static CCriticalSection csFreeLimiter;
-            static double dFreeCount;
-            static int64_t nLastTime;
-            int64_t nNow = GetTime();
-
-            LOCK(csFreeLimiter);
-
-            // Use an exponentially decaying ~10-minute window:
-            dFreeCount *= pow(1.0 - 1.0/600.0, (double)(nNow - nLastTime));
-            nLastTime = nNow;
-            // -limitfreerelay unit is thousand-bytes-per-minute
-            // At default rate it would take over a month to fill 1GB
-            if (dFreeCount + nSize >= gArgs.GetArg("-limitfreerelay", DEFAULT_LIMITFREERELAY) * 10 * 1000)
-                return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "rate limited free transaction");
-            LogPrintChar("mempool", "Rate limit dFreeCount: %g => %g\n", dFreeCount, dFreeCount+nSize);
-            dFreeCount += nSize;
+            return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
 
         if (!tx.HasCreateOrCall() && nAbsurdFee && nFees > nAbsurdFee) 
@@ -1282,9 +1267,9 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     CAmount nSubsidy = 25 * COIN;
 
     //Pre-mining 
-    bool fRegTest = gArgs.GetBoolArg("-regtest", false);
-
-    if ( nHeight == 2  &&  !fRegTest ) {
+    //bool fRegTest = gArgs.GetBoolArg("-regtest", false);
+    //if ( nHeight == 2  &&  !fRegTest ) {
+    if ( nHeight == 2  ) {
        nSubsidy = 32000000 * COIN;
     }
 
@@ -2306,8 +2291,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
     checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
     checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
-    checkBlock.nHeight = block.nHeight;
-
 
     if ((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
     {
@@ -2386,8 +2369,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         return true;
     }
     //////////////////////////////////////////////////////////////////
-    if (fJustCheck)
-        return true;
 
     // Write undo information to disk
     if (pindex->GetUndoPos().IsNull() || !pindex->IsValid(BLOCK_VALID_SCRIPTS))

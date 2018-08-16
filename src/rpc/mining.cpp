@@ -424,7 +424,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. template_request         (json object, optional) A json object in the following spec\n"
             "     {\n"
-            "       \"mode\":\"template\"    (string, optional) This must be set to \"template\", \"proposal\" (see BIP 23), \"proposal_legacy\",  \"proposal_no_contract\", or omitted\n"
+            "       \"mode\":\"template\"    (string, optional) This must be set to \"template\", \"proposal | proposal_legacy | proposal_no_contract | proposal_legacy_no_contract \", or omitted\n"
             "       \"capabilities\":[     (array, optional) A list of strings\n"
             "           \"support\"          (string) client side supported feature, 'longpoll', 'coinbasetxn', 'coinbasevalue', 'proposal', 'serverlist', 'workid'\n"
             "           ,...\n"
@@ -507,17 +507,20 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
 
-        if (strMode == "proposal" || strMode == "proposal_legacy"  || strMode == "proposal_no_contract")
+        if (strMode == "proposal" || strMode == "proposal_legacy"  || strMode == "proposal_no_contract" || strMode == "proposal_legacy_no_contract")
         {
             const UniValue& dataval = find_value(oparam, "data");
             if (!dataval.isStr())
                 throw JSONRPCError(RPC_TYPE_ERROR, "Missing data String key for proposal");
 
             CBlock block;
-            bool legacy_format = (strMode == "proposal_legacy");
-            bool no_contract_format = (strMode == "proposal_no_contract");
-            if (!DecodeHexBlk(block, dataval.get_str(), legacy_format, no_contract_format))
+            bool legacy_format = (strMode == "proposal_legacy") || (strMode == "proposal_legacy_no_contract");
+            bool no_contract_format = (strMode == "proposal_no_contract") || (strMode == "proposal_legacy_no_contract");
+
+            if (!DecodeHexBlk(block, dataval.get_str(), legacy_format, no_contract_format)){
+                LogPrintf("Block decode failed: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
+            }
 
             uint256 hash = block.GetHash();
             BlockMap::iterator mi = mapBlockIndex.find(hash);
@@ -854,10 +857,12 @@ UniValue submitblock(const JSONRPCRequest& request)
     }
 
     if (!DecodeHexBlk(block, request.params[0].get_str(), legacy_format, no_contract_format)) {
+        LogPrintf("Block decode failed: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase()) {
+        LogPrintf("Block does not start with a coinbase: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block does not start with a coinbase");
     }
 
