@@ -46,6 +46,14 @@ uint256 CBlockHeader::GetHashWithoutSign() const
     return SerializeHash(*this, SER_GETHASH | SER_WITHOUT_SIGNATURE);
 }
 
+bool CBlockHeader::IsSupportContract()
+{   
+    if( nHeight == 0 )
+        return false;
+    
+    return nHeight >= (uint32_t)Params().GetConsensus().ContractHeight;
+}
+
 std::string CBlock::ToString() const
 {
     std::stringstream s;

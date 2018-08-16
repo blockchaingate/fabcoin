@@ -246,7 +246,7 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = uint256();
-      hashStateRoot  = uint256(); // fasc
+        hashStateRoot  = uint256(); // fasc
         hashUTXORoot   = uint256(); // fasc
       //nMoneySupply = 0;
         nSolution.clear();
@@ -379,6 +379,8 @@ public:
     //! Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+
+    bool IsSupportContract();
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
@@ -430,8 +432,14 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        READWRITE(hashStateRoot); // fasc
-        READWRITE(hashUTXORoot); // fasc
+
+        bool hascontract = IsSupportContract();
+        if( hascontract )
+        {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
+
         READWRITE(nSolution);
     }
 

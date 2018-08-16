@@ -59,7 +59,6 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
         bool new_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
-        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
@@ -71,7 +70,10 @@ public:
         }
         READWRITE(nTime);
         READWRITE(nBits);
-        if (has_contract) {
+
+        bool hascontract = IsSupportContract();
+        if( hascontract )
+        {
             READWRITE(hashStateRoot); // fasc
             READWRITE(hashUTXORoot); // fasc
         }
@@ -110,6 +112,7 @@ public:
     uint256 GetHash() const;
     uint256 GetHash(const Consensus::Params& params) const;
     uint256 GetHashWithoutSign() const;
+    bool IsSupportContract();
 
     int64_t GetBlockTime() const
     {
@@ -209,7 +212,6 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
 
-        bool has_contract = !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
@@ -219,7 +221,10 @@ public:
         }
         READWRITE(nTime);
         READWRITE(nBits);
-        if (has_contract) {
+
+        bool hascontract = IsSupportContract();
+        if( hascontract )
+        {
             READWRITE(hashStateRoot); // fasc
             READWRITE(hashUTXORoot); // fasc
         }
