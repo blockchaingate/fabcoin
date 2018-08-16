@@ -67,4 +67,8 @@ std::string HelpMessage(HelpMessageMode mode);
 /** Returns licensing information (for -version) */
 std::string LicenseInfo();
 
+/** Unlock the data directory */
+void UnlockDataDirectory();
+
+
 #endif // FABCOIN_INIT_H

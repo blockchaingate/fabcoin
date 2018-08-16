@@ -27,9 +27,12 @@ class FabcoinAddressCheckValidator : public QValidator
     Q_OBJECT
 
 public:
-    explicit FabcoinAddressCheckValidator(QObject *parent);
+    explicit FabcoinAddressCheckValidator(QObject *parent, bool allowScript = true);
 
     State validate(QString &input, int &pos) const;
+
+private:
+    bool bAllowScript;
 };
 
 #endif // FABCOIN_QT_FABCOINADDRESSVALIDATOR_H
