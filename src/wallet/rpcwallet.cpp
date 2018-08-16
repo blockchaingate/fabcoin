@@ -633,8 +633,18 @@ UniValue createcontract(const JSONRPCRequest& request)
 
     string bytecode = request.params[0].get_str();
 
-    if (bytecode.size() % 2 != 0 || !CheckHex(bytecode))
+    if (bytecode.size() % 2 != 0 || bytecode.size() <= 6 || !CheckHex(bytecode) )
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
+
+    if (bytecode.compare(0,2,"00") == 0 ) {
+        unsigned int len;   
+        std::stringstream ss;
+        ss << std::hex << bytecode.substr(2,8);
+        ss >> len;
+        if ( len > MAX_SCRIPT_ELEMENT_SIZE * 2 || len + 10 != bytecode.size() ) 
+            throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data length not correct)");
+        bytecode = bytecode.substr(10);
+    }
 
     uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_CREATE;
     if (request.params.size() > 1) {

@@ -1790,6 +1790,7 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
     return ret;
 }
 
+
 UniValue gettxoutset(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)

@@ -146,7 +146,7 @@ void setupAmountWidget(QLineEdit *widget, QWidget *parent)
 bool parseFabcoinURI(const QUrl &uri, SendCoinsRecipient *out)
 {
     // return if URI is not valid or is no fabcoin: URI
-    if(!uri.isValid() || uri.scheme() != QString("fabcoin"))
+    if(!uri.isValid() || uri.scheme() != QString("fabcoinsc"))
         return false;
 
     SendCoinsRecipient rv;
