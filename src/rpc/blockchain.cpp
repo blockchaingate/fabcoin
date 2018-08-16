@@ -27,6 +27,7 @@
 #include "utilstrencodings.h"
 #include "hash.h"
 #include "libdevcore/CommonData.h"
+#include "txdb.h"
 
 #include <stdint.h>
 
@@ -845,7 +846,7 @@ UniValue getstorage(const JSONRPCRequest& request)
 }
 UniValue getblockheader(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 4)
         throw std::runtime_error(
             "getblockheader \"hash\" ( verbose legacy no_contract)\n"
             "\nIf verbose is false, returns a string that is serialized, hex-encoded data for blockheader 'hash'.\n"
@@ -1311,7 +1312,7 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
 
     WaitForLogsParams params(request.params);
 
-    //request.PollStart();
+    request.PollStart();
 
     std::vector<std::vector<uint256>> hashesToBlock;
 
@@ -1349,7 +1350,7 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
                 std::unique_lock<std::mutex> lock(cs_blockchange);
                 auto blockHeight = latestblock.height;
 
-                //request.PollPing();
+                request.PollPing();
 
                 cond_blockchange.wait_for(lock, std::chrono::milliseconds(1000));
                 if (latestblock.height > blockHeight) {
@@ -1357,7 +1358,7 @@ UniValue waitforlogs(const JSONRPCRequest& request_) {
                 }
 
                 // TODO: maybe just merge `IsRPCRunning` this into PollAlive
-                if ( !IsRPCRunning()) {
+                if (!request.PollAlive() || !IsRPCRunning()) {
                     LogPrintf("waitforlogs client disconnected\n");
                     return NullUniValue;
                 }
@@ -1858,6 +1859,7 @@ UniValue gettxoutset(const JSONRPCRequest& request)
 
     return ret;
 }
+
 
 UniValue gettxout(const JSONRPCRequest& request)
 {

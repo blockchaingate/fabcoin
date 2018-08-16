@@ -266,6 +266,7 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::QT, "qt"},
     {BCLog::LEVELDB, "leveldb"},
     {BCLog::POW, "pow"},
+    {BCLog::HTTPPOLL, "http-poll"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 };

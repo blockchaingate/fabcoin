@@ -762,6 +762,7 @@ UniValue createcontract(const JSONRPCRequest& request)
     ExtractDestination(pwallet->mapWallet[wtx.tx->vin[0].prevout.hash].tx->vout[wtx.tx->vin[0].prevout.n].scriptPubKey, txSenderDest);
 
     if (fHasSender && !(senderAddress.Get() == txSenderDest)) {
+        //LogPrintf("debug fHasSender=%d, senderAddress.Get()=%s, txSenderDest=%s" , fHasSender, senderAddress.Get(), txSenderDest);
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender could not be set, transaction was not committed!");
     }
 
@@ -981,6 +982,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
     ExtractDestination(pwallet->mapWallet[wtx.tx->vin[0].prevout.hash].tx->vout[wtx.tx->vin[0].prevout.n].scriptPubKey, txSenderDest);
 
     if (fHasSender && !(senderAddress.Get() == txSenderDest)) {
+        //LogPrintf("debug fHasSender=%d, senderAddress.Get()=%s, txSenderDest=%s" , fHasSender, senderAddress.Get(), txSenderDest);
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender could not be set, transaction was not committed!");
     }
 

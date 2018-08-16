@@ -35,7 +35,7 @@ fab_daemon() {
        sleep 1
      else
        sleep 10
-       fab_mining_one 1 $FAB_ROOT $RPC_PORT 20
+       fab_mining_one 1 $FAB_ROOT $RPC_PORT 800
        sleep 3
      fi
     done    

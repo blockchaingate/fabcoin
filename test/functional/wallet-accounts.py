@@ -15,6 +15,7 @@ RPCs tested are:
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import assert_equal
+from test_framework.fabcoinconfig import *
 
 class WalletAccountsTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -29,9 +30,9 @@ class WalletAccountsTest(FabcoinTestFramework):
 
         # Note each time we call generate, all generated coins go into
         # the same address, so we call twice to get two addresses w/50 each
-        node.generate(2)
-        node.generate(802)
-        assert_equal(node.getbalance(), 100)
+        node.generate(1)
+        node.generate(COINBASE_MATURITY+1)
+        assert_equal(node.getbalance(), 2*INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
 
         # there should be 2 address groups
         # each with 1 address with a balance of 50 Fabcoins
@@ -40,10 +41,18 @@ class WalletAccountsTest(FabcoinTestFramework):
         # the addresses aren't linked now, but will be after we send to the
         # common address
         linked_addresses = set()
+       
+        i = 0
         for address_group in address_groups:
+            i+=1
             assert_equal(len(address_group), 1)
             assert_equal(len(address_group[0]), 2)
-            assert_equal(address_group[0][1], 50)
+            print ( i, address_group ) 
+            if i == 2 :
+                assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
+            else :
+                assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD*1 )
+
             linked_addresses.add(address_group[0][0])
 
         # send 50 from each address to a third address not in this wallet
@@ -52,7 +61,7 @@ class WalletAccountsTest(FabcoinTestFramework):
         common_address = "msf4WtN1YQKXvNtvdFYt9JBnUD2FB41kjr"
         txid = node.sendmany(
             fromaccount="",
-            amounts={common_address: 100},
+            amounts={common_address: 2*INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD },
             subtractfeefrom=[common_address],
             minconf=1,
         )
@@ -70,7 +79,7 @@ class WalletAccountsTest(FabcoinTestFramework):
 
         # we want to reset so that the "" account has what's expected.
         # otherwise we're off by exactly the fee amount as that's mined
-        # and matures in the next 800 blocks
+        # and matures in the next 100 blocks
         node.sendfrom("", common_address, fee)
         accounts = ["a", "b", "c", "d", "e"]
         amount_to_send = 1.0
@@ -101,15 +110,15 @@ class WalletAccountsTest(FabcoinTestFramework):
             assert_equal(node.getreceivedbyaccount(account), 2)
             node.move(account, "", node.getbalance(account))
 
-        node.generate(801)
+        node.generate(COINBASE_MATURITY+1)
         
-        expected_account_balances = {"": 20100}
+        expected_account_balances = {"": (COINBASE_MATURITY+4)*INITIAL_BLOCK_REWARD}
         for account in accounts:
             expected_account_balances[account] = 0
         
         assert_equal(node.listaccounts(), expected_account_balances)
         
-        assert_equal(node.getbalance(""), 20100)
+        assert_equal(node.getbalance(""), (COINBASE_MATURITY+4)*INITIAL_BLOCK_REWARD)
         
         for account in accounts:
             address = node.getaccountaddress("")
@@ -124,7 +133,7 @@ class WalletAccountsTest(FabcoinTestFramework):
             multisig_address = node.addmultisigaddress(5, addresses, account)
             node.sendfrom("", multisig_address, 50)
         
-        node.generate(801)
+        node.generate(COINBASE_MATURITY+1)
         
         for account in accounts:
             assert_equal(node.getbalance(account), 50)

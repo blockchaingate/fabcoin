@@ -45,6 +45,10 @@ const char* GetTxnOutputType(txnouttype t)
  */
 bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::vector<unsigned char> >& vSolutionsRet, bool contractConsensus)
 {
+    //contractConsesus is true when evaluating if a contract tx is "standard" for consensus purposes
+    //It is false in all other cases, so to prevent a particular contract tx from being broadcast on mempool, but allowed in blocks,
+    //one should ensure that contractConsensus is false
+
     // Templates
     static std::multimap<txnouttype, CScript> mTemplates;
     if (mTemplates.empty())

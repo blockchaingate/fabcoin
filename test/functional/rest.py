@@ -12,6 +12,7 @@ from codecs import encode
 
 import http.client
 import urllib.parse
+from test_framework.fabcoinconfig import COINBASE_MATURITY, INITIAL_BLOCK_REWARD
 
 def deser_uint256(f):
     r = 0
@@ -57,10 +58,10 @@ class RESTTest (FabcoinTestFramework):
 
         self.nodes[0].generate(2)
         self.sync_all()
-        self.nodes[2].generate(800)
+        self.nodes[2].generate(COINBASE_MATURITY)
         self.sync_all()
 
-        assert_equal(self.nodes[0].getbalance(), 50)
+        assert_equal(self.nodes[0].getbalance(), INITIAL_BLOCK_REWARD + 32000000  )  
 
         txid = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.1)
         self.sync_all()
@@ -139,7 +140,7 @@ class RESTTest (FabcoinTestFramework):
         hashFromBinResponse = hex(deser_uint256(output))[2:].zfill(64)
 
         assert_equal(bb_hash, hashFromBinResponse) #check if getutxo's chaintip during calculation was fine
-        assert_equal(chainHeight, 803) #chain height must be 803
+        assert_equal(chainHeight, COINBASE_MATURITY + 3) #chain height must be 803
 
 
         ############################
@@ -204,15 +205,20 @@ class RESTTest (FabcoinTestFramework):
         # check binary format
         response = http_get_call(url.hostname, url.port, '/rest/block/'+bb_hash+self.FORMAT_SEPARATOR+"bin", True)
         assert_equal(response.status, 200)
-        assert_greater_than(int(response.getheader('content-length')), 80)
+
+        print (response.getheader('content-length'))
+        assert_greater_than(int(response.getheader('content-length')), 181)
         response_str = response.read()
 
         # compare with block header
         response_header = http_get_call(url.hostname, url.port, '/rest/headers/1/'+bb_hash+self.FORMAT_SEPARATOR+"bin", True)
         assert_equal(response_header.status, 200)
-        response_header_length = int(response_header.getheader('content-length'))
-        assert_greater_than(response_header_length, 80)
+
+        print (response.getheader('content-length'))
+        assert_greater_than(int(response_header.getheader('content-length')), 181)
+
         response_header_str = response_header.read()
+        response_header_length = int(response_header.getheader('content-length'))
         assert_equal(response_str[0:response_header_length], response_header_str)
 
         # check block hex format
@@ -224,9 +230,12 @@ class RESTTest (FabcoinTestFramework):
 
         # compare with hex block header
         response_header_hex = http_get_call(url.hostname, url.port, '/rest/headers/1/'+bb_hash+self.FORMAT_SEPARATOR+"hex", True)
+
         assert_equal(response_header_hex.status, 200)
         assert_greater_than(int(response_header_hex.getheader('content-length')), 160)
         response_header_hex_str = response_header_hex.read()
+        print ("response_header_hex)", response_header_hex_str)
+
         assert_equal(response_hex_str[0:160], response_header_hex_str[0:160])
         assert_equal(encode(response_header_str, "hex_codec")[0:160], response_header_hex_str[0:160])
 
