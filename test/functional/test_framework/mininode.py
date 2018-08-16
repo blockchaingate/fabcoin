@@ -603,7 +603,7 @@ class CBlockHeader(object):
         self.sha256 = None
         self.hash = None
 
-        print(self)
+        #print(self)
 
     def serialize_header(self, legacy=True, has_contract=True):
         r = b""
@@ -630,7 +630,7 @@ class CBlockHeader(object):
             r += ser_uint256(self.nNonce)
             r += ser_byte_vector(self.nSolution)
 
-        print("debug serialize_header", "height=", self.nHeight, "legacy=",legacy, "has_contract", has_contract, "len=", len(r) )
+        #print("debug serialize_header", "height=", self.nHeight, "legacy=",legacy, "has_contract", has_contract, "len=", len(r) )
 
         return r
 

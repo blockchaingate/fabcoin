@@ -7,9 +7,6 @@
 #define FABCOIN_POLICY_FEERATE_H
 
 #include "amount.h"
-
-//????   check amount.h
-#if 0
 #include "serialize.h"
 
 #include <string>
@@ -55,6 +52,5 @@ public:
         READWRITE(nSatoshisPerK);
     }
 };
-#endif
 
 #endif //  FABCOIN_POLICY_FEERATE_H
