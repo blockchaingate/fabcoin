@@ -148,7 +148,6 @@ BASE_SCRIPTS= [
     'fabcoin-soft-block-gas-limits.py',
     'fabcoin-dgp-block-size-restart.py',
     'fabcoin-searchlog-restart-node.py',
-    'fabcoin-immature-coinstake-spend.py',
     'fabcoin-transaction-prioritization.py',
     'fabcoin-many-value-refunds-from-same-tx.py',
     'fabcoin-combined-outputs-exceed-gas-limit.py',
