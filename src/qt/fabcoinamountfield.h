@@ -31,7 +31,7 @@ public:
     CAmount value(bool *value=0) const;
     void setValue(const CAmount& value);
 
-    /** Set single step in lius **/
+    /** Set single step in satoshis **/
     void setSingleStep(const CAmount& step);
 
     /** Make read-only **/
@@ -55,6 +55,9 @@ public:
         in these cases we have to set it up manually.
     */
     QWidget *setupTabChain(QWidget *prev);
+
+    CAmount minimum() const;
+    void setMinimum(const CAmount& min);
 
 Q_SIGNALS:
     void valueChanged();

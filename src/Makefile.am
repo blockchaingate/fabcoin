@@ -363,7 +363,6 @@ libfabcoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(FABCOIN_INCLUDES) -DFASC_BUILD
 libfabcoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libfabcoin_common_a_CFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) -std=c99
 libfabcoin_common_a_SOURCES = \
-  amount.cpp \
   base58.cpp \
   chainparams.cpp \
   coins.cpp \

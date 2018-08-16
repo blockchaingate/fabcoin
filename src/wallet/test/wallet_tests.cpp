@@ -19,6 +19,9 @@
 #include <boost/test/unit_test.hpp>
 #include <univalue.h>
 
+#include <timedata.h>
+#include <random.h>
+
 extern CWallet* pwalletMain;
 
 extern UniValue importmulti(const JSONRPCRequest& request);

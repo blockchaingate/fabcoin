@@ -1,4 +1,4 @@
-// Copyright (c) 2009-2010 Satoshi Nakamoto
+// yCopyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -757,10 +757,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             if(count > fascTransactions.size())
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-incorrect-format");
 
-            if (rawTx && nAbsurdFee && dev::u256(nFees) > dev::u256(nAbsurdFee) + sumGas)
+            if (rawTx && nAbsurdFee && dev::u256(nFees) > dev::u256(nAbsurdFee) + sumGas){
+                LogPrintf("absurdly-high-fee nAbsurdFee=%d nFees=%d sumGas=%d\n ", nAbsurdFee , nFees , sumGas);
                 return state.Invalid(false,
                     REJECT_HIGHFEE, "absurdly-high-fee",
                     strprintf("%d > %d", nFees, nAbsurdFee));
+            }
         }
         ////////////////////////////////////////////////////////////
         // nModifiedFees includes any fee deltas from PrioritiseTransaction
@@ -801,15 +803,18 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         }
 
         // No transactions are allowed below minRelayTxFee except from disconnected blocks
+
         if (fLimitFree && nModifiedFees < ::minRelayTxFee.GetFee(nSize))
         {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
 
-        if (!tx.HasCreateOrCall() && nAbsurdFee && nFees > nAbsurdFee) 
+        if (!tx.HasCreateOrCall() && nAbsurdFee && nFees  > nAbsurdFee ) {
+            LogPrintf("absurdly-high-fee nAbsurdFee=%d nFees=%d \n", nAbsurdFee , nFees );
             return state.Invalid(false,
                 REJECT_HIGHFEE, "absurdly-high-fee",
                 strprintf("%d > %d", nFees, nAbsurdFee));
+        }
 
         // Calculate in-mempool ancestors, up to a limit.
         CTxMemPool::setEntries setAncestors;

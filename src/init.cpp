@@ -384,12 +384,14 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-prune=<n>", strprintf(_("Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. "
             "Warning: Reverting this setting requires re-downloading the entire blockchain. "
             "(default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, >%u = automatically prune block files to stay under the specified target size in MiB)"), MIN_DISK_SPACE_FOR_BLOCK_FILES / 1024 / 1024));
+    strUsage += HelpMessageOpt("-record-log-opcodes", strprintf(_("Logs all EVM LOG opcode operations to the file vmExecLogs.json")));
     strUsage += HelpMessageOpt("-reindex-chainstate", _("Rebuild chain state from the currently indexed blocks"));
     strUsage += HelpMessageOpt("-reindex", _("Rebuild chain state and block index from the blk*.dat files on disk"));
 #ifndef WIN32
     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
 #endif
     strUsage += HelpMessageOpt("-txindex", strprintf(_("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)"), DEFAULT_TXINDEX));
+    strUsage += HelpMessageOpt("-logevents", strprintf(_("Maintain a full EVM log index, used by searchlogs and gettransactionreceipt rpc calls (default: %u)"), DEFAULT_LOGEVENTS));
 
     strUsage += HelpMessageGroup(_("Connection options:"));
     strUsage += HelpMessageOpt("-addnode=<ip>", _("Add a node to connect to and attempt to keep the connection open"));
@@ -477,8 +479,10 @@ std::string HelpMessage(HelpMessageMode mode)
 
 #ifdef ENABLE_GPU
     strUsage += HelpMessageOpt("-G", _("Enable GPU mining (default: false)"));
+    strUsage += HelpMessageOpt("-CUDA", _("Enable NVIDIA CUDA mining (default: false)"));
+    strUsage += HelpMessageOpt("-platform=<id>", _("If -G is enabled this specifies the GPU platform number to use (default: 0)"));
     strUsage += HelpMessageOpt("-device=<id>", _("If -G is enabled this specifies the GPU device number to use (default: 0)"));
-    strUsage += HelpMessageOpt("-allgpu", _("If -G is enabled this will mine on all available GPU devices (default: false)"));
+    strUsage += HelpMessageOpt("-allgpu", _("If -G is enabled this will mine on all available GPU platforms and devices (default: false)"));
     strUsage += HelpMessageOpt("-forcenolimit", _("Do not limit thread count per GPU by memory limits. (default: false)"));
 #endif
 #endif
@@ -493,6 +497,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-maxsigcachesize=<n>", strprintf("Limit sum of signature cache and script execution cache sizes to <n> MiB (default: %u)", DEFAULT_MAX_SIG_CACHE_SIZE));
         strUsage += HelpMessageOpt("-maxtipage=<n>", strprintf("Maximum tip age in seconds to consider node in initial block download (default: %u)", DEFAULT_MAX_TIP_AGE));
     }
+    strUsage += HelpMessageOpt("-minmempoolgaslimit=<limit>", strprintf("The minimum transaction gas limit we are willing to accept into the mempool (default: %s)",MEMPOOL_MIN_GAS_LIMIT));
     strUsage += HelpMessageOpt("-maxtxfee=<amt>", strprintf(_("Maximum total fees (in %s) to use in a single wallet transaction or raw transaction; setting this too low may abort large transactions (default: %s)"),
         CURRENCY_UNIT, FormatMoney(DEFAULT_TRANSACTION_MAXFEE)));
     strUsage += HelpMessageOpt("-printtoconsole", _("Send trace/debug info to console instead of debug.log file"));
@@ -549,9 +554,9 @@ std::string HelpMessage(HelpMessageMode mode)
 std::string LicenseInfo()
 {
     const std::string URL_SOURCE_CODE = "<https://github.com/blockchaingate/fabcoin>";
-    const std::string URL_WEBSITE = "<https://fabcoincore.org>";
+    const std::string URL_WEBSITE = "<https://fabcoin.pro>";
 
-    return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
+    return CopyrightHolders(strprintf(_("Copyright (C) %i"), COPYRIGHT_YEAR) + " ") + "\n" +
            "\n" +
            strprintf(_("Please contribute if you find %s useful. "
                        "Visit %s for further information about the software."),
@@ -1185,7 +1190,7 @@ bool AppInitParameterInteraction()
     return true;
 }
 
-static bool LockDataDirectory(bool probeOnly)
+static bool LockDataDirectory(bool probeOnly, bool try_lock=true)
 {
     std::string strDataDir = GetDataDir().string();
 
@@ -1196,7 +1201,7 @@ static bool LockDataDirectory(bool probeOnly)
 
     try {
         static boost::interprocess::file_lock lock(pathLockFile.string().c_str());
-        if (!lock.try_lock()) {
+        if (try_lock && !lock.try_lock()) {
             return InitError(strprintf(_("Cannot obtain a lock on data directory %s. %s is probably already running."), strDataDir, _(PACKAGE_NAME)));
         }
         if (probeOnly) {
@@ -1510,8 +1515,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                     break;
                 }
 
-               
-
                 // ReplayBlocks is a no-op if we cleared the coinsviewdb with -reindex or -reindex-chainstate
                 if (!ReplayBlocks(chainparams, pcoinsdbview)) {
                     strLoadError = _("Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.");
@@ -1803,10 +1806,13 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 #ifdef ENABLE_WALLET
     // Generate coins in the background
     GPUConfig conf;
-    conf.selGPU = gArgs.GetArg("-deviceid", 0);
-    conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
+
     conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
+    conf.selGPU = gArgs.GetArg("-device", 0);
 #ifdef ENABLE_GPU    
+    conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
+    conf.sel_platform = gArgs.GetArg("-platform", 0);
+    conf.useCUDA   = gArgs.GetBoolArg("-CUDA", 0);
     conf.useGPU = gArgs.GetBoolArg("-G", false) || gArgs.GetBoolArg("-GPU", false);
 #else
     conf.useGPU = false;
@@ -1826,3 +1832,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     return !fRequestShutdown;
 }
+
+void UnlockDataDirectory()
+{
+    // Unlock
+    LockDataDirectory(true, false);
+}
+

@@ -25,7 +25,6 @@
 #include <memory> // for unique_ptr
 #include <unordered_map>
 
-using namespace RPCServer;
 static bool fRPCRunning = false;
 static bool fRPCInWarmup = true;
 static std::string rpcWarmupStatus("RPC server started");
@@ -40,7 +39,6 @@ static struct CRPCSignals
     boost::signals2::signal<void ()> Started;
     boost::signals2::signal<void ()> Stopped;
     boost::signals2::signal<void (const CRPCCommand&)> PreCommand;
-    boost::signals2::signal<void (const CRPCCommand&)> PostCommand;
 } g_rpcSignals;
 
 void RPCServer::OnStarted(std::function<void ()> slot)
@@ -56,10 +54,6 @@ void RPCServer::OnStopped(std::function<void ()> slot)
 void RPCServer::OnPreCommand(std::function<void (const CRPCCommand&)> slot)
 {
     g_rpcSignals.PreCommand.connect(boost::bind(slot, _1));
-}
-void RPCServer::OnPostCommand(std::function<void (const CRPCCommand&)> slot)
-{
-    g_rpcSignals.PostCommand.connect(boost::bind(slot, _1));
 }
 
 void RPCTypeCheck(const UniValue& params,
@@ -365,7 +359,42 @@ bool RPCIsInWarmup(std::string *outStatus)
 }
 
 JSONRPCRequest::JSONRPCRequest(HTTPRequest *_req): JSONRPCRequest() {
-    req = _req;
+	req = _req;
+}
+
+bool JSONRPCRequest::PollAlive() {
+    return !req->isConnClosed();
+}
+
+void JSONRPCRequest::PollStart() {
+    // send an empty space to the client to ensure that it's still alive.
+    assert(!isLongPolling);
+    req->WriteHeader("Content-Type", "application/json");
+    req->WriteHeader("Connection", "close");
+    req->Chunk(std::string(" "));
+    isLongPolling = true;
+}
+
+void JSONRPCRequest::PollPing() {
+    assert(isLongPolling);
+    // send an empty space to the client to ensure that it's still alive.
+    req->Chunk(std::string(" "));
+}
+
+void JSONRPCRequest::PollCancel() {
+    assert(isLongPolling);
+    req->ChunkEnd();
+}
+
+void JSONRPCRequest::PollReply(const UniValue& result) {
+    assert(isLongPolling);
+    UniValue reply(UniValue::VOBJ);
+    reply.push_back(Pair("result", result));
+    reply.push_back(Pair("error", NullUniValue));
+    reply.push_back(Pair("id", id));
+
+    req->Chunk(reply.write() + "\n");
+    req->ChunkEnd();
 }
 
 void JSONRPCRequest::parse(const UniValue& valRequest)
@@ -401,7 +430,7 @@ static UniValue JSONRPCExecOne(const UniValue& req)
 {
     UniValue rpc_result(UniValue::VOBJ);
 
-    JSONRPCRequest jreq;
+    JSONRPCRequest jreq(NULL);
     try {
         jreq.parse(req);
 

@@ -80,8 +80,9 @@ QValidator::State FabcoinAddressEntryValidator::validate(QString &input, int &po
     return state;
 }
 
-FabcoinAddressCheckValidator::FabcoinAddressCheckValidator(QObject *parent) :
-    QValidator(parent)
+FabcoinAddressCheckValidator::FabcoinAddressCheckValidator(QObject *parent, bool allowScript) :
+    QValidator(parent),
+    bAllowScript(allowScript)
 {
 }
 
@@ -91,7 +92,12 @@ QValidator::State FabcoinAddressCheckValidator::validate(QString &input, int &po
     // Validate the passed Fabcoin address
     CFabcoinAddress addr(input.toStdString());
     if (addr.IsValid())
-        return QValidator::Acceptable;
+    {
+        if(bAllowScript)
+            return QValidator::Acceptable;
+        else if(!addr.IsScript())
+            return QValidator::Acceptable;
+    }
 
     return QValidator::Invalid;
 }

@@ -29,6 +29,12 @@
 
 #include <boost/signals2/signal.hpp>
 
+#ifndef WIN32
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
+
 // Application startup time (used for uptime calculation)
 int64_t GetStartupTime();
 
@@ -101,6 +107,8 @@ namespace BCLog {
         COINDB      = (1 << 18),
         QT          = (1 << 19),
         LEVELDB     = (1 << 20),
+
+        HTTPPOLL    = (1 << 22),
         POW         = (1 << 30),
         ALL         = ~(uint32_t)0,
     };

@@ -5,7 +5,7 @@
 #include "fabcoinamountfield.h"
 
 #include "fabcoinunits.h"
-#include "guiconstants.h"
+#include "styleSheet.h"
 #include "qvaluecombobox.h"
 
 #include <QApplication>
@@ -25,7 +25,8 @@ public:
     explicit AmountSpinBox(QWidget *parent):
         QAbstractSpinBox(parent),
         currentUnit(FabcoinUnits::FAB),
-        singleStep(100000) // lius
+        singleStep(100000), // lius
+        minAmount(0)
     {
         setAlignment(Qt::AlignRight);
 
@@ -46,6 +47,7 @@ public:
     {
         bool valid = false;
         CAmount val = parse(input, &valid);
+        val = qMax(val, minAmount);
         if(valid)
         {
             input = FabcoinUnits::format(currentUnit, val, false, FabcoinUnits::separatorAlways);
@@ -60,7 +62,8 @@ public:
 
     void setValue(const CAmount& value)
     {
-        lineEdit()->setText(FabcoinUnits::format(currentUnit, value, false, FabcoinUnits::separatorAlways));
+        CAmount val = qMax(value, minAmount);
+        lineEdit()->setText(FabcoinUnits::format(currentUnit, val, false, FabcoinUnits::separatorAlways));
         Q_EMIT valueChanged();
     }
 
@@ -69,7 +72,7 @@ public:
         bool valid = false;
         CAmount val = value(&valid);
         val = val + steps * singleStep;
-        val = qMin(qMax(val, CAmount(0)), FabcoinUnits::maxMoney());
+        val = qMin(qMax(val, minAmount), FabcoinUnits::maxMoney());
         setValue(val);
     }
 
@@ -124,9 +127,22 @@ public:
         return cachedMinimumSizeHint;
     }
 
+    CAmount minimum() const
+    {
+        return minAmount;
+    }
+
+    void setMinimum(const CAmount& min)
+    {
+        minAmount = min;
+        Q_EMIT valueChanged();
+    }
+
+
 private:
     int currentUnit;
     CAmount singleStep;
+    CAmount minAmount;
     mutable QSize cachedMinimumSizeHint;
 
     /**
@@ -176,7 +192,7 @@ protected:
         CAmount val = value(&valid);
         if(valid)
         {
-            if(val > 0)
+            if(val > minAmount)
                 rv |= StepDownEnabled;
             if(val < FabcoinUnits::maxMoney())
                 rv |= StepUpEnabled;
@@ -197,14 +213,15 @@ FabcoinAmountField::FabcoinAmountField(QWidget *parent) :
     amount = new AmountSpinBox(this);
     amount->setLocale(QLocale::c());
     amount->installEventFilter(this);
-    amount->setMaximumWidth(170);
+    amount->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->addWidget(amount);
     unit = new QValueComboBox(this);
     unit->setModel(new FabcoinUnits(this));
+    unit->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    unit->setMinimumWidth(120);
     layout->addWidget(unit);
-    layout->addStretch(1);
     layout->setContentsMargins(0,0,0,0);
 
     setLayout(layout);
@@ -245,7 +262,7 @@ void FabcoinAmountField::setValid(bool valid)
     if (valid)
         amount->setStyleSheet("");
     else
-        amount->setStyleSheet(STYLE_INVALID);
+        SetObjectStyleSheet(amount, StyleSheetNames::Invalid);
 }
 
 bool FabcoinAmountField::eventFilter(QObject *object, QEvent *event)
@@ -299,4 +316,14 @@ void FabcoinAmountField::setDisplayUnit(int newUnit)
 void FabcoinAmountField::setSingleStep(const CAmount& step)
 {
     amount->setSingleStep(step);
+}
+
+CAmount FabcoinAmountField::minimum() const
+{
+    return amount->minimum();
+}
+
+void FabcoinAmountField::setMinimum(const CAmount& min)
+{
+    amount->setMinimum(min);
 }
