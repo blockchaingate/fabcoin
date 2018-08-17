@@ -3749,7 +3749,7 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     // Check proof of work matches claimed amount
     if (fCheckPOW && !CheckProofOfWork(block.GetHash(), block.nBits, postfork, consensusParams)) {
         CBlock dumpBlock(block); 
-        LogPrintf("Dump block: Height %d, others ==   %s \n", block.nHeight, dumpBlock.ToString());
+        LogPrintf("Dump block: Height %d, postfork=%d others == %s \n", block.nHeight, postfork, dumpBlock.ToString());
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false, "proof of work failed");
     }
 

@@ -70,9 +70,12 @@ class Fabcoin8MBBlock(FabcoinTestFramework):
         block.solve()
 
         block_count = self.node.getblockcount()
-        print("Size of submitted block: ", len(block.serialize(with_witness=True, legacy=True, has_contract=True)), "bytes")
-        ret = self.node.submitblock(bytes_to_hex_str(block.serialize(with_witness=True, legacy=True, has_contract=True)))
-        assert_equal(ret, None)
+        block_bytes = block.serialize(with_witness=True, legacy=True, has_contract=True)
+        print("Size of submitted block: ", len(block_bytes), "bytes")
+
+        ret = self.node.submitblock(bytes_to_hex_str(block_bytes), '', True)
+        #print (ret)
+        #assert_equal(ret, None)
         self.sync_all()
 
         assert_equal(block_count+1, self.nodes[0].getblockcount())

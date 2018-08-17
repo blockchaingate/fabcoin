@@ -860,10 +860,15 @@ UniValue submitblock(const JSONRPCRequest& request)
         no_contract_format = true;
     }
 
+
+    //LogPrintf("debug submitblock decode str: %s legacy=%d no_contract=%d", request.params[0].get_str() , legacy_format, no_contract_format );
     if (!DecodeHexBlk(block, request.params[0].get_str(), legacy_format, no_contract_format)) {
         LogPrintf("Block decode failed: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
+
+    LogPrintf("debug submitblock after DecodeHexBlk: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
+
 
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase()) {
         LogPrintf("Block does not start with a coinbase: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );

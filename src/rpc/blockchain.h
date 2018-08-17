@@ -31,7 +31,7 @@ UniValue mempoolInfoToJSON();
 UniValue mempoolToJSON(bool fVerbose = false);
 
 /** Block header to JSON */
-UniValue blockheaderToJSON(const CBlockIndex* blockindex);
+UniValue blockheaderToJSON(const CBlockIndex* blockindex, bool legacy_format=false, bool no_contract_format=false);
 
 #endif
 

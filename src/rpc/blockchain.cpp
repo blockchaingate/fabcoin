@@ -122,7 +122,7 @@ double GetDifficulty(const CBlockIndex* blockindex)
     }
 }
 
-UniValue blockheaderToJSON(const CBlockIndex* blockindex)
+UniValue blockheaderToJSON(const CBlockIndex* blockindex, bool legacy_format, bool no_contract_format )
 {
     UniValue result(UniValue::VOBJ);
     result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
@@ -131,26 +131,41 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex)
     if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
     result.push_back(Pair("confirmations", confirmations));
-    result.push_back(Pair("height", blockindex->nHeight));
+    if (! legacy_format ){
+        result.push_back(Pair("height", blockindex->nHeight));
+    
+    }
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
-    result.push_back(Pair("hashStateRoot", blockindex->hashStateRoot.GetHex())); // fasc
-    result.push_back(Pair("hashUTXORoot", blockindex->hashUTXORoot.GetHex())); // fasc
+
+    if ( ! no_contract_format ) {
+        result.push_back(Pair("hashStateRoot", blockindex->hashStateRoot.GetHex())); // fasc
+        result.push_back(Pair("hashUTXORoot", blockindex->hashUTXORoot.GetHex())); // fasc
+    }
+
     result.push_back(Pair("time", (int64_t)blockindex->nTime));
     result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
-    result.push_back(Pair("nonceUint32", (uint64_t)((uint32_t)blockindex->nNonce.GetUint64(0))));
-    result.push_back(Pair("nonce", blockindex->nNonce.GetHex()));
-    result.push_back(Pair("solution", HexStr(blockindex->nSolution)));
+
+    if ( legacy_format ){
+        result.push_back(Pair("nonceUint32", (uint64_t)((uint32_t)blockindex->nNonce.GetUint64(0))));
+    }
+    else {
+        result.push_back(Pair("nonce", blockindex->nNonce.GetHex()));
+        result.push_back(Pair("solution", HexStr(blockindex->nSolution)));
+    }
     result.push_back(Pair("bits", strprintf("%08x", blockindex->nBits)));
+
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
 
     if (blockindex->pprev)
         result.push_back(Pair("previousblockhash", blockindex->pprev->GetBlockHash().GetHex()));
     CBlockIndex *pnext = chainActive.Next(blockindex);
+
     if (pnext)
         result.push_back(Pair("nextblockhash", pnext->GetBlockHash().GetHex()));
+
     return result;
 }
 
@@ -912,10 +927,11 @@ UniValue getblockheader(const JSONRPCRequest& request)
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | ser_flags);
         ssBlock << pblockindex->GetBlockHeader();
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
+
         return strHex;
     }
 
-    return blockheaderToJSON(pblockindex);
+    return blockheaderToJSON(pblockindex, legacy_format, no_contract_format);
 }
 
 UniValue getblock(const JSONRPCRequest& request)

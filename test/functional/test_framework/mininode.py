@@ -539,12 +539,12 @@ class CBlockHeader(object):
             self.nVersion = header.nVersion
             self.hashPrevBlock = header.hashPrevBlock
             self.hashMerkleRoot = header.hashMerkleRoot
-            self.hashStateRoot = header.hashStateRoot
-            self.hashUTXORoot = header.hashUTXORoot
             self.nHeight = header.nHeight
             self.nReserved = copy.copy(header.nReserved)
             self.nTime = header.nTime
             self.nBits = header.nBits
+            self.hashStateRoot = header.hashStateRoot
+            self.hashUTXORoot = header.hashUTXORoot
             self.nNonce = header.nNonce
             self.nSolution = header.nSolution
 
@@ -576,13 +576,6 @@ class CBlockHeader(object):
         self.hashPrevBlock = deser_uint256(f)
         self.hashMerkleRoot = deser_uint256(f)
 
-        if has_contract:    
-            self.hashStateRoot = deser_uint256(f)
-            self.hashUTXORoot = deser_uint256(f)
-        else:
-            self.hashStateRoot = None
-            self.hashUTXORoot = None
-
         if legacy:
             self.nHeight = 0
             self.nReserved = [0] * 7
@@ -592,6 +585,13 @@ class CBlockHeader(object):
 
         self.nTime = struct.unpack("<I", f.read(4))[0]
         self.nBits = struct.unpack("<I", f.read(4))[0]
+
+        if has_contract:    
+            self.hashStateRoot = deser_uint256(f)
+            self.hashUTXORoot = deser_uint256(f)
+        else:
+            self.hashStateRoot = None
+            self.hashUTXORoot = None
 
         if legacy:
             self.nNonce = struct.unpack("<I", f.read(4))[0]
@@ -611,10 +611,6 @@ class CBlockHeader(object):
         r += struct.pack("<i", self.nVersion)
         r += ser_uint256(self.hashPrevBlock)
         r += ser_uint256(self.hashMerkleRoot)
-
-        if has_contract :
-            r += ser_uint256(self.hashStateRoot)
-            r += ser_uint256(self.hashUTXORoot)
    
         if not legacy:
             r += struct.pack("<I", self.nHeight)
@@ -623,6 +619,10 @@ class CBlockHeader(object):
 
         r += struct.pack("<I", self.nTime)
         r += struct.pack("<I", self.nBits)
+
+        if has_contract :
+            r += ser_uint256(self.hashStateRoot)
+            r += ser_uint256(self.hashUTXORoot)
 
         if legacy:
             r += struct.pack("<I", self.nNonce & 0xFFFFFFFF)
@@ -641,10 +641,12 @@ class CBlockHeader(object):
     def calc_sha256(self):
 
         if self.sha256 is None:
-            if self.nHeight < FAB_REGTEST_HARDFORK_HEIGHT:
-                r = self.serialize_header(legacy=True, has_contract=True)
-            else:
-                r = self.serialize_header(legacy=False, has_contract=True)
+            r = self.serialize_header(legacy=True, has_contract=True)
+
+            #if self.nHeight < FAB_REGTEST_HARDFORK_HEIGHT:
+            #    r = self.serialize_header(legacy=True, has_contract=True)
+            #else:
+            #    r = self.serialize_header(legacy=False, has_contract=True)
 
             self.sha256 = uint256_from_str(hash256(r))
             self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
@@ -749,9 +751,11 @@ class CBlock(CBlockHeader):
     def solve(self):
         self.rehash()
         target = uint256_from_compact(self.nBits)
+        print(self.sha256, target, self.nNonce)
         while self.sha256 > target:
             self.nNonce += 1
             self.rehash()
+            print(self.sha256, target, self.nNonce)
 
     def sign_block(self, key, low_s=True):
         data = b""
@@ -760,15 +764,15 @@ class CBlock(CBlockHeader):
         data += ser_uint256(self.hashMerkleRoot)
         data += struct.pack("<I", self.nTime)
         data += struct.pack("<I", self.nBits)
-        data += struct.pack("<I", self.nNonce)
         data += ser_uint256(self.hashStateRoot)
         data += ser_uint256(self.hashUTXORoot)
+        data += struct.pack("<I", self.nNonce)
         #data += self.prevoutStake.serialize()
         #sha256NoSig = hash256(data)
         #self.vchBlockSig = key.sign(sha256NoSig, low_s=low_s)
 
     def __repr__(self):
-        return "CBlock(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nHeight=%d nTime=%s nBits=%08x nNonce=%08x vtx=%s)" \
+        return "CBlock(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nHeight=%d nTime=%s nBits=%08x hashStateRoot=%064x hashUTXORoot=%064x nNonce=%08x vtx=%s)" \
             % (self.nVersion, self.hashPrevBlock, self.hashMerkleRoot, self.nHeight, 
                time.ctime(self.nTime), self.nBits, self.nNonce, repr(self.vtx))
 

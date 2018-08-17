@@ -14,7 +14,7 @@ RPCs tested are:
 """
 
 from test_framework.test_framework import FabcoinTestFramework
-from test_framework.util import assert_equal
+from test_framework.util import *
 from test_framework.fabcoinconfig import *
 
 class WalletAccountsTest(FabcoinTestFramework):
@@ -41,17 +41,18 @@ class WalletAccountsTest(FabcoinTestFramework):
         # the addresses aren't linked now, but will be after we send to the
         # common address
         linked_addresses = set()
-       
-        i = 0
+
+        time.sleep(0.1)
+
         for address_group in address_groups:
-            i+=1
             assert_equal(len(address_group), 1)
             assert_equal(len(address_group[0]), 2)
-            print ( i, address_group ) 
-            if i == 2 :
-                assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
-            else :
+
+            print ( address_group ) 
+            if address_group[0][1]  == INITIAL_BLOCK_REWARD :
                 assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD*1 )
+            else :
+                assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
 
             linked_addresses.add(address_group[0][0])
 
