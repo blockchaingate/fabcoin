@@ -6,6 +6,7 @@ from test_framework.script import *
 from test_framework.mininode import *
 from test_framework.address import *
 from test_framework.fabcoin import *
+from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 import sys
 import random
 import time
@@ -14,7 +15,7 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 1
-        self.extra_args = [['-staking=1', '-rpcmaxgasprice=10000000']]
+        self.extra_args = [['-staking=0', '-rpcmaxgasprice=10000000']]
 
     def restart_node(self):
         self.stop_nodes()
@@ -79,7 +80,7 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
         gas_limit = 100000
         if not spends_txid:
             for unspent in self.node.listunspent():
-                if unspent['amount'] == 20000:
+                if unspent['amount'] == INITIAL_BLOCK_REWARD:
                     spends_txid = unspent['txid']
                     spends_vout = unspent['vout']
                     break
@@ -207,7 +208,7 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
             expected_tx_order.append((expected_tx_index, unspent['txid']))
 
         for unspent in self.node.listunspent():
-            if unspent['amount'] == 20000 and unspent['address'] != address:
+            if unspent['amount'] == INITIAL_BLOCK_REWARD and unspent['address'] != address:
                 break
 
         # The list of tuples specifies (expected position in block txs, gas_price)
@@ -242,7 +243,8 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
 
     def run_test(self):
         self.node = self.nodes[0]
-        self.node.generate(500+COINBASE_MATURITY)
+        self.node.generate(COINBASE_MATURITY+COINBASE_MATURITY)
+
         print("running pow tests")
         self.verify_contract_txs_are_added_last_test()
         self.verify_ancestor_chain_with_contract_txs_test()
@@ -262,20 +264,20 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
         # Verify that the mempool is empty before running more tests
         assert_equal(self.node.getrawmempool(), [])
 
-        print("running pos tests")
-        self.verify_contract_txs_are_added_last_test(use_staking=True)
-        self.verify_ancestor_chain_with_contract_txs_test(use_staking=True)
-        self.verify_contract_txs_internal_order_test(use_staking=True)
-        self.verify_contract_ancestor_txs_test(use_staking=True)
+        #print("running pos tests")
+        #self.verify_contract_txs_are_added_last_test(use_staking=True)
+        #self.verify_ancestor_chain_with_contract_txs_test(use_staking=True)
+        #self.verify_contract_txs_internal_order_test(use_staking=True)
+        #self.verify_contract_ancestor_txs_test(use_staking=True)
 
         # Verify that the mempool is empty before running more tests
-        assert_equal(self.node.getrawmempool(), [])
+        #assert_equal(self.node.getrawmempool(), [])
 
-        print("running pos tests with restart")
-        self.verify_contract_txs_are_added_last_test(with_restart=True, use_staking=True)
-        self.verify_ancestor_chain_with_contract_txs_test(with_restart=True, use_staking=True)
-        self.verify_contract_txs_internal_order_test(with_restart=True, use_staking=True)
-        self.verify_contract_ancestor_txs_test(with_restart=True, use_staking=True)
+        #print("running pos tests with restart")
+        #self.verify_contract_txs_are_added_last_test(with_restart=True, use_staking=True)
+        #self.verify_ancestor_chain_with_contract_txs_test(with_restart=True, use_staking=True)
+        #self.verify_contract_txs_internal_order_test(with_restart=True, use_staking=True)
+        #self.verify_contract_ancestor_txs_test(with_restart=True, use_staking=True)
 
 if __name__ == '__main__':
     FabcoinTransactionPrioritizationTest().main()

@@ -12,7 +12,7 @@ from codecs import encode
 
 import http.client
 import urllib.parse
-from test_framework.fabcoinconfig import COINBASE_MATURITY, INITIAL_BLOCK_REWARD
+from test_framework.fabcoinconfig import COINBASE_MATURITY, INITIAL_BLOCK_REWARD, ICO_BLOCK_REWARD
 
 def deser_uint256(f):
     r = 0
@@ -61,7 +61,7 @@ class RESTTest (FabcoinTestFramework):
         self.nodes[2].generate(COINBASE_MATURITY)
         self.sync_all()
 
-        assert_equal(self.nodes[0].getbalance(), INITIAL_BLOCK_REWARD + 32000000  )  
+        assert_equal(self.nodes[0].getbalance(), INITIAL_BLOCK_REWARD*2 + ICO_BLOCK_REWARD  )  
 
         txid = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.1)
         self.sync_all()

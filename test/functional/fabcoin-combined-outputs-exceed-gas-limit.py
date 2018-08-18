@@ -6,6 +6,7 @@ from test_framework.script import *
 from test_framework.mininode import *
 from test_framework.fabcoin import *
 from test_framework.address import *
+from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 import time
 
 class FabcoinCombinedOutputsExceedGasLimitTest(FabcoinTestFramework):
@@ -31,7 +32,7 @@ class FabcoinCombinedOutputsExceedGasLimitTest(FabcoinTestFramework):
         contract_address = self.node.createcontract(contract_bytecode)['address']
         self.node.generate(1)
         tx = CTransaction()
-        tx.vin = [make_vin(self.node, int(20000*COIN))]
+        tx.vin = [make_vin(self.node, int(INITIAL_BLOCK_REWARD *COIN))]
         tx.vout = [
             CTxOut(0, CScript([b"\x04", CScriptNum(19998999), CScriptNum(FABCOIN_MIN_GAS_PRICE), hex_str_to_bytes("00"), hex_str_to_bytes(contract_address), OP_CALL])),
             CTxOut(0, CScript([b"\x04", CScriptNum(19998999), CScriptNum(FABCOIN_MIN_GAS_PRICE), hex_str_to_bytes("00"), hex_str_to_bytes(contract_address), OP_CALL])),

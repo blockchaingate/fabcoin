@@ -6,6 +6,7 @@ from test_framework.script import *
 from test_framework.mininode import *
 from test_framework.address import *
 from test_framework.fabcoin import *
+from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 import sys
 import random
 import time
@@ -21,7 +22,7 @@ class FabcoinGasLimitOverflowTest(FabcoinTestFramework):
         self.node = self.nodes[0]
         self.node.setmocktime(int(time.time()) - 1000000)
         self.node.generate(200 + COINBASE_MATURITY)
-        unspents = [unspent for unspent in self.node.listunspent() if unspent['amount'] == 20000]
+        unspents = [unspent for unspent in self.node.listunspent() if unspent['amount'] == INITIAL_BLOCK_REWARD ]
         unspent = unspents.pop(0)
 
         tx = CTransaction()

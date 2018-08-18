@@ -7,6 +7,7 @@ from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
 from test_framework.script import *
 from test_framework.mininode import *
+from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 import sys
 
 class StateRootTest(FabcoinTestFramework):
@@ -22,7 +23,7 @@ class StateRootTest(FabcoinTestFramework):
 
     # verify that the state hash changes on contract creation
     def verify_state_hash_changes(self):
-        amount = 20000*COIN
+        amount = INITIAL_BLOCK_REWARD * COIN
         self.node.generate(COINBASE_MATURITY+50)
         block_hash_a = self.node.getblockhash(COINBASE_MATURITY+50)
         block_a = self.node.getblock(block_hash_a)

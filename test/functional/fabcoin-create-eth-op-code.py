@@ -6,6 +6,7 @@ from test_framework.script import *
 from test_framework.mininode import *
 from test_framework.fabcoin import *
 from test_framework.address import *
+from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 
 
 class FabcoinCreateEthOpCodeTest(FabcoinTestFramework):
@@ -60,7 +61,7 @@ class FabcoinCreateEthOpCodeTest(FabcoinTestFramework):
         # The total gas is equal to 1 fabcoin (10^6 * 10^2) + a minor txfee
         block = self.node.getblock(blockhash)
         coinbase_tx = self.node.getrawtransaction(block['tx'][0], True)
-        assert(coinbase_tx['vout'][0]['value'] >= 20000+1)
+        assert(coinbase_tx['vout'][0]['value'] >= INITIAL_BLOCK_REWARD+1)
         
         # Since the call to the contract threw an out of gas exception the origin contract should have a zero balance
         assert_equal(deployed_contracts[factory_with_value_contract_address], 0)

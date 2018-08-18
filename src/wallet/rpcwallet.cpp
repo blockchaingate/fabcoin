@@ -479,7 +479,7 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
     if (request.params.size() > 8 && !request.params[8].isNull()) {
         senderAddress.SetString(request.params[8].get_str());
         if (!senderAddress.IsValid())
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Qtum address to send from");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid fabcoin address to send from");
         else
             fHasSender = true;
     }
