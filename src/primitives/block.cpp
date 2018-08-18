@@ -46,10 +46,18 @@ uint256 CBlockHeader::GetHashWithoutSign() const
     return SerializeHash(*this, SER_GETHASH | SER_WITHOUT_SIGNATURE);
 }
 
+bool CBlockHeader::IsSupportContract()
+{   
+    if( nHeight == 0 )
+        return false;
+    
+    return nHeight >= (uint32_t)Params().GetConsensus().ContractHeight;
+}
+
 std::string CBlock::ToString() const
 {
     std::stringstream s;
-    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s,  hashStateRoot=%s, hashUTXORoot=%s, nHeight=%u, nTime=%u, nBits=%08x, nNonce=%s, nSolution=%s, vtx=%u)\n",
+    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s,  hashStateRoot=%s, hashUTXORoot=%s, nHeight=%u, nTime=%u, nBits=%08x, nNonce=%s, vtx=%u)\n",
         GetHash().ToString(),
         nVersion,
         hashPrevBlock.ToString(),
@@ -57,7 +65,6 @@ std::string CBlock::ToString() const
         hashStateRoot.ToString(), // fasc
         hashUTXORoot.ToString(), // fasc
         nHeight, nTime, nBits, nNonce.GetHex(),
-        HexStr(nSolution.begin(), nSolution.end()),
         vtx.size());
     for (const auto& tx : vtx) {
         s << "  " << tx->ToString() << "\n";

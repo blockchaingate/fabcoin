@@ -259,23 +259,54 @@ __device__ __constant__ const u64 blake_iv[] = {
 	0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
 };
 
+__device__ __constant__ const u8 blake2b_sigma[12][16] =
+{
+    {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 },
+    { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 },
+    { 11,  8, 12,  0,  5,  2, 15, 13, 10, 14,  3,  6,  7,  1,  9,  4 },
+    {  7,  9,  3,  1, 13, 12, 11, 14,  2,  6,  5, 10,  4,  0, 15,  8 },
+    {  9,  0,  5,  7,  2,  4, 10, 15, 14,  1, 11, 12,  6,  8,  3, 13 },
+    {  2, 12,  6, 10,  0, 11,  8,  3,  4, 13,  7,  5, 15, 14,  1,  9 },
+    { 12,  5,  1, 15, 14, 13,  4, 10,  0,  7,  6,  3,  9,  2,  8, 11 },
+    { 13, 11,  7, 14, 12,  1,  3,  9,  5,  0, 15,  4,  8,  6,  2, 10 },
+    {  6, 15, 14,  9, 11,  3,  0,  8, 12,  2, 13,  7,  1,  4, 10,  5 },
+    { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13,  0 },
+    {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15 },
+    { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 },
+};
+
+
 #if CUDART_VERSION < 8000 || !defined(__ldca)
 #define __ldca(ptr) *(ptr)
 #endif
 
 template <u32 RB, u32 SM, typename PACKER>
-__global__ void digit_first(equi<RB, SM>* eq, u32 nonce)
+__global__ void digit_first(equi<RB, SM>* eq,const u8 *buf, const u8 len)
 {
 	const u32 block = blockIdx.x * blockDim.x + threadIdx.x;
 	__shared__ u64 hash_h[8];
+
 	u32* hash_h32 = (u32*)hash_h;
 
 	if (threadIdx.x < 16)
+	{
 		hash_h32[threadIdx.x] = __ldca(&eq->blake_h32[threadIdx.x]);
-
+    }
+    
 	__syncthreads();
 
-	u64 m = (u64)block << 32 | (u64)nonce;
+	u64 *tmpbuf = (u64 *)buf;
+    u64 val1 = 0, val9 = 0;	
+    
+    if( len == 12 )
+    {
+        val1 = tmpbuf[1] | (u64)block<<(len%8*8);
+    }
+    else
+    {
+        val1 = tmpbuf[1];
+        val9 = tmpbuf[9] | (u64)block<<(len%8*8);
+    }
 
 	union
 	{
@@ -296,130 +327,142 @@ __global__ void digit_first(equi<RB, SM>* eq, u32 nonce)
 	v[9] = blake_iv[1];
 	v[10] = blake_iv[2];
 	v[11] = blake_iv[3];
-	v[12] = blake_iv[4] ^ (128 + 16);
+	v[12] = blake_iv[4] ^ (128 + len + 4);
 	v[13] = blake_iv[5];
 	v[14] = blake_iv[6] ^ 0xffffffffffffffff;
 	v[15] = blake_iv[7];
 
 	// mix 1
-	G2(v[0], v[4], v[8], v[12], 0, m);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+    const u8  *s = blake2b_sigma[0];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], val1 );
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], val9);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 2
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], m, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[1];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], val9, tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], val1, tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 3
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, m);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[2];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], val1);
+	G2(v[3], v[4], v[9], v[14], val9, tmpbuf[s[15]]);
 
 	// mix 4
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, m);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[3];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], val9);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], val1);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 5
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, m);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[4];
+	G2(v[0], v[4], v[8], v[12], val9, tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], val1);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 6
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], m, 0);
+	s = blake2b_sigma[5];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], val1, val9);
 
 	// mix 7
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], m, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[6];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], val1, tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], val9, tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 8
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, m);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[7];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], val1);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], val9);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 9
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], m, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[8];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], val9);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], val1, tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 10
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], m, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[9];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], val1, tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], val9, tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 11
-	G2(v[0], v[4], v[8], v[12], 0, m);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], 0, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[10];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], val1);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], tmpbuf[s[4]], tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], tmpbuf[s[8]], val9);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	// mix 12
-	G2(v[0], v[4], v[8], v[12], 0, 0);
-	G2(v[1], v[5], v[9], v[13], 0, 0);
-	G2(v[2], v[6], v[10], v[14], 0, 0);
-	G2(v[3], v[7], v[11], v[15], 0, 0);
-	G2(v[0], v[5], v[10], v[15], m, 0);
-	G2(v[1], v[6], v[11], v[12], 0, 0);
-	G2(v[2], v[7], v[8], v[13], 0, 0);
-	G2(v[3], v[4], v[9], v[14], 0, 0);
+	s = blake2b_sigma[11];
+	G2(v[0], v[4], v[8], v[12], tmpbuf[s[0]], tmpbuf[s[1]]);
+	G2(v[1], v[5], v[9], v[13], tmpbuf[s[2]], tmpbuf[s[3]]);
+	G2(v[2], v[6], v[10], v[14], val9, tmpbuf[s[5]]);
+	G2(v[3], v[7], v[11], v[15], tmpbuf[s[6]], tmpbuf[s[7]]);
+	G2(v[0], v[5], v[10], v[15], val1, tmpbuf[s[9]]);
+	G2(v[1], v[6], v[11], v[12], tmpbuf[s[10]], tmpbuf[s[11]]);
+	G2(v[2], v[7], v[8], v[13], tmpbuf[s[12]], tmpbuf[s[13]]);
+	G2(v[3], v[4], v[9], v[14], tmpbuf[s[14]], tmpbuf[s[15]]);
 
 	v[0] ^= hash_h[0] ^ v[8];
 	v[1] ^= hash_h[1] ^ v[9];
@@ -1959,6 +2002,8 @@ __host__ eq_cuda_context<RB, SM, SSM, THREADS, PACKER>::eq_cuda_context(int thr_
 	threadsperblock = FD_THREADS;
 	threadsperblock_digits = THREADS;
 
+    m_buf = NULL;
+
 	//dev_init.lock();
 	if (!dev_init_done[device_id])
 	{
@@ -2009,7 +2054,10 @@ __host__ eq_cuda_context<RB, SM, SSM, THREADS, PACKER>::eq_cuda_context(int thr_
 	if (cudaMalloc((void**)&device_eq, equi_mem_sz) != cudaSuccess)
 		throw std::runtime_error("CUDA: failed to alloc memory");
 
-	solutions = (scontainerreal*) malloc(sizeof(scontainerreal));
+    if (cudaMalloc((void**)&m_buf, 128) != cudaSuccess)
+        throw std::runtime_error("CUDA: failed to alloc memory");
+
+    solutions = (scontainerreal*) malloc(sizeof(scontainerreal));
 	if (!solutions)
 		throw std::runtime_error("EOM: failed to alloc solutions memory");
 }
@@ -2027,7 +2075,7 @@ __host__ bool eq_cuda_context<RB, SM, SSM, THREADS, PACKER>::solve(
 	blake2b_state blake_ctx;                  
 	int blocks = NBUCKETS;
 
-	setheader(&blake_ctx, (const char *)header, 140-32, (const char *)header+140-32, 32);
+	setheader(&blake_ctx, (const char *)header, headerlen-32, (const char *)header+headerlen-32, 32);
 
 	// todo: improve
 	// djezo solver allows last 4 bytes of nonce to be iterrated
@@ -2035,13 +2083,15 @@ __host__ bool eq_cuda_context<RB, SM, SSM, THREADS, PACKER>::solve(
 	// then just iterate nn++
 	// less CPU load, 1 cudaMemcpy less -> faster
 	//u32 nn = *(u32*)&nonce[28];
-	u32 nn = 0;
 
 	checkCudaErrors(cudaMemcpy(&device_eq->blake_h, &blake_ctx.h, sizeof(u64) * 8, cudaMemcpyHostToDevice));
 
 	checkCudaErrors(cudaMemset(&device_eq->edata, 0, sizeof(device_eq->edata)));
+    
+    checkCudaErrors(cudaMemset(m_buf, 0, 128));
+    checkCudaErrors(cudaMemcpy(m_buf, blake_ctx.buf, blake_ctx.buflen, cudaMemcpyHostToDevice));
 
-	digit_first<RB, SM, PACKER> <<<NBLOCKS / FD_THREADS, FD_THREADS >>>(device_eq, nn);
+	digit_first<RB, SM, PACKER> <<<NBLOCKS / FD_THREADS, FD_THREADS >>>(device_eq, m_buf, blake_ctx.buflen);
 
 	digit_1<RB, SM, SSM, PACKER, 4 * NRESTS, 512> <<<4096, 512 >>>(device_eq);
 	digit_2<RB, SM, SSM, PACKER, 4 * NRESTS, THREADS> <<<blocks, THREADS >>>(device_eq);
@@ -2099,7 +2149,12 @@ void eq_cuda_context<RB, SM, SSM, THREADS, PACKER>::freemem()
 		device_eq = NULL;
 	}
 
-	if (pctx) {
+    if (m_buf) {
+        cudaFree(m_buf);
+        m_buf = NULL;
+    }
+
+    if (pctx) {
 		// non primary thread, destroy context
 #ifdef WIN32
 		checkCudaDriverErrors(_cuCtxDestroy(pctx));

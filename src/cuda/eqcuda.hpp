@@ -111,6 +111,8 @@ public:
     int threadsperblock;
     int threadsperblock_digits;
     size_t equi_mem_sz;
+
+    u8 *m_buf;
 };
 
 // RB, SM, SSM, TPB, PACKER... but any change only here will fail..

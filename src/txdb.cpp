@@ -396,9 +396,8 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nSolution      = diskindex.nSolution;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
-                pindexNew->hashStateRoot  = diskindex.hashStateRoot; // fasc
-                pindexNew->hashUTXORoot   = diskindex.hashUTXORoot; // fasc
-
+                pindexNew->hashStateRoot  = diskindex.hashStateRoot;
+                pindexNew->hashUTXORoot   = diskindex.hashUTXORoot;
 
                 // TODO(h4x3rotab): Check Equihash solution? Not sure why Zcash doesn't do it here.
                 bool postfork = pindexNew->nHeight >= consensusParams.FABHeight;

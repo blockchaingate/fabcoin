@@ -392,6 +392,8 @@ public:
     //! Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+
+    bool IsSupportContract();
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
@@ -437,16 +439,19 @@ public:
         READWRITE(this->nVersion);
         READWRITE(hashPrev);
         READWRITE(hashMerkleRoot);
-        // keep hashStateRoot & hashUTXORoot on data file  
-        READWRITE(hashStateRoot); // fasc
-        READWRITE(hashUTXORoot);  // fasc
-
         for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
             READWRITE(nReserved[i]);
         }
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        bool hascontract = IsSupportContract();
+        if( hascontract )
+        {
+            READWRITE(hashStateRoot); // fasc
+            READWRITE(hashUTXORoot); // fasc
+        }
 
         READWRITE(nSolution);
     }

@@ -391,18 +391,28 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
 	{
 		blake2b_state_t blake;
         cl::Buffer      buf_blake_st;
+        cl::Buffer      databuf;
 		uint32_t		sol_found = 0;
 		size_t          local_ws = 64;
 		size_t		    global_ws;
+        unsigned char   buf[136] = {0};
 
-        assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
-        *ptr = *(uint256 *)(header + CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
+        assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_NEWSIZE);
+        *ptr = *(uint256 *)(header + header_len - FABCOIN_NONCE_LEN);
 
 		zcash_blake2b_init(&blake, FABCOIN_HASH_LEN, PARAM_N, PARAM_K);
-		zcash_blake2b_update(&blake, header, 128, 0);
+
+        zcash_blake2b_update(&blake, header, 128, 0);
+
+        memcpy( buf + 8, header + 128, header_len - 128);
+        buf[0] = (header_len - 128)/8+1;
+
 		buf_blake_st = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof (blake.h), NULL, NULL);
 		m_queue.enqueueWriteBuffer(buf_blake_st, true, 0, sizeof(blake.h), blake.h);
-		m_queue.finish();
+
+        databuf = cl::Buffer(m_context, CL_MEM_READ_ONLY, 136, NULL, NULL);
+        m_queue.enqueueWriteBuffer(databuf, true, 0, 136, buf);
+        m_queue.finish();
 
 		for (unsigned round = 0; round < PARAM_K; round++) 
         {
@@ -414,7 +424,8 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
             {
 				m_gpuKernels[1+round].setArg(0, buf_blake_st);
 				m_gpuKernels[1+round].setArg(1, buf_ht[round % 2]);
-                m_gpuKernels[1+round].setArg(2, rowCounters[round % 2]);
+                m_gpuKernels[1+round].setArg(2, databuf);
+                m_gpuKernels[1+round].setArg(3, rowCounters[round % 2]);
 				global_ws = select_work_size_blake();
 			} 
             else 
@@ -425,8 +436,8 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
                 m_gpuKernels[1+round].setArg(3, rowCounters[round % 2]);
 				global_ws = NR_ROWS;
 			}
+            m_gpuKernels[1+round].setArg(4, buf_dbg);
 
-			m_gpuKernels[1+round].setArg(round == 0 ? 3 : 4, buf_dbg);
             if (round == PARAM_K - 1)
             {
                 m_gpuKernels[1+round].setArg(5, buf_sols);

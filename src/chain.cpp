@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
+#include "chainparams.h"
 
 /**
  * CChain implementation
@@ -115,6 +116,14 @@ void CBlockIndex::BuildSkip()
 {
     if (pprev)
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
+}
+
+bool CBlockIndex::IsSupportContract()
+{   
+    if( nHeight == 0 )
+        return false;
+
+    return nHeight >= (uint32_t)Params().GetConsensus().ContractHeight;
 }
 
 arith_uint256 GetBlockProof(const CBlockIndex& block)

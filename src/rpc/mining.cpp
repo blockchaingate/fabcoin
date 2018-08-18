@@ -126,6 +126,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     int nHeightEnd = 0;
     int nHeight = 0;
     int nCounter = 0;
+    int headerlen = 0;
 
     {   // Don't keep cs_main locked
         LOCK(cs_main);
@@ -152,13 +153,15 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     if( conf.useGPU )
     {
         g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
-        header = (uint8_t *) calloc(CBlockHeader::HEADER_SIZE, sizeof(uint8_t));
+        header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
     }    
 #endif
 
     while (nHeight < nHeightEnd)
     {
+        headerlen = ((nHeight+1) < params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
+
         std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
@@ -179,27 +182,28 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 continue;
         } else {
             // Solve Equihash.
+            int ser_flags = ((nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
             // I = the block header minus nonce and solution.
             CEquihashInput I{*pblock};
-            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags );
             ss << I;
 
+            // Solve Equihash.
             crypto_generichash_blake2b_state eh_state;
+            EhInitialiseState(n, k, eh_state);
+
+            // H(I||...
+            crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
+
             if( conf.useGPU )
             {
                 memcpy(header, &ss[0], ss.size());
-            }
-            else
-            {
-                // Solve Equihash.
-                EhInitialiseState(n, k, eh_state);
-                // H(I||...
-                crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
             }
 
             while ( nMaxTries > 0  && nCounter < nInnerLoopCount ) 
             {
                 crypto_generichash_blake2b_state curr_state;
+                curr_state = eh_state;
 
                 // Yes, there is a chance every nonce could fail to satisfy the -regtest
                 // target -- 1 in 2^(2^256). That ain't gonna happen
@@ -210,15 +214,12 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 {
 #ifdef ENABLE_GPU
                     for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
-                        header[108 + i] = pblock->nNonce.begin()[i];
+                        header[headerlen-32 + i] = pblock->nNonce.begin()[i];
 #endif
                 }
-                else
-                {
-                    // H(I||V||...
-                    curr_state = eh_state;
-                    crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
-                }
+
+                // H(I||V||...
+                crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());               
 
                 // (x_1, x_2, ...) = A(I, V, n, k)
                 std::function<bool(std::vector<unsigned char>)> validBlock =
@@ -234,7 +235,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 if( conf.useGPU )
                 {
 #ifdef ENABLE_GPU
-                    found = g_solver->run(n, k, header, CBlockHeader::HEADER_SIZE, pblock->nNonce, validBlock, false, curr_state);
+                    found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, false, curr_state);
 #endif
                 }
                 else
