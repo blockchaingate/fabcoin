@@ -574,6 +574,8 @@ UniValue getfabaddressbyvm(const JSONRPCRequest& request)
             "1. \"vmaddress\"          (string, required) The VM account address\n");
 
     std::string strAddr = request.params[0].get_str();
+    if (strAddr.size() != 40 || !CheckHex(strAddr) )
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not 20 bytes hex)");
     uint160 u(ParseHex(strAddr));
 
     CFabcoinAddress fabAddress;
