@@ -39,6 +39,8 @@ class TxnMallTest(FabcoinTestFramework):
 
         node0_address_foo = self.nodes[0].getnewaddress("foo")
         fund_foo_txid = self.nodes[0].sendfrom("", node0_address_foo, 309)
+        print (self.nodes[0].getbalance("foo")  )
+
         fund_foo_tx = self.nodes[0].gettransaction(fund_foo_txid)
 
         node0_address_bar = self.nodes[0].getnewaddress("bar")
@@ -53,6 +55,7 @@ class TxnMallTest(FabcoinTestFramework):
 
         # Send tx1, and another transaction tx2 that won't be cloned 
         txid1 = self.nodes[0].sendfrom("foo", node1_address, 20, 0)
+        print (self.nodes[0].getbalance("foo") )
         txid2 = self.nodes[0].sendfrom("bar", node1_address, 10, 0)
 
         # Construct a clone of tx1, to be malleated 
@@ -98,6 +101,7 @@ class TxnMallTest(FabcoinTestFramework):
         assert_equal(self.nodes[0].getbalance(), expected + ICO_BLOCK_REWARD )
 
         # foo and bar accounts should be debited:
+        print (self.nodes[0].getbalance("foo") , expected )
         assert_equal(self.nodes[0].getbalance("foo", 0), 309 + tx1["amount"] + tx1["fee"])
         assert_equal(self.nodes[0].getbalance("bar", 0), 29 + tx2["amount"] + tx2["fee"])
 
@@ -112,6 +116,8 @@ class TxnMallTest(FabcoinTestFramework):
 
         # Send clone and its parent to miner
         self.nodes[2].sendrawtransaction(fund_foo_tx["hex"])
+        print (self.nodes[0].getbalance("foo") , expected )
+
         txid1_clone = self.nodes[2].sendrawtransaction(tx1_clone["hex"])
 
         # ... mine a block...
@@ -137,13 +143,18 @@ class TxnMallTest(FabcoinTestFramework):
 
         # Check node0's total balance; should be same as before the clone, + 50 FAB for 2 matured,
         # less possible orphaned matured subsidy
-        expected += 50
-        if (self.options.mine_block): 
-            expected -= 25
+        expected += 2*INITIAL_BLOCK_REWARD
+
+        if (self.options.mine_block):
+            expected -= INITIAL_BLOCK_REWARD
+
+        print (self.nodes[0].getbalance("foo") , expected )
+
+
         assert_equal(self.nodes[0].getbalance(), expected + ICO_BLOCK_REWARD )
         assert_equal(self.nodes[0].getbalance("*", 0), expected + ICO_BLOCK_REWARD )
 
-        time.sleep(5) 
+        print (self.nodes[0].getbalance("foo") )
         # Check node0's individual account balances.
         # "foo" should have been debited by the equivalent clone of tx1
         assert_equal(self.nodes[0].getbalance("foo"), 309 + tx1["amount"] + tx1["fee"])

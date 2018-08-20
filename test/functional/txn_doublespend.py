@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2014-2016 The Bitcoin Core developers
+# Copyright (c) 2014-2017 The Fabcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test the wallet accounts properly when there is a double-spend conflict."""
@@ -25,6 +25,16 @@ class TxnMallTest(FabcoinTestFramework):
     def run_test(self):
         # All nodes should start with 1,250 FAB:
         starting_balance = 25*INITIAL_BLOCK_REWARD  
+
+        #mine 25 each node, so total 200 block  200*25= 5000 FAB, make sure each node have 1250 FAB.
+        for peer in range(4):
+            for j in range(25):
+                self.nodes[peer].generate(1)
+            # Must sync before next peer starts generating blocks
+            sync_blocks(self.nodes)
+      
+        time.sleep(10)
+
         for i in range(4):
             if i == 0 :
                 assert_equal(self.nodes[i].getbalance(), starting_balance + ICO_BLOCK_REWARD )

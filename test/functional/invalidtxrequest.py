@@ -14,6 +14,7 @@ import time
 from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 
 
+
 # Use the ComparisonTestFramework with 1 node: only use --testbinary.
 class InvalidTxRequestTest(ComparisonTestFramework):
 

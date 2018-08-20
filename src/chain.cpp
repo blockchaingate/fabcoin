@@ -120,10 +120,11 @@ void CBlockIndex::BuildSkip()
 
 bool CBlockIndex::IsSupportContract()
 {   
+    //legacy nHeight is 0 
     if( nHeight == 0 )
-        return false;
+        return true;
 
-    return nHeight >= (uint32_t)Params().GetConsensus().ContractHeight;
+    return ( nHeight >= (uint32_t)( Params().GetConsensus().ContractHeight ) );
 }
 
 arith_uint256 GetBlockProof(const CBlockIndex& block)

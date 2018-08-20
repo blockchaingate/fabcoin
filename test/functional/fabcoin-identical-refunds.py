@@ -43,7 +43,7 @@ class FabcoinIdenticalRefunds(FabcoinTestFramework):
 
         # Fetch the last generated block containing the txs and refund outputs and deserialize it.
         manipulation_block = CBlock()
-        block_raw = self.node.getblock(block_hash, False)
+        block_raw = self.node.getblock(block_hash, False, True)
         f = io.BytesIO(hex_str_to_bytes(block_raw))
         manipulation_block.deserialize(f)
 
@@ -62,7 +62,7 @@ class FabcoinIdenticalRefunds(FabcoinTestFramework):
         block_count = self.node.getblockcount()
 
         # Resubmit the manipulated block.
-        ret = self.node.submitblock(bytes_to_hex_str(manipulation_block.serialize()))
+        ret = self.node.submitblock(bytes_to_hex_str(manipulation_block.serialize(True)), '', True)
 
         # Check that the block was not accepted
         assert_equal(ret is None, False)

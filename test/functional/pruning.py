@@ -242,7 +242,7 @@ class PruneTest(FabcoinTestFramework):
 
         def height(index):
             if use_timestamp:
-                return node.getblockheader(node.getblockhash(index))["time"] + TIMESTAMP_WINDOW
+                return node.getblockheader(node.getblockhash(index), True)["time"] + TIMESTAMP_WINDOW
             else:
                 return index
 

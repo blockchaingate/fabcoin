@@ -22,7 +22,7 @@ class GetChainTipsTest (FabcoinTestFramework):
         tips = self.nodes[0].getchaintips ()
         assert_equal (len (tips), 1)
         assert_equal (tips[0]['branchlen'], 0)
-        assert_equal (tips[0]['height'], COINBASE_MATURITY+100)
+        assert_equal (tips[0]['height'], 900)
         assert_equal (tips[0]['status'], 'active')
 
         # Split the network and build two chains of different lengths.

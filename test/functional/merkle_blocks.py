@@ -34,10 +34,16 @@ class MerkleBlockTest(FabcoinTestFramework):
         assert_equal(self.nodes[2].getbalance(), 0)
 
         node0utxos = self.nodes[0].listunspent(1)
-        tx1 = self.nodes[0].createrawtransaction([node0utxos.pop()], {self.nodes[1].getnewaddress(): INITIAL_BLOCK_REWARD - 0.01})
+        utxo1 =node0utxos.pop()
+        #print ( utxo1['amount'] )
+        tx1 = self.nodes[0].createrawtransaction([utxo1], {self.nodes[1].getnewaddress(): utxo1['amount']- Decimal('0.01')})
         txid1 = self.nodes[0].sendrawtransaction(self.nodes[0].signrawtransaction(tx1)["hex"])
-        tx2 = self.nodes[0].createrawtransaction([node0utxos.pop()], {self.nodes[1].getnewaddress(): INITIAL_BLOCK_REWARD - 0.01})
+
+        utxo2 =node0utxos.pop()
+        #print ( utxo2['amount'] )
+        tx2 = self.nodes[0].createrawtransaction([utxo2], {self.nodes[1].getnewaddress(): utxo2['amount']- Decimal('0.01')})
         txid2 = self.nodes[0].sendrawtransaction(self.nodes[0].signrawtransaction(tx2)["hex"])
+
         # This will raise an exception because the transaction is not yet in a block
         assert_raises_rpc_error(-5, "Transaction not yet in block", self.nodes[0].gettxoutproof, [txid1])
 
@@ -55,7 +61,8 @@ class MerkleBlockTest(FabcoinTestFramework):
         assert_equal(self.nodes[2].verifytxoutproof(self.nodes[2].gettxoutproof([txid1, txid2], blockhash)), txlist)
 
         txin_spent = self.nodes[1].listunspent(1).pop()
-        tx3 = self.nodes[1].createrawtransaction([txin_spent], {self.nodes[0].getnewaddress(): INITIAL_BLOCK_REWARD - 0.02})
+        #print(txin_spent)
+        tx3 = self.nodes[1].createrawtransaction([txin_spent], {self.nodes[0].getnewaddress(): txin_spent['amount'] - Decimal('0.02')})
         txid3 = self.nodes[0].sendrawtransaction(self.nodes[1].signrawtransaction(tx3)["hex"])
         self.nodes[0].generate(1)
         self.sync_all()

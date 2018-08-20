@@ -78,8 +78,8 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         self.block_time += 1
 
         # b'0x51' is OP_TRUE
-        tx1 = create_transaction(self.block1.vtx[0], 0, b'\x51', 50 * COIN)
-        tx2 = create_transaction(tx1, 0, b'\x51', 50 * COIN)
+        tx1 = create_transaction(self.block1.vtx[0], 0, b'\x51', 25 * COIN)
+        tx2 = create_transaction(tx1, 0, b'\x51', 25 * COIN)
 
         block2.vtx.extend([tx1, tx2])
         block2.hashMerkleRoot = block2.calc_merkle_root()
@@ -103,14 +103,14 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         '''
         block3 = create_block(self.tip, create_coinbase(height), self.block_time)
         self.block_time += 1
-        block3.vtx[0].vout[0].nValue = 2*INITIAL_BLOCK_REWARD * COIN # Too high!
+        block3.vtx[0].vout[0].nValue = 50 * COIN # Too high!
         block3.vtx[0].sha256=None
         block3.vtx[0].calc_sha256()
         block3.hashMerkleRoot = block3.calc_merkle_root()
         block3.rehash()
         block3.solve()
 
-        yield TestInstance([[block3, False]])
+        yield TestInstance([[block3, RejectResult(16, b'bad-cb-amount')]])
 
 
 if __name__ == '__main__':

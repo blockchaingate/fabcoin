@@ -264,20 +264,6 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
         # Verify that the mempool is empty before running more tests
         assert_equal(self.node.getrawmempool(), [])
 
-        #print("running pos tests")
-        #self.verify_contract_txs_are_added_last_test(use_staking=True)
-        #self.verify_ancestor_chain_with_contract_txs_test(use_staking=True)
-        #self.verify_contract_txs_internal_order_test(use_staking=True)
-        #self.verify_contract_ancestor_txs_test(use_staking=True)
-
-        # Verify that the mempool is empty before running more tests
-        #assert_equal(self.node.getrawmempool(), [])
-
-        #print("running pos tests with restart")
-        #self.verify_contract_txs_are_added_last_test(with_restart=True, use_staking=True)
-        #self.verify_ancestor_chain_with_contract_txs_test(with_restart=True, use_staking=True)
-        #self.verify_contract_txs_internal_order_test(with_restart=True, use_staking=True)
-        #self.verify_contract_ancestor_txs_test(with_restart=True, use_staking=True)
 
 if __name__ == '__main__':
     FabcoinTransactionPrioritizationTest().main()

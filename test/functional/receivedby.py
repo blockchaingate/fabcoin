@@ -38,7 +38,6 @@ class ReceivedByTest(FabcoinTestFramework):
         addr = self.nodes[1].getnewaddress()
         txid = self.nodes[0].sendtoaddress(addr, 0.1)
         self.sync_all()
-        time.sleep(5)
 
         #Check not listed in listreceivedbyaddress because has 0 confirmations
         assert_array_result(self.nodes[1].listreceivedbyaddress(),

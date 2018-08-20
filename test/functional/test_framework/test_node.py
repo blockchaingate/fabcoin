@@ -75,7 +75,6 @@ class TestNode():
         if stderr is None:
             stderr = self.stderr
 
-
         if not any(arg.startswith('-staking=') for arg in extra_args):
             extra_args.append('-staking=0')
         self.process = subprocess.Popen(self.args + extra_args, stderr=stderr)

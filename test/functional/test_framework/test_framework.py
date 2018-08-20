@@ -119,7 +119,6 @@ class FabcoinTestFramework(object):
         try:
             self.setup_chain()
             self.setup_network()
-            
             self.run_test()
             success = TestStatus.PASSED
         except JSONRPCException as e:
@@ -414,7 +413,7 @@ class FabcoinTestFramework(object):
             # blocks are created with timestamps 75 seconds apart
             # starting from 901 *75 seconds in the past
             self.enable_mocktime()
-            block_time = self.mocktime - (901 * 75)
+            block_time = self.mocktime - (901 * 75 )
 
             print( block_time )
 
@@ -435,7 +434,6 @@ class FabcoinTestFramework(object):
                 block_time += 75 
             # Must sync before next peer starts generating blocks
             sync_blocks(self.nodes)
-
 
             # Shut them down, and clean up cache directories:
             self.stop_nodes()

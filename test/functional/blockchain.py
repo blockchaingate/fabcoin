@@ -49,7 +49,7 @@ class BlockchainTest(FabcoinTestFramework):
 
     def _test_getchaintxstats(self):
         chaintxstats = self.nodes[0].getchaintxstats(1)
-        # 200 txs plus genesis tx
+        # 900 txs plus genesis tx
         assert_equal(chaintxstats['txcount'], COINBASE_MATURITY+101)
         # tx rate should be 1 per 75 second , 
         # we have to round because of binary math
@@ -60,29 +60,28 @@ class BlockchainTest(FabcoinTestFramework):
         res = node.gettxoutsetinfo()
 
         assert_equal(res['total_amount'], Decimal('32021837.50000000'))
-        assert_equal(res['transactions'], COINBASE_MATURITY+100)
-        assert_equal(res['height'], COINBASE_MATURITY+100)
-        assert_equal(res['txouts'], COINBASE_MATURITY+100)
+        assert_equal(res['transactions'], 900)
+        assert_equal(res['height'], 900)
+        assert_equal(res['txouts'], 900)
         assert_equal(res['bogosize'], 76500),
-        assert_equal(res['bestblock'], node.getblockhash(COINBASE_MATURITY+100))
+        assert_equal(res['bestblock'], node.getblockhash(900))
         size = res['disk_size']
-        print (size)
         assert size > 6400
-        assert size < 64000/2*9 
+        assert size < 64000/2*9
         assert_equal(len(res['bestblock']), 64)
         assert_equal(len(res['hash_serialized_2']), 64)
 
         self.log.info("Test that gettxoutsetinfo() works for blockchain with just the genesis block")
-        b1hash = node.getblockhash(COINBASE_MATURITY+1)
+        b1hash = node.getblockhash(1)
         node.invalidateblock(b1hash)
 
         res2 = node.gettxoutsetinfo()
-        assert_equal(res2['transactions'], COINBASE_MATURITY)
-        assert_equal(res2['total_amount'], Decimal('32019975.00000000'))
-        assert_equal(res2['height'], COINBASE_MATURITY)
-        assert_equal(res2['txouts'], COINBASE_MATURITY)
-        assert_equal(res2['bogosize'], 68000),
-        assert_equal(res2['bestblock'], node.getblockhash(COINBASE_MATURITY))
+        assert_equal(res2['transactions'], 0)
+        assert_equal(res2['total_amount'], Decimal('0'))
+        assert_equal(res2['height'], 0)
+        assert_equal(res2['txouts'], 0)
+        assert_equal(res2['bogosize'], 0),
+        assert_equal(res2['bestblock'], node.getblockhash(0))
         assert_equal(len(res2['hash_serialized_2']), 64)
 
         self.log.info("Test that gettxoutsetinfo() returns the same result after invalidate/reconsider block")
@@ -133,8 +132,8 @@ class BlockchainTest(FabcoinTestFramework):
 
     def _test_getnetworkhashps(self):
         hashes_per_second = self.nodes[0].getnetworkhashps()
-        # This should be 2 hashes every 10 minutes or 1/300
-        assert abs(hashes_per_second * 300 - 1) < 10
+        # This should be 2 hashes every 75 second or 2/75
+        assert abs(hashes_per_second /2 * 75 - 1) < 0.0001
 
     def _test_stopatheight(self):
         assert_equal(self.nodes[0].getblockcount(), COINBASE_MATURITY+100)

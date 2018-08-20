@@ -34,21 +34,21 @@ class MempoolSpendCoinbaseTest(FabcoinTestFramework):
         coinbase_txids = [ self.nodes[0].getblock(h)['tx'][0] for h in b ]
         spends_raw = [ create_tx(self.nodes[0], txid, node0_address, INITIAL_BLOCK_REWARD - Decimal('0.01')) for txid in coinbase_txids ]
 
-        spend_101_id = self.nodes[0].sendrawtransaction(spends_raw[0])
+        spend_801_id = self.nodes[0].sendrawtransaction(spends_raw[0])
 
         # coinbase at height 102 should be too immature to spend
         assert_raises_rpc_error(-26,"bad-txns-premature-spend-of-coinbase", self.nodes[0].sendrawtransaction, spends_raw[1])
 
-        # mempool should have just spend_101:
-        assert_equal(self.nodes[0].getrawmempool(), [ spend_101_id ])
+        # mempool should have just spend_801:
+        assert_equal(self.nodes[0].getrawmempool(), [ spend_801_id ])
 
-        # mine a block, spend_101 should get confirmed
+        # mine a block, spend_801 should get confirmed
         self.nodes[0].generate(1)
         assert_equal(set(self.nodes[0].getrawmempool()), set())
 
-        # ... and now height 102 can be spent:
-        spend_102_id = self.nodes[0].sendrawtransaction(spends_raw[1])
-        assert_equal(self.nodes[0].getrawmempool(), [ spend_102_id ])
+        # ... and now height 802 can be spent:
+        spend_802_id = self.nodes[0].sendrawtransaction(spends_raw[1])
+        assert_equal(self.nodes[0].getrawmempool(), [ spend_802_id ])
 
 if __name__ == '__main__':
     MempoolSpendCoinbaseTest().main()

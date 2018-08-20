@@ -222,19 +222,17 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
 
-        bool has_contract = false; // to do check has_contract or not
-
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
         READWRITE(nHeight);
-        for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
+        for (size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
             READWRITE(nReserved[i]);
         }
         READWRITE(nTime);
         READWRITE(nBits);
 
-        bool hascontract = IsSupportContract();
+        bool hascontract = IsSupportContract() | !( s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT) ;
         if( hascontract )
         {
             READWRITE(hashStateRoot); // fasc

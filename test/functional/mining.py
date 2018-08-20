@@ -18,7 +18,6 @@ from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
 from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD, COINBASE_MATURITY
 
-
 def b2x(b):
     return b2a_hex(b).decode('ascii')
 
@@ -43,7 +42,6 @@ class MiningTest(FabcoinTestFramework):
         assert_equal(mining_info['currentblocktx'], 0)
         assert_equal(mining_info['currentblockweight'], 0)
         assert_equal(mining_info['difficulty'], Decimal('4.656542373906925E-10'))
-        #assert_equal(mining_info['networkhashps'], Decimal('0.015625'))
         assert_equal(mining_info['networkhashps'], Decimal('0.02666666666666667'))
         assert_equal(mining_info['pooledtx'], 0)
 
@@ -134,6 +132,8 @@ class MiningTest(FabcoinTestFramework):
         bad_block = copy.deepcopy(block)
         bad_block.hashPrevBlock = 123
         assert_template(node, bad_block, 'inconclusive-not-best-prevblk')
+
+        # TODO(h4x3rotab): Test new block format.
 
 if __name__ == '__main__':
     MiningTest().main()

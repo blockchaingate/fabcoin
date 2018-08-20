@@ -53,7 +53,7 @@ class AbandonConflictTest(FabcoinTestFramework):
         signed = self.nodes[0].signrawtransaction(self.nodes[0].createrawtransaction(inputs, outputs))
         txAB1 = self.nodes[0].sendrawtransaction(signed["hex"])
 
-        # Identify the 14.99998btc output
+        # Identify the 14.99998 fab output
         nAB = next(i for i, vout in enumerate(self.nodes[0].getrawtransaction(txAB1, 1)["vout"]) if vout["value"] == Decimal("14.99998"))
 
         #Create a child tx spending AB1 and C
@@ -131,7 +131,7 @@ class AbandonConflictTest(FabcoinTestFramework):
         inputs =[]
         inputs.append({"txid":txA, "vout":nA})
         outputs = {}
-        outputs[self.nodes[1].getnewaddress()] = Decimal("9.999")
+        outputs[self.nodes[1].getnewaddress()] = Decimal("9.9999")
         tx = self.nodes[0].createrawtransaction(inputs, outputs)
         signed = self.nodes[0].signrawtransaction(tx)
         self.nodes[1].sendrawtransaction(signed["hex"])

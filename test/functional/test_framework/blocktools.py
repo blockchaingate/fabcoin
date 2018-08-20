@@ -35,11 +35,11 @@ def get_witness_script(witness_root, witness_nonce):
 
 # According to BIP141, blocks with witness rules active must commit to the
 # hash of all in-block transactions including witness.
-def add_witness_commitment(block, nonce=0, is_pos=False):
+def add_witness_commitment(block, nonce=0):
     # First calculate the merkle root of the block's
     # transactions, with witnesses.
     witness_nonce = nonce
-    witness_root = block.calc_witness_merkle_root(is_pos)
+    witness_root = block.calc_witness_merkle_root()
     # witness_nonce should go to coinbase witness.
     block.vtx[0].wit.vtxinwit = [CTxInWitness()]
     block.vtx[0].wit.vtxinwit[0].scriptWitness.stack = [ser_uint256(witness_nonce)]
@@ -72,11 +72,11 @@ def serialize_script_num(value):
 def create_coinbase(height, pubkey = None):
     coinbase = CTransaction()
     coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), 
-                CScript() + height + b"\x00", 0xffffffff)) #Fix for BIP34
+                ser_string(serialize_script_num(height)), 0xffffffff))
     coinbaseoutput = CTxOut()
-    coinbaseoutput.nValue = INITIAL_BLOCK_REWARD * COIN
-    #halvings = int(height/150) # regtest
-    #coinbaseoutput.nValue >>= halvings
+    coinbaseoutput.nValue = 25 * COIN
+    halvings = int(height/850) # regtest
+    coinbaseoutput.nValue >>= halvings
     if (pubkey != None):
         coinbaseoutput.scriptPubKey = CScript([pubkey, OP_CHECKSIG])
     else:
