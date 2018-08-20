@@ -1388,9 +1388,10 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
                 ++nCounter;
 
+                // block.nTime is refered by solidity 'now', can't be updated once block is created
                 // Update nTime every few seconds
-                if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
-                    break; // Recreate the block if the clock has run backwards,
+                //if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
+                //    break; // Recreate the block if the clock has run backwards,
                 // so that we can use the correct time.
                 if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
                 {
