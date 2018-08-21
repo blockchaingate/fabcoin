@@ -163,6 +163,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 0, "include" },
     { "logging", 1, "exclude" },
     { "disconnectnode", 1, "nodeid" },
+    { "callcontract",   3, "gasLimit" },
     { "createcontract", 1, "gasLimit" },
     { "createcontract", 2, "gasPrice" },
     { "createcontract", 4, "broadcast" },

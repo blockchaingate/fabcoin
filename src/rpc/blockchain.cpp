@@ -1065,7 +1065,7 @@ UniValue callcontract(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
     
     dev::Address senderAddress;
-    if(request.params.size() == 3){
+    if(request.params.size() >= 3){
         CFabcoinAddress fascSenderAddress(request.params[2].get_str());
         if(fascSenderAddress.IsValid()){
             CKeyID keyid;
