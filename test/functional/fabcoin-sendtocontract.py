@@ -80,7 +80,7 @@ class SendToContractTest(FabcoinTestFramework):
 
     def sendtocontract_specify_sender_test(self):
         self.node.importprivkey("cQWxca9y9XBf4c6ohTwRQ9Kf4GZyRybhGBfzaFgkvRpw8HjbRC58")
-        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 0.1)
+        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 101)
         self.node.generate(1)
         # call setSenderAsOwner with 100 fabcoin
         ret = self.node.sendtocontract(self.contract_address, "2bcf51b4", 100, 1000000, FABCOIN_MIN_GAS_PRICE_STR, "mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs")
@@ -98,7 +98,7 @@ class SendToContractTest(FabcoinTestFramework):
         assert(ret['code'] == '60606040526000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806313af40351461005c5780632bcf51b41461008a5780635e01eb5a14610094578063893d20e8146100e6575bfe5b610088600480803573ffffffffffffffffffffffffffffffffffffffff16906020019091905050610138565b005b61009261017d565b005b341561009c57fe5b6100a46101c1565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b34156100ee57fe5b6100f66101ca565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b80600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505b50565b33600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505b565b60003390505b90565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1690505b905600a165627a7a72305820791895230daae0ed58cc374ad5b639044408f1942d7b85689a616caee50dc42e0029')
 
     def sendtocontract_no_broadcast(self):
-        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 0.1)
+        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 101)
         self.node.generate(1)
         # call setSenderAsOwner with 100 fabcoin
         ret = self.node.sendtocontract(self.contract_address, "2bcf51b4", 100, 1000000, FABCOIN_MIN_GAS_PRICE_STR, "mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", False)

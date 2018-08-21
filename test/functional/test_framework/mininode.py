@@ -660,9 +660,9 @@ class CBlockHeader(object):
 
 
     def __repr__(self):
-        return "CBlockHeader(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nHeight=%d nTime=%s nBits=%08x nNonce=%08x)" \
+        return "CBlockHeader(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nHeight=%d nTime=%s nBits=%08x hashStateRoot=%064x hashUTXORoot=%064x nNonce=%08x)" \
             % (self.nVersion, self.hashPrevBlock, self.hashMerkleRoot, self.nHeight, 
-               time.ctime(self.nTime), self.nBits, self.nNonce)
+               time.ctime(self.nTime), self.nBits, self.hashStateRoot, self.hashUTXORoot,self.nNonce)
 
 
 class CBlock(CBlockHeader):

@@ -31,9 +31,10 @@ class FabcoinSpendOpCallTest(FabcoinTestFramework):
         self.nodes[0].generate(1)
 
         # Send 100000 fabcoin to the contract
-        self.nodes[0].sendtocontract(first_contract_address, "00", 100000)['txid']
+        #self.nodes[0].sendtocontract(first_contract_address, "00", 100000)['txid']
+        self.nodes[0].sendtocontract(first_contract_address, "00", 10)['txid']
         blockhash = self.nodes[0].generate(1)[0]
-        prev_block = self.nodes[0].getblock(blockhash)
+        prev_block = self.nodes[0].getblock(blockhash, True, True)
 
         # Extract the transaction which will be the prevout to spend the contract's funds later on
         op_call_txid = prev_block['tx'][-1]
@@ -44,14 +45,15 @@ class FabcoinSpendOpCallTest(FabcoinTestFramework):
 
         tx = CTransaction()
         tx.vin = [CTxIn(COutPoint(int(op_call_txid, 16), 0), scriptSig=CScript([]))]
-        tx.vout = [CTxOut(int(100000*COIN), scriptPubKey=CScript([OP_TRUE]))]
+        #tx.vout = [CTxOut(int(100000*COIN), scriptPubKey=CScript([OP_TRUE]))]
+        tx.vout = [CTxOut(int(9*COIN), scriptPubKey=CScript([OP_TRUE]))]
         block.vtx.append(tx)
 
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()
 
         block_count = self.nodes[0].getblockcount()
-        ret = self.nodes[0].submitblock(bytes_to_hex_str(block.serialize()))
+        ret = self.nodes[0].submitblock(bytes_to_hex_str(block.serialize(True)),'', True)
         assert_equal(self.nodes[0].getblockcount(), block_count)
 
 if __name__ == '__main__':

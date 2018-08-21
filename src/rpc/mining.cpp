@@ -523,7 +523,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             bool no_contract_format = (strMode == "proposal_no_contract") || (strMode == "proposal_legacy_no_contract");
 
             if (!DecodeHexBlk(block, dataval.get_str(), legacy_format, no_contract_format)){
-                LogPrintf("Block decode failed: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
+                LogPrintf("Block decode failed: legacy=%d no_contract=%d", legacy_format, no_contract_format );
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
             }
 

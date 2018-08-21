@@ -61,7 +61,7 @@ class CreatecontractTest(FabcoinTestFramework):
 
     def createcontract_with_sender_test(self):
         self.node.importprivkey("cQWxca9y9XBf4c6ohTwRQ9Kf4GZyRybhGBfzaFgkvRpw8HjbRC58")
-        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 0.1)
+        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 1)
         self.node.generate(1)
 
         """
@@ -104,7 +104,7 @@ class CreatecontractTest(FabcoinTestFramework):
         assert(ret == expected_account_info)
 
     def createcontract_no_broadcast_test(self):
-        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 0.1)
+        self.node.sendtoaddress("mxZLyb4TU1uhnaZhQDo5rckhYLTqFu9PNs", 1)
         self.node.generate(1)
         """
         pragma solidity ^0.4.0;
