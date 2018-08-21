@@ -627,7 +627,7 @@ class CBlockHeader(object):
             r += ser_uint256(self.nNonce)
             r += ser_byte_vector(self.nSolution)
 
-        #print("debug serialize_header", "height=", self.nHeight, "legacy=",legacy, "has_contract", has_contract, "len=", len(r) )
+        print("debug serialize_header", "height=", self.nHeight, "legacy=",legacy, "has_contract", has_contract, "len=", len(r) )
 
         return r
 
@@ -647,6 +647,7 @@ class CBlockHeader(object):
 
             self.sha256 = uint256_from_str(hash256(r))
             self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
+            print ("debug hash = ",self.hash, "sha256=", self.sha256)
 
 
     def rehash(self):
@@ -738,9 +739,9 @@ class CBlock(CBlockHeader):
             print(self.sha256, target, self.nNonce)
 
     def __repr__(self):
-        return "CBlock(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nHeight=%d nTime=%s nBits=%08x nNonce=%08x vtx=%s)" \
-            % (self.nVersion, self.hashPrevBlock, self.hashMerkleRoot, self.nHeight, 
-               time.ctime(self.nTime), self.nBits, self.nNonce, repr(self.vtx))
+        return "CBlock(hash=%s nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nHeight=%d nTime=%s nBits=%08x hashStateRoot=%064x hashUTXORoot=%064x nNonce=%08x vtx=%s)" \
+            % (self.hash, self.nVersion, self.hashPrevBlock, self.hashMerkleRoot, self.nHeight, 
+               time.ctime(self.nTime), self.nBits, self.hashStateRoot, self.hashUTXORoot, self.nNonce, repr(self.vtx))
 
 
 class CUnsignedAlert(object):

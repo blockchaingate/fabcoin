@@ -150,7 +150,8 @@ class CondensingTxsTest(FabcoinTestFramework):
         print("Setting up contracts and calling setSenders")
         self.setup_contracts()
         A1 = self.node.getnewaddress()
-        self.node.sendtoaddress(A1, 1)
+        #self.node.sendtoaddress(A1, 1)
+        self.node.sendtoaddress(A1, 100)
         self.node.generate(1)
         assert("vin" not in self.node.getaccountinfo(self.sender1))
         assert("vin" not in self.node.getaccountinfo(self.sender2))
@@ -195,7 +196,7 @@ class CondensingTxsTest(FabcoinTestFramework):
 
         # We need the txfee to be higher than T5 so that T4 tx is prioritized over T5.
         # We set the gas such that the the tx will run but not immediately throw a out of gas exception
-        T4_raw = make_transaction(self.node, [make_vin(self.node, 3*COIN)], [make_op_call_output(2*COIN, b"\x04", 22000, CScriptNum(FABCOIN_MIN_GAS_PRICE), hex_str_to_bytes(self.share_abi), hex_str_to_bytes(self.sender2))])
+        T4_raw = make_transaction(self.node, [make_vin(self.node, 3*COIN)], [make_op_call_output((int)(2.9*COIN), b"\x04", 22000, CScriptNum(FABCOIN_MIN_GAS_PRICE), hex_str_to_bytes(self.share_abi), hex_str_to_bytes(self.sender2))])
         T4_id = self.node.sendrawtransaction(T4_raw)
         T5_id = self.node.sendtocontract(self.sender2, self.withdrawAll_abi, 0, 1000000, FABCOIN_MIN_GAS_PRICE_STR, A1)['txid']
         B4_id = self.node.generate(1)[0]
@@ -210,7 +211,7 @@ class CondensingTxsTest(FabcoinTestFramework):
 
         C4_id = B4['tx'][4]
         C4 = self.node.getrawtransaction(C4_id, True)
-        assert_vout(R1, [(2, 'pubkeyhash')])
+        assert_vout(R1, [(Decimal('2.9'), 'pubkeyhash')])
         assert_vin(C4, [('OP_SPEND', ), ('OP_SPEND', )])
         assert_vout(C4, [(12, 'pubkeyhash')])
         assert_equal(sum(self.node.listcontracts().values()), 0)

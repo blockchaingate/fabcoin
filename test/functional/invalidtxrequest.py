@@ -42,13 +42,30 @@ class InvalidTxRequestTest(ComparisonTestFramework):
         Create a new block with an anyone-can-spend coinbase
         '''
         height = 1
-        block = create_block(self.tip, create_coinbase(height), self.block_time)
+        tip = self.nodes[0].getblock(self.nodes[0].getbestblockhash(),True, True)
+        #block = create_block(self.tip, create_coinbase(height), self.block_time)
+        block = create_block(int(self.nodes[0].getbestblockhash(), 16), create_coinbase(self.nodes[0].getblockcount()+1), tip['time'])
+        print ('hashUTXORoot', tip['hashUTXORoot'])
+        print ('hashStateRoot', tip['hashStateRoot'])
+
+        if int(tip['hashUTXORoot'], 16) == 0 :
+            block.hashUTXORoot = INITIAL_HASH_UTXO_ROOT
+            block.hashStateRoot = INITIAL_HASH_STATE_ROOT
+        else :
+            block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
+            block.hashStateRoot = int(tip['hashStateRoot'], 16)
+
+        print ('hashUTXORoot', block.hashUTXORoot )
+        print ('hashStateRoot', block.hashStateRoot )
+
         self.block_time += 1
         block.solve()
+
         # Save the coinbase for later
         self.block1 = block
         self.tip = block.sha256
         height += 1
+
         yield TestInstance([[block, True]])
 
         print (" step2: Now we need that block to mature so we can spend the coinbase.")
@@ -58,7 +75,10 @@ class InvalidTxRequestTest(ComparisonTestFramework):
         test = TestInstance(sync_every_block=False)
         for i in range(800):
             block = create_block(self.tip, create_coinbase(height), self.block_time)
+            block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
+            block.hashStateRoot = int(tip['hashStateRoot'], 16)
             block.solve()
+
             self.tip = block.sha256
             self.block_time += 1
             test.blocks_and_transactions.append([block, True])

@@ -1,0 +1,182 @@
+config/fabcoin-config.h:#define USE_QRCODE 1
+config/fabcoin-config.h.in:#undef USE_QRCODE
+Makefile:USE_QRCODE = 
+Makefile:QT_QRC_CPP = qt/qrc_fabcoin.cpp
+Makefile:QT_QRC = qt/fabcoin.qrc
+Makefile:QT_QRC_LOCALE_CPP = qt/qrc_fabcoin_locale.cpp
+Makefile:QT_QRC_LOCALE = qt/fabcoin_locale.qrc
+Makefile:  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(RES_STYLES)
+Makefile:  $(PROTOBUF_H) $(QT_QRC_CPP) $(QT_QRC_LOCALE_CPP)
+Makefile:$(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
+Makefile:$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(RES_STYLES) $(PROTOBUF_H)
+Makefile.in:USE_QRCODE = @USE_QRCODE@
+Makefile.in:@ENABLE_QT_TRUE@QT_QRC_CPP = qt/qrc_fabcoin.cpp
+Makefile.in:@ENABLE_QT_TRUE@QT_QRC = qt/fabcoin.qrc
+Makefile.in:@ENABLE_QT_TRUE@QT_QRC_LOCALE_CPP = qt/qrc_fabcoin_locale.cpp
+Makefile.in:@ENABLE_QT_TRUE@QT_QRC_LOCALE = qt/fabcoin_locale.qrc
+Makefile.in:@ENABLE_QT_TRUE@  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(RES_STYLES)
+Makefile.in:@ENABLE_QT_TRUE@  $(PROTOBUF_H) $(QT_QRC_CPP) $(QT_QRC_LOCALE_CPP)
+Makefile.in:@ENABLE_QT_TRUE@$(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
+Makefile.in:@ENABLE_QT_TRUE@$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(RES_STYLES) $(PROTOBUF_H)
+Makefile.qt.include:QT_QRC_CPP = qt/qrc_fabcoin.cpp
+Makefile.qt.include:QT_QRC = qt/fabcoin.qrc
+Makefile.qt.include:QT_QRC_LOCALE_CPP = qt/qrc_fabcoin_locale.cpp
+Makefile.qt.include:QT_QRC_LOCALE = qt/fabcoin_locale.qrc
+Makefile.qt.include:  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(RES_STYLES)
+Makefile.qt.include:  $(PROTOBUF_H) $(QT_QRC_CPP) $(QT_QRC_LOCALE_CPP)
+Makefile.qt.include:$(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
+Makefile.qt.include:$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) $(RES_STYLES) $(PROTOBUF_H)
+qt/walletview.cpp:    QRCTokenPage = new QRCToken(platformStyle);
+qt/walletview.cpp:    addWidget(QRCTokenPage);
+qt/walletview.cpp:    QRCTokenPage->setClientModel(_clientModel);
+qt/walletview.cpp:    QRCTokenPage->setModel(_walletModel);
+qt/walletview.cpp:    setCurrentWidget(QRCTokenPage);
+qt/walletview.cpp:    QRCTokenPage->on_goToSendTokenPage();
+qt/walletview.cpp:    setCurrentWidget(QRCTokenPage);
+qt/walletview.cpp:    QRCTokenPage->on_goToReceiveTokenPage();
+qt/walletview.cpp:    setCurrentWidget(QRCTokenPage);
+qt/walletview.cpp:    QRCTokenPage->on_goToAddTokenPage();
+Binary file qt/qt_libfabcoinqt_a-qrctoken.o matches
+qt/fabcoingui.cpp:    QRCTokenAction(0),
+qt/fabcoingui.cpp:    QRCTokenAction = new QAction(platformStyle->MultiStatesIcon(":/icons/qrctoken"), tr("&QRC Tokens"), this);
+qt/fabcoingui.cpp:    QRCTokenAction->setStatusTip(tr("ERC Tokens (send, receive or add Tokens in list)"));
+qt/fabcoingui.cpp:    QRCTokenAction->setToolTip(QRCTokenAction->statusTip());
+qt/fabcoingui.cpp:    QRCTokenAction->setCheckable(true);
+qt/fabcoingui.cpp:    QRCTokenAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+qt/fabcoingui.cpp:    tabGroup->addAction(QRCTokenAction);
+qt/fabcoingui.cpp:        appNavigationBar->mapGroup(QRCTokenAction, tokenActions);
+qt/fabcoingui.cpp:    QRCTokenAction->setChecked(true);
+qt/fabcoingui.cpp:    QRCTokenAction->setChecked(true);
+qt/fabcoingui.cpp:    QRCTokenAction->setChecked(true);
+qt/receivecoinsdialog.cpp:    ui->lblQRCode->setPixmap(emptyPixmap);
+qt/receivecoinsdialog.cpp:    ui->lblQRCode->setText("");
+qt/receivecoinsdialog.cpp:    if(ReceiveRequestDialog::createQRCode(ui->lblQRCode, info))
+qt/receivecoinsdialog.cpp:        ui->lblQRCode->setScaledContents(true);
+qt/qrctoken.h:#ifndef QRCTOKEN_H
+qt/qrctoken.h:#define QRCTOKEN_H
+qt/qrctoken.h:class QRCToken;
+qt/qrctoken.h:class QRCToken : public QWidget
+qt/qrctoken.h:    explicit QRCToken(const PlatformStyle *platformStyle, QWidget *parent = 0);
+qt/qrctoken.h:    ~QRCToken();
+qt/qrctoken.h:    Ui::QRCToken *ui;
+qt/qrctoken.h:#endif // QRCTOKEN_H
+qt/guiconstants.h:/* QRCodeDialog -- size of exported QR Code image */
+Binary file qt/qt_libfabcoinqt_a-moc_receivetokenpage.o matches
+Binary file qt/qt_libfabcoinqt_a-moc_walletview.o matches
+qt/walletview.h:class QRCToken;
+qt/walletview.h:    QRCToken* QRCTokenPage;
+Binary file qt/qt_libfabcoinqt_a-receivecoinsdialog.o matches
+qt/receiverequestdialog.cpp:#include "config/fabcoin-config.h" /* for USE_QRCODE */
+qt/receiverequestdialog.cpp:#ifdef USE_QRCODE
+qt/receiverequestdialog.cpp:#ifndef USE_QRCODE
+qt/receiverequestdialog.cpp:    ui->lblQRCode->setVisible(false);
+qt/receiverequestdialog.cpp:    connect(ui->btnSaveAs, SIGNAL(clicked()), ui->lblQRCode, SLOT(saveImage()));
+qt/receiverequestdialog.cpp:bool ReceiveRequestDialog::createQRCode(QLabel *label, SendCoinsRecipient _info, bool showAddress)
+qt/receiverequestdialog.cpp:#ifdef USE_QRCODE
+qt/receiverequestdialog.cpp:#ifdef USE_QRCODE
+qt/receiverequestdialog.cpp:    if(createQRCode(ui->lblQRCode, info))
+qt/receiverequestdialog.cpp:        ui->lblQRCode->setScaledContents(true);
+Binary file qt/libfabcoinqt.a matches
+Binary file qt/qt_libfabcoinqt_a-receivetokenpage.o matches
+Binary file qt/qt_libfabcoinqt_a-fabcoingui.o matches
+Binary file qt/fabcoin-qt matches
+qt/moc_qrctoken.cpp:struct qt_meta_stringdata_QRCToken_t {
+qt/moc_qrctoken.cpp:    qptrdiff(offsetof(qt_meta_stringdata_QRCToken_t, stringdata0) + ofs \
+qt/moc_qrctoken.cpp:static const qt_meta_stringdata_QRCToken_t qt_meta_stringdata_QRCToken = {
+qt/moc_qrctoken.cpp:QT_MOC_LITERAL(0, 0, 8), // "QRCToken"
+qt/moc_qrctoken.cpp:    "QRCToken\0on_goToSendTokenPage\0\0"
+qt/moc_qrctoken.cpp:static const uint qt_meta_data_QRCToken[] = {
+qt/moc_qrctoken.cpp:void QRCToken::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+qt/moc_qrctoken.cpp:        QRCToken *_t = static_cast<QRCToken *>(_o);
+qt/moc_qrctoken.cpp:const QMetaObject QRCToken::staticMetaObject = {
+qt/moc_qrctoken.cpp:    { &QWidget::staticMetaObject, qt_meta_stringdata_QRCToken.data,
+qt/moc_qrctoken.cpp:      qt_meta_data_QRCToken,  qt_static_metacall, Q_NULLPTR, Q_NULLPTR}
+qt/moc_qrctoken.cpp:const QMetaObject *QRCToken::metaObject() const
+qt/moc_qrctoken.cpp:void *QRCToken::qt_metacast(const char *_clname)
+qt/moc_qrctoken.cpp:    if (!strcmp(_clname, qt_meta_stringdata_QRCToken.stringdata0))
+qt/moc_qrctoken.cpp:        return static_cast<void*>(const_cast< QRCToken*>(this));
+qt/moc_qrctoken.cpp:int QRCToken::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+Binary file qt/qt_libfabcoinqt_a-moc_qrctoken.o matches
+Binary file qt/qt_libfabcoinqt_a-moc_fabcoingui.o matches
+qt/fabcoingui.h:    QAction* QRCTokenAction;
+Binary file qt/qt_libfabcoinqt_a-moc_receiverequestdialog.o matches
+qt/forms/ui_qrctoken.h:#ifndef UI_QRCTOKEN_H
+qt/forms/ui_qrctoken.h:#define UI_QRCTOKEN_H
+qt/forms/ui_qrctoken.h:class Ui_QRCToken
+qt/forms/ui_qrctoken.h:    void setupUi(QWidget *QRCToken)
+qt/forms/ui_qrctoken.h:        if (QRCToken->objectName().isEmpty())
+qt/forms/ui_qrctoken.h:            QRCToken->setObjectName(QStringLiteral("ERCToken"));
+qt/forms/ui_qrctoken.h:        QRCToken->resize(723, 467);
+qt/forms/ui_qrctoken.h:        verticalLayout_2 = new QVBoxLayout(QRCToken);
+qt/forms/ui_qrctoken.h:        tokensList = new QListView(QRCToken);
+qt/forms/ui_qrctoken.h:        stackedWidgetToken = new QStackedWidget(QRCToken);
+qt/forms/ui_qrctoken.h:        retranslateUi(QRCToken);
+qt/forms/ui_qrctoken.h:        QMetaObject::connectSlotsByName(QRCToken);
+qt/forms/ui_qrctoken.h:    void retranslateUi(QWidget *QRCToken)
+qt/forms/ui_qrctoken.h:        QRCToken->setWindowTitle(QApplication::translate("QRCToken", "Form", 0));
+qt/forms/ui_qrctoken.h:    class QRCToken: public Ui_QRCToken {};
+qt/forms/ui_qrctoken.h:#endif // UI_QRCTOKEN_H
+qt/forms/receivetokenpage.ui:      <widget class="QLabel" name="lblQRCode">
+qt/forms/ui_receiverequestdialog.h:    QRImageWidget *lblQRCode;
+qt/forms/ui_receiverequestdialog.h:        lblQRCode = new QRImageWidget(ReceiveRequestDialog);
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setObjectName(QStringLiteral("lblQRCode"));
+qt/forms/ui_receiverequestdialog.h:        sizePolicy.setHeightForWidth(lblQRCode->sizePolicy().hasHeightForWidth());
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setSizePolicy(sizePolicy);
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setMinimumSize(QSize(200, 200));
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setMaximumSize(QSize(200, 200));
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setTextFormat(Qt::PlainText);
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setAlignment(Qt::AlignCenter);
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setWordWrap(true);
+qt/forms/ui_receiverequestdialog.h:        horizontalLayout_3->addWidget(lblQRCode);
+qt/forms/ui_receiverequestdialog.h:        lblQRCode->setToolTip(QApplication::translate("ReceiveRequestDialog", "QR Code", 0));
+qt/forms/ui_receivecoinsdialog.h:    QRImageWidget *lblQRCode;
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode = new QRImageWidget(frameRequest);
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode->setObjectName(QStringLiteral("lblQRCode"));
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode->setMinimumSize(QSize(200, 220));
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode->setMaximumSize(QSize(200, 220));
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode->setAlignment(Qt::AlignCenter);
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode->setWordWrap(true);
+qt/forms/ui_receivecoinsdialog.h:        horizontalLayout_4->addWidget(lblQRCode);
+qt/forms/ui_receivecoinsdialog.h:        lblQRCode->setText(QString());
+qt/forms/receivecoinsdialog.ui:       <widget class="QRImageWidget" name="lblQRCode">
+qt/forms/ui_receivetokenpage.h:    QLabel *lblQRCode;
+qt/forms/ui_receivetokenpage.h:        lblQRCode = new QLabel(ReceiveTokenPage);
+qt/forms/ui_receivetokenpage.h:        lblQRCode->setObjectName(QStringLiteral("lblQRCode"));
+qt/forms/ui_receivetokenpage.h:        lblQRCode->setMinimumSize(QSize(200, 220));
+qt/forms/ui_receivetokenpage.h:        lblQRCode->setMaximumSize(QSize(200, 220));
+qt/forms/ui_receivetokenpage.h:        lblQRCode->setAlignment(Qt::AlignCenter);
+qt/forms/ui_receivetokenpage.h:        horizontalLayout_2->addWidget(lblQRCode);
+qt/forms/ui_receivetokenpage.h:        lblQRCode->setText(QString());
+qt/forms/qrctoken.ui: <class>QRCToken</class>
+qt/forms/qrctoken.ui: <widget class="QWidget" name="QRCToken">
+qt/forms/receiverequestdialog.ui:        <widget class="QRImageWidget" name="lblQRCode">
+qt/receivetokenpage.cpp:    createQRCode();
+qt/receivetokenpage.cpp:void ReceiveTokenPage::createQRCode()
+qt/receivetokenpage.cpp:        if(ReceiveRequestDialog::createQRCode(ui->lblQRCode, info))
+qt/receivetokenpage.cpp:            ui->lblQRCode->setVisible(true);
+qt/receivetokenpage.cpp:            ui->lblQRCode->setScaledContents(true);
+qt/receivetokenpage.cpp:            ui->lblQRCode->setVisible(false);
+qt/receivetokenpage.cpp:        ui->lblQRCode->clear();
+qt/receiverequestdialog.h:    static bool createQRCode(QLabel * label, SendCoinsRecipient info, bool showAddress = false);
+qt/qrctoken.cpp:QRCToken::QRCToken(const PlatformStyle *platformStyle, QWidget *parent) :
+qt/qrctoken.cpp:    ui(new Ui::QRCToken),
+qt/qrctoken.cpp:QRCToken::~QRCToken()
+qt/qrctoken.cpp:void QRCToken::setModel(WalletModel *_model)
+qt/qrctoken.cpp:void QRCToken::setClientModel(ClientModel *_clientModel)
+qt/qrctoken.cpp:void QRCToken::on_goToSendTokenPage()
+qt/qrctoken.cpp:void QRCToken::on_goToReceiveTokenPage()
+qt/qrctoken.cpp:void QRCToken::on_goToAddTokenPage()
+qt/qrctoken.cpp:void QRCToken::on_currentTokenChanged(QModelIndex index)
+qt/qrctoken.cpp:void QRCToken::on_dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+qt/qrctoken.cpp:void QRCToken::on_currentChanged(QModelIndex current, QModelIndex previous)
+qt/qrctoken.cpp:void QRCToken::on_rowsInserted(QModelIndex index, int first, int last)
+qt/qrctoken.cpp:void QRCToken::contextualMenu(const QPoint &point)
+qt/qrctoken.cpp:void QRCToken::copyTokenAddress()
+qt/qrctoken.cpp:void QRCToken::copyTokenBalance()
+qt/qrctoken.cpp:void QRCToken::copyTokenName()
+qt/qrctoken.cpp:void QRCToken::copySenderAddress()
+qt/qrctoken.cpp:void QRCToken::removeToken()
+Binary file qt/qt_libfabcoinqt_a-walletview.o matches
+qt/guiutil.h:       @see  QRCToken::copyTokenAddress
+Binary file qt/qt_libfabcoinqt_a-receiverequestdialog.o matches
+qt/receivetokenpage.h:    void createQRCode();

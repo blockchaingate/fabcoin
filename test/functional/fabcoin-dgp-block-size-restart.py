@@ -21,10 +21,10 @@ class FabcoinDGPActivation(FabcoinTestFramework):
         self.num_nodes = 1
 
     def create_block_of_approx_max_size(self, size_in_bytes):
-        tip = self.node.getblock(self.node.getbestblockhash())
+        tip = self.node.getblock(self.node.getbestblockhash(),True, True)
         block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(self.node.getblockcount()+1), tip['time'])
-        block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
-        block.hashStateRoot = int(tip['hashStateRoot'], 16)
+        block.hashUTXORoot = INITIAL_HASH_UTXO_ROOT
+        block.hashStateRoot = INITIAL_HASH_STATE_ROOT
 
         unspents = self.node.listunspent()
         while len(block.serialize()) < size_in_bytes:
@@ -48,8 +48,10 @@ class FabcoinDGPActivation(FabcoinTestFramework):
         block.vtx[-1].deserialize(f)
 
         block.hashMerkleRoot = block.calc_merkle_root()
+
         block.rehash()
         block.solve()
+
         print("block size", len(block.serialize()))
         return block
 
@@ -97,7 +99,7 @@ class FabcoinDGPActivation(FabcoinTestFramework):
         # Submit a block close to 8MB and make sure that it was accepted
         block = self.create_block_of_approx_max_size(max_block_size)
         current_block_count = self.node.getblockcount()
-        assert_equal(self.node.submitblock(bytes_to_hex_str(block.serialize())), None)
+        assert_equal(self.node.submitblock(bytes_to_hex_str(block.serialize()),'',True), None)
         assert_equal(self.node.getblockcount(), current_block_count+1)
 
         # Activate a proposal for 1MB blocks
