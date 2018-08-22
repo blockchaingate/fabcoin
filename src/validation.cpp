@@ -2363,7 +2363,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
 
     if (fJustCheck)
     {
-        dev::h256 prevHashStateRoot(dev::sha3(dev::rlp("")));
+        dev::h256 prevHashStateRoot(dev::h256("e965ffd002cd6ad0e2dc402b8044de833e06b23127ea8c3d80aec91410771495"));
         dev::h256 prevHashUTXORoot(dev::sha3(dev::rlp("")));
         if (pindex->pprev->hashStateRoot != uint256() && pindex->pprev->hashUTXORoot != uint256()) {
             prevHashStateRoot = uintToh256(pindex->pprev->hashStateRoot);

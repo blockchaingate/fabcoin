@@ -62,6 +62,12 @@ public:
     {
         bool equihash_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
 
+        bool has_contract = !( s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
+
+        // for old fabcoin version 70016 , no smart contract 
+        if ( (s.GetVersion() & 0x00ffffff ) < FAB_CONTRACT_VERSION ){
+           has_contract = false;
+        }
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
@@ -75,8 +81,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
       
-        bool hascontract = IsSupportContract();
-        if( hascontract )
+        if( has_contract )
         {
             READWRITE(hashStateRoot); // fasc
             READWRITE(hashUTXORoot); // fasc
