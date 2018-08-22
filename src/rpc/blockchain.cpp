@@ -64,7 +64,7 @@ double GetDifficultyINTERNAL(const CBlockIndex* blockindex)
     int nShiftAmount = (powLimit >> 24) & 0xff;
 
     double dDiff =
-        (double)(powLimit & 0x00ffffff) / 
+        (double)(powLimit & 0x00ffffff) /
         (double)(bits & 0x00ffffff);
 
     while (nShift < nShiftAmount)
@@ -133,7 +133,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex, bool legacy_format, bo
     result.push_back(Pair("confirmations", confirmations));
     if (! legacy_format ){
         result.push_back(Pair("height", blockindex->nHeight));
-    
+
     }
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
@@ -759,7 +759,7 @@ UniValue getaccountinfo(const JSONRPCRequest& request)
     dev::Address addrAccount(strAddr);
     if(!globalState->addressInUse(addrAccount))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
-    
+
     UniValue result(UniValue::VOBJ);
 
     result.push_back(Pair("address", strAddr));
@@ -774,7 +774,7 @@ UniValue getaccountinfo(const JSONRPCRequest& request)
         e.push_back(Pair(dev::toHex(j.second.first), dev::toHex(j.second.second)));
         storageUV.push_back(Pair(j.first.hex(), e));
     }
-        
+
     result.push_back(Pair("storage", storageUV));
 
     result.push_back(Pair("code", HexStr(code.begin(), code.end())));
@@ -806,7 +806,7 @@ UniValue getstorage(const JSONRPCRequest& request)
 
     std::string strAddr = request.params[0].get_str();
     if(strAddr.size() != 40 || !CheckHex(strAddr))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address"); 
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
 
     TemporaryState ts(globalState);
     if (request.params.size() > 1)
@@ -819,7 +819,7 @@ UniValue getstorage(const JSONRPCRequest& request)
 
             if(blockNum != -1)
                 ts.SetRoot(uintToh256(chainActive[blockNum]->hashStateRoot), uintToh256(chainActive[blockNum]->hashUTXORoot));
-                
+
         } else {
             throw JSONRPCError(RPC_INVALID_PARAMS, "Incorrect block number");
         }
@@ -828,7 +828,7 @@ UniValue getstorage(const JSONRPCRequest& request)
     dev::Address addrAccount(strAddr);
     if(!globalState->addressInUse(addrAccount))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
-    
+
     UniValue result(UniValue::VOBJ);
 
     bool onlyIndex = request.params.size() > 2;
@@ -850,7 +850,7 @@ UniValue getstorage(const JSONRPCRequest& request)
         UniValue e(UniValue::VOBJ);
 
         storage = {{elem->first, {elem->second.first, elem->second.second}}};
-    } 
+    }
     for (const auto& j: storage)
     {
         UniValue e(UniValue::VOBJ);
@@ -1039,18 +1039,18 @@ UniValue getblock(const JSONRPCRequest& request)
 ////////////////////////////////////////////////////////////////////// // fasc
 UniValue callcontract(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 2)
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
         throw std::runtime_error(
-             "callcontract \"address\" \"data\" ( address )\n"
+             "callcontract \"address\" \"data\" ( address gasLimit )\n"
              "\nArgument:\n"
              "1. \"address\"          (string, required) The account address\n"
              "2. \"data\"             (string, required) The data hex string\n"
              "3. address              (string, optional) The sender address hex string\n"
-             "4. gasLimit             (string, optional) The gas limit for executing the contract\n"
+             "4. gasLimit             (numeric, optional) The gas limit for executing the contract\n"
          );
- 
+
     LOCK(cs_main);
-    
+
     std::string strAddr = request.params[0].get_str();
     std::string data = request.params[1].get_str();
 
@@ -1059,11 +1059,11 @@ UniValue callcontract(const JSONRPCRequest& request)
 
     if(strAddr.size() != 40 || !CheckHex(strAddr))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
- 
+
     dev::Address addrAccount(strAddr);
     if(!globalState->addressInUse(addrAccount))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
-    
+
     dev::Address senderAddress;
     if(request.params.size() >= 3){
         CFabcoinAddress fascSenderAddress(request.params[2].get_str());
@@ -1074,13 +1074,8 @@ UniValue callcontract(const JSONRPCRequest& request)
         }else{
             senderAddress = dev::Address(request.params[2].get_str());
         }
-
     }
-    uint64_t gasLimit=0;
-    if(request.params.size() == 4){
-        gasLimit = request.params[3].get_int();
-    }
-
+    uint64_t gasLimit = request.params.size() >= 4 ? request.params[3].get_int64() : 0;
 
     std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), senderAddress, gasLimit);
 
@@ -1092,7 +1087,7 @@ UniValue callcontract(const JSONRPCRequest& request)
     result.push_back(Pair("address", strAddr));
     result.push_back(Pair("executionResult", executionResultToJSON(execResults[0].execRes)));
     result.push_back(Pair("transactionReceipt", transactionReceiptToJSON(execResults[0].txRec)));
- 
+
     return result;
 }
 
@@ -1499,11 +1494,11 @@ UniValue searchlogs(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
     int curheight = 0;
-    
+
     LOCK(cs_main);
 
     SearchLogsParams params(request.params);
-    
+
     std::vector<std::vector<uint256>> hashesToBlock;
 
     curheight = pblocktree->ReadHeightIndex(params.fromBlock, params.toBlock, params.minconf, hashesToBlock, params.addresses);
@@ -1521,7 +1516,7 @@ UniValue searchlogs(const JSONRPCRequest& request)
         for(const auto& e : hashesTx)
         {
             std::vector<TransactionReceiptInfo> receipts = pstorageresult->getResult(uintToh256(e));
-            
+
             for(const auto& receipt : receipts) {
                 if(receipt.logs.empty()) {
                     continue;
@@ -1573,7 +1568,7 @@ UniValue gettransactionreceipt(const JSONRPCRequest& request)
              "\nArgument:\n"
              "1. \"hash\"          (string, required) The transaction hash\n"
          );
- 
+
     if(!fLogEvents)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
@@ -1583,7 +1578,7 @@ UniValue gettransactionreceipt(const JSONRPCRequest& request)
     if(hashTemp.size() != 64){
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect hash");
     }
-    
+
     uint256 hash(uint256S(hashTemp));
 
     std::vector<TransactionReceiptInfo> transactionReceiptInfo = pstorageresult->getResult(uintToh256(hash));
@@ -1824,10 +1819,10 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         );
 
     UniValue ret(UniValue::VOBJ);
-    
+
     CCoinsStats stats;
     FlushStateToDisk();
-    
+
     std::unique_ptr<CCoinsViewCursor> pcursor(pcoinsdbview->Cursor());
 
     uint256 prevkey;
@@ -1837,7 +1832,7 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         boost::this_thread::interruption_point();
         COutPoint key;
         Coin coin;
-        
+
         if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
             if (!outputs.empty() && key.hash != prevkey) {
                 outputs.clear();
@@ -1864,8 +1859,8 @@ UniValue gettxoutset(const JSONRPCRequest& request)
                 ret.push_back(Pair("UTXO", strUtxo.str()));
             }
             outputs[key.n] = std::move(coin);
-        } 
-        else 
+        }
+        else
         {
             ret.push_back(Pair("ERROR: ", "unable to read value"));
             return ret;
