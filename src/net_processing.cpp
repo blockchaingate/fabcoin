@@ -2568,18 +2568,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         headers.resize(nCount);
         for (unsigned int n = 0; n < nCount; n++) {
-/*
-            CBlockHeaderNoContract headerNoContract;
-            vRecv >> headerNoContract;
-            headers[n] = headerNoContract;
-            LogPrintf("jyan nHeight %d n %d ncount %d\n", headerNoContract.nHeight, n, nCount);
-            CBlock dumpBlock(headers[n]);
-            LogPrintf("jyan nHeight %d n %d Others %s\n", headerNoContract.nHeight, n, dumpBlock.ToString());
-            if (headerNoContract.nHeight >= chainparams.GetConsensus().ContractHeight || chainparams.GetConsensus().ContractHeight == 10) {
-                headers[n].hashStateRoot = ReadUint256(vRecv);
-                headers[n].hashUTXORoot = ReadUint256(vRecv);
-            }
-*/
             headers[n].hashStateRoot = uint256S("9514771014c9ae803d8cea2731b2063e83de44802b40dce2d06acd02d0ff65e9");
             headers[n].hashUTXORoot = uint256S("21b463e3b52f6201c0ad6c991be0485b6ef8c092e64583ffa655cc1b171fe856");
             vRecv >> headers[n];

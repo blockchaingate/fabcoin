@@ -3928,7 +3928,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
     }
 
-    // Check block height for blocks after FAB fork. jyan
+    // Check block height for blocks after FAB fork. TODO-J 
     //if (nHeight >= consensusParams.FABHeight && block.nHeight != (uint32_t)nHeight)
     //    return state.Invalid(false, REJECT_INVALID, "bad-height", "incorrect block height");
 

@@ -29,7 +29,7 @@ static const unsigned int MAX_BLOCK_WEIGHT = 8000000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
 static const int64_t MAX_BLOCK_SIGOPS_COST = 80000;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
-static const int COINBASE_MATURITY = 800; //fasc: change to 800 for prod //jyan
+static const int COINBASE_MATURITY = 800; //fasc: change to 800 for prod 
 
 static const int WITNESS_SCALE_FACTOR = 4;
 
