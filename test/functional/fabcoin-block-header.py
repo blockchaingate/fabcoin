@@ -54,14 +54,14 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
 
         node.generate(10)
         self.block_time = int(time.time())+20
-        for i in range(500):
+        for i in range(COINBASE_MATURITY):
             height = node.getblockcount()+1
             self.tip = create_block(int(node.getbestblockhash(), 16), create_coinbase(height), height, self.block_time+i)
             self.tip.solve()
             yield accepted()
 
         #node.generate(COINBASE_MATURITY+50)
-        mocktime = COINBASE_MATURITY+50
+        mocktime = time.time() + COINBASE_MATURITY+50
         spendable_addresses = []
         # store some addresses to use later
         for unspent in node.listunspent():
@@ -70,7 +70,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         # first make sure that what is a valid block is accepted
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(time.time()+mocktime+100))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+100))
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()
         self.tip.solve()
         yield accepted()
