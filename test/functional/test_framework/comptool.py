@@ -210,7 +210,7 @@ class TestManager(object):
             )
 
         # --> error if not requested
-        wait_until(blocks_requested, attempts=20*num_blocks, lock=mininode_lock)
+        wait_until(blocks_requested, attempts=30*num_blocks, lock=mininode_lock)
 
         # Send getheaders message
         [ c.cb.send_getheaders() for c in self.connections ]
@@ -218,6 +218,7 @@ class TestManager(object):
         # Send ping and wait for response -- synchronization hack
         [ c.cb.send_ping(self.ping_counter) for c in self.connections ]
         self.wait_for_pings(self.ping_counter)
+        time.sleep(0.05)
         self.ping_counter += 1
 
     # Analogous to sync_block (see above)
@@ -230,7 +231,8 @@ class TestManager(object):
             )
 
         # --> error if not requested
-        wait_until(transaction_requested, attempts=20*num_events, lock=mininode_lock)
+        wait_until(transaction_requested, attempts=30*num_events, lock=mininode_lock)
+        time.sleep(0.05)
 
         # Get the mempool
         [ c.cb.send_mempool() for c in self.connections ]
@@ -347,9 +349,9 @@ class TestManager(object):
                             self.sync_blocks(block.sha256, 1)
                         else:
                             [ c.send_message(msg_block(block)) for c in self.connections ]
-                            #time.sleep(0.05)
+                            time.sleep(0.05)
                             [ c.cb.send_ping(self.ping_counter) for c in self.connections ]
-                            #time.sleep(0.05)
+                            time.sleep(0.05)
                             self.wait_for_pings(self.ping_counter)
                             self.ping_counter += 1
                         if (not self.check_results(tip, outcome)):

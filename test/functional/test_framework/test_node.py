@@ -21,7 +21,7 @@ from .util import (
 )
 from .authproxy import JSONRPCException
 
-FABCOIND_PROC_WAIT_TIMEOUT = 60
+FABCOIND_PROC_WAIT_TIMEOUT = 120
 
 class TestNode():
     """A class for representing a fabcoind node under test.

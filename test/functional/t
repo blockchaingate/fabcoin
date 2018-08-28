@@ -1,0 +1,204 @@
+21d20
+< from test_framework.fabcoinconfig import *
+91c90,91
+<         (sighash, err) = SignatureHash(spend_tx.vout[n].scriptPubKey, tx, 0, SIGHASH_ALL)
+---
+>         #(sighash, err) = SignatureHash(spend_tx.vout[n].scriptPubKey, tx, 0, SIGHASH_ALL)
+>         sighash = SegwitVersion1SignatureHash(spend_tx.vout[n].scriptPubKey, tx, 0, SIGHASH_ALL, spend_tx.vout[n].nValue)
+113c113
+<             block = create_block(base_block_hash, coinbase, height, block_time)
+---
+>             block = create_block(base_block_hash, coinbase, block_time)
+115c115
+<             coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one satoshi to fees
+---
+>             coinbase.vout[0].nValue += spend.tx.vout[spend.n].nValue - 1 # all but one liu to fees
+117,118c117,118
+<             block = create_block(base_block_hash, coinbase, height, block_time)
+<             tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 satoshi
+---
+>             block = create_block(base_block_hash, coinbase, block_time)
+>             tx = create_transaction(spend.tx, spend.n, b"", 1, script)  # spend 1 liu
+189,190c189,190
+<         test = TestInstance(sync_every_block=True)
+<         for i in range(98-15+COINBASE_MATURITY):
+---
+>         test = TestInstance(sync_every_block=False)
+>         for i in range(99):
+198c198
+<         for i in range(99):
+---
+>         for i in range(33):
+201,202d200
+< 
+< 
+262c260
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'bad-cb-amount'))
+273c271
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'bad-cb-amount'))
+336d333
+< 
+342c339
+<         block(20, spend=out[98])
+---
+>         block(20, spend=out[7])
+351c348
+<         block(21, spend=out[97])
+---
+>         block(21, spend=out[6])
+354c351
+<         block(22, spend=out[96])
+---
+>         block(22, spend=out[5])
+365c362
+<         script_length = 1000000 - len(b23.serialize()) - 69
+---
+>         script_length = MAX_BLOCK_BASE_SIZE - len(b23.serialize()) - 69
+371c368
+<         assert_equal(len(b23.serialize()), 1000000)
+---
+>         assert_equal(len(b23.serialize()), MAX_BLOCK_BASE_SIZE)
+383c380
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'bad-blk-length'))
+388d384
+< 
+405c401
+<         yield rejected()
+---
+>         yield rejected(False)
+417c413
+<         yield rejected()
+---
+>         yield rejected(False)
+422c418
+<         b30.vtx[0].vin[0].scriptSig += b'\x00' * 90
+---
+>         b30.vtx[0].vin[0].scriptSig = b'\x00' * 100
+516c512
+<         # Create a transaction that spends one satoshi to the p2sh_script, the rest to OP_TRUE
+---
+>         # Create a transaction that spends one liu to the p2sh_script, the rest to OP_TRUE
+526c522
+<         # Until block is full, add tx's with 1 satoshi to p2sh_script, the rest to OP_TRUE
+---
+>         # Until block is full, add tx's with 1 liu to p2sh_script, the rest to OP_TRUE
+559a556,557
+>         lastOutAmount = b40.vtx[1].vout[0].nValue
+> 
+568c566,567
+<             (sighash, err) = SignatureHash(redeem_script, tx, 1, SIGHASH_ALL)
+---
+>             #(sighash, err) = SignatureHash(redeem_script, tx, 1, SIGHASH_ALL)
+>             sighash = SegwitVersion1SignatureHash(redeem_script, tx, 1, SIGHASH_ALL, lastOutAmount)
+575a575
+>             lastOutAmount = tx.vout[0].nValue
+663c663
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'bad-blk-length'))
+675d674
+<         # This rule has been disabled for non-PoS blocks
+678c677
+<         b48.nBits = b48.nBits - 1
+---
+>         b48.nTime = int(time.time()) + 60 * 60 * 3
+680c679
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'time-too-new'))
+696d694
+< 
+722d719
+<         # We no longer do checking on medianTimePast for PoW blocks, therefore we simply submit a block that will be rejected here
+724c721
+<         b54.nBits -= 1
+---
+>         b54.nTime = b35.nTime - 1
+726c723
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'time-too-old'))
+800a798
+> 
+820c818
+<         yield rejected(RejectResult(16, b'bad-txns-vout-empty'))
+---
+>         yield rejected(RejectResult(16, b'bad-txns-inputs-missingorspent'))
+825c823
+<         tx = create_and_sign_tx(out[17].tx, out[17].n, (int(INITIAL_BLOCK_REWARD)+1)*COIN)
+---
+>         tx = create_and_sign_tx(out[17].tx, out[17].n, 51*COIN)
+835d832
+< 
+845,854c842,848
+< 
+<         # FABCOIN: Since we enable BIP34 from block 0, this BIP30 test is no longer relevant. This test has therefore been removed.
+<         # See https://github.com/fabcoinproject/fabcoin_new/blob/master/src/validation.cpp#L1809
+<         #tip(60)
+<         #b61 = block(61, spend=out[18])
+<         #b61.vtx[0].vin[0].scriptSig = b60.vtx[0].vin[0].scriptSig  #equalize the coinbases
+<         #b61.vtx[0].rehash()
+<         #b61 = update_block(61, [])
+<         #assert_equal(b60.vtx[0].serialize(), b61.vtx[0].serialize())
+<         #yield rejected(RejectResult(16, b'bad-txns-BIP30'))
+---
+>         tip(60)
+>         b61 = block(61, spend=out[18])
+>         b61.vtx[0].vin[0].scriptSig = b60.vtx[0].vin[0].scriptSig  #equalize the coinbases
+>         b61.vtx[0].rehash()
+>         b61 = update_block(61, [])
+>         assert_equal(b60.vtx[0].serialize(), b61.vtx[0].serialize())
+>         yield rejected(RejectResult(16, b'bad-txns-BIP30'))
+914c908
+<         script_length = 1000000 - len(b64a.normal_serialize()) - 69
+---
+>         script_length = MAX_BLOCK_BASE_SIZE - len(b64a.normal_serialize()) - 69
+919c913
+<         assert_equal(len(b64a.serialize()), 1000000 + 8)
+---
+>         assert_equal(len(b64a.serialize()), MAX_BLOCK_BASE_SIZE + 8)
+929c923
+<         assert_equal(len(b64.serialize()), 1000000)
+---
+>         assert_equal(len(b64.serialize()), MAX_BLOCK_BASE_SIZE)
+977,979c971,973
+<         # b68 - coinbase with an extra 10 satoshis,
+<         #       creates a tx that has 9 satoshis from out[20] go to fees
+<         #       this fails because the coinbase is trying to claim 1 satoshi too much in fees
+---
+>         # b68 - coinbase with an extra 10 liu,
+>         #       creates a tx that has 9 liu from out[20] go to fees
+>         #       this fails because the coinbase is trying to claim 1 liu too much in fees
+981c975
+<         # b69 - coinbase with extra 10 satoshis, and a tx that gives a 10 satoshi fee
+---
+>         # b69 - coinbase with extra 10 lius, and a tx that gives a 10 liu fee
+988c982
+<         yield rejected()
+---
+>         yield rejected(RejectResult(16, b'bad-cb-amount'))
+1239a1234
+> 
+1256,1257c1251
+<             # Due to changing the MAX_HEADERS_RESULTS
+<             LARGE_REORG_SIZE = 10
+---
+>             LARGE_REORG_SIZE = 1088
+1263c1257
+<                 script_length = 1000000 - len(b.serialize()) - 69
+---
+>                 script_length = MAX_BLOCK_BASE_SIZE - len(b.serialize()) - 69
+1268c1262
+<                 assert_equal(len(b.serialize()), 1000000)
+---
+>                 assert_equal(len(b.serialize()), MAX_BLOCK_BASE_SIZE)
+1271a1266
+> 
+1273a1269
+> 

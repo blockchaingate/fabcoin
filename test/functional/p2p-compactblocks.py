@@ -80,7 +80,7 @@ class TestNode(NodeConnCB):
             return (block_hash in self.announced_blockhashes)
         wait_until(received_hash, timeout=timeout, lock=mininode_lock)
 
-    def send_await_disconnect(self, message, timeout=60):
+    def send_await_disconnect(self, message, timeout=30):
         """Sends a message to the node and wait for disconnect.
 
         This is used when we want to send a message into the node that we expect
@@ -100,7 +100,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         height = node.getblockcount()
         tip = node.getbestblockhash()
         mtp = node.getblockheader(tip)['mediantime']
-        block = create_block(int(tip, 16), create_coinbase(height + 1), height+1, mtp + 1)
+        block = create_block(int(tip, 16), create_coinbase(height + 1), height +1, mtp + 1)
         block.nVersion = 4
         if segwit:
             add_witness_commitment(block)
@@ -234,7 +234,7 @@ class CompactBlocksTest(FabcoinTestFramework):
 
     # This test actually causes fabcoind to (reasonably!) disconnect us, so do this last.
     def test_invalid_cmpctblock_message(self):
-        self.nodes[0].generate(801)
+        self.nodes[0].generate(101)
         block = self.build_block_on_tip(self.nodes[0])
 
         cmpct_block = P2PHeaderAndShortIDs()
@@ -250,7 +250,7 @@ class CompactBlocksTest(FabcoinTestFramework):
     # fabcoind's choice of nonce.
     def test_compactblock_construction(self, node, test_node, version, use_witness_address):
         # Generate a bunch of transactions.
-        node.generate(801)
+        node.generate(101)
         num_transactions = 25
         address = node.getnewaddress()
         if use_witness_address:
@@ -284,7 +284,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block_hash = int(node.generate(1)[0], 16)
 
         # Store the raw block in our internal format.
-        block = FromHex(CBlock(), node.getblock("%02x" % block_hash, False, True))
+        block = FromHex(CBlock(), node.getblock("%02x" % block_hash, False))
         [tx.calc_sha256() for tx in block.vtx]
         block.rehash()
 
@@ -579,7 +579,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         current_height = chain_height
         while (current_height >= chain_height - MAX_GETBLOCKTXN_DEPTH):
             block_hash = node.getblockhash(current_height)
-            block = FromHex(CBlock(), node.getblock(block_hash, False, True))
+            block = FromHex(CBlock(), node.getblock(block_hash, False))
 
             msg = msg_getblocktxn()
             msg.block_txn_request = BlockTransactionsRequest(int(block_hash, 16), [])
@@ -686,7 +686,7 @@ class CompactBlocksTest(FabcoinTestFramework):
 
         # ToHex() won't serialize with witness, but this block has no witnesses
         # anyway. TODO: repeat this test with witness tx's to a segwit node.
-        node.submitblock(ToHex(block), '', True)
+        node.submitblock(ToHex(block))
 
         for l in listeners:
             wait_until(lambda: l.received_block_announcement(), timeout=30, lock=mininode_lock)
@@ -815,6 +815,9 @@ class CompactBlocksTest(FabcoinTestFramework):
         self.test_sendcmpct(self.nodes[1], self.segwit_node, 2, old_node=self.old_node)
         sync_blocks(self.nodes)
 
+        self.nodes[0].generate(1)
+        self.nodes[1].generate(1)
+        self.nodes[0].generate(COINBASE_MATURITY)
         self.log.info("Testing compactblock construction...")
         self.test_compactblock_construction(self.nodes[0], self.test_node, 1, False)
         sync_blocks(self.nodes)
@@ -892,7 +895,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         assert(self.nodes[0].getbestblockhash() != self.nodes[1].getbestblockhash())
         while (self.nodes[0].getblockcount() > self.nodes[1].getblockcount()):
             block_hash = self.nodes[0].getblockhash(self.nodes[1].getblockcount()+1)
-            self.nodes[1].submitblock(self.nodes[0].getblock(block_hash, False, True), '', True)
+            self.nodes[1].submitblock(self.nodes[0].getblock(block_hash, False))
         assert_equal(self.nodes[0].getbestblockhash(), self.nodes[1].getbestblockhash())
 
         self.log.info("Testing compactblock requests (segwit node)... ")

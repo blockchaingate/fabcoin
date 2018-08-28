@@ -3945,8 +3945,11 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
         return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
 
     // Check timestamp
-    if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME)
+    
+    if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME){
+        LogPrintf(" Debug block.GetBlockTime() =%d =%d MAX_FUTURE_BLOCK_TIME=%d ", block.GetBlockTime(), nAdjustedTime, MAX_FUTURE_BLOCK_TIME );
         return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+    }
 
     // Reject outdated version blocks when 95% (75% on testnet) of the network has upgraded:
     // check for version 2, 3 and 4 upgrades

@@ -13,6 +13,7 @@
 #include "crypto/common.h"
 #include "util.h"
 
+
 uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
 {
     return SerializeHash(*this);
@@ -36,8 +37,10 @@ uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
 
 uint256 CBlockHeader::GetHash() const
 {
-    const Consensus::Params& consensusParams = Params().GetConsensus();
-    return GetHash(consensusParams);
+    //const Consensus::Params& consensusParams = Params().GetConsensus();
+    //return GetHash(consensusParams);
+
+    return SerializeHash(*this);
 }
 
 uint256 CBlockHeader::GetHashWithoutSign() const
