@@ -14,7 +14,6 @@ import time
 from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
 
 
-
 # Use the ComparisonTestFramework with 1 node: only use --testbinary.
 class InvalidTxRequestTest(ComparisonTestFramework):
 
@@ -37,60 +36,35 @@ class InvalidTxRequestTest(ComparisonTestFramework):
             self.tip = int("0x" + self.nodes[0].getbestblockhash(), 0)
         self.block_time = int(time.time())+1
 
-        print ("step1: Create a new block with an anyone-can-spend coinbase")
         '''
         Create a new block with an anyone-can-spend coinbase
         '''
         height = 1
-        tip = self.nodes[0].getblock(self.nodes[0].getbestblockhash(),True, True)
-        #block = create_block(self.tip, create_coinbase(height), self.block_time)
-        block = create_block(int(self.nodes[0].getbestblockhash(), 16), create_coinbase(self.nodes[0].getblockcount()+1), tip['time'])
-        print ('hashUTXORoot', tip['hashUTXORoot'])
-        print ('hashStateRoot', tip['hashStateRoot'])
-
-        if int(tip['hashUTXORoot'], 16) == 0 :
-            block.hashUTXORoot = INITIAL_HASH_UTXO_ROOT
-            block.hashStateRoot = INITIAL_HASH_STATE_ROOT
-        else :
-            block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
-            block.hashStateRoot = int(tip['hashStateRoot'], 16)
-
-        print ('hashUTXORoot', block.hashUTXORoot )
-        print ('hashStateRoot', block.hashStateRoot )
-
+        block = create_block(self.tip, create_coinbase(height), height, self.block_time)
         self.block_time += 1
         block.solve()
-
         # Save the coinbase for later
         self.block1 = block
         self.tip = block.sha256
         height += 1
-
         yield TestInstance([[block, True]])
 
-        print (" step2: Now we need that block to mature so we can spend the coinbase.")
         '''
         Now we need that block to mature so we can spend the coinbase.
         '''
         test = TestInstance(sync_every_block=False)
-        for i in range(800):
-            block = create_block(self.tip, create_coinbase(height), self.block_time)
-            block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
-            block.hashStateRoot = int(tip['hashStateRoot'], 16)
+        for i in range(COINBASE_MATURITY):
+            block = create_block(self.tip, create_coinbase(height), height, self.block_time)
             block.solve()
-
             self.tip = block.sha256
             self.block_time += 1
             test.blocks_and_transactions.append([block, True])
             height += 1
         yield test
 
-        print(self.tip)
-        print ("step3: Transaction will be rejected with code 16 (REJECT_INVALID)")
-
         # b'\x64' is OP_NOTIF
         # Transaction will be rejected with code 16 (REJECT_INVALID)
-        tx1 = create_transaction(self.block1.vtx[0], 0, b'\x64', INITIAL_BLOCK_REWARD * COIN - 12000)
+        tx1 = create_transaction(self.block1.vtx[0], 0, b'\x64', INITIAL_BLOCK_REWARD * COIN - 120000)
         yield TestInstance([[tx1, RejectResult(16, b'mandatory-script-verify-flag-failed')]])
 
         # TODO: test further transactions...

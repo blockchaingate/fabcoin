@@ -422,7 +422,7 @@ static bool IsCurrentForFeeEstimation()
 }
 
 bool static IsFABHardForkEnabled(int nHeight, const Consensus::Params& params) {
-    return nHeight >= params.FABHeight;
+    return (uint32_t)nHeight >= (uint32_t)params.FABHeight;
 }
 
 bool IsFABHardForkEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params) {
@@ -1202,8 +1202,10 @@ bool ReadBlockFromDisk(Block& block, const CDiskBlockPos& pos, const Consensus::
         return error("%s: Deserialize or I/O error - %s at %s", __func__, e.what(), pos.ToString());
     }
 
+
     // Check Equihash solution
-    bool postfork = block.nHeight >= (uint32_t)consensusParams.FABHeight;
+    bool postfork = ( (uint32_t)block.nHeight >= (uint32_t)consensusParams.FABHeight );
+    LogPrintf("Debug ReadBlockFromDisk nHeight=%d %d %d ", block.nHeight, consensusParams.FABHeight, postfork );
     if (postfork && !CheckEquihashSolution(&block, Params())) {
         return error("ReadBlockFromDisk: Errors in block header at %s (bad Equihash solution)", pos.ToString());
     }
@@ -1269,17 +1271,21 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
     if (halvings >= 64)
         return 0;
 
-    CAmount nSubsidy = 25 * COIN;
+    CAmount nSubsidy = INITIAL_BLOCK_REWARD * COIN;
+
+    bool fRegTest = ( Params().NetworkIDString() == CBaseChainParams::REGTEST) ||  (Params().NetworkIDString() == CBaseChainParams::UNITTEST ) ;
+
+    if ( fRegTest )
+        nSubsidy = INITIAL_BLOCK_REWARD_REGTEST * COIN;
 
     //Pre-mining 
-    //bool fRegTest = gArgs.GetBoolArg("-regtest", false);
-    //if ( nHeight == 2  &&  !fRegTest ) {
-    if ( nHeight == 2  ) {
+    if ( nHeight == 2  &&  !fRegTest ) {
        nSubsidy = 32000000 * COIN;
     }
 
     // Subsidy is cut in half every 1680,000 blocks which will occur approximately every 4 years.
-    nSubsidy >>= halvings;
+    if ( !fRegTest )
+       nSubsidy >>= halvings;
     return nSubsidy;
 }
 
@@ -1924,10 +1930,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // Move this check from CheckBlock to ConnectBlock as it depends on DGP values
     int serialization_flags = SERIALIZE_TRANSACTION_NO_WITNESS;
     auto params = chainparams.GetConsensus();
-    if (block.nHeight < (uint32_t)params.ContractHeight) {
-        serialization_flags |= SERIALIZE_BLOCK_NO_CONTRACT;
-    }
-    if (block.vtx.empty() || block.vtx.size() > dgpMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | serialization_flags) > dgpMaxBlockSize) // fasc
+
+    LogPrintf("Debug Block=%s", block.ToString());
+
+    if (block.vtx.empty() || block.vtx.size() > dgpMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > dgpMaxBlockSize) // fasc
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
 
     // Move this check from ContextualCheckBlock to ConnectBlock as it depends on DGP values
@@ -3739,7 +3745,10 @@ static bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, 
 static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
 {
     // Check Equihash solution is valid
-    bool postfork = block.nHeight >= (uint32_t)consensusParams.FABHeight;
+    bool postfork = (uint32_t)block.nHeight >= (uint32_t)consensusParams.FABHeight;
+    LogPrintf("Debug CheckBlockHeader nHeight=%d %d %d ", block.nHeight, consensusParams.FABHeight, postfork );
+    LogPrintf("Debug blockheader=%s", block.ToString());
+
     if (fCheckPOW && postfork && !CheckEquihashSolution(&block, Params())) {
         LogPrintf("CheckBlockHeader(): Equihash solution invalid at height %d\n", block.nHeight);
         return state.DoS(100, error("CheckBlockHeader(): Equihash solution invalid"),
@@ -3978,7 +3987,7 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
         CScript expect = CScript() << nHeight;
         if (block.vtx[0]->vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(), block.vtx[0]->vin[0].scriptSig.begin())) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-height", false, "block height mismatch in coinbase");
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-height", false, strprintf("block height mismatch in coinbase (%d %d)", block.nHeight,  nHeight));
         }
     }
 

@@ -160,7 +160,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     while (nHeight < nHeightEnd)
     {
-        headerlen = ((nHeight+1) < params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
+        headerlen = ((uint32_t)(nHeight+1) < (uint32_t)params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
 
         std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
         if (!pblocktemplate.get())
@@ -182,10 +182,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 continue;
         } else {
             // Solve Equihash.
-            int ser_flags = ((nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
             // I = the block header minus nonce and solution.
             CEquihashInput I{*pblock};
-            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags );
+            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
             ss << I;
 
             // Solve Equihash.
@@ -429,7 +428,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. template_request         (json object, optional) A json object in the following spec\n"
             "     {\n"
-            "       \"mode\":\"template\"    (string, optional) This must be set to \"template\", \"proposal | proposal_legacy | proposal_no_contract | proposal_legacy_no_contract \", or omitted\n"
+            "       \"mode\":\"template\"    (string, optional) This must be set to \"template\", \"proposal | proposal_legacy \", or omitted\n"
             "       \"capabilities\":[     (array, optional) A list of strings\n"
             "           \"support\"          (string) client side supported feature, 'longpoll', 'coinbasetxn', 'coinbasevalue', 'proposal', 'serverlist', 'workid'\n"
             "           ,...\n"
@@ -512,18 +511,15 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid mode");
         lpval = find_value(oparam, "longpollid");
 
-        if (strMode == "proposal" || strMode == "proposal_legacy"  || strMode == "proposal_no_contract" || strMode == "proposal_legacy_no_contract")
+        if (strMode == "proposal" || strMode == "proposal_legacy"  )
         {
             const UniValue& dataval = find_value(oparam, "data");
             if (!dataval.isStr())
                 throw JSONRPCError(RPC_TYPE_ERROR, "Missing data String key for proposal");
 
             CBlock block;
-            bool legacy_format = (strMode == "proposal_legacy") || (strMode == "proposal_legacy_no_contract");
-            bool no_contract_format = (strMode == "proposal_no_contract") || (strMode == "proposal_legacy_no_contract");
 
-            if (!DecodeHexBlk(block, dataval.get_str(), legacy_format, no_contract_format)){
-                LogPrintf("Block decode failed: legacy=%d no_contract=%d", legacy_format, no_contract_format );
+            if (!DecodeHexBlk(block, dataval.get_str())){
                 throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
             }
 
@@ -542,7 +538,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             // TestBlockValidity only supports blocks built on the current Tip
             if (block.hashPrevBlock != pindexPrev->GetBlockHash())
                 return "inconclusive-not-best-prevblk";
-            if (!legacy_format && !no_contract_format && block.nHeight != (uint32_t)pindexPrev->nHeight + 1)
+            if (block.nHeight != (uint32_t)pindexPrev->nHeight + 1)
                 return "inconclusive-bad-height";
             CValidationState state;
             TestBlockValidity(state, Params(), block, pindexPrev, false, true);
@@ -834,15 +830,13 @@ UniValue submitblock(const JSONRPCRequest& request)
     // We allow 2 arguments for compliance with BIP22. Argument 2 is ignored.
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 4) {
         throw std::runtime_error(
-            "submitblock \"hexdata\"  ( \"dummy\" \"legacy\" )\n"
+            "submitblock \"hexdata\"  ( \"dummy\" )\n"
             "\nAttempts to submit new block to network.\n"
             "See https://en.fabcoin.it/wiki/BIP_0022 for full specification.\n"
 
             "\nArguments\n"
             "1. \"hexdata\"        (string, required) the hex-encoded block data to submit\n"
             "2. \"dummy\"          (optional) dummy value, for compatibility with BIP22. This value is ignored.\n"
-            "3. \"legacy\"         (boolean, optional) indicates if the block is in legacy foramt. default: false.\n"
-            "4. \"non_contract\"   (boolean, optional) indicates if the block is in non-contract foramt. default: false.\n"
             "\nResult:\n"
             "\nExamples:\n"
             + HelpExampleCli("submitblock", "\"mydata\"")
@@ -852,27 +846,12 @@ UniValue submitblock(const JSONRPCRequest& request)
 
     std::shared_ptr<CBlock> blockptr = std::make_shared<CBlock>();
     CBlock& block = *blockptr;
-    bool legacy_format = false;
-    if (request.params.size() >= 3 && request.params[2].get_bool() == true) {
-        legacy_format = true;
-    }
-    bool no_contract_format = false;
-    if (request.params.size() == 4 && request.params[3].get_bool() == true) {
-        no_contract_format = true;
-    }
 
-
-    //LogPrintf("debug submitblock decode str: %s legacy=%d no_contract=%d", request.params[0].get_str() , legacy_format, no_contract_format );
-    if (!DecodeHexBlk(block, request.params[0].get_str(), legacy_format, no_contract_format)) {
-        LogPrintf("Block decode failed: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
+    if (!DecodeHexBlk(block, request.params[0].get_str())) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 
-    LogPrintf("debug submitblock after DecodeHexBlk: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
-
-
     if (block.vtx.empty() || !block.vtx[0]->IsCoinBase()) {
-        LogPrintf("Block does not start with a coinbase: %s legacy=%d no_contract=%d", block.ToString() , legacy_format, no_contract_format );
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block does not start with a coinbase");
     }
 

@@ -73,7 +73,7 @@ class MultiWalletTest(FabcoinTestFramework):
         assert_equal({"w1", "w2", "w3"}, {w1_name, w2_name, w3_name})
 
         w1.generate(COINBASE_MATURITY+1)
-        assert_equal(w1.getbalance(), 2*INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD)
+        assert_equal(w1.getbalance(), 2*INITIAL_BLOCK_REWARD)
         assert_equal(w2.getbalance(), 0)
         assert_equal(w3.getbalance(), 0)
 

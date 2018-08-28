@@ -24,23 +24,9 @@ class TxnMallTest(FabcoinTestFramework):
 
     def run_test(self):
         # All nodes should start with 1,250 FAB:
-        starting_balance = 25*INITIAL_BLOCK_REWARD  
-
-        #mine 25 each node, so total 200 block  200*25= 5000 FAB, make sure each node have 1250 FAB.
-        for peer in range(4):
-            for j in range(25):
-                self.nodes[peer].generate(1)
-            # Must sync before next peer starts generating blocks
-            sync_blocks(self.nodes)
-      
-        time.sleep(10)
-
+        starting_balance = 25*INITIAL_BLOCK_REWARD
         for i in range(4):
-            if i == 0 :
-                assert_equal(self.nodes[i].getbalance(), starting_balance + ICO_BLOCK_REWARD )
-            else: 
-                assert_equal(self.nodes[i].getbalance(), starting_balance)
-
+            assert_equal(self.nodes[i].getbalance(), starting_balance)
             self.nodes[i].getnewaddress("")  # bug workaround, coins generated assigned to first getnewaddress!
         
         spend_from_foo = starting_balance - INITIAL_BLOCK_REWARD*5
@@ -57,7 +43,7 @@ class TxnMallTest(FabcoinTestFramework):
         fund_bar_tx = self.nodes[0].gettransaction(fund_bar_txid)
 
         assert_equal(self.nodes[0].getbalance(""),
-                     starting_balance + ICO_BLOCK_REWARD - spend_from_foo - spend_from_bar + fund_foo_tx["fee"] + fund_bar_tx["fee"])
+                     starting_balance - spend_from_foo - spend_from_bar + fund_foo_tx["fee"] + fund_bar_tx["fee"])
 
         # Coins are sent to node1_address
         node1_address = self.nodes[1].getnewaddress("from0")
@@ -98,7 +84,7 @@ class TxnMallTest(FabcoinTestFramework):
         if self.options.mine_block: expected += INITIAL_BLOCK_REWARD
         expected += tx1["amount"] + tx1["fee"]
         expected += tx2["amount"] + tx2["fee"]
-        assert_equal(self.nodes[0].getbalance(), expected + ICO_BLOCK_REWARD )
+        assert_equal(self.nodes[0].getbalance(), expected)
 
         # foo and bar accounts should be debited:
         assert_equal(self.nodes[0].getbalance("foo", 0), spend_from_foo+tx1["amount"]+tx1["fee"])
@@ -120,21 +106,16 @@ class TxnMallTest(FabcoinTestFramework):
         # ... mine a block...
         self.nodes[2].generate(1)
 
-        time.sleep(5)
-
         # Reconnect the split network, and sync chain:
         connect_nodes(self.nodes[1], 2)
         self.nodes[2].generate(1)  # Mine another block to make sure we sync
         sync_blocks(self.nodes)
-        time.sleep(5)
-
         assert_equal(self.nodes[0].gettransaction(doublespend_txid)["confirmations"], 2)
 
         # Re-fetch transaction info:
         tx1 = self.nodes[0].gettransaction(txid1)
         tx2 = self.nodes[0].gettransaction(txid2)
-     
-        time.sleep(5)
+
         # Both transactions should be conflicted
         assert_equal(tx1["confirmations"], -2)
         assert_equal(tx2["confirmations"], -2)

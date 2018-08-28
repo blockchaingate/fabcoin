@@ -6,7 +6,8 @@ from test_framework.script import *
 from test_framework.mininode import *
 from test_framework.address import *
 from test_framework.fabcoin import *
-from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
+from test_framework.fabcoinconfig import *
+
 import sys
 import random
 import time

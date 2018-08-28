@@ -22,9 +22,9 @@ class FabcoinDGPActivation(FabcoinTestFramework):
 
     def create_block_of_approx_max_size(self, size_in_bytes):
         tip = self.node.getblock(self.node.getbestblockhash(),True, True)
-        block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(self.node.getblockcount()+1), tip['time'])
-        block.hashUTXORoot = INITIAL_HASH_UTXO_ROOT
-        block.hashStateRoot = INITIAL_HASH_STATE_ROOT
+        block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(self.node.getblockcount()+1), self.node.getblockcount()+1, tip['time']+1)
+        block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
+        block.hashStateRoot = int(tip['hashStateRoot'], 16)
 
         unspents = self.node.listunspent()
         while len(block.serialize()) < size_in_bytes:
@@ -48,10 +48,8 @@ class FabcoinDGPActivation(FabcoinTestFramework):
         block.vtx[-1].deserialize(f)
 
         block.hashMerkleRoot = block.calc_merkle_root()
-
         block.rehash()
         block.solve()
-
         print("block size", len(block.serialize()))
         return block
 

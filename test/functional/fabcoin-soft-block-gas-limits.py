@@ -54,7 +54,6 @@ class FabcoinSoftMinerGasRelatedLimitsTest(FabcoinTestFramework):
         tx = CTransaction()
         tx.vin = [CTxIn(COutPoint(int(unspent['txid'], 16), unspent['vout']), nSequence=0)]
         amount = int((float(str(unspent['amount']))*COIN)) // num_outputs -  gas_price*gas_limit
-        print ( amount , gas_price*gas_limit ) 
 
         tx.vout = [CTxOut(amount, scriptPubKey=CScript([b"\x04", CScriptNum(gas_limit), CScriptNum(gas_price), b"\x00", hex_str_to_bytes(contract_address), OP_CALL])) for i in range(num_outputs)]
         tx_hex_signed = node.signrawtransaction(bytes_to_hex_str(tx.serialize()))['hex']
@@ -82,11 +81,8 @@ class FabcoinSoftMinerGasRelatedLimitsTest(FabcoinTestFramework):
         self.sync_all()
 
         # Make sure that the soft block gas limit default to the hard block gas limit if the soft one exceeds the hard one.
-        #txid1 = self.send_raw_to_contract(self.nodes[0], contract_address, 40000000, 2000)
-        #txid2 = self.send_raw_to_contract(self.nodes[0], contract_address, 40000000, 1000)
-
-        txid1 = self.send_raw_to_contract(self.nodes[0], contract_address, 4000000, 200)
-        txid2 = self.send_raw_to_contract(self.nodes[0], contract_address, 4000000, 100)
+        txid1 = self.send_raw_to_contract(self.nodes[0], contract_address, 40000000, 2000)
+        txid2 = self.send_raw_to_contract(self.nodes[0], contract_address, 40000000, 1000)
         self.sync_all()
         for node_that_cannot_mine_the_txs in self.nodes[1:3]:
             block_hash = node_that_cannot_mine_the_txs.generate(1)[0]
@@ -97,7 +93,6 @@ class FabcoinSoftMinerGasRelatedLimitsTest(FabcoinTestFramework):
 
         block_hash = self.nodes[0].generate(1)[0]
         # coinbase + txid1 + refund tx.
-        print (self.nodes[0].getblock(block_hash)['tx'] )
         assert_equal(len(self.nodes[0].getblock(block_hash)['tx']), 3)
         assert(txid2 in self.nodes[0].getrawmempool())
         block_hash = self.nodes[0].generate(1)[0]

@@ -84,7 +84,10 @@ static CBlock CreateGenesisBlock_legacy(const char* pszTimestamp, const CScript&
     txNew.nVersion = 1;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
-    txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+    //txNew.vin[0].scriptSig = CScript() << 486604799 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+
+    txNew.vin[0].scriptSig = CScript() << 00 << 488804799 << CScriptNum(4) << std::vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+
     txNew.vout[0].nValue = genesisReward;
     txNew.vout[0].scriptPubKey = genesisOutputScript;
 
@@ -128,10 +131,11 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
+        consensus.strNetworkID = "main";
  
         consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
-        consensus.ContractHeight = 140000;
+        consensus.ContractHeight = 200000;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -244,11 +248,13 @@ public:
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
+
         strNetworkID = "test";
+        consensus.strNetworkID = "test";
 
         consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
-        consensus.ContractHeight = 2001 ;
+        consensus.ContractHeight = 200000 ;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -358,17 +364,29 @@ class CRegTestParams : public CChainParams {
 public:
     CRegTestParams() {
         strNetworkID = "regtest";
-        consensus.nSubsidyHalvingInterval = 850;
+        consensus.strNetworkID = "regtest";
+        consensus.nSubsidyHalvingInterval = 150;
+        consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
+        consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
 
-        consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
-        consensus.BIP34Hash   = uint256();
-        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.FABHeight   = 100000000;   //enable LEGACY MODE for fabcoin
-        //consensus.ContractHeight = 100000000;
-        consensus.ContractHeight = 1;
+        consensus.BIP34Height = 0; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests) // activate for fabcoin
+        consensus.BIP34Hash = uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3");
+        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in rpc activation tests)
+        consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+        consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
+        consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.fPowAllowMinDifficultyBlocks = true;
+        consensus.fPowNoRetargeting = true;
+
+        consensus.FABHeight = 1000000;
+        consensus.ContractHeight = 0;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
+
 
         consensus.nPowAveragingWindow = 17;
         consensus.nPowMaxAdjustDown = 32;
@@ -381,8 +399,6 @@ public:
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
 
-        consensus.nRuleChangeActivationThreshold = 633; //  258 75% for testchains
-        consensus.nMinerConfirmationWindow = 844; // Faster than normal for regtest (144 instead of 2016)
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
@@ -398,7 +414,7 @@ public:
         consensus.nMinimumChainWork = uint256S("0x00");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206");
+        consensus.defaultAssumeValid = uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3");
 
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0xbf;
@@ -412,11 +428,18 @@ public:
         nEquihashN = N;
         nEquihashK = K;
 
-        genesis = CreateGenesisBlock_legacy(1296688602, 2, 0x207fffff, 1, 50 * COIN);
+/*
+for (int i=0;i<20;i++) {
+        genesis = CreateGenesisBlock_legacy(1296688602, i, 0x207fffff, 5, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
-        assert(consensus.hashGenesisBlock == uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206"));
-        assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
+        std::cout << consensus.hashGenesisBlock.GetHex() << std::endl; 
+}
+*/
 
+        genesis = CreateGenesisBlock_legacy(1296688602, 12, 0x207fffff, 5, 50 * COIN);
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
+        assert(consensus.hashGenesisBlock == uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3"));
+        assert(genesis.hashMerkleRoot == uint256S("0x487e51f691fd29b1ee5c7fc3341eb4f91b86f4a8eace12d259f89f70af558ee1"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -434,7 +457,7 @@ public:
 
         checkpointData = (CCheckpointData) {
             {
-                {0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")},
+                {0, uint256S("0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3")},
 
             }
         };
@@ -447,6 +470,33 @@ public:
 
     }
 };
+
+/**
+ * Regression network parameters overwrites for unit testing
+ */
+class CUnitTestParams : public CRegTestParams
+{
+public:
+    CUnitTestParams()
+    {
+        strNetworkID = "unittest";
+        consensus.strNetworkID = "unittest";
+
+        // Activate the the BIPs for regtest as in Fabcoin
+        consensus.nSubsidyHalvingInterval = 850;
+        consensus.nRuleChangeActivationThreshold = 633; //  258 75% for testchains
+        consensus.nMinerConfirmationWindow = 844; // Faster than normal for regtest (144 instead of 2016)
+
+        consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
+        consensus.BIP34Hash = uint256();
+        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
+        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.FABHeight = 24000;
+        consensus.CoinbaseLock = 0;
+        consensus.ForceSegwit = false;
+    }
+};
+
 
 static std::unique_ptr<CChainParams> globalChainParams;
 
@@ -468,6 +518,9 @@ std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
         return std::unique_ptr<CChainParams>(new CTestNetParams());
     else if (chain == CBaseChainParams::REGTEST)
         return std::unique_ptr<CChainParams>(new CRegTestParams());
+    else if (chain == CBaseChainParams::UNITTEST)
+        return std::unique_ptr<CChainParams>(new CUnitTestParams());
+
     throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 

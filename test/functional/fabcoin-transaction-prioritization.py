@@ -6,7 +6,7 @@ from test_framework.script import *
 from test_framework.mininode import *
 from test_framework.address import *
 from test_framework.fabcoin import *
-from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
+from test_framework.fabcoinconfig import *
 import sys
 import random
 import time
@@ -38,7 +38,7 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
 
     def send_transaction_with_fee(self, fee):
         for unspent in self.node.listunspent():
-            if unspent['amount'] >= 10000:
+            if unspent['amount'] >= INITIAL_BLOCK_REWARD/2:
                 break
         addr = self.node.getnewaddress()
         haddr = p2pkh_to_hex_hash(addr)
@@ -187,7 +187,7 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
     def verify_contract_ancestor_txs_test(self, with_restart=False, use_staking=False):
         contract_address = list(self.node.listcontracts().keys())[0]
         for unspent in self.node.listunspent():
-            if unspent['amount'] > 10000:
+            if unspent['amount'] > INITIAL_BLOCK_REWARD/2:
                 break
         address = self.node.getnewaddress()
         expected_tx_order = []
@@ -243,8 +243,7 @@ class FabcoinTransactionPrioritizationTest(FabcoinTestFramework):
 
     def run_test(self):
         self.node = self.nodes[0]
-        self.node.generate(COINBASE_MATURITY+COINBASE_MATURITY)
-
+        self.node.generate(500+COINBASE_MATURITY)
         print("running pow tests")
         self.verify_contract_txs_are_added_last_test()
         self.verify_ancestor_chain_with_contract_txs_test()

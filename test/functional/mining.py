@@ -16,7 +16,7 @@ from test_framework.blocktools import create_coinbase
 from test_framework.mininode import CBlock
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
-from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD, COINBASE_MATURITY
+from test_framework.fabcoinconfig import *
 
 def b2x(b):
     return b2a_hex(b).decode('ascii')
@@ -51,7 +51,9 @@ class MiningTest(FabcoinTestFramework):
         self.log.info("getblocktemplate: Test capability advertised")
         assert 'proposal' in tmpl['capabilities']
         assert 'coinbasetxn' not in tmpl
-        coinbase_tx = create_coinbase(height=int(tmpl["height"])+1 )
+        
+        print ( node.getblockcount(), int(tmpl["height"]) )
+        coinbase_tx = create_coinbase(height=int(tmpl["height"]) )
 
         # sequence numbers must not be max for nLockTime to have effect
         coinbase_tx.vin[0].nSequence = 2 ** 32 - 2
@@ -62,6 +64,7 @@ class MiningTest(FabcoinTestFramework):
         block.hashPrevBlock = int(tmpl["previousblockhash"], 16)
         block.nTime = tmpl["curtime"]
         block.nBits = int(tmpl["bits"], 16)
+        block.nHeight = int(tmpl["height"])
         block.nNonce = 0
         block.vtx = [coinbase_tx]
 
@@ -104,7 +107,7 @@ class MiningTest(FabcoinTestFramework):
 
         self.log.info("getblocktemplate: Test bad tx count")
         # The tx count is immediately after the block header
-        TX_COUNT_OFFSET = 144
+        TX_COUNT_OFFSET = 148
         bad_block_sn = bytearray(block.serialize())
         assert_equal(bad_block_sn[TX_COUNT_OFFSET], 1)
         bad_block_sn[TX_COUNT_OFFSET] += 1

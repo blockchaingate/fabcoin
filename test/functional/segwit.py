@@ -10,7 +10,7 @@ from test_framework.mininode import sha256, CTransaction, CTxIn, COutPoint, CTxO
 from test_framework.address import script_to_p2sh, key_to_p2pkh
 from test_framework.script import CScript, OP_HASH160, OP_CHECKSIG, OP_0, hash160, OP_EQUAL, OP_DUP, OP_EQUALVERIFY, OP_1, OP_2, OP_CHECKMULTISIG, OP_TRUE
 from test_framework.blocktools import create_block, create_coinbase
-from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD
+from test_framework.fabcoinconfig import *
 from test_framework.fabcoin import convert_btc_address_to_fabcoin
 from io import BytesIO
 
@@ -103,7 +103,7 @@ class SegWitTest(FabcoinTestFramework):
         sync_blocks(self.nodes)
 
     def fail_accept(self, node, error_msg, txid, sign, redeem_script=""):
-        assert_raises_rpc_error(-26, error_msg, send_to_witness, 1, node, getutxo(txid), self.pubkey[0], False, Decimal("24.998"), sign, redeem_script)
+        assert_raises_rpc_error(-26, error_msg, send_to_witness, 1, node, getutxo(txid), self.pubkey[0], False, INITIAL_BLOCK_REWARD - Decimal("0.002"), sign, redeem_script)
 
     def fail_mine(self, node, txid, sign, redeem_script=""):
         send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, INITIAL_BLOCK_REWARD - Decimal("0.002"), sign, redeem_script)
@@ -111,23 +111,32 @@ class SegWitTest(FabcoinTestFramework):
         sync_blocks(self.nodes)
 
     def run_test(self):
-        self.nodes[0].generate(861) #block 161 - 861
+ 
+        self.nodes[0].generate(161) #block 161
+        for i in range(8*144 - 161):
+            block = create_block(int(self.nodes[0].getbestblockhash(), 16), create_coinbase(self.nodes[0].getblockcount() + 1), int(time.time())+2+i)
+            block.nVersion = 4
+            block.hashMerkleRoot = block.calc_merkle_root()
+            block.rehash()
+            block.solve()
+            self.nodes[0].submitblock(bytes_to_hex_str(block.serialize()))
+        self.nodes[0].generate(17)   
 
         self.log.info("Verify sigops are counted in GBT with pre-BIP141 rules before the fork")
         txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
         tmpl = self.nodes[0].getblocktemplate({})
         assert(tmpl['sizelimit'] == 2000000)
-        #assert('weightlimit' not in tmpl)
-        assert(tmpl['sigoplimit'] == 20000)     
+        assert('weightlimit' not in tmpl)
+        assert(tmpl['sigoplimit'] == 20000)
         assert(tmpl['transactions'][0]['hash'] == txid)
         assert(tmpl['transactions'][0]['sigops'] == 2)
         tmpl = self.nodes[0].getblocktemplate({'rules':['segwit']})
         assert(tmpl['sizelimit'] == 2000000)
-        #assert('weightlimit' not in tmpl)
+        assert('weightlimit' not in tmpl)
         assert(tmpl['sigoplimit'] == 20000)
         assert(tmpl['transactions'][0]['hash'] == txid)
         assert(tmpl['transactions'][0]['sigops'] == 2)
-        self.nodes[0].generate(1) #block 162 - 862
+        self.nodes[0].generate(1) #block 162
 
         balance_presetup = self.nodes[0].getbalance()
         self.pubkey = []
@@ -148,10 +157,10 @@ class SegWitTest(FabcoinTestFramework):
         for i in range(5):
             for n in range(3):
                 for v in range(2):
-                    wit_ids[n][v].append(send_to_witness(v, self.nodes[0], find_unspent(self.nodes[0], 25), self.pubkey[n], False, Decimal("24.999")))
-                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], find_unspent(self.nodes[0], 25), self.pubkey[n], True, Decimal("24.999")))
+                    wit_ids[n][v].append(send_to_witness(v, self.nodes[0], find_unspent(self.nodes[0], INITIAL_BLOCK_REWARD), self.pubkey[n], False, INITIAL_BLOCK_REWARD - Decimal("0.001")))
+                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], find_unspent(self.nodes[0], INITIAL_BLOCK_REWARD), self.pubkey[n], True, INITIAL_BLOCK_REWARD - Decimal("0.001")))
 
-        self.nodes[0].generate(1) #block 863
+        self.nodes[0].generate(1) #block 163
         sync_blocks(self.nodes)
 
         # Make sure all nodes recognize the transactions as theirs
@@ -159,7 +168,7 @@ class SegWitTest(FabcoinTestFramework):
         assert_equal(self.nodes[1].getbalance(), 20*(INITIAL_BLOCK_REWARD - Decimal("0.001")))
         assert_equal(self.nodes[2].getbalance(), 20*(INITIAL_BLOCK_REWARD - Decimal("0.001")))
 
-        self.nodes[0].generate(1660) #block 423 - 2523        
+        self.nodes[0].generate(260) #block 423
         sync_blocks(self.nodes)
 
         self.log.info("Verify default node can't accept any witness format txs before fork")
@@ -178,16 +187,16 @@ class SegWitTest(FabcoinTestFramework):
         self.fail_accept(self.nodes[0], "no-witness-yet", p2sh_ids[NODE_0][WIT_V1][0], True)
 
         self.log.info("Verify witness txs are skipped for mining before the fork")
-        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][0], True) #block 424 
-        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][0], True) #block 425 
+        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][0], True) #block 424
+        self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][0], True) #block 425
         self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][0], True) #block 426
         self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][0], True) #block 427
 
         # TODO: An old node would see these txs without witnesses and be able to mine them
 
         self.log.info("Verify unsigned bare witness txs in versionbits-setting blocks are valid before the fork")
-        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][1], False) #block 428 
-        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][1], False) #block 429 
+        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][1], False) #block 428
+        self.success_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][1], False) #block 429
 
         self.log.info("Verify unsigned p2sh witness txs without a redeem script are invalid")
         self.fail_accept(self.nodes[2], "mandatory-script-verify-flag", p2sh_ids[NODE_2][WIT_V0][1], False)
@@ -199,7 +208,7 @@ class SegWitTest(FabcoinTestFramework):
 
         self.log.info("Verify previous witness txs skipped for mining can now be mined")
         assert_equal(len(self.nodes[2].getrawmempool()), 4)
-        block = self.nodes[2].generate(1) #block 432 - 2532 (first block with new rules; 2532 = 844 * 3)
+        block = self.nodes[2].generate(1) #block 432 (first block with new rules; 432 = 144 * 3)
         sync_blocks(self.nodes)
         assert_equal(len(self.nodes[2].getrawmempool()), 0)
         segwit_tx_list = self.nodes[2].getblock(block[0])["tx"]
@@ -568,7 +577,7 @@ class SegWitTest(FabcoinTestFramework):
         self.create_and_mine_tx_from_txids(solvable_txid)
 
     def mine_and_test_listunspent(self, script_list, ismine):
-        utxo = find_unspent(self.nodes[0], 25)
+        utxo = find_unspent(self.nodes[0], 50)
         tx = CTransaction()
         tx.vin.append(CTxIn(COutPoint(int('0x'+utxo['txid'],0), utxo['vout'])))
         for i in script_list:
@@ -624,7 +633,7 @@ class SegWitTest(FabcoinTestFramework):
             txtmp.deserialize(f)
             for j in range(len(txtmp.vout)):
                 tx.vin.append(CTxIn(COutPoint(int('0x'+i,0), j)))
-        tx.vout.append(CTxOut(0, CScript()))
+        tx.vout.append(CTxOut(0, CScript([OP_TRUE])))
         tx.rehash()
         signresults = self.nodes[0].signrawtransaction(bytes_to_hex_str(tx.serialize_without_witness()))['hex']
         self.nodes[0].sendrawtransaction(signresults, True)

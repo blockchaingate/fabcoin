@@ -291,12 +291,12 @@ def submit_block_with_tx(node, tx):
     tip = node.getbestblockhash()
     height = node.getblockcount() + 1
     block_time = node.getblockheader(tip)["mediantime"] + 1
-    block = blocktools.create_block(int(tip, 16), blocktools.create_coinbase(height), block_time)
+    block = blocktools.create_block(int(tip, 16), blocktools.create_coinbase(height), height, block_time)
     block.vtx.append(ctx)
     block.rehash()
     block.hashMerkleRoot = block.calc_merkle_root()
     block.solve()
-    node.submitblock(bytes_to_hex_str(block.serialize(True, True)), '', True )
+    node.submitblock(bytes_to_hex_str(block.serialize()), '', True )
     return block
 
 

@@ -51,7 +51,7 @@ class FabcoinNoExecCallDisabledTest(FabcoinTestFramework):
 
 
         tip = self.node.getblock(self.node.getbestblockhash())
-        block = create_block(int(tip['hash'], 16), create_coinbase(tip['height']+1), tip['time']+1)
+        block = create_block(int(tip['hash'], 16), create_coinbase(tip['height']+1), tip['height']+1,tip['time']+1)
         block.vtx.append(tx)
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()

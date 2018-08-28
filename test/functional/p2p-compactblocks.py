@@ -75,7 +75,7 @@ class TestNode(NodeConnCB):
 
     # Block until a block announcement for a particular block hash is
     # received.
-    def wait_for_block_announcement(self, block_hash, timeout=60):
+    def wait_for_block_announcement(self, block_hash, timeout=30):
         def received_hash():
             return (block_hash in self.announced_blockhashes)
         wait_until(received_hash, timeout=timeout, lock=mininode_lock)
@@ -100,7 +100,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         height = node.getblockcount()
         tip = node.getbestblockhash()
         mtp = node.getblockheader(tip)['mediantime']
-        block = create_block(int(tip, 16), create_coinbase(height + 1), mtp + 1)
+        block = create_block(int(tip, 16), create_coinbase(height + 1), height+1, mtp + 1)
         block.nVersion = 4
         if segwit:
             add_witness_commitment(block)

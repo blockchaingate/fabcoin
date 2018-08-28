@@ -55,7 +55,8 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         node.generate(10)
         self.block_time = int(time.time())+20
         for i in range(500):
-            self.tip = create_block(int(node.getbestblockhash(), 16), create_coinbase(node.getblockcount()+1), self.block_time+i)
+            height = node.getblockcount()+1
+            self.tip = create_block(int(node.getbestblockhash(), 16), create_coinbase(height), height, self.block_time+i)
             self.tip.solve()
             yield accepted()
 
@@ -69,7 +70,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         # first make sure that what is a valid block is accepted
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(time.time()+mocktime+100))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(time.time()+mocktime+100))
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()
         self.tip.solve()
         yield accepted()
@@ -88,7 +89,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
 
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(mocktime+200))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+200))
         self.tip.vtx.append(tx)
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()
         self.tip.solve()
@@ -111,7 +112,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         # A block with both an invalid hashStateRoot and hashUTXORoot
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(mocktime+300))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+300))
         self.tip.hashUTXORoot = 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         self.tip.hashStateRoot = 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()
@@ -127,7 +128,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
 
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(mocktime+400))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+400))
         self.tip.realHashUTXORoot = realHashUTXORoot
         self.tip.realHashStateRoot = realHashStateRoot
         self.tip.vtx.append(tx)
@@ -138,7 +139,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         # A block with an invalid hashUTXORoot
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(mocktime+500))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+500))
         self.tip.hashStateRoot = realHashStateRoot
         self.tip.hashUTXORoot = 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()
@@ -148,7 +149,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         # A block with an invalid hashStateRoot
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(mocktime+600))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+600))
         self.tip.hashUTXORoot = realHashUTXORoot
         self.tip.hashStateRoot = 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()
@@ -158,7 +159,7 @@ class FabcoinBlockHeaderTest(ComparisonTestFramework):
         # Verify that blocks with a correct hashStateRoot and hashUTXORoot are accepted.
         coinbase = create_coinbase(node.getblockcount()+1)
         coinbase.rehash()
-        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, int(mocktime+700))
+        self.tip = create_block(int(node.getbestblockhash(), 16), coinbase, node.getblockcount()+1, int(mocktime+700))
         self.tip.hashUTXORoot = realHashUTXORoot
         self.tip.hashStateRoot = realHashStateRoot
         self.tip.hashMerkleRoot = self.tip.calc_merkle_root()

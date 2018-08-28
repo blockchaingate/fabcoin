@@ -11,6 +11,7 @@
 #include "serialize.h"
 #include "uint256.h"
 #include "version.h"
+#include "util.h"
 #include <string.h>
 
 static const int SER_WITHOUT_SIGNATURE = 1 << 3;
@@ -18,8 +19,10 @@ namespace Consensus {
     struct Params;
 };
 
-static const int SERIALIZE_BLOCK_LEGACY      = 0x04000000;
+static const int SERIALIZE_BLOCK_LEGACY = 0x04000000;
 static const int SERIALIZE_BLOCK_NO_CONTRACT = 0x08000000;
+bool _IsSupportContract(int nVersion, int nHeight);
+bool _IsLegacyFormat(int nHeight);
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
  * and scan through nonce values to make the block's hash satisfy proof-of-work
@@ -60,20 +63,17 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action)
     {
-        bool equihash_format = !(s.GetVersion() & SERIALIZE_BLOCK_LEGACY);
 
-        bool has_contract = !( s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT);
-
-        // for old fabcoin version 70016 , no smart contract 
-        if ( (s.GetVersion() & 0x00ffffff ) < FAB_CONTRACT_VERSION ){
-           has_contract = false;
-        }
         READWRITE(this->nVersion);
         READWRITE(hashPrevBlock);
         READWRITE(hashMerkleRoot);
 
+        if ( !( s.GetVersion() & SERIALIZE_BLOCK_LEGACY ) )
+           READWRITE(nHeight);
+
+        bool equihash_format =  ! ( (s.GetVersion() & SERIALIZE_BLOCK_LEGACY) || _IsLegacyFormat(nHeight) );
+
         if (equihash_format) {
-            READWRITE(nHeight);
             for(size_t i = 0; i < (sizeof(nReserved) / sizeof(nReserved[0])); i++) {
                 READWRITE(nReserved[i]);
             }
@@ -81,7 +81,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
       
-        if( has_contract )
+        if( _IsSupportContract( nVersion, nHeight ) && !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT))
         {
             READWRITE(hashStateRoot); // fasc
             READWRITE(hashUTXORoot); // fasc
@@ -124,7 +124,6 @@ public:
     uint256 GetHash() const;
     uint256 GetHash(const Consensus::Params& params) const;
     uint256 GetHashWithoutSign() const;
-    bool IsSupportContract();
 
     int64_t GetBlockTime() const
     {
@@ -137,18 +136,20 @@ public:
             this->nVersion       = other.nVersion;
             this->hashPrevBlock  = other.hashPrevBlock;
             this->hashMerkleRoot = other.hashMerkleRoot;
-            this->hashStateRoot  = other.hashStateRoot;
-            this->hashUTXORoot   = other.hashUTXORoot;
-            this->nTime          = other.nTime;
-            this->nBits          = other.nBits;
-            this->nNonce         = other.nNonce;
             this->nHeight        = other.nHeight;
             memcpy(this->nReserved, other.nReserved, sizeof(other.nReserved));
+            this->nTime          = other.nTime;
+            this->nBits          = other.nBits;
+            this->hashStateRoot  = other.hashStateRoot;
+            this->hashUTXORoot   = other.hashUTXORoot;
+            this->nNonce         = other.nNonce;
             this->nSolution      = other.nSolution;
 
         }
         return *this;
     }
+
+    std::string ToString() const;
 };
 
 
@@ -193,12 +194,12 @@ public:
         block.nVersion       = nVersion;
         block.hashPrevBlock  = hashPrevBlock;
         block.hashMerkleRoot = hashMerkleRoot;
-        block.hashStateRoot  = hashStateRoot; // fasc
-        block.hashUTXORoot   = hashUTXORoot;  // fasc
         block.nHeight        = nHeight;                               //equihash
         memcpy(block.nReserved, nReserved, sizeof(block.nReserved));  //equihash
         block.nTime          = nTime;
         block.nBits          = nBits;
+        block.hashStateRoot  = hashStateRoot; // fasc
+        block.hashUTXORoot   = hashUTXORoot;  // fasc
         block.nNonce         = nNonce;
         block.nSolution      = nSolution;
 
@@ -237,7 +238,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
 
-        bool hascontract = IsSupportContract() | !( s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT) ;
+        bool hascontract = _IsSupportContract(nVersion, nHeight)  ;
         if( hascontract )
         {
             READWRITE(hashStateRoot); // fasc

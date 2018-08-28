@@ -136,7 +136,7 @@ TestingSetup::~TestingSetup()
         fs::remove_all(pathTemp);
 }
 
-TestChain800Setup::TestChain800Setup() : TestingSetup(CBaseChainParams::REGTEST)
+TestChain800Setup::TestChain800Setup() : TestingSetup(CBaseChainParams::UNITTEST)
 {
     // Generate a 800-block chain:
     coinbaseKey.MakeNewKey(true);
@@ -184,7 +184,7 @@ TestChain800Setup::~TestChain800Setup()
 
 //####################################
 //TestChain100 
-TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::REGTEST)
+TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::UNITTEST)
 {
     // Generate a 100-block chain:
     coinbaseKey.MakeNewKey(true);

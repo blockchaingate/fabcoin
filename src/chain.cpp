@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
+#include "util.h"
 #include "chainparams.h"
 
 /**
@@ -118,13 +119,31 @@ void CBlockIndex::BuildSkip()
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
 
-bool CBlockIndex::IsSupportContract()
-{   
-    //legacy nHeight is 0 
-    if( nHeight == 0 )
-        return true;
 
-    return ( nHeight >= (uint32_t)( Params().GetConsensus().ContractHeight ) );
+/*
+   regtest support Contract. 
+   mainnet and test : only when nHeight larger than ContractHeight,  support Contract 
+*/
+bool CBlockIndex::IsSupportContract() const
+{
+    if ( nVersion == 5 ) 
+       return true;
+
+    // genesis block 
+    if ( nHeight == 0 )
+       return false;
+
+    bool fRegTest = (Params().NetworkIDString() == CBaseChainParams::REGTEST ) || (Params().NetworkIDString() == CBaseChainParams::UNITTEST );
+    if ( fRegTest )
+       return true;
+
+    // when nHeight larger than consensus.ContractHeight ,  support Contract 
+    return (nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
+}
+
+bool CBlockIndex::IsLegacyFormat() const
+{
+    return (Params().NetworkIDString() == CBaseChainParams::REGTEST ) || (Params().NetworkIDString() == CBaseChainParams::UNITTEST );
 }
 
 arith_uint256 GetBlockProof(const CBlockIndex& block)
@@ -177,3 +196,5 @@ const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* 
     assert(pa == pb);
     return pa;
 }
+
+

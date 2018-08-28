@@ -62,7 +62,7 @@ class Fabcoin8MBBlock(FabcoinTestFramework):
         tip = self.nodes[0].getbestblockhash()
         height = self.nodes[0].getblockcount() + 1
         block_time = self.nodes[0].getblockheader(tip)["time"] + 1
-        block = create_block(int(tip, 16), create_coinbase(height), block_time)
+        block = create_block(int(tip, 16), create_coinbase(height), height, block_time)
         block.nVersion = 4
         block.rehash()
         block.vtx.extend([parent_tx, child_tx])
@@ -70,14 +70,15 @@ class Fabcoin8MBBlock(FabcoinTestFramework):
         block.solve()
 
         block_count = self.node.getblockcount()
-        block_bytes = block.serialize(with_witness=True, legacy=True, has_contract=True)
+        block_bytes = block.serialize(with_witness=True)
         print("Size of submitted block: ", len(block_bytes), "bytes")
 
         ret = self.node.submitblock(bytes_to_hex_str(block_bytes), '', True)
-        #print (ret)
+        print (ret)
         #assert_equal(ret, None)
         self.sync_all()
 
+        time.sleep(5)
         assert_equal(block_count+1, self.nodes[0].getblockcount())
         assert_equal(block_count+1, self.nodes[1].getblockcount())
 

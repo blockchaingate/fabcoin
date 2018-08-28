@@ -20,7 +20,7 @@ class FabcoinDGPBlockSizeSyncTest(FabcoinTestFramework):
 
     def create_block_of_approx_max_size(self, size_in_bytes):
         tip = self.node.getblock(self.node.getbestblockhash())
-        block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(self.node.getblockcount()+1), tip['time'])
+        block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(self.node.getblockcount()+1), self.node.getblockcount()+1, tip['time']+1)
         block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
         block.hashStateRoot = int(tip['hashStateRoot'], 16)
 
@@ -134,6 +134,7 @@ class FabcoinDGPBlockSizeSyncTest(FabcoinTestFramework):
             self.create_proposal_contract(max_block_size)
             self.BLOCK_SIZE_DGP.send_add_address_proposal(self.proposal_address, 2, admin_address)
             self.node.generate(2) # We need to generate 2 blocks now for it to activate
+            print(max_block_size, ascending_block_sizes )
             self.assert_block_limits(max_block_size, ascending_block_sizes)
 
         # Bring the last nodes online and make sure that they sync with node 0 and 1 (A and B)

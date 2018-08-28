@@ -400,7 +400,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->hashUTXORoot   = diskindex.hashUTXORoot;
 
                 // TODO(h4x3rotab): Check Equihash solution? Not sure why Zcash doesn't do it here.
-                bool postfork = pindexNew->nHeight >= consensusParams.FABHeight;
+                bool postfork = (uint32_t)pindexNew->nHeight >= (uint32_t)consensusParams.FABHeight;
                 if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, postfork, consensusParams))
                     return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
 

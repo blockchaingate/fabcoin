@@ -45,7 +45,7 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         Create a new block with an anyone-can-spend coinbase
         '''
         height = 1
-        block = create_block(self.tip, create_coinbase(height), self.block_time)
+        block = create_block(self.tip, create_coinbase(height), height, self.block_time)
         self.block_time += 1
         block.solve()
         # Save the coinbase for later
@@ -59,7 +59,7 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         '''
         test = TestInstance(sync_every_block=False)
         for i in range(COINBASE_MATURITY):
-            block = create_block(self.tip, create_coinbase(height), self.block_time)
+            block = create_block(self.tip, create_coinbase(height), height, self.block_time)
             block.solve()
             self.tip = block.sha256
             self.block_time += 1
@@ -74,12 +74,12 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         coinbase, spend of that spend).  Duplicate the 3rd transaction to 
         leave merkle root and blockheader unchanged but invalidate the block.
         '''
-        block2 = create_block(self.tip, create_coinbase(height), self.block_time)
+        block2 = create_block(self.tip, create_coinbase(height), height, self.block_time)
         self.block_time += 1
 
         # b'0x51' is OP_TRUE
-        tx1 = create_transaction(self.block1.vtx[0], 0, b'\x51', 25 * COIN)
-        tx2 = create_transaction(tx1, 0, b'\x51', 25 * COIN)
+        tx1 = create_transaction(self.block1.vtx[0], 0, b'\x51', 50 * COIN)
+        tx2 = create_transaction(tx1, 0, b'\x51', 50 * COIN)
 
         block2.vtx.extend([tx1, tx2])
         block2.hashMerkleRoot = block2.calc_merkle_root()
@@ -101,16 +101,16 @@ class InvalidBlockRequestTest(ComparisonTestFramework):
         '''
         Make sure that a totally screwed up block is not valid.
         '''
-        block3 = create_block(self.tip, create_coinbase(height), self.block_time)
+        block3 = create_block(self.tip, create_coinbase(height), height, self.block_time)
         self.block_time += 1
-        block3.vtx[0].vout[0].nValue = 50 * COIN # Too high!
+        block3.vtx[0].vout[0].nValue = 2*INITIAL_BLOCK_REWARD * COIN # Too high!
         block3.vtx[0].sha256=None
         block3.vtx[0].calc_sha256()
         block3.hashMerkleRoot = block3.calc_merkle_root()
         block3.rehash()
         block3.solve()
 
-        yield TestInstance([[block3, RejectResult(16, b'bad-cb-amount')]])
+        yield TestInstance([[block3, False]])
 
 
 if __name__ == '__main__':

@@ -96,8 +96,7 @@ def rpc_sign_transaction(node, tx):
     tx_signed.deserialize(f)
     return tx_signed
 
-#def make_vin_from_unspent(node, unspents=None, value=2000000000000, address=None):
-def make_vin_from_unspent(node, unspents=None, value=2500000000, address=None):
+def make_vin_from_unspent(node, unspents=None, value=INITIAL_BLOCK_REWARD*COIN, address=None):
     if not unspents:
         unspents = node.listunspent()
     for i in range(len(unspents)):
@@ -356,4 +355,5 @@ def collect_prevouts(node, amount=None):
         if unspent['confirmations'] > COINBASE_MATURITY and (not amount or amount == unspent['amount']):
             staking_prevouts.append((COutPoint(int(unspent['txid'], 16), unspent['vout']), int(unspent['amount']*COIN), tx_block_time))
     return staking_prevouts
+
 

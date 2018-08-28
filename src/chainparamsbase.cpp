@@ -13,6 +13,7 @@
 const std::string CBaseChainParams::MAIN = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::REGTEST = "regtest";
+const std::string CBaseChainParams::UNITTEST = "unittest";
 
 void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
 {
@@ -35,7 +36,6 @@ public:
         nRPCPort = 8667;
     }
 };
-
 
 /**
  * Testnet (v3)
@@ -78,6 +78,8 @@ std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain
     else if (chain == CBaseChainParams::TESTNET)
         return std::unique_ptr<CBaseChainParams>(new CBaseTestNetParams());
     else if (chain == CBaseChainParams::REGTEST)
+        return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
+    else if (chain == CBaseChainParams::UNITTEST)
         return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));

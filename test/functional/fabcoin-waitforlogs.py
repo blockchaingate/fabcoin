@@ -4,10 +4,10 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 from test_framework.test_framework import FabcoinTestFramework
-from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD, COINBASE_MATURITY
 from test_framework.util import *
 from test_framework.script import *
 from test_framework.mininode import *
+from test_framework.fabcoinconfig import *
 import sys
 
 
@@ -65,7 +65,7 @@ class FabcoinRPCWaitforlogs(FabcoinTestFramework):
         assert_equal(ret['entries'][0]['topics'], ["c5c442325655248f6bccf5c6181738f8755524172cea2a8bd1e38e43f833e7f2"])
         assert_equal(ret['entries'][0]['data'], "000000000000000000000000000000000000000000000000000000000000000d000000000000000000000000000000000000000000000000000000000000000d0000000000000000000000000000000000000000000000000000000000000000")
         assert_equal(ret['count'], 2)
-        assert_equal(ret['nextblock'], COINBASE_MATURITY+106)
+        assert_equal(ret['nextblock'], COINBASE_MATURITY+106 )
 
         topic.clear()
         topic.append("c5c442325655248f6bccf5c6181738f8755524172cea2a8bd1e38e43f833e7f3")      #error topics

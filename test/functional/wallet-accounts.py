@@ -14,8 +14,8 @@ RPCs tested are:
 """
 
 from test_framework.test_framework import FabcoinTestFramework
-from test_framework.util import *
-from test_framework.fabcoinconfig import *
+from test_framework.util import assert_equal
+from test_framework.fabcoinconfig import COINBASE_MATURITY, INITIAL_BLOCK_REWARD
 
 class WalletAccountsTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -32,7 +32,7 @@ class WalletAccountsTest(FabcoinTestFramework):
         # the same address, so we call twice to get two addresses w/50 each
         node.generate(1)
         node.generate(COINBASE_MATURITY+1)
-        assert_equal(node.getbalance(), 2*INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
+        assert_equal(node.getbalance(), 2*INITIAL_BLOCK_REWARD)
 
         # there should be 2 address groups
         # each with 1 address with a balance of 50 Fabcoins
@@ -41,19 +41,10 @@ class WalletAccountsTest(FabcoinTestFramework):
         # the addresses aren't linked now, but will be after we send to the
         # common address
         linked_addresses = set()
-
-        time.sleep(0.1)
-
         for address_group in address_groups:
             assert_equal(len(address_group), 1)
             assert_equal(len(address_group[0]), 2)
-
-            print ( address_group ) 
-            if address_group[0][1]  == INITIAL_BLOCK_REWARD :
-                assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD*1 )
-            else :
-                assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
-
+            assert_equal(address_group[0][1], INITIAL_BLOCK_REWARD)
             linked_addresses.add(address_group[0][0])
 
         # send 50 from each address to a third address not in this wallet
@@ -62,7 +53,7 @@ class WalletAccountsTest(FabcoinTestFramework):
         common_address = "msf4WtN1YQKXvNtvdFYt9JBnUD2FB41kjr"
         txid = node.sendmany(
             fromaccount="",
-            amounts={common_address: 2*INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD },
+            amounts={common_address: 2*INITIAL_BLOCK_REWARD},
             subtractfeefrom=[common_address],
             minconf=1,
         )

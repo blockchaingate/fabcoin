@@ -11,24 +11,11 @@
 #include "chainparams.h"
 #include "consensus/params.h"
 #include "crypto/common.h"
+#include "util.h"
 
 uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
 {
     int version;
-
-    if ((uint32_t) -1 == (uint32_t)params.FABHeight ) {
-        version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
-    }
-    else if (nHeight >= (uint32_t)params.FABHeight) {
-        version = PROTOCOL_VERSION;
-    } else {
-        version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
-    }
-
-    if ( (uint32_t) -1 == (uint32_t)params.ContractHeight || nHeight < (uint32_t)params.ContractHeight) 
-    {
-        version |= SERIALIZE_BLOCK_NO_CONTRACT;
-    }
 
     CHashWriter writer(SER_GETHASH, version);
     ::Serialize(writer, *this);
@@ -46,12 +33,19 @@ uint256 CBlockHeader::GetHashWithoutSign() const
     return SerializeHash(*this, SER_GETHASH | SER_WITHOUT_SIGNATURE);
 }
 
-bool CBlockHeader::IsSupportContract()
-{   
-    if( nHeight == 0 )
-        return false;
-    
-    return nHeight >= (uint32_t)Params().GetConsensus().ContractHeight;
+std::string CBlockHeader::ToString() const
+{
+    std::stringstream s;
+    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s,  hashStateRoot=%s, hashUTXORoot=%s, nHeight=%u, nTime=%u, nBits=%08x, nNonce=%s)\n",
+        GetHash().ToString(),
+        nVersion,
+        hashPrevBlock.ToString(),
+        hashMerkleRoot.ToString(),
+        hashStateRoot.ToString(), // fasc
+        hashUTXORoot.ToString(), // fasc
+        nHeight, nTime, nBits, nNonce.GetHex());
+
+    return s.str();
 }
 
 std::string CBlock::ToString() const
@@ -73,3 +67,26 @@ std::string CBlock::ToString() const
     return s.str();
 }
 
+bool _IsSupportContract(int nVersion, int nHeight)
+{
+    if ( nVersion == 5 )
+       return true;
+
+    if ( nHeight == 0 )
+       return false;
+
+    bool fRegTest =  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
+    if ( fRegTest )
+       return true;
+
+
+    return (nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
+}
+
+bool _IsLegacyFormat( int nHeight)
+{
+    if ( nHeight == 0 )
+       return false;
+
+    return  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
+}

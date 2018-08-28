@@ -206,16 +206,16 @@ class RESTTest (FabcoinTestFramework):
         response = http_get_call(url.hostname, url.port, '/rest/block/'+bb_hash+self.FORMAT_SEPARATOR+"bin", True)
         assert_equal(response.status, 200)
 
-        print (response.getheader('content-length'))
-        assert_greater_than(int(response.getheader('content-length')), 181)
+        #print (response.getheader('content-length'))
+        assert_greater_than(int(response.getheader('content-length')), 147)
         response_str = response.read()
 
         # compare with block header
         response_header = http_get_call(url.hostname, url.port, '/rest/headers/1/'+bb_hash+self.FORMAT_SEPARATOR+"bin", True)
         assert_equal(response_header.status, 200)
 
-        print (response.getheader('content-length'))
-        assert_greater_than(int(response_header.getheader('content-length')), 181)
+        #print (response.getheader('content-length'))
+        assert_greater_than(int(response_header.getheader('content-length')), 147)
 
         response_header_str = response_header.read()
         response_header_length = int(response_header.getheader('content-length'))
@@ -234,7 +234,7 @@ class RESTTest (FabcoinTestFramework):
         assert_equal(response_header_hex.status, 200)
         assert_greater_than(int(response_header_hex.getheader('content-length')), 160)
         response_header_hex_str = response_header_hex.read()
-        print ("response_header_hex)", response_header_hex_str)
+        #print ("response_header_hex)", response_header_hex_str)
 
         assert_equal(response_hex_str[0:160], response_header_hex_str[0:160])
         assert_equal(encode(response_header_str, "hex_codec")[0:160], response_header_hex_str[0:160])
@@ -260,6 +260,7 @@ class RESTTest (FabcoinTestFramework):
         assert_equal(json_obj[0]['version'],            rpc_block_json['version'])
         assert_equal(json_obj[0]['merkleroot'],         rpc_block_json['merkleroot'])
         assert_equal(json_obj[0]['time'],               rpc_block_json['time'])
+        #print(json_obj[0]['nonce'], rpc_block_json['nonce'] )
         assert_equal(json_obj[0]['nonce'],              rpc_block_json['nonce'])
         assert_equal(json_obj[0]['bits'],               rpc_block_json['bits'])
         assert_equal(json_obj[0]['difficulty'],         rpc_block_json['difficulty'])

@@ -48,7 +48,7 @@ class WalletTest(FabcoinTestFramework):
         self.sync_all([self.nodes[0:3]])
 
         assert_equal(self.nodes[0].getbalance(), INITIAL_BLOCK_REWARD)
-        assert_equal(self.nodes[1].getbalance(), INITIAL_BLOCK_REWARD + ICO_BLOCK_REWARD )
+        assert_equal(self.nodes[1].getbalance(), INITIAL_BLOCK_REWARD)
         assert_equal(self.nodes[2].getbalance(), 0)
 
         # Check that only first and second nodes have UTXOs

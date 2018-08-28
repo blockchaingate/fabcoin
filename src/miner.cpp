@@ -265,8 +265,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblocktemplate->vTxFees[0] = -nFees;
 
     auto params = chainparams.GetConsensus();
-    int ser_flags = (nHeight < params.ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
-    uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+    uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION );
     LogPrintChar("miner", "CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", nHeight, nSerializeSize, GetBlockWeight(*pblock, params), nBlockTx, nFees, nBlockSigOpsCost);
 
     // The total fee is the Fees minus the Refund
@@ -1037,10 +1036,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
             auto t = std::chrono::high_resolution_clock::now();
             while (true) 
             {
-                int ser_flags = (pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
                 // I = the block header minus nonce and solution.
                 CEquihashInput I{*pblock};
-                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags );
+                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
                 ss << I;
 
                 // Hash state
@@ -1345,10 +1343,9 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             auto t = std::chrono::high_resolution_clock::now();
             while (true) 
             {
-                int ser_flags = (pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
                 // I = the block header minus nonce and solution.
                 CEquihashInput I{*pblock};
-                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags );
+                CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
                 ss << I;
 
                 memcpy(header, &ss[0], ss.size());

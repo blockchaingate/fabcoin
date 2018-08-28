@@ -33,8 +33,7 @@ from .util import (
     sync_blocks,
     sync_mempools,
 )
-from .fabcoinconfig import COINBASE_MATURITY
-
+from .fabcoinconfig import *
 
 class TestStatus(Enum):
     PASSED = 1
@@ -335,7 +334,7 @@ class FabcoinTestFramework(object):
         For backwared compatibility of the python scripts with previous
         versions of the cache, this helper function sets mocktime to Jan 1,
         2014 + (901 * 75 )"""
-        self.mocktime = 1388534400 + (901 * 75 )
+        self.mocktime = 1504695029 + ((COINBASE_MATURITY+101) * FABCOIN_BLOCK_DURATION) # int(time.time()) - 100*24*60*60 + (201 * 10 * 60)
 
     def disable_mocktime(self):
         self.mocktime = 0
@@ -370,7 +369,7 @@ class FabcoinTestFramework(object):
             rpc_handler.setLevel(logging.DEBUG)
             rpc_logger.addHandler(rpc_handler)
 
-    def _initialize_chain(self, blocknum=900):
+    def _initialize_chain(self):
         """Initialize a pre-mined blockchain for use by the test.
 
         Create a cache of a 900-block-long chain (with wallet) for MAX_NODES
@@ -413,25 +412,23 @@ class FabcoinTestFramework(object):
             # blocks are created with timestamps 75 seconds apart
             # starting from 901 *75 seconds in the past
             self.enable_mocktime()
-            block_time = self.mocktime - (901 * 75 )
-
-            print( block_time )
-
+            block_time = self.mocktime - (COINBASE_MATURITY+101) * FABCOIN_BLOCK_DURATION 
             for i in range(1):
                 for peer in range(4):
                     for j in range(25):
                         set_node_times(self.nodes, block_time)
                         self.nodes[peer].generate(1)
-                        block_time += 75 
+                        block_time += FABCOIN_BLOCK_DURATION
                     # Must sync before next peer starts generating blocks
                     sync_blocks(self.nodes)
 
+            # since blocks mature after 15 blocks we only generate 115 blocks initially. A lot of the tests rely on the behaviour of having 100 mature blocks.
             # The last blocks (that have not matured on a test where setup_clean_chain is set to false) are generated at the 0th node.
             peer = 0
             for j in range(COINBASE_MATURITY):
                 set_node_times(self.nodes, block_time)
                 self.nodes[peer].generate(1)
-                block_time += 75 
+                block_time += FABCOIN_BLOCK_DURATION
             # Must sync before next peer starts generating blocks
             sync_blocks(self.nodes)
 
@@ -492,4 +489,3 @@ class SkipTest(Exception):
     """This exception is raised to skip a test"""
     def __init__(self, message):
         self.message = message
-

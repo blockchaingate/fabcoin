@@ -23,7 +23,7 @@ import subprocess
 import time
 
 from test_framework.test_framework import FabcoinTestFramework
-from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD, COINBASE_MATURITY
+from test_framework.fabcoinconfig import *
 
 from test_framework.util import (
     assert_equal,
@@ -36,7 +36,8 @@ from test_framework.util import (
 class BlockchainTest(FabcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
-        self.extra_args = [['-stopatheight=907']]
+        str_args = '-stopatheight=%d'%(COINBASE_MATURITY+107)
+        self.extra_args = [[str_args]]
 
     def run_test(self):
         self._test_getchaintxstats()
@@ -59,29 +60,30 @@ class BlockchainTest(FabcoinTestFramework):
         node = self.nodes[0]
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('32021837.50000000'))
-        assert_equal(res['transactions'], 900)
-        assert_equal(res['height'], 900)
-        assert_equal(res['txouts'], 900)
-        assert_equal(res['bogosize'], 76500),
-        assert_equal(res['bestblock'], node.getblockhash(900))
+        
+        assert_equal(res['total_amount'], Decimal((COINBASE_MATURITY+100) * INITIAL_BLOCK_REWARD))
+        assert_equal(res['transactions'], COINBASE_MATURITY+100)
+        assert_equal(res['height'], COINBASE_MATURITY+100)
+        assert_equal(res['txouts'], COINBASE_MATURITY+100)
+        assert_equal(res['bogosize'], (COINBASE_MATURITY+100)*85)
+        assert_equal(res['bestblock'], node.getblockhash(COINBASE_MATURITY+100))
         size = res['disk_size']
         assert size > 6400
-        assert size < 64000/2*9
+        assert size < 64000/2* (COINBASE_MATURITY+100) /100
         assert_equal(len(res['bestblock']), 64)
         assert_equal(len(res['hash_serialized_2']), 64)
 
         self.log.info("Test that gettxoutsetinfo() works for blockchain with just the genesis block")
-        b1hash = node.getblockhash(1)
+        b1hash = node.getblockhash(COINBASE_MATURITY+1)
         node.invalidateblock(b1hash)
 
         res2 = node.gettxoutsetinfo()
-        assert_equal(res2['transactions'], 0)
-        assert_equal(res2['total_amount'], Decimal('0'))
-        assert_equal(res2['height'], 0)
-        assert_equal(res2['txouts'], 0)
-        assert_equal(res2['bogosize'], 0),
-        assert_equal(res2['bestblock'], node.getblockhash(0))
+        assert_equal(res2['transactions'], COINBASE_MATURITY)
+        assert_equal(res2['total_amount'], Decimal(COINBASE_MATURITY * INITIAL_BLOCK_REWARD))
+        assert_equal(res2['height'], COINBASE_MATURITY)
+        assert_equal(res2['txouts'], COINBASE_MATURITY)
+        assert_equal(res2['bogosize'], COINBASE_MATURITY*85)
+        assert_equal(res2['bestblock'], node.getblockhash(COINBASE_MATURITY))
         assert_equal(len(res2['hash_serialized_2']), 64)
 
         self.log.info("Test that gettxoutsetinfo() returns the same result after invalidate/reconsider block")
@@ -117,8 +119,8 @@ class BlockchainTest(FabcoinTestFramework):
         assert_is_hash_string(header['bits'], length=None)
         assert isinstance(header['time'], int)
         assert isinstance(header['mediantime'], int)
-        #assert isinstance(header['nonce'], int)
-        assert_is_hex_string(header['nonce'])
+        assert isinstance(header['nonce'], int)
+        #assert_is_hex_string(header['nonce'])
         assert isinstance(header['version'], int)
         assert isinstance(int(header['versionHex'], 16), int)
         assert isinstance(header['difficulty'], Decimal)

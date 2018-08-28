@@ -112,7 +112,7 @@ double GetDifficulty(const CBlockIndex* blockindex)
             blockindex = chainActive.Tip();
     }
 
-    if (blockindex->nHeight >= Params().GetConsensus().FABHeight)
+    if ((uint32_t) blockindex->nHeight >= Params().GetConsensus().FABHeight)
     {
         return GetDifficultyINTERNAL(blockindex);
     }
@@ -122,24 +122,27 @@ double GetDifficulty(const CBlockIndex* blockindex)
     }
 }
 
-UniValue blockheaderToJSON(const CBlockIndex* blockindex, bool legacy_format, bool no_contract_format )
+UniValue blockheaderToJSON(const CBlockIndex* blockindex)
 {
+
     UniValue result(UniValue::VOBJ);
     result.push_back(Pair("hash", blockindex->GetBlockHash().GetHex()));
     int confirmations = -1;
     // Only report confirmations if the block is on the main chain
     if (chainActive.Contains(blockindex))
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
-    result.push_back(Pair("confirmations", confirmations));
-    if (! legacy_format ){
-        result.push_back(Pair("height", blockindex->nHeight));
 
-    }
+    bool contract_format =  blockindex->IsSupportContract();  //!!!
+    bool legacy_format = blockindex->IsLegacyFormat() ;  //!!!
+
+    result.push_back(Pair("confirmations", confirmations));
+    result.push_back(Pair("height", blockindex->nHeight));
+
     result.push_back(Pair("version", blockindex->nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", blockindex->nVersion)));
     result.push_back(Pair("merkleroot", blockindex->hashMerkleRoot.GetHex()));
 
-    if ( ! no_contract_format ) {
+    if ( contract_format ) {
         result.push_back(Pair("hashStateRoot", blockindex->hashStateRoot.GetHex())); // fasc
         result.push_back(Pair("hashUTXORoot", blockindex->hashUTXORoot.GetHex())); // fasc
     }
@@ -148,7 +151,7 @@ UniValue blockheaderToJSON(const CBlockIndex* blockindex, bool legacy_format, bo
     result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
 
     if ( legacy_format ){
-        result.push_back(Pair("nonceUint32", (uint64_t)((uint32_t)blockindex->nNonce.GetUint64(0))));
+        result.push_back(Pair("nonce", (uint64_t)((uint32_t)blockindex->nNonce.GetUint64(0))));
     }
     else {
         result.push_back(Pair("nonce", blockindex->nNonce.GetHex()));
@@ -179,20 +182,23 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
         confirmations = chainActive.Height() - blockindex->nHeight + 1;
     result.push_back(Pair("confirmations", confirmations));
     const Consensus::Params& consensusParams = Params().GetConsensus();
-    int ser_flags = (blockindex->nHeight < consensusParams.FABHeight) ? SERIALIZE_BLOCK_LEGACY : 0;
-    ser_flags |= (blockindex->nHeight < consensusParams.ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
     result.push_back(
         Pair("strippedsize",
              (int)::GetSerializeSize(block, SER_NETWORK,
-                                     PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS | ser_flags)));
-    result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | ser_flags)));
+                                     PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS )));
+    result.push_back(Pair("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION )));
     result.push_back(Pair("weight", (int)::GetBlockWeight(block, consensusParams)));
     result.push_back(Pair("height", blockindex->nHeight));
     result.push_back(Pair("version", block.nVersion));
     result.push_back(Pair("versionHex", strprintf("%08x", block.nVersion)));
     result.push_back(Pair("merkleroot", block.hashMerkleRoot.GetHex()));
-    result.push_back(Pair("hashStateRoot", block.hashStateRoot.GetHex())); // fasc
-    result.push_back(Pair("hashUTXORoot", block.hashUTXORoot.GetHex())); // fasc
+
+    bool contract_format =  blockindex->IsSupportContract();  //!!!
+    bool legacy_format = blockindex->IsLegacyFormat() ;  //!!!
+    if ( contract_format ) {
+        result.push_back(Pair("hashStateRoot", block.hashStateRoot.GetHex())); // fasc
+        result.push_back(Pair("hashUTXORoot", block.hashUTXORoot.GetHex())); // fasc
+    }
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {
@@ -208,8 +214,11 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     result.push_back(Pair("tx", txs));
     result.push_back(Pair("time", block.GetBlockTime()));
     result.push_back(Pair("mediantime", (int64_t)blockindex->GetMedianTimePast()));
-    result.push_back(Pair("nonceUint32", (uint64_t)((uint32_t)block.nNonce.GetUint64(0))));
-    result.push_back(Pair("nonce", block.nNonce.GetHex()));
+
+    if ( legacy_format ) 
+       result.push_back(Pair("nonce", (uint64_t)((uint32_t)block.nNonce.GetUint64(0))));
+    else result.push_back(Pair("nonce", block.nNonce.GetHex()));
+
     result.push_back(Pair("bits", strprintf("%08x", block.nBits)));
     result.push_back(Pair("difficulty", GetDifficulty(blockindex)));
     result.push_back(Pair("chainwork", blockindex->nChainWork.GetHex()));
@@ -904,17 +913,6 @@ UniValue getblockheader(const JSONRPCRequest& request)
     if (!request.params[1].isNull())
         fVerbose = request.params[1].get_bool();
 
-    bool legacy_format = false;
-    if (request.params.size() >= 3 && request.params[2].get_bool() == true) {
-        legacy_format = true;
-    }
-
-    bool no_contract_format = false;
-    if (request.params.size() == 4 && request.params[3].get_bool() == true) {
-        no_contract_format = true;
-    }
-
-
     if (mapBlockIndex.count(hash) == 0)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
 
@@ -922,16 +920,14 @@ UniValue getblockheader(const JSONRPCRequest& request)
 
     if (!fVerbose)
     {
-        int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
-        ser_flags |= no_contract_format ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
-        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION );
         ssBlock << pblockindex->GetBlockHeader();
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
 
         return strHex;
     }
 
-    return blockheaderToJSON(pblockindex, legacy_format, no_contract_format);
+    return blockheaderToJSON(pblockindex);
 }
 
 UniValue getblock(const JSONRPCRequest& request)
@@ -998,15 +994,7 @@ UniValue getblock(const JSONRPCRequest& request)
         else
             verbosity = request.params[1].get_bool() ? 1 : 0;
     }
-    bool legacy_format = false;
-    if (request.params.size() >= 3 && request.params[2].get_bool() == true) {
-        legacy_format = true;
-    }
 
-    bool no_contract_format = false;
-    if (request.params.size() == 4 && request.params[3].get_bool() == true) {
-        no_contract_format = true;
-    }
     if (mapBlockIndex.count(hash) == 0)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
 
@@ -1024,11 +1012,11 @@ UniValue getblock(const JSONRPCRequest& request)
         // block).
         throw JSONRPCError(RPC_MISC_ERROR, "Block not found on disk");
 
+    LogPrintf("debug getblock()=%s", block.ToString());
+
     if (verbosity <= 0)
     {
-        int ser_flags = legacy_format ? SERIALIZE_BLOCK_LEGACY : 0;
-        ser_flags |= no_contract_format ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
-        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | ser_flags | RPCSerializationFlags());
+        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags());
         ssBlock << block;
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
         return strHex;

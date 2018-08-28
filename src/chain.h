@@ -11,6 +11,7 @@
 #include "pow.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include "util.h"
 
 #include <vector>
 
@@ -355,6 +356,11 @@ public:
         return false;
     }
 
+    bool IsSupportContract()  const;
+
+    bool IsLegacyFormat()  const;
+
+
     std::string ToString() const
     {
         return strprintf("CBlockIndex(pprev=%p, nHeight=%d, merkle=%s, hashBlock=%s)",
@@ -393,7 +399,6 @@ public:
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
 
-    bool IsSupportContract();
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
