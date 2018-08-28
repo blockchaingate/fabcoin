@@ -138,7 +138,7 @@ bool CBlockIndex::IsSupportContract() const
        return true;
 
     // when nHeight larger than consensus.ContractHeight ,  support Contract 
-    return (nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
+    return ((uint32_t) nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
 }
 
 bool CBlockIndex::IsLegacyFormat() const

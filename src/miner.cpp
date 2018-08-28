@@ -273,7 +273,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         *pTotalFees = nFees - bceResult.refundSender;
 
     arith_uint256 nonce;
-    if (nHeight >= params.FABHeight) {
+    if ((uint32_t)nHeight >= (uint32_t)params.FABHeight) {
         // Randomise nonce for new block foramt.
         nonce = UintToArith256(GetRandHash());
         // Clear the top and bottom 16 bits (for local use as thread flags and counters)
@@ -1207,6 +1207,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 //    c.disconnect();
 }
 
+#ifdef ENABLE_GPU
 static bool cb_cancel() 
 {
     return g_cancelSolver;
@@ -1242,6 +1243,7 @@ static bool cb_validate(std::vector<unsigned char> sols, unsigned char *pblockda
     g_cs.unlock();
     return ret;
 }
+#endif
 
 #if USE_CUDA
 void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, int thr_id)
@@ -1351,7 +1353,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                 memcpy(header, &ss[0], ss.size());
 
                 for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
-                    header[headerlen-32 + i] = pblock->nNonce.begin()[i];
+                    header[ headerlen -32 + i] = pblock->nNonce.begin()[i];
 
                 // (x_1, x_2, ...) = A(I, V, n, k)
                 //LogPrint(BCLog::POW, "Running Equihash solver in %u %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());

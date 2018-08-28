@@ -1928,7 +1928,6 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     /////////////////////////////////////////////////
 
     // Move this check from CheckBlock to ConnectBlock as it depends on DGP values
-    int serialization_flags = SERIALIZE_TRANSACTION_NO_WITNESS;
     auto params = chainparams.GetConsensus();
 
     LogPrintf("Debug Block=%s", block.ToString());

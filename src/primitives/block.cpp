@@ -15,11 +15,23 @@
 
 uint256 CBlockHeader::GetHash(const Consensus::Params& params) const
 {
-    int version;
+    return SerializeHash(*this);
 
+    /*int version;
+
+    if ((uint32_t) -1 == (uint32_t)params.FABHeight ) {
+        version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
+    }
+    else if (nHeight >= (uint32_t)params.FABHeight) {
+        version = PROTOCOL_VERSION;
+    } else {
+        version = PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY;
+    }
     CHashWriter writer(SER_GETHASH, version);
+
     ::Serialize(writer, *this);
     return writer.GetHash();
+    */
 }
 
 uint256 CBlockHeader::GetHash() const
@@ -80,7 +92,7 @@ bool _IsSupportContract(int nVersion, int nHeight)
        return true;
 
 
-    return (nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
+    return ((uint32_t) nHeight >= (uint32_t) Params().GetConsensus().ContractHeight );
 }
 
 bool _IsLegacyFormat( int nHeight)
