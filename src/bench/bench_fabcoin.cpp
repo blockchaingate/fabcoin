@@ -9,6 +9,7 @@
 #include "validation.h"
 #include "util.h"
 #include "random.h"
+#include "chainparams.h"
 
 int
 main(int argc, char** argv)
@@ -19,6 +20,7 @@ main(int argc, char** argv)
     SetupEnvironment();
     fPrintToDebugLog = false; // don't want to write to debug.log file
 
+    SelectParams("unittest");
     benchmark::BenchRunner::RunAll();
 
     ECC_Stop();

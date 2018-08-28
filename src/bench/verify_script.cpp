@@ -93,7 +93,7 @@ static void VerifyScriptBench(benchmark::State& state)
         assert(success);
 
 #if defined(HAVE_CONSENSUS_LIB)
-        CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream stream(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY);
         stream << txSpend;
         int csuccess = fabcoinconsensus_verify_script_with_amount(
             txCredit.vout[0].scriptPubKey.data(),

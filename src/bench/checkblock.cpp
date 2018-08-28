@@ -21,7 +21,7 @@ static void DeserializeBlockTest(benchmark::State& state)
 {
     CDataStream stream((const char*)block_bench::block413567,
             (const char*)&block_bench::block413567[sizeof(block_bench::block413567)],
-            SER_NETWORK, PROTOCOL_VERSION);
+            SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY);
     char a = '\0';
     stream.write(&a, 1); // Prevent compaction
 
@@ -36,11 +36,11 @@ static void DeserializeAndCheckBlockTest(benchmark::State& state)
 {
     CDataStream stream((const char*)block_bench::block413567,
             (const char*)&block_bench::block413567[sizeof(block_bench::block413567)],
-            SER_NETWORK, PROTOCOL_VERSION);
+            SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY );
     char a = '\0';
     stream.write(&a, 1); // Prevent compaction
 
-    const auto chainParams = CreateChainParams(CBaseChainParams::MAIN);
+    const auto chainParams = CreateChainParams(CBaseChainParams::UNITTEST);
 
     while (state.KeepRunning()) {
         CBlock block; // Note that CBlock caches its checked state, so we need to recreate it here
@@ -52,5 +52,5 @@ static void DeserializeAndCheckBlockTest(benchmark::State& state)
     }
 }
 
-BENCHMARK(DeserializeBlockTest);
-BENCHMARK(DeserializeAndCheckBlockTest);
+//BENCHMARK(DeserializeBlockTest);
+//BENCHMARK(DeserializeAndCheckBlockTest);
