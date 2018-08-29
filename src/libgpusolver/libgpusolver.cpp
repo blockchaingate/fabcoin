@@ -120,20 +120,19 @@ GPUSolver::~GPUSolver() {
 bool GPUSolver::run(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 nonce,
 		            const std::function<bool(std::vector<unsigned char>)> validBlock,
 				const std::function<bool(GPUSolverCancelCheck)> cancelled,
-			crypto_generichash_blake2b_state base_state) {
-
+			crypto_generichash_blake2b_state base_state) 
+{
     if (n == 200 && k == 9) {
-        return GPUSolve200_9(header, header_len, nonce, validBlock, cancelled, base_state);
+        return GPUSolve(n, k, header, header_len, nonce, validBlock, cancelled, base_state);
     } else {
         throw std::invalid_argument("Unsupported Equihash parameters");
     }
-
 }
 
-bool GPUSolver::GPUSolve200_9(uint8_t *header, size_t header_len, uint256 &nonce,
-                 	const std::function<bool(std::vector<unsigned char>)> validBlock,
-			const std::function<bool(GPUSolverCancelCheck)> cancelled,
-		crypto_generichash_blake2b_state base_state) 
+bool GPUSolver::GPUSolve(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 &nonce,
+                         const std::function<bool(std::vector<unsigned char>)> validBlock,
+                         const std::function<bool(GPUSolverCancelCheck)> cancelled,
+                         crypto_generichash_blake2b_state base_state) 
 {
 	/* Run the kernel
 	TODO: Optimise and figure out how we want this to go
@@ -183,7 +182,7 @@ bool GPUSolver::GPUSolve200_9(uint8_t *header, size_t header_len, uint256 &nonce
             //LogPrint(BCLog::POW, "Checking with = %s, %d sols\n",nNonce.ToString(), n_sol);
 #ifdef DEBUG
             bool isValid;
-            EhIsValidSolution(200, 9, base_state, sol_char, isValid);
+            EhIsValidSolution(n, k, base_state, sol_char, isValid);
             LogPrint(BCLog::POW,"is valid: \n");
             if (!isValid) 
             {

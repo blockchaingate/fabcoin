@@ -33,8 +33,7 @@
 #include "uint256.h"
 
 
-//#include "param.h"
-//#include "blake.h"
+#include "param.h"
 #include <cassert>
 
 #ifdef __APPLE__
@@ -46,9 +45,7 @@
 // The maximum size of the .cl file we read in and compile
 #define MAX_SOURCE_SIZE 	(0x200000)
 
-#define EK 9
-#define EN 200
-#define DIGITBITS_S	(EN/(EK+1))
+#define DIGITBITS_S	PREFIX
 
 class GPUSolverCancelledException : public std::exception
 {
@@ -78,7 +75,7 @@ private:
 	cl_gpuminer * miner;
 	bool GPU;
 	bool initOK;
-	static const uint32_t PROOFSIZE = 1 << EK;
+	static const uint32_t PROOFSIZE = 1 << PARAM_K;
 	//TODO 20?
 	sols_t * indices;
 	uint32_t n_sol;
@@ -87,7 +84,7 @@ private:
 	float sum = 0.f;
 	float avg = 0.f;
 
-	bool GPUSolve200_9(uint8_t *header, size_t header_len, uint256 &nonce,
+	bool GPUSolve(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 &nonce,
         const std::function<bool(std::vector<unsigned char>)> validBlock,
         const std::function<bool(GPUSolverCancelCheck)> cancelled,
         crypto_generichash_blake2b_state base_state);

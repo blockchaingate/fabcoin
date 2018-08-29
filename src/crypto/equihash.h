@@ -165,12 +165,13 @@ class Equihash
 {
 private:
     BOOST_STATIC_ASSERT(K < N);
-    BOOST_STATIC_ASSERT(N % 8 == 0);
+    //BOOST_STATIC_ASSERT(N % 8 == 0);
     BOOST_STATIC_ASSERT((N/(K+1)) + 1 < 8*sizeof(eh_index));
 
 public:
     enum : size_t { IndicesPerHashOutput=512/N };
-    enum : size_t { HashOutput=IndicesPerHashOutput*N/8 };
+    enum : size_t { HashLen=(N+7)/8 };
+    enum : size_t { HashOutput=IndicesPerHashOutput*HashLen };    
     enum : size_t { CollisionBitLength=N/(K+1) };
     enum : size_t { CollisionByteLength=(CollisionBitLength+7)/8 };
     enum : size_t { HashLength=(K+1)*CollisionByteLength };
@@ -198,6 +199,7 @@ static Equihash<96,3> Eh96_3;
 static Equihash<200,9> Eh200_9;
 static Equihash<96,5> Eh96_5;
 static Equihash<48,5> Eh48_5;
+static Equihash<210,9> Eh210_9; 
 
 #define EhInitialiseState(n, k, base_state)  \
     if (n == 96 && k == 3) {                 \
@@ -208,6 +210,8 @@ static Equihash<48,5> Eh48_5;
         Eh96_5.InitialiseState(base_state);  \
     } else if (n == 48 && k == 5) {          \
         Eh48_5.InitialiseState(base_state);  \
+    } else if (n == 210 && k == 9) {          \
+        Eh210_9.InitialiseState(base_state);  \
     } else {                                 \
         throw std::invalid_argument("Unsupported Equihash parameters"); \
     }
@@ -224,6 +228,8 @@ inline bool EhBasicSolve(unsigned int n, unsigned int k, const eh_HashState& bas
         return Eh96_5.BasicSolve(base_state, validBlock, cancelled);
     } else if (n == 48 && k == 5) {
         return Eh48_5.BasicSolve(base_state, validBlock, cancelled);
+    } else if (n == 210 && k == 9) {
+        return Eh210_9.BasicSolve(base_state, validBlock, cancelled);
     } else {
         throw std::invalid_argument("Unsupported Equihash parameters");
     }
@@ -248,6 +254,8 @@ inline bool EhOptimisedSolve(unsigned int n, unsigned int k, const eh_HashState&
         return Eh96_5.OptimisedSolve(base_state, validBlock, cancelled);
     } else if (n == 48 && k == 5) {
         return Eh48_5.OptimisedSolve(base_state, validBlock, cancelled);
+    } else if (n == 210 && k == 9) {
+        return Eh210_9.OptimisedSolve(base_state, validBlock, cancelled);
     } else {
         throw std::invalid_argument("Unsupported Equihash parameters");
     }
@@ -269,6 +277,8 @@ inline bool EhOptimisedSolveUncancellable(unsigned int n, unsigned int k, const 
         ret = Eh96_5.IsValidSolution(base_state, soln);  \
     } else if (n == 48 && k == 5) {                      \
         ret = Eh48_5.IsValidSolution(base_state, soln);  \
+    } else if (n == 210 && k == 9) {                      \
+        ret = Eh210_9.IsValidSolution(base_state, soln);  \
     } else {                                             \
         throw std::invalid_argument("Unsupported Equihash parameters"); \
     }

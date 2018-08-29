@@ -20,15 +20,12 @@
 
 #include <stdio.h>
 #include <vector>
-//#include <mutex>
-
-#include "equihash.h"
-#include "eqcuda.hpp" // eq_cuda_context
 
 #include "blake2/blake2.h"
+#include "eqcuda.hpp" // eq_cuda_context
 
-//#define WN 200
-//#define WK 9
+#define WN 200
+#define WK 9
 #ifndef MAX_GPUS
 #define MAX_GPUS 16
 #endif

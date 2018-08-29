@@ -72,8 +72,8 @@ unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTi
 bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& params)
 {
 
-    unsigned int n = params.EquihashN();
-    unsigned int k = params.EquihashK();
+    unsigned int n = params.EquihashN(pblock->nHeight );
+    unsigned int k = params.EquihashK(pblock->nHeight );
 
     // Hash state
     crypto_generichash_blake2b_state state;
@@ -81,8 +81,9 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
 
     // I = the block header minus nonce and solution.
     CEquihashInput I{*pblock};
+    int ser_flags = (pblock->nHeight < (uint32_t)params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
     // I||V
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags);
     ss << I;
     ss << pblock->nNonce;
 
