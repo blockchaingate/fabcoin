@@ -123,7 +123,6 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 
 #if defined(ENABLE_GPU) &&  defined(USE_CUDA)
 #include "../cuda/eqcuda.hpp"
-#endif
 
 static bool cb_cancel() 
 {
@@ -166,6 +165,8 @@ static bool cb_validate(std::vector<unsigned char> sols, unsigned char *pblockda
 
     return ret;
 }
+#endif
+
 
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
 {
@@ -244,7 +245,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             int ser_flags = ((nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
             // I = the block header minus nonce and solution.
             CEquihashInput I{*pblock};
-            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION | ser_flags );
+            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
             ss << I;
 
 #if defined(ENABLE_GPU) &&  defined(USE_CUDA)
