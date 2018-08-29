@@ -20,7 +20,8 @@ class FabcoinDGPBlockSizeSyncTest(FabcoinTestFramework):
 
     def create_block_of_approx_max_size(self, size_in_bytes):
         tip = self.node.getblock(self.node.getbestblockhash())
-        block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(self.node.getblockcount()+1), self.node.getblockcount()+1, tip['time']+1)
+        height = self.node.getblockcount()+1
+        block = create_block(int(self.node.getbestblockhash(), 16), create_coinbase(height), height , tip['time']+1)
         block.hashUTXORoot = int(tip['hashUTXORoot'], 16)
         block.hashStateRoot = int(tip['hashStateRoot'], 16)
 
@@ -85,9 +86,10 @@ class FabcoinDGPBlockSizeSyncTest(FabcoinTestFramework):
         assert_equal(self.node.submitblock(bytes_to_hex_str(block.serialize(with_witness))), None)
         assert_equal(self.node.getblockcount(), current_block_count+1)
         t = time.time()
-        while time.time() < t+5:
+        while time.time() < t+10:
             if self.nodes[0].getbestblockhash() == self.nodes[1].getbestblockhash():
                 break
+            time.sleep(0.5)
         else:
             assert(False)
         assert_equal(self.nodes[0].getbestblockhash(), self.nodes[1].getbestblockhash())
