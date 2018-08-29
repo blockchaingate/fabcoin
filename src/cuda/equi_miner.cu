@@ -71,20 +71,15 @@ static const u32 NBLOCKS = (NHASHES + HASHESPERBLAKE - 1) / HASHESPERBLAKE;
 static const u32 MAXSOLS = 10;
 
 
-
-
-
-
-
-
-
-
-
 void setheader(blake2b_state *ctx, const unsigned char *header, const u32 headerLen, const unsigned char* nce, const u32 nonceLen) 
 {
   uint32_t le_N = WN;
   uint32_t le_K = WK;
   uchar personal[] = "ZcashPoW01230123";
+  
+  if( le_N != 200 || le_K != 9 )
+      memcpy(personal, "FABcoin_", 8);
+
   memcpy(personal+8,  &le_N, 4);
   memcpy(personal+12, &le_K, 4);
   blake2b_param P[1];

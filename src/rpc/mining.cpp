@@ -126,6 +126,7 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 
 static bool cb_cancel() 
 {
+    return false;
 }
 
 static bool cb_validate(std::vector<unsigned char> sols, unsigned char *pblockdata, int thrid)
@@ -242,7 +243,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         else
         {
             // Solve Equihash.
-            int ser_flags = ((nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
+            int ser_flags = ((uint32_t)(nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
             // I = the block header minus nonce and solution.
             CEquihashInput I{*pblock};
             CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );

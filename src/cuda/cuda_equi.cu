@@ -1953,6 +1953,10 @@ static void setheader(blake2b_state *ctx, const char *header, const u32 headerLe
 	uint32_t le_N = WN;
 	uint32_t le_K = WK;
 	uchar personal[] = "ZcashPoW01230123";
+	
+	if( le_N != 200 || le_K != 9 )
+	    memcpy(personal, "FABcoin_", 8);
+	    
 	memcpy(personal + 8, &le_N, 4);
 	memcpy(personal + 12, &le_K, 4);
 	blake2b_param P[1];
