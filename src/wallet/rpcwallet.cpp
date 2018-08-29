@@ -387,7 +387,7 @@ static void SendMoney(CWallet* const pwallet, const CTxDestination& address, CAm
     int nChangePosRet = -1;
     CRecipient recipient = {scriptPubKey, nValue, fSubtractFeeFromAmount};
     vecSend.push_back(recipient);
-    if (!pwallet->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, &coin_control, true, 0, hasSender)) {
+    if (!pwallet->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, coin_control, true, 0, hasSender)) {
         if (!fSubtractFeeFromAmount && nValue + nFeeRequired > curBalance)
             strError = strprintf("Error: This transaction requires a transaction fee of at least %s", FormatMoney(nFeeRequired));
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
@@ -707,17 +707,21 @@ UniValue createcontract(const JSONRPCRequest& request)
         assert(pwallet != NULL);
         pwallet->AvailableCoins(vecOutputs, false, NULL, true);
 
-        for (auto out : vecOutputs) {
+        for (const COutput out : vecOutputs) {
             CTxDestination address;
             const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
             bool fValidAddress = ExtractDestination(scriptPubKey, address);
 
             CFabcoinAddress destAdress(address);
 
-            if (!fValidAddress || senderAddress.Get() != destAdress.Get())
+            if (!fValidAddress || senderAddress.Get() != destAdress.Get() )
                 continue;
 
             coinControl.Select(COutPoint(out.tx->GetHash(), out.i));
+            //LogPrintf("Debug createcontract coinControl.Select %s %d %d\n", out.tx->GetHash().GetHex(), out.tx->tx->vout[out.i].nValue, out.i); 
+
+            //if ( nGasPrice * nGasLimit > out.tx->tx->vout[out.i].nValue ) 
+            //   continue;
 
             break;
         }
@@ -758,17 +762,19 @@ UniValue createcontract(const JSONRPCRequest& request)
     CRecipient recipient = {scriptPubKey, 0, false};
     vecSend.push_back(recipient);
 
-    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, strError, &coinControl, true, nGasFee, fHasSender)) {
+    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, strError, coinControl, true, nGasFee, fHasSender)) {
         if (nFeeRequired > pwallet->GetBalance())
             strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!", FormatMoney(nFeeRequired));
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
+        //throw JSONRPCError(RPC_TYPE_ERROR, "CreateTransaction failed, transaction was not committed!");
     }
 
     CTxDestination txSenderDest;
     ExtractDestination(pwallet->mapWallet[wtx.tx->vin[0].prevout.hash].tx->vout[wtx.tx->vin[0].prevout.n].scriptPubKey, txSenderDest);
 
     if (fHasSender && !(senderAddress.Get() == txSenderDest)) {
-        //LogPrintf("debug fHasSender=%d, senderAddress.Get()=%s, txSenderDest=%s" , fHasSender, senderAddress.Get(), txSenderDest);
+        CFabcoinAddress txd(txSenderDest);
+        LogPrintf("Debug createcontract fHasSender=%d, senderAddress=%s, txSenderDest=%s \n", fHasSender, senderAddress.ToString(),  txd.ToString() );
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender could not be set, transaction was not committed!");
     }
 
@@ -792,7 +798,7 @@ UniValue createcontract(const JSONRPCRequest& request)
         std::vector<unsigned char> contractAddress(20);
         std::vector<unsigned char> txIdAndVout(wtx.GetHash().begin(), wtx.GetHash().end());
         uint32_t voutNumber = 0;
-        for (auto txout : wtx.tx->vout) {
+        for (const CTxOut& txout : wtx.tx->vout) {
             if (txout.scriptPubKey.HasOpCreate()) {
                 std::vector<unsigned char> voutNumberChrs;
                 if (voutNumberChrs.size() < sizeof(voutNumber)) voutNumberChrs.resize(sizeof(voutNumber));
@@ -915,6 +921,8 @@ UniValue sendtocontract(const JSONRPCRequest& request)
         fChangeToSender = request.params[7].get_bool();
     }
 
+    //LogPrintf(" Debug sendtocontract request.params.size()=%d gas(%d*%d) fHasSender=%d(%s) fBroadcast=%d fChangeToSender=%d\n", request.params.size(), nGasLimit, nGasPrice,fHasSender, request.params[5].get_str(),  fBroadcast, fChangeToSender );
+
     CCoinControl coinControl;
 
     if (fHasSender) {
@@ -937,6 +945,10 @@ UniValue sendtocontract(const JSONRPCRequest& request)
                 continue;
 
             coinControl.Select(COutPoint(out.tx->GetHash(), out.i));
+            //LogPrintf("Debug sendtocontract coinControl.Select %s %d %d\n", out.tx->GetHash().GetHex(), out.tx->tx->vout[out.i].nValue, out.i);
+
+            //if ( nGasPrice * nGasLimit > out.tx->tx->vout[out.i].nValue )
+            //   continue;
 
             break;
         }
@@ -978,17 +990,20 @@ UniValue sendtocontract(const JSONRPCRequest& request)
     CRecipient recipient = {scriptPubKey, nAmount, false};
     vecSend.push_back(recipient);
 
-    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, strError, &coinControl, true, nGasFee, fHasSender)) {
+    if (!pwallet->CreateTransaction(vecSend, wtx, reservekey, nFeeRequired, nChangePosRet, strError, coinControl, true, nGasFee, fHasSender)) {
         if (nFeeRequired > pwallet->GetBalance())
             strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!", FormatMoney(nFeeRequired));
-        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+        //throw JSONRPCError(RPC_WALLET_ERROR, strError);
+        throw JSONRPCError(RPC_TYPE_ERROR, "CreateTransaction failed, transaction was not committed!");
     }
 
     CTxDestination txSenderDest;
     ExtractDestination(pwallet->mapWallet[wtx.tx->vin[0].prevout.hash].tx->vout[wtx.tx->vin[0].prevout.n].scriptPubKey, txSenderDest);
 
     if (fHasSender && !(senderAddress.Get() == txSenderDest)) {
-        //LogPrintf("debug fHasSender=%d, senderAddress.Get()=%s, txSenderDest=%s" , fHasSender, senderAddress.Get(), txSenderDest);
+        CFabcoinAddress txd(txSenderDest);
+        LogPrintf("Debug sendtocontract fHasSender=%d, senderAddress=%s, txSenderDest=%s \n", fHasSender, senderAddress.ToString(),  txd.ToString() );
+
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender could not be set, transaction was not committed!");
     }
 
@@ -1549,7 +1564,7 @@ UniValue sendmany(const JSONRPCRequest& request)
     CAmount nFeeRequired = 0;
     int nChangePosRet = -1;
     std::string strFailReason;
-    bool fCreated = pwallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, strFailReason, &coin_control);
+    bool fCreated = pwallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, strFailReason, coin_control);
     if (!fCreated)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
     CValidationState state;

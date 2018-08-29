@@ -67,6 +67,7 @@ struct ChainTxData;
 struct PrecomputedTransactionData;
 struct LockPoints;
 
+/** Minimum gas limit that is allowed in a transaction within a block - prevent various types of tx and mempool spam **/
 static const uint64_t MINIMUM_GAS_LIMIT = 10000;
 static const uint64_t MEMPOOL_MIN_GAS_LIMIT = 22000;
 /** Default for DEFAULT_WHITELISTRELAY. */
@@ -79,9 +80,11 @@ static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 1000;
 
 
 //! -maxtxfee default
-static const CAmount DEFAULT_TRANSACTION_MAXFEE = 1 * COIN; 
+static const CAmount DEFAULT_TRANSACTION_MAXFEE = 1 * COIN;
+//?????? static const CAmount DEFAULT_TRANSACTION_MAXFEE = 0.1 * COIN;
 //! Discourage users to set fees higher than this amount (in lius) per kB
-static const CAmount HIGH_TX_FEE_PER_KB = 0.01 * COIN;
+static const CAmount HIGH_TX_FEE_PER_KB = 1 * COIN;
+//??????? static const CAmount HIGH_TX_FEE_PER_KB = 0.01 * COIN;
 //! -maxtxfee will warn if called with a higher fee than this amount (in lius)
 static const CAmount HIGH_MAX_TX_FEE = 100 * HIGH_TX_FEE_PER_KB;
 /** Default for -limitancestorcount, max number of in-mempool ancestors */
@@ -149,7 +152,7 @@ static const int64_t BLOCK_DOWNLOAD_TIMEOUT_BASE = 1000000;
 /** Additional block download timeout per parallel downloading peer (i.e. 5 min) */
 static const int64_t BLOCK_DOWNLOAD_TIMEOUT_PER_PEER = 500000;
 
-static const bool DEFAULT_RELAYPRIORITY = true;
+//static const int64_t DEFAULT_MAX_TIP_AGE = 30 * 24 * 60 * 60; //fabcoin 30 days in case something causes the chain to get stuck in testnet
 static const int64_t DEFAULT_MAX_TIP_AGE = 24 * 60 * 60;
 /** Maximum age of our tip in seconds for us to be considered current for fee estimation */
 static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
@@ -683,7 +686,7 @@ void DumpMempool();
 /** Load the mempool from disk. */
 bool LoadMempool();
 
-bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, CAmount gasRefunds, CAmount nActualStakeReward, const std::vector<CTxOut>& vouts);
+bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, CAmount gasRefunds, const std::vector<CTxOut>& vouts);
 
 //////////////////////////////////////////////////////// fasc
 std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::vector<unsigned char> opcode, const dev::Address& sender = dev::Address(), uint64_t gasLimit=0);

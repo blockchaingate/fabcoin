@@ -20,8 +20,8 @@ static void AddTx(const CTransaction& tx, const CAmount& nFee, CTxMemPool& pool)
     double dPriority = .0;
     dev::u256 txMinGasPrice = 0;
     pool.addUnchecked(tx.GetHash(), CTxMemPoolEntry(
-                                        MakeTransactionRef(tx), nFee, nTime, dPriority, nHeight,
-                                        inChainInputValue, spendsCoinbase, sigOpCost, lp, CAmount(txMinGasPrice)));
+                                        MakeTransactionRef(tx), nFee, nTime, nHeight,
+                                        spendsCoinbase, sigOpCost, lp));
 }
 
 // Right now this is only testing eviction performance in an extremely small

@@ -22,7 +22,7 @@ class CCoinsViewDBCursor;
 class uint256;
 
 //! Compensate for extra memory peak (x1.5-x1.9) at flush time.
-static constexpr int DB_PEAK_USAGE_FACTOR = 2;
+static constexpr int DB_PEAK_USAGE_FACTOR = 1;
 
 
 //! No need to periodic flush if at least this much space still available.

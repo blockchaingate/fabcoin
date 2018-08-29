@@ -28,23 +28,11 @@
 
 #include <boost/signals2/signal.hpp>
 
-class CAutoFile;
 class CBlockIndex;
 
-inline double AllowFreeThreshold()
-{
-    return COIN * 144 / 250;
-}
-
-inline bool AllowFree(double dPriority)
-{
-    // Large (in bytes) low-priority (new, small-coin) transactions
-    // need a fee.
-    return dPriority > AllowFreeThreshold();
-}
-
 /** Fake height value used in Coin to signify they are only in the memory pool (since 0.8) */
-static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
+static const uint32_t MEMPOOL_HEIGHT = 0x0FFFFFFF;
+//??? static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
 
 struct LockPoints
 {
@@ -81,12 +69,9 @@ private:
     CTransactionRef tx;
     CAmount nFee;              //!< Cached to avoid expensive parent-transaction lookups
     size_t nTxWeight;          //!< ... and avoid recomputing tx weight (also used for GetTxSize())
-    size_t nModSize;           //!< ... and modified size for priority
     size_t nUsageSize;         //!< ... and total memory usage
     int64_t nTime;             //!< Local time when entering the mempool
-    double entryPriority;      //!< Priority when entering the mempool
     unsigned int entryHeight;  //!< Chain height when entering the mempool
-    CAmount inChainInputValue; //!< Sum of all txin values that are already in blockchain
     bool spendsCoinbase;       //!< keep track of transactions that spend a coinbase
     int64_t sigOpCost;         //!< Total sigop cost
     int64_t feeDelta;          //!< Used for determining the priority of the transaction for mining in a block
@@ -108,19 +93,14 @@ private:
 
 public:
     CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
-                    int64_t _nTime, double _entryPriority, unsigned int _entryHeight,
-                    CAmount _inChainInputValue, bool spendsCoinbase,
+                    int64_t _nTime, unsigned int _entryHeight,
+                    bool spendsCoinbase,
                     int64_t nSigOpsCost, LockPoints lp, CAmount _nMinGasPrice = 0);
 
     CTxMemPoolEntry(const CTxMemPoolEntry& other);
 
     const CTransaction& GetTx() const { return *this->tx; }
     CTransactionRef GetSharedTx() const { return this->tx; }
-    /**
-     * Fast calculation of lower bound of current priority as update
-     * from entry priority. Only inputs that were originally in-chain will age.
-     */
-    double GetPriority(unsigned int currentHeight) const;
     const CAmount& GetFee() const { return nFee; }
     size_t GetTxSize() const;
     size_t GetTxWeight() const { return nTxWeight; }
@@ -573,13 +553,10 @@ private:
 
 public:
     indirectmap<COutPoint, const CTransaction*> mapNextTx;
-    std::map<uint256, std::pair<double, CAmount> > mapDeltas;
+    std::map<uint256, CAmount> mapDeltas;
 
     /** Create a new CTxMemPool.
      */
-    //CTxMemPool(const CFeeRate& _minReasonableRelayFee);
-    //~CTxMemPool();
-
     CTxMemPool(CBlockPolicyEstimator* estimator = nullptr);
 
     /**
@@ -617,8 +594,6 @@ public:
     bool HasNoInputsOf(const CTransaction& tx) const;
 
     /** Affect CreateNewBlock prioritisation of transactions */
-    void PrioritiseTransaction(const uint256 hash, const std::string strHash, double dPriorityDelta, const CAmount& nFeeDelta);
-    void ApplyDeltas(const uint256 hash, double &dPriorityDelta, CAmount &nFeeDelta) const;
     void PrioritiseTransaction(const uint256& hash, const CAmount& nFeeDelta);
     void ApplyDelta(const uint256 hash, CAmount &nFeeDelta) const;
     void ClearPrioritisation(const uint256 hash);
@@ -710,28 +685,6 @@ public:
     TxMempoolInfo info(const uint256& hash) const;
     std::vector<TxMempoolInfo> infoAll() const;
 
-    /** Estimate fee rate needed to get into the next nBlocks
-     *  If no answer can be given at nBlocks, return an estimate
-     *  at the lowest number of blocks where one can be given
-     */
-    CFeeRate estimateSmartFee(int nBlocks, int *answerFoundAtBlocks = NULL) const;
-
-    /** Estimate fee rate needed to get into the next nBlocks */
-    CFeeRate estimateFee(int nBlocks) const;
-
-    /** Estimate priority needed to get into the next nBlocks
-     *  If no answer can be given at nBlocks, return an estimate
-     *  at the lowest number of blocks where one can be given
-     */
-    double estimateSmartPriority(int nBlocks, int *answerFoundAtBlocks = NULL) const;
-
-    /** Estimate priority needed to get into the next nBlocks */
-    double estimatePriority(int nBlocks) const;
-    
-    /** Write/Read estimates to disk */
-    bool WriteFeeEstimates(CAutoFile& fileout) const;
-    bool ReadFeeEstimates(CAutoFile& filein);
-
     size_t DynamicMemoryUsage() const;
 
     boost::signals2::signal<void (CTransactionRef)> NotifyEntryAdded;
@@ -795,10 +748,9 @@ protected:
 public:
     CCoinsViewMemPool(CCoinsView* baseIn, const CTxMemPool& mempoolIn);
     bool GetCoin(const COutPoint &outpoint, Coin &coin) const override;
-    bool HaveCoin(const COutPoint &outpoint) const;
+    bool HaveCoin(const COutPoint &outpoint) const override;
 };
 
-typedef std::pair<double, CTxMemPool::txiter> TxCoinAgePriority;
 /**
  * DisconnectedBlockTransactions
 
@@ -887,17 +839,6 @@ struct DisconnectedBlockTransactions {
     {
         cachedInnerUsage = 0;
         queuedTx.clear();
-    }
-};
-
-
-struct TxCoinAgePriorityCompare
-{
-    bool operator()(const TxCoinAgePriority& a, const TxCoinAgePriority& b)
-    {
-        if (a.first == b.first)
-            return CompareTxMemPoolEntryByScore()(*(b.second), *(a.second)); //Reverse order to make sort less than
-        return a.first < b.first;
     }
 };
 

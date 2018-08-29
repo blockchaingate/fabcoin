@@ -19,9 +19,8 @@
 
 class CBlockIndex;
 class CChainParams;
-class CReserveKey;
+
 class CScript;
-class CWallet;
 
 namespace Consensus { struct Params; };
 
@@ -81,7 +80,7 @@ struct modifiedentry_iter {
     }
 };
 
-// This matches the calculation in CompareTxMemPoolEntryByAncestorFee,
+// This related to the calculation in CompareTxMemPoolEntryByAncestorFeeOrGasPrice,
 // except operating on CTxMemPoolModifiedEntry.
 // TODO: refactor to avoid duplication of this logic.
 struct CompareModifiedEntry {
@@ -157,7 +156,7 @@ typedef boost::multi_index_container<
             modifiedentry_iter,
             CompareCTxMemPoolIter
         >,
-        // sorted by modified ancestor fee rate
+        // sorted by modified ancestor fee rate or gas price
         boost::multi_index::ordered_non_unique<
             // Reuse same tag from CTxMemPool's similar index
             boost::multi_index::tag<ancestor_score_or_gas_price>,
@@ -195,13 +194,11 @@ private:
 
     // Configuration parameters for the block size
     bool fIncludeWitness;
-    unsigned int nBlockMaxWeight, nBlockMaxSize;
-    bool fNeedSizeAccounting;
+    unsigned int nBlockMaxWeight;
     CFeeRate blockMinFeeRate;
 
     // Information on the current status of the block
     uint64_t nBlockWeight;
-    uint64_t nBlockSize;
     uint64_t nBlockTx;
     uint64_t nBlockSigOpsCost;
     CAmount nFees;
@@ -211,11 +208,21 @@ private:
     int nHeight;
     int64_t nLockTimeCutoff;
     const CChainParams& chainparams;
-    // Variables used for addPriorityTxs
-    int lastFewTxs;
-    bool blockFinished;
 
-///////////////////////////////////////////// // fasc
+public:
+    struct Options {
+        Options();
+        size_t nBlockMaxWeight;
+        size_t nBlockMaxSize;
+        CFeeRate blockMinFeeRate;
+    };
+
+    BlockAssembler(const CChainParams& params);
+    BlockAssembler(const CChainParams& params, const Options& options);
+
+    /**  Construct a new block template with coinbase to scriptPubKeyIn */
+    //??? std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx=true);
+///////////////////////////////////////////// // fabcoin
     ByteCodeExecResult bceResult;
     uint64_t minGasPrice = 1;
     uint64_t hardBlockGasLimit;
@@ -229,20 +236,8 @@ private:
     //When GetAdjustedTime() exceeds this, no more transactions will attempt to be added
     int32_t nTimeLimit;
 
-public:
-    struct Options {
-        Options();
-        size_t nBlockMaxWeight;
-        size_t nBlockMaxSize;
-        CFeeRate blockMinFeeRate;
-    };
-
-    BlockAssembler(const CChainParams& params);
-    BlockAssembler(const CChainParams& params, const Options& options);
-
     /** Construct a new block template with coinbase to scriptPubKeyIn */
     std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx=true, int64_t* pTotalFees = 0, int32_t nTime=0, int32_t nTimeLimit=0);
-
 
 private:
     // utility functions
@@ -254,25 +249,13 @@ private:
     bool AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64_t minGasPrice);
 
     // Methods for how to add transactions to a block.
-    /** Add transactions based on tx "priority" */
-    void addPriorityTxs(uint64_t minGasPrice);
-    /** Add transactions based on feerate including unconfirmed ancestors */
-    void addPackageTxs(uint64_t minGasPrice);
-
-    // helper function for addPriorityTxs
-    /** Test if tx will still "fit" in the block */
-    bool TestForBlock(CTxMemPool::txiter iter);
-    /** Test if block is already full - returns true if block is fuller than allowed by consensus  */
-    bool CheckBlockBeyondFull();
-    /** Rebuild the coinbase/coinstake transaction to account for new gas refunds **/
-    void RebuildRefundTransaction();
-    /** Test if tx still has unconfirmed parents not yet in block */
-    bool isStillDependent(CTxMemPool::txiter iter);
-    // Methods for how to add transactions to a block.
     /** Add transactions based on feerate including unconfirmed ancestors
       * Increments nPackagesSelected / nDescendantsUpdated with corresponding
       * statistics from the package selection (for logging statistics). */
-    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated);
+    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice);
+
+    /** Rebuild the coinbase/coinstake transaction to account for new gas refunds **/
+    void RebuildRefundTransaction();
 
     // helper functions for addPackageTxs()
     /** Remove confirmed (inBlock) entries from given set */
