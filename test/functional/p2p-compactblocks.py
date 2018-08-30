@@ -126,6 +126,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block2 = self.build_block_on_tip(self.nodes[0])
         block2.vtx.append(tx)
         block2.hashMerkleRoot = block2.calc_merkle_root()
+        block2.nHeihgt=self.nodes[0].getblockcount()+1
         block2.solve()
         self.test_node.send_and_ping(msg_block(block2))
         assert_equal(int(self.nodes[0].getbestblockhash(), 16), block2.sha256)
@@ -426,6 +427,7 @@ class CompactBlocksTest(FabcoinTestFramework):
             block.vtx.append(tx)
 
         block.hashMerkleRoot = block.calc_merkle_root()
+        block.nHeihgt=self.nodes[0].getblockcount()+1
         block.solve()
         return block
 
@@ -705,6 +707,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block = self.build_block_with_transactions(node, utxo, 5)
         del block.vtx[3]
         block.hashMerkleRoot = block.calc_merkle_root()
+        block.nHeihgt=self.nodes[0].getblockcount()+1
         if use_segwit:
             # If we're testing with segwit, also drop the coinbase witness,
             # but include the witness commitment.

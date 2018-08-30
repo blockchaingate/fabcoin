@@ -170,14 +170,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     if (chainparams.MineBlocksOnDemand())
         pblock->nVersion = gArgs.GetArg("-blockversion", pblock->nVersion);
 
-    //???pblock->nTime = GetAdjustedTime();
-
     if ( txProofTime == 0 ) {
-       pblock->nTime = GetAdjustedTime();
+       txProofTime = GetAdjustedTime();
     }
-    
     pblock->nTime = txProofTime;
-
+    UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
 
     const int64_t nMedianTimePast = pindexPrev->GetMedianTimePast();
@@ -262,7 +259,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
     pblock->nHeight        = pindexPrev->nHeight + 1;
     memset(pblock->nReserved, 0, sizeof(pblock->nReserved));
-    UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
 
     arith_uint256 nonce;

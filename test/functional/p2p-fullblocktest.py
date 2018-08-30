@@ -184,7 +184,6 @@ class FullBlockTest(ComparisonTestFramework):
         save_spendable_output()
         yield accepted()
 
-
         # Now we need that block to mature so we can spend the coinbase.
         test = TestInstance(sync_every_block=True)
         for i in range(98-15+COINBASE_MATURITY):
@@ -197,8 +196,6 @@ class FullBlockTest(ComparisonTestFramework):
         out = []
         for i in range(99):
             out.append(get_spendable_output())
-
-
 
         # Start by building a couple of blocks on top (which output is spent is
         # in parentheses):
@@ -625,6 +622,7 @@ class FullBlockTest(ComparisonTestFramework):
         b44.nBits = 0x207fffff
         b44.vtx.append(coinbase)
         b44.hashMerkleRoot = b44.calc_merkle_root()
+        b44.nHeight=height
         b44.solve()
         self.tip = b44
         self.block_heights[b44.sha256] = height
@@ -632,11 +630,13 @@ class FullBlockTest(ComparisonTestFramework):
         yield accepted()
 
         # A block with a non-coinbase as the first tx
+        height = self.block_heights[self.tip.sha256] + 1
         non_coinbase = create_tx(out[15].tx, out[15].n, 1)
         b45 = CBlock()
         b45.nTime = self.tip.nTime + 1
         b45.hashPrevBlock = self.tip.sha256
         b45.nBits = 0x207fffff
+        b45.nHeight=height
         b45.vtx.append(non_coinbase)
         b45.hashMerkleRoot = b45.calc_merkle_root()
         b45.calc_sha256()
@@ -654,6 +654,7 @@ class FullBlockTest(ComparisonTestFramework):
         b46.nBits = 0x207fffff
         b46.vtx = []
         b46.hashMerkleRoot = 0
+        b46.nHeight=self.block_heights[b44.sha256]+1
         b46.solve()
         self.block_heights[b46.sha256] = self.block_heights[b44.sha256]+1
         self.tip = b46
