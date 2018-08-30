@@ -1203,8 +1203,8 @@ bool ReadBlockFromDisk(Block& block, const CDiskBlockPos& pos, const Consensus::
 
     // Check Equihash solution
     bool postfork = ( (uint32_t)block.nHeight >= (uint32_t)consensusParams.FABHeight );
-    LogPrintf("Debug ReadBlockFromDisk nHeight=%d %d %d ", block.nHeight, consensusParams.FABHeight, postfork );
     if (postfork && !CheckEquihashSolution(&block, Params())) {
+        LogPrintf("Debug nHeight=%d FABHeight=%d postfork=%d \n", block.nHeight, consensusParams.FABHeight, postfork );
         return error("ReadBlockFromDisk: Errors in block header at %s (bad Equihash solution)", pos.ToString());
     }
     // Check the header 
@@ -2270,11 +2270,11 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime3 - nTime2), 0.001 * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * 0.000001);
 
-    if(nFees < gasRefunds) { //make sure it won't overflow
+    if (nFees < gasRefunds) { //make sure it won't overflow
         return state.DoS(1000, error("ConnectBlock(): Less total fees than gas refund fees"), REJECT_INVALID, "bad-blk-fees-greater-gasrefund");
     }
 
-    if(!CheckReward(block, state, pindex->nHeight, chainparams.GetConsensus(), nFees, gasRefunds, checkVouts))
+    if (!CheckReward(block, state, pindex->nHeight, chainparams.GetConsensus(), nFees, gasRefunds, checkVouts))
         return state.DoS(100,error("ConnectBlock(): Reward check failed"));
 
     if (!control.Wait())
@@ -2289,7 +2289,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
 
     //If this error happens, it probably means that something with AAL created transactions didn't match up to what is expected
-    if((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
+    if ((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
     {
         LogPrintf("Actual block data does not match block expected by AAL\n");
 
@@ -2717,6 +2717,7 @@ bool CheckMinGasPrice(std::vector<EthTransactionParams>& etps, const uint64_t& m
 
 bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, CAmount gasRefunds, const std::vector<CTxOut>& vouts)
 {
+
     std::vector<CTxOut> vTempVouts = block.vtx[0]->vout;
     std::vector<CTxOut>::iterator it;
     for (size_t i = 0; i < vouts.size(); i++) {

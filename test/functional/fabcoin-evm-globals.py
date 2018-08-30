@@ -30,7 +30,7 @@ class FabcoinEVMGlobalsTest(FabcoinTestFramework):
     def verify_evm_globals_test(self, use_staking=False):
         sender = self.node.getnewaddress()
         sender_pkh = p2pkh_to_hex_hash(sender)
-        self.node.sendtoaddress(sender, 10)
+        self.node.sendtoaddress(sender, 1)
         self.node.generate(1)
         """
             9950fc69 blockblockhash(uint256)

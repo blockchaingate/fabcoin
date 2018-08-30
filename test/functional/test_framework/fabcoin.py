@@ -166,7 +166,10 @@ class DGPState:
 
     def send_add_address_proposal(self, proposal_address, type1, sender):
         self.node.sendtoaddress(sender, 1)
+        #self.node.setaccount(sender, sender)
+        #print( 'before sender: ' , sender, ' ',    self.node.getbalance(sender))
         self.node.sendtocontract(self.contract_address, self.abiAddAddressProposal + proposal_address.zfill(64) + hex(type1)[2:].zfill(64), 0, 2000000, FABCOIN_MIN_GAS_PRICE_STR, sender)
+        #print( 'after sender: ' , sender, ' ',    self.node.getbalance(sender))
 
     def send_remove_address_proposal(self, proposal_address, type1, sender):
         self.node.sendtoaddress(sender, 1)

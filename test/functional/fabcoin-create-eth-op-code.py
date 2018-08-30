@@ -157,7 +157,7 @@ class FabcoinCreateEthOpCodeTest(FabcoinTestFramework):
 
     def check_suicide_test(self):
         sender = self.node.getnewaddress()
-        self.node.sendtoaddress(sender, 1)
+        self.node.sendtoaddress(sender, 2)
         self.node.generate(1)
         self.node.sendtocontract(self.test_contract_address, "83197ef0", 0, 1000000, "0.000001", sender)
         self.node.generate(1)
@@ -168,16 +168,16 @@ class FabcoinCreateEthOpCodeTest(FabcoinTestFramework):
         self.node = self.nodes[0]
         self.node.generate(10+COINBASE_MATURITY)
         
-        print('Checking that contracts cannot be created from other contracts with a default value')
+        #print('Checking that contracts cannot be created from other contracts with a default value')
         self.create_contract_with_value_from_contract_test()
         
-        print('Checking that contracts can be created from other contract without a default value')
+        #print('Checking that contracts can be created from other contract without a default value')
         self.create_contract_without_value_from_contract_test()
-        print('Checking that value transfers via op_call and p2pkh works as expected for the created "subcontract"')
+        #print('Checking that value transfers via op_call and p2pkh works as expected for the created "subcontract"')
         self.check_value_transfers_from_and_to_contract_test()
-        print('Checking that calls to other contracts works as expected for the created "subcontract"')
+        #print('Checking that calls to other contracts works as expected for the created "subcontract"')
         self.check_calls_to_contract_test()
-        print('Checking that suicides works as expected for the created "subcontract"')
+        #print('Checking that suicides works as expected for the created "subcontract"')
         self.check_suicide_test()
 
 if __name__ == '__main__':
