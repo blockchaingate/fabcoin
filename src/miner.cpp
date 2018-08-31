@@ -29,7 +29,7 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 
-#if USE_CUDA
+#ifdef USE_CUDA
 #include "cuda/eqcuda.hpp"
 #endif
 
@@ -837,8 +837,11 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
             CBlock *pblock = &pblocktemplate->block;
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
 
-            //LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) %d@(%s-%u-%u)  \n", pblock->vtx.size(),
-            //    ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), thr_id, conf.useGPU?"GPU":"CPU", conf.currentPlatform, conf.currentDevice );
+            n = chainparams.EquihashN(pblock->nHeight);
+            k = chainparams.EquihashK(pblock->nHeight);
+
+            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
+                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
 
             headerlen = (pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
             //
@@ -1030,7 +1033,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 //    c.disconnect();
 }
 
-#ifdef ENABLE_GPU
+#if defined(ENABLE_GPU) &&  defined(USE_CUDA)
+
 static bool cb_cancel() 
 {
     return g_cancelSolver;
@@ -1066,9 +1070,7 @@ static bool cb_validate(std::vector<unsigned char> sols, unsigned char *pblockda
     g_cs.unlock();
     return ret;
 }
-#endif
 
-#if USE_CUDA
 void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, int thr_id)
 {
     static const unsigned int nInnerLoopCount = 0x0FFFFFFF;
@@ -1090,30 +1092,10 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
     unsigned int n = chainparams.EquihashN();
     unsigned int k = chainparams.EquihashK();
 
-#ifdef ENABLE_GPU
     uint8_t * header = NULL;
     eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
-    try
-    {
-        std::lock_guard<std::mutex> lock{g_cs};
-        g_solver = new eq_cuda_context<CONFIG_MODE_1>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
-    }
-    catch (const std::runtime_error &e)
-    {
-        std::lock_guard<std::mutex> lock{g_cs};
-        g_cancelSolver = false;
-        return;
-    }
-    LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
+    eq_cuda_context210_9 *g_solver210_9 = NULL;
     header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
-#endif
-
-    //    boost::signals2::connection c = uiInterface.NotifyBlockTip.connect(
-    //        [&m_cs, &cancelSolver](const uint256& hashNewTip) mutable {
-    //            std::lock_guard<std::mutex> lock{m_cs};
-    //            cancelSolver = true;
-    //    }
-    //    );
 
     try {
         // Throw an error if no script was provided.  This can happen
@@ -1148,11 +1130,50 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             }
             CBlock *pblock = &pblocktemplate->block;
             IncrementExtraNonce(pblock, pindexPrev, nExtraNonce);
-
-            //LogPrintf("FabcoinMinerCuda mining   with %u transactions in block (%u bytes) @(%s-%d)  \n", pblock->vtx.size(),
-            //    ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU", thr_id );
+            n = chainparams.EquihashN(pblock->nHeight );
+            k = chainparams.EquihashK(pblock->nHeight );
+            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  n=%d, k=%d\n", pblock->vtx.size(),
+                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU", n, k );
 
             headerlen = (pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
+
+            try
+            {
+                if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight)   // before fork
+                {
+                    if( g_solver210_9 ) 
+                    {
+                        delete g_solver210_9;
+                        g_solver210_9 = NULL;
+                    }
+
+                    if( !g_solver )
+                    {
+                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                    }
+                }
+                else // after fork
+                {
+                    if( g_solver ) 
+                    {
+                        delete g_solver;
+                        g_solver = NULL;
+                    }
+
+                    if( !g_solver210_9 )
+                    {
+                        g_solver210_9 = new eq_cuda_context210_9(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                    }
+                }                
+            }
+            catch (const std::runtime_error &e)
+            {
+                LogPrint(BCLog::POW, "failed to create cuda context\n");
+                std::lock_guard<std::mutex> lock{g_cs};
+                g_cancelSolver = false;
+                return;
+            }
+
             //
             // Search
             //
@@ -1167,23 +1188,29 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             g_nSols[thr_id] = 0;
             auto t = std::chrono::high_resolution_clock::now();
             while (true) 
-            {
+            {                
                 // I = the block header minus nonce and solution.
                 CEquihashInput I{*pblock};
                 CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                 ss << I;
 
                 memcpy(header, &ss[0], ss.size());
-
                 for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
-                    header[ headerlen -32 + i] = pblock->nNonce.begin()[i];
-
-                // (x_1, x_2, ...) = A(I, V, n, k)
-                //LogPrint(BCLog::POW, "Running Equihash solver in %u %u %u with nNonce = %s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString());
-
+                    header[headerlen-32 + i] = pblock->nNonce.begin()[i];
 
                 try {
-                    bool found = g_solver->solve((unsigned char *)pblock, header, headerlen);
+                    bool found = false;
+
+                    if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight )   // before fork
+                    {
+                        if( g_solver )
+                            found = g_solver->solve((unsigned char *)pblock, header, headerlen);
+                    }
+                    else
+                    {
+                        if( g_solver210_9 )
+                            found = g_solver210_9->solve((unsigned char *)pblock, header, headerlen);                        
+                    }
                     if (found)
                         break;
                 } catch (EhSolverCancelledException&) {
@@ -1205,7 +1232,6 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                 if (pindexPrev != chainActive.Tip())
                     break;
 
-                //LogPrint(BCLog::POW, "solver... nNonce = %s -> Hash = %s \n", pblock->nNonce.ToString(), pblock->GetHash().GetHex());
                 // Update nNonce and nTime
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
                 ++nCounter;
@@ -1231,29 +1257,36 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
     }
     catch (const boost::thread_interrupted&)
     {
-        LogPrintf("FabcoinMinerCuda terminated\n");
-#ifdef ENABLE_GPU
-        delete g_solver;
+        LogPrintf("FabcoinMiner terminated\n");
+        if( g_solver)
+            delete g_solver;
+
+        if( g_solver210_9 )
+            delete g_solver210_9;
+
         free(header);
-#endif
         throw;
     }
     catch (const std::runtime_error &e)
     {
-        LogPrintf("FabcoinMinerCuda runtime error: %s\n", e.what());
-#ifdef ENABLE_GPU
-        delete g_solver;
+        LogPrintf("FabcoinMiner runtime error: %s\n", e.what());
+        if( g_solver)
+            delete g_solver;
+
+        if( g_solver210_9 )
+            delete g_solver210_9;
+
         free(header);
-#endif
         return;
     }
 
-#ifdef ENABLE_GPU
-    delete g_solver;
-    free(header);
-#endif
+    if( g_solver)
+        delete g_solver;
 
-    //    c.disconnect();
+    if( g_solver210_9 )
+        delete g_solver210_9;
+
+    free(header);
 }
 #endif
 
