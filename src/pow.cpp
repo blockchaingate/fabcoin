@@ -72,8 +72,8 @@ unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTi
 bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& params)
 {
 
-    unsigned int n = params.EquihashN();
-    unsigned int k = params.EquihashK();
+    unsigned int n = params.EquihashN(pblock->nHeight );
+    unsigned int k = params.EquihashK(pblock->nHeight );
 
     // Hash state
     crypto_generichash_blake2b_state state;

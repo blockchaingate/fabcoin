@@ -249,7 +249,7 @@ libfabcoin_server_a_SOURCES += $(libgpusolver_SOURCES)
 endif
 
 if USE_CUDA
-libcuda_SOURCES = cuda/cuda.cpp cuda/blake2/blake2bx.cpp cuda/cuda_equi.cu 
+libcuda_SOURCES = cuda/cuda_equi.cu cuda/blake2b.cu cuda/blake2/blake2bx.cpp cuda/equi_miner.cu
 libfabcoin_server_a_SOURCES += $(libcuda_SOURCES)
 endif
 
@@ -744,6 +744,10 @@ if USE_CUDA
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=128 -o $@ -c $<
 
 cuda/cuda_equi.o: cuda/cuda_equi.cu
+	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
+cuda/equi_miner.o: cuda/equi_miner.cu
+	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
+cuda/blake2b.o: cuda/blake2b.cu
 	$(NVCC) $(nvcc_FLAGS) --maxrregcount=64 -o $@ -c $<
 endif
 
