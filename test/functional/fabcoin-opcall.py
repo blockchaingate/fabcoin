@@ -49,9 +49,9 @@ class OpCallTest(FabcoinTestFramework):
         while i < num_txs and len(unspents) > 0:
             # Select as input a tx which has at least 5 fabcoin spendable
             for tx_i in range(len(unspents)):
-                print(int(unspents[tx_i]['amount']*COIN), 1000000*FABCOIN_MIN_GAS_PRICE, unspents[tx_i]['spendable'])
+                #print(int(unspents[tx_i]['amount']*COIN), 1000000*FABCOIN_MIN_GAS_PRICE, unspents[tx_i]['spendable'])
                 if int(unspents[tx_i]['amount']*COIN) == 1000000*FABCOIN_MIN_GAS_PRICE and unspents[tx_i]['spendable']:
-                    print('FOUND')
+                    #print('FOUND')
                     break
             else:
                 assert(False)
