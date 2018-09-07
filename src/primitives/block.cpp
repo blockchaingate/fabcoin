@@ -84,16 +84,12 @@ std::string CBlock::ToString() const
 
 bool _IsSupportContract(int nVersion, int nHeight)
 {
-    if ( nVersion == 5 )
-       return true;
-
-    if ( nHeight == 0 )
-       return false;
-
-    bool fRegTest =  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
-    if ( fRegTest )
-       return true;
-
+    //genesis block
+    if ( nHeight == 0 ) {
+       if ( nVersion == 5 )
+          return true;
+       else return false;
+    }
 
     return ((uint32_t) nHeight >= (uint32_t) Params().GetConsensus().ContractHeight );
 }
@@ -103,5 +99,5 @@ bool _IsLegacyFormat( int nHeight)
     if ( nHeight == 0 )
        return false;
 
-    return  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
+    return  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::UNITTEST );
 }
