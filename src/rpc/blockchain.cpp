@@ -1042,6 +1042,9 @@ UniValue callcontract(const JSONRPCRequest& request)
     std::string strAddr = request.params[0].get_str();
     std::string data = request.params[1].get_str();
 
+    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+       throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
+
     if(data.size() % 2 != 0 || !CheckHex(data))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
 
@@ -1481,6 +1484,9 @@ UniValue searchlogs(const JSONRPCRequest& request)
     if(!fLogEvents)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
+    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+       throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
+
     int curheight = 0;
 
     LOCK(cs_main);
@@ -1592,6 +1598,9 @@ UniValue listcontracts(const JSONRPCRequest& request)
         );
 
     LOCK(cs_main);
+
+    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+       throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     int start=1;
     if (request.params.size() > 0){

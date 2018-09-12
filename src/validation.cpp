@@ -686,8 +686,12 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         CAmount nValueOut = tx.GetValueOut();
         CAmount nFees = nValueIn-nValueOut;
         dev::u256 txMinGasPrice = 0;
-        //////////////////////////////////////////////////////////// // fasc
+        ////////////////////////////////////////////////////////////// fasc
         if(tx.HasCreateOrCall()){
+
+            if ( (uint32_t)chainActive.Tip()->nHeight < (uint32_t)Params().GetConsensus().ContractHeight  ) {
+                return state.DoS(1, false, REJECT_INVALID, "bad-txns-invalid-contract-before-fork");
+            }
 
             if(!CheckSenderScript(view, tx)){
                 return state.DoS(1, false, REJECT_INVALID, "bad-txns-invalid-sender-script");
@@ -769,6 +773,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
             }
         }
         ////////////////////////////////////////////////////////////
+
         // nModifiedFees includes any fee deltas from PrioritiseTransaction
         CAmount nModifiedFees = nFees;
         pool.ApplyDelta(hash, nModifiedFees);
@@ -1928,7 +1933,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
     // Move this check from CheckBlock to ConnectBlock as it depends on DGP values
     auto params = chainparams.GetConsensus();
 
-    LogPrintf("Debug Block=%s", block.ToString());
+    //LogPrintf("Debug Block=%s", block.ToString());
 
     if (block.vtx.empty() || block.vtx.size() > dgpMaxBlockSize || ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > dgpMaxBlockSize) // fabcoin
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-length", false, "size limits failed");
@@ -1953,10 +1958,12 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
         return true;
     }
 
+    ////////////////////////////////////////////////////////////////////////   fasc
     // State is filled in by UpdateHashProof, this is an addional step from fasc
     if (!UpdateHashProof(block, state, chainparams.GetConsensus(), pindex, view)) {
         return error("%s: ConnectBlock(): %s", __func__, state.GetRejectReason().c_str());
     }
+    ////////////////////////////////////////////////////////////////////////   
 
     bool fScriptChecks = true;
     if (!hashAssumeValid.IsNull()) {
@@ -2133,6 +2140,9 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             checkBlock.vtx.push_back(block.vtx[i]);
         }
         if (tx.HasCreateOrCall() && !hasOpSpend) {
+            if ( (uint32_t) chainActive.Tip()->nHeight < (uint32_t) Params().GetConsensus().ContractHeight  ) {
+                return state.DoS(1, false, REJECT_INVALID, "bad-txns-invalid-contract-before-fork");
+            }
 
             if (!CheckSenderScript(view, tx)) {
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-invalid-sender-script");
@@ -3738,8 +3748,8 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
 {
     // Check Equihash solution is valid
     bool postfork = (uint32_t)block.nHeight >= (uint32_t)consensusParams.FABHeight;
-    LogPrintf("Debug CheckBlockHeader nHeight=%d %d %d ", block.nHeight, consensusParams.FABHeight, postfork );
-    LogPrintf("Debug blockheader=%s", block.ToString());
+    //LogPrintf("Debug CheckBlockHeader nHeight=%d %d %d ", block.nHeight, consensusParams.FABHeight, postfork );
+    //LogPrintf("Debug blockheader=%s", block.ToString());
 
     if (fCheckPOW && postfork && !CheckEquihashSolution(&block, Params())) {
         LogPrintf("CheckBlockHeader(): Equihash solution invalid at height %d\n", block.nHeight);

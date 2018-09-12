@@ -460,6 +460,9 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             CTxOut out(0, CScript() << OP_RETURN << data);
             rawTx.vout.push_back(out);
         } else if (name_ == "contract") {
+            if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+               throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, after block ") + std::to_string(Params().GetConsensus().ContractHeight ));
+
             // Get the call object
             UniValue Contract = sendTo[name_];
             if(!Contract.isObject())
