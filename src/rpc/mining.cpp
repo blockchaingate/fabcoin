@@ -200,7 +200,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
 #if defined(ENABLE_GPU) &&  defined(USE_CUDA)
     eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
-    eq_cuda_context210_9 *g_solver210_9 = NULL;
+    eq_cuda_context1847 *g_solver184_7 = NULL;
     if( conf.useGPU )
     {        
         header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
@@ -254,10 +254,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             {
                 if( ser_flags & SERIALIZE_BLOCK_NO_CONTRACT ) // before fork
                 {
-                    if( g_solver210_9 ) 
+                    if( g_solver184_7 ) 
                     {
-                        delete g_solver210_9;
-                        g_solver210_9 = NULL;
+                        delete g_solver184_7;
+                        g_solver184_7 = NULL;
                     }
 
                     if( !g_solver )
@@ -273,9 +273,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                         g_solver = NULL;
                     }
 
-                    if( !g_solver210_9 )
+                    if( !g_solver184_7 )
                     {
-                        g_solver210_9 = new eq_cuda_context210_9(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver184_7 = new eq_cuda_context1847(1, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }                
                 memcpy(header, &ss[0], ss.size());
@@ -330,8 +330,8 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                     }
                     else
                     {
-                        if( g_solver210_9 )
-                            found = g_solver210_9->solve((unsigned char *)pblock, header, headerlen);
+                        if( g_solver184_7 )
+                            found = g_solver184_7->solve((unsigned char *)pblock, header, headerlen);
                     }
 #endif
                 }
@@ -367,8 +367,8 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         if( g_solver)
             delete g_solver;
 
-        if( g_solver210_9 )
-            delete g_solver210_9;
+        if( g_solver184_7 )
+            delete g_solver184_7;
 
         free(header);
 #endif

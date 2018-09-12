@@ -70,10 +70,10 @@ struct packer_cantor;
 typedef bool (*fn_cancel)();
 typedef bool (*fn_validate)(std::vector<unsigned char>, unsigned char *, int);
 
-#define PROOFSIZE1 (1<<9)
+#define PROOFSIZE1 (1<<7)
 typedef u32 proof[PROOFSIZE1];
 struct equi210_9;
-struct eq_cuda_context210_9
+struct eq_cuda_context1847
 {
 	int threadsperblock;
 	int totalblocks;
@@ -88,14 +88,14 @@ struct eq_cuda_context210_9
     fn_validate m_fnValidate;
     fn_cancel m_fnCancel;
 
-	eq_cuda_context210_9(int thrid, int devid, fn_validate validate, fn_cancel cancel);
-	~eq_cuda_context210_9();
+	eq_cuda_context1847(int thrid, int devid, fn_validate validate, fn_cancel cancel);
+	~eq_cuda_context1847();
 
     bool solve(unsigned char *pblock, unsigned char *header, unsigned int headerlen);
 };
 
 
-#define MAXREALSOLS 9
+#define MAXREALSOLS 10
 struct scontainerreal {
     u32 sols[MAXREALSOLS][512];
     u32 nsols;
