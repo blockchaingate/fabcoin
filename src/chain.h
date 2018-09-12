@@ -13,6 +13,12 @@
 #include "uint256.h"
 #include "util.h"
 
+///////////////////////////////////////////// // fasc
+#include <libdevcore/SHA3.h>
+#include <libdevcore/RLP.h>
+#include "arith_uint256.h"
+/////////////////////////////////////////////
+
 #include <vector>
 
 /**
@@ -251,9 +257,9 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = uint256();
-        hashStateRoot  = uint256(); // fasc
-        hashUTXORoot   = uint256(); // fasc
-      //nMoneySupply = 0;
+        hashStateRoot  = uint256(h256Touint(dev::h256("e965ffd002cd6ad0e2dc402b8044de833e06b23127ea8c3d80aec91410771495"))); // fasc
+        hashUTXORoot   = uint256(h256Touint(dev::sha3(dev::rlp("")))); // fasc
+
         nSolution.clear();
     }
 
