@@ -1,6 +1,6 @@
 #ifndef __PARAM_H__
 #define __PARAM_H__
-#define PARAM_N				210
+#define PARAM_N				200
 #define PARAM_K				9
 #define PREFIX                          (PARAM_N / (PARAM_K + 1))
 #define NR_INPUTS                       (1 << PREFIX)
