@@ -81,8 +81,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
       
-        if( _IsSupportContract( nVersion, nHeight ) && !(s.GetVersion() & SERIALIZE_BLOCK_NO_CONTRACT))
-        {
+        if ( _IsSupportContract( this->nVersion, nHeight ) ) {
             READWRITE(hashStateRoot); // fasc
             READWRITE(hashUTXORoot); // fasc
         }
@@ -238,9 +237,7 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
 
-        bool hascontract = _IsSupportContract(nVersion, nHeight)  ;
-        if( hascontract )
-        {
+        if (_IsSupportContract( this->nVersion, nHeight ) ){
             READWRITE(hashStateRoot); // fasc
             READWRITE(hashUTXORoot); // fasc
         }

@@ -87,17 +87,23 @@ bool _IsSupportContract(int nVersion, int nHeight)
     //genesis block
     if ( nHeight == 0 ) {
        if ( nVersion == 5 )
-          return true;
-       else return false;
+           return true;
+       else
+           return false;
     }
 
+    bool fRegTest =  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
+    if ( fRegTest )
+       return true;
+
     return ((uint32_t) nHeight >= (uint32_t) Params().GetConsensus().ContractHeight );
+
 }
 
 bool _IsLegacyFormat( int nHeight)
 {
     if ( nHeight == 0 )
        return false;
-
+    //regtest legacyformat
     return  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::UNITTEST );
 }

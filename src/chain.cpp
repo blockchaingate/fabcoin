@@ -128,11 +128,15 @@ bool CBlockIndex::IsSupportContract() const
 {
     //genesis block
     if ( nHeight == 0 ) {
-       //regtest nVersion = 5
-       if ( nVersion == 5 ) 
-          return true;
-       else return false;
+       if ( nVersion == 5 )
+           return true;
+       else
+           return false;
     }
+
+    bool fRegTest =  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
+    if ( fRegTest )
+       return true;
 
     // when nHeight larger than consensus.ContractHeight ,  support Contract 
     return ((uint32_t) nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
@@ -140,6 +144,9 @@ bool CBlockIndex::IsSupportContract() const
 
 bool CBlockIndex::IsLegacyFormat() const
 {
+    if ( nHeight == 0 ) 
+       return false;
+
     return (Params().NetworkIDString() == CBaseChainParams::REGTEST ) || (Params().NetworkIDString() == CBaseChainParams::UNITTEST );
 }
 

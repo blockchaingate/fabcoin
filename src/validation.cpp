@@ -3929,7 +3929,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     //if (nHeight >= consensusParams.FABHeight && block.nHeight != (uint32_t)nHeight)
     //    return state.Invalid(false, REJECT_INVALID, "bad-height", "incorrect block height");
 
-    LogPrintf(" Debug block.GetBlockTime() =%d pindexPrev->GetMedianTimePast=%d nAdjustedTime=%d MAX_FUTURE_BLOCK_TIME=%d ", block.GetBlockTime(), pindexPrev->GetMedianTimePast(), nAdjustedTime, MAX_FUTURE_BLOCK_TIME );
+    //LogPrintf(" Debug block.GetBlockTime() =%d pindexPrev->GetMedianTimePast=%d nAdjustedTime=%d MAX_FUTURE_BLOCK_TIME=%d ", block.GetBlockTime(), pindexPrev->GetMedianTimePast(), nAdjustedTime, MAX_FUTURE_BLOCK_TIME );
 
     // Check timestamp against prev
     //if (pindexPrev && block.IsProofOfStake() && block.GetBlockTime() <= pindexPrev->GetMedianTimePast())

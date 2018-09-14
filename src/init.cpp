@@ -479,11 +479,13 @@ std::string HelpMessage(HelpMessageMode mode)
 
 #ifdef ENABLE_GPU
     strUsage += HelpMessageOpt("-G", _("Enable GPU mining (default: false)"));
-    strUsage += HelpMessageOpt("-CUDA", _("Enable NVIDIA CUDA mining (default: false)"));
     strUsage += HelpMessageOpt("-platform=<id>", _("If -G is enabled this specifies the GPU platform number to use (default: 0)"));
     strUsage += HelpMessageOpt("-device=<id>", _("If -G is enabled this specifies the GPU device number to use (default: 0)"));
     strUsage += HelpMessageOpt("-allgpu", _("If -G is enabled this will mine on all available GPU platforms and devices (default: false)"));
     strUsage += HelpMessageOpt("-forcenolimit", _("Do not limit thread count per GPU by memory limits. (default: false)"));
+#endif
+#ifdef USE_CUDA
+    strUsage += HelpMessageOpt("-CUDA", _("Enable NVIDIA CUDA mining (default: false)"));
 #endif
 #endif
 

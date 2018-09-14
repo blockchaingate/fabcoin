@@ -82,7 +82,8 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     // I = the block header minus nonce and solution.
     CEquihashInput I{*pblock};
     // I||V
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
+    int ser_flags = (pblock->nHeight < (uint32_t)params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
+    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION |ser_flags );
     ss << I;
     ss << pblock->nNonce;
 
@@ -91,8 +92,10 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
 
     bool isValid;
     EhIsValidSolution(n, k, state, pblock->nSolution, isValid);
-    if (!isValid)
+    if (!isValid) {
+        LogPrintf("EhIsValidSolution is invalid, n=%d k=%d ss.size=%d \npblock=%s ", n,k, ss.size(), pblock->ToString() );
         return error("CheckEquihashSolution(): invalid solution");
+    }
 
     return true;
 }
