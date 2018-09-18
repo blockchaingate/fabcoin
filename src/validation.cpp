@@ -4125,7 +4125,7 @@ bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, CValidatio
         LOCK(cs_main);
         for (const CBlockHeader& header : headers) {
             CBlockIndex *pindex = nullptr; // Use a temp pindex instead of ppindex to avoid a const_cast
-            LogPrintf("debug AcceptBlockHeader() %s(%d) headers.size=%d \n", header.GetHash().ToString(), header.nHeight, headers.size() );
+            //LogPrintf("debug AcceptBlockHeader() %s(%d) headers.size=%d \n", header.GetHash().ToString(), header.nHeight, headers.size() );
             if (!AcceptBlockHeader(header, state, chainparams, &pindex)) {
                 if (first_invalid) *first_invalid = header;
                 return false;

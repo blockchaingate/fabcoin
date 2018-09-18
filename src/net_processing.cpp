@@ -1297,7 +1297,7 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
 
     CValidationState state;
     CBlockHeader first_invalid_header;
-    LogPrint(BCLog::NET, "Debug ProcessNewBlockHeaders %d peer=%d\n", headers.size() ,pfrom->GetId());
+    //LogPrint(BCLog::NET, "Debug ProcessNewBlockHeaders %d peer=%d\n", headers.size() ,pfrom->GetId());
     if (!ProcessNewBlockHeaders(headers, state, chainparams, &pindexLast, &first_invalid_header)) {
         int nDoS;
         if (state.IsInvalid(nDoS)) {
