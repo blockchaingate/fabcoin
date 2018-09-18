@@ -1297,6 +1297,7 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
 
     CValidationState state;
     CBlockHeader first_invalid_header;
+    LogPrint(BCLog::NET, "Debug ProcessNewBlockHeaders %d peer=%d\n", headers.size() ,pfrom->GetId());
     if (!ProcessNewBlockHeaders(headers, state, chainparams, &pindexLast, &first_invalid_header)) {
         int nDoS;
         if (state.IsInvalid(nDoS)) {
@@ -2601,7 +2602,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             mapBlockSource.emplace(hash, std::make_pair(pfrom->GetId(), true));
         }
         bool fNewBlock = false;
-        ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
+
+        //LogPrint(BCLog::NET, "Debug ProcessNewBlock %s peer=%d\n", pblock->GetHash().ToString(), pfrom->GetId());
+        ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock)  ;
+
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
         } else {

@@ -3281,8 +3281,8 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
 
     // Build list of new blocks to connect.
     std::vector<CBlockIndex*> vpindexToConnect;
-    bool fContinue = true;
     int nHeight = pindexFork ? pindexFork->nHeight : -1;
+    bool fContinue = true;
     while (fContinue && nHeight != pindexMostWork->nHeight) {
         // Don't iterate the entire list of potential improvements toward the best tip, as we likely only need
         // a few blocks along the way.
@@ -4046,22 +4046,35 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
     uint256 hash = block.GetHash();
     BlockMap::iterator miSelf = mapBlockIndex.find(hash);
     CBlockIndex *pindex = nullptr;
+
     if (hash != chainparams.GetConsensus().hashGenesisBlock) {
+       //LogPrintf("debug AcceptBlockHeader() bypass-already-known header %s(%d)\n", block.GetHash().ToString() , block.nHeight);
+       if (miSelf != mapBlockIndex.end()) {
+           // Block header is already known.
+           pindex = miSelf->second;
+           if (ppindex)
+               *ppindex = pindex;
+           if (pindex->nStatus & BLOCK_FAILED_MASK)
+               return state.Invalid(error("%s: block %s is marked invalid", __func__, hash.ToString()), 0, "duplicate");
+           return true;
+       }
 
-        if (miSelf != mapBlockIndex.end()) {
-            // Block header is already known.
-            pindex = miSelf->second;
-            if (ppindex)
-                *ppindex = pindex;
-            if (pindex->nStatus & BLOCK_FAILED_MASK)
-                return state.Invalid(error("%s: block %s is marked invalid", __func__, hash.ToString()), 0, "duplicate");
-            return true;
-        }
+       //int nBlockMaxConflict = gArgs.GetArg("-blockmaxconflict", DEFAULT_BLOCK_MAX_CONFLICT);
+       int nBlockMaxConflict = gArgs.GetArg("-blockmaxconflict", 0);
+       int conflict_blocks = chainActive.Tip()->nHeight - (block.nHeight -1);
 
+       if ( (nBlockMaxConflict > 0 ) && (conflict_blocks >= nBlockMaxConflict ) ) {
+           LogPrintf("Invalid block=%s(%d) conflicted with currenainActive.Tip()=%s(%d) about %d blocks before, more than blockmaxconflict(%d) setting.\n" , block.GetHash().ToString(), block.nHeight, chainActive.Tip()->GetBlockHash().ToString(), chainActive.Tip()->nHeight, conflict_blocks , nBlockMaxConflict ) ;
+
+           return state.DoS(10, error("block conflicted with current bestblock chain more than blockmaxconflict setting"), REJECT_INVALID, "invalid-blocks-over-blockmaxconflict");
+       }
+
+        //LogPrintf("debug AcceptBlockHeader CheckBlockHeader %s(%d)\n", block.GetHash().ToString() , block.nHeight);
         if (!CheckBlockHeader(block, state, chainparams.GetConsensus()))
             return error("%s: Consensus::CheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
 
         // Get prev block index
+        //LogPrintf("debug AcceptBlockHeader check-prev-block-index %s(%d) - %s\n", block.GetHash().ToString() , block.nHeight, block.hashPrevBlock.ToString());
         CBlockIndex* pindexPrev = nullptr;
         BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
         if (mi == mapBlockIndex.end())
@@ -4069,6 +4082,8 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
         pindexPrev = (*mi).second;
         if (pindexPrev->nStatus & BLOCK_FAILED_MASK)
             return state.DoS(100, error("%s: prev block invalid", __func__), REJECT_INVALID, "bad-prevblk");
+
+        //LogPrintf("debug ContextualCheckBlockHeader() %s(%d)\n", block.GetHash().ToString(), block.nHeight);
         if (!ContextualCheckBlockHeader(block, state, chainparams, pindexPrev, GetAdjustedTime()))
             return error("%s: Consensus::ContextualCheckBlockHeader: %s, %s", __func__, hash.ToString(), FormatStateMessage(state));
 
@@ -4087,12 +4102,16 @@ static bool AcceptBlockHeader(const CBlockHeader& block, CValidationState& state
             }
         }
     }
-    if (pindex == nullptr)
+
+    if (pindex == nullptr) {
+        //LogPrintf("debug AddToBlockIndex() %s(%d)\n", block.GetHash().ToString(), block.nHeight);
         pindex = AddToBlockIndex(block);
+    }
 
     if (ppindex)
         *ppindex = pindex;
 
+    //LogPrintf("debug CheckBlockIndex() %s(%d)\n", block.GetHash().ToString(), block.nHeight);
     CheckBlockIndex(chainparams.GetConsensus());
 
     return true;
@@ -4106,6 +4125,7 @@ bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, CValidatio
         LOCK(cs_main);
         for (const CBlockHeader& header : headers) {
             CBlockIndex *pindex = nullptr; // Use a temp pindex instead of ppindex to avoid a const_cast
+            LogPrintf("debug AcceptBlockHeader() %s(%d) headers.size=%d \n", header.GetHash().ToString(), header.nHeight, headers.size() );
             if (!AcceptBlockHeader(header, state, chainparams, &pindex)) {
                 if (first_invalid) *first_invalid = header;
                 return false;
@@ -4245,6 +4265,7 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         CValidationState state;
         // Ensure that CheckBlock() passes before calling AcceptBlock, as
         // belt-and-suspenders.
+        //LogPrintf("debug CheckBlock %s(%d)\n", pblock->GetHash().ToString(), pblock->nHeight);
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
 
         if (!ret) {
@@ -4256,8 +4277,11 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
 
         if (ret) {
             // Store to disk
+            //LogPrintf("debug AcceptBlock %s(%d)\n", pblock->GetHash().ToString(), pblock->nHeight);
             ret = AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
         }
+
+        //LogPrintf("debug CheckBlockIndex %s(%d)\n", pblock->GetHash().ToString(), pblock->nHeight);
         CheckBlockIndex(chainparams.GetConsensus());
         if (!ret) {
             GetMainSignals().BlockChecked(*pblock, state);
@@ -4265,9 +4289,11 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         }
     }
 
+    //LogPrintf("debug NotifyHeaderTip %s(%d)\n", pblock->GetHash().ToString(), pblock->nHeight);
     NotifyHeaderTip();
 
     CValidationState state; // Only used to report errors, not invalidity - ignore it
+    //LogPrintf("debug ActivateBestChain %s(%d)\n", pblock->GetHash().ToString(), pblock->nHeight);
     if (!ActivateBestChain(state, chainparams, pblock))
         return error("%s: ActivateBestChain failed", __func__);
 
