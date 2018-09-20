@@ -175,7 +175,6 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     int nHeightEnd = 0;
     int nHeight = 0;
     int nCounter = 0;
-    int headerlen = 0;
 
     {   // Don't keep cs_main locked
         LOCK(cs_main);
@@ -196,9 +195,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
     conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
 
-    uint8_t * header = NULL;
 
 #if defined(ENABLE_GPU) &&  defined(USE_CUDA)
+    uint8_t * header = NULL;
+    int headerlen = 0;
     eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
     eq_cuda_context210_9 *g_solver210_9 = NULL;
     if( conf.useGPU )
@@ -210,7 +210,6 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     while (nHeight < nHeightEnd)
     {
-        headerlen = ((uint32_t)(nHeight+1) < (uint32_t)params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
 
         //std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
         std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true, nullptr, 0, GetAdjustedTime()+POW_MINER_MAX_TIME));
@@ -245,13 +244,13 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         else
         {
             // Solve Equihash.
-            int ser_flags = ((uint32_t)(nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
             // I = the block header minus nonce and solution.
             CEquihashInput I{*pblock};
             CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
             ss << I;
 
 #if defined(ENABLE_GPU) &&  defined(USE_CUDA)
+            int ser_flags = ((uint32_t)(nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
             if( conf.useGPU )
             {
                 if( ser_flags & SERIALIZE_BLOCK_NO_CONTRACT ) // before fork
@@ -303,8 +302,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 if( conf.useGPU )
                 {
 #if defined(ENABLE_GPU) &&  defined(USE_CUDA)
+                    headerlen = ((uint32_t)(nHeight+1) < (uint32_t)params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
                     for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
-                        header[headerlen-32 + i] = pblock->nNonce.begin()[i];
+                        header[ headerlen-32 + i] = pblock->nNonce.begin()[i];
 #endif
                 }
 
