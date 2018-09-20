@@ -1394,14 +1394,13 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
                         thread_sequence ++;
                         LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) starting thread=%d...\n", conf.currentPlatform, conf.currentDevice, thread_sequence);
+                        if( bNvidiaDev && conf.useCUDA ){
 #ifdef USE_CUDA
-                        if( bNvidiaDev && conf.useCUDA )
                             minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf, thread_sequence  ));
+#endif
+                        }
                         else
                             minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
-#else
-                        minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence   ));
-#endif
                     }
 
                 }
@@ -1461,14 +1460,13 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                     thread_sequence ++;
 
                     LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) starting thread=%d...\n", conf.currentPlatform, conf.currentDevice, thread_sequence);
+                    if( bNvidiaDev && conf.useCUDA ){
 #ifdef USE_CUDA
-                    if( bNvidiaDev && conf.useCUDA )
                         minerThreads->create_thread(boost::bind(&FabcoinMinerCuda, boost::cref(chainparams), conf, thread_sequence  ));
+#endif
+                    }
                     else
                         minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
-#else
-                    minerThreads->create_thread(boost::bind(&FabcoinMiner, boost::cref(chainparams), conf,  thread_sequence  ));
-#endif
                 }
             } 
             else 
