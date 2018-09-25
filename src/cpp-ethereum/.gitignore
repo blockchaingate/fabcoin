@@ -80,7 +80,7 @@ node_modules/
 dependency_graph.svg
 
 
-#cmake files from ./autogen.sh Fabcoin
+#cmake files from ./autogen.sh Fasc
 CMakeCache.txt
 CMakeFiles/
 Makefile
@@ -208,6 +208,8 @@ libethash/.dirstamp
 libethash/.deps/
 libethashseal/.dirstamp
 libethashseal/.deps/
+libethashseal/genesis/.dirstamp
+libethashseal/genesis/.deps/
 libethcore/.dirstamp
 libethcore/.deps/
 libethereum/.dirstamp

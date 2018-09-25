@@ -89,6 +89,10 @@ public:
 
 	EVMSchedule& getFascSchedule() const { return fascSchedule; }
 
+	//deleteAddresses is a set that keeps track of accounts that were inserted as part of sending to pubkeyhash addresses
+	//This is added to when doing a CALL to a non-existent address (if the account does not exist, it assumes you're sending to pubkeyhash)
+	//It is also added to when a SUICIDE is done where all coins are sent to a non-existent address
+	//After contract execution, these accounts will be deleted from the ETH database, and their vins marked dead, to ensure future executions behave the same
 	mutable std::set<Address> deleteAddresses;
 //////////////////////////////////////////////////////////////
 
