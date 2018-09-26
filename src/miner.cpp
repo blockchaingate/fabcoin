@@ -1329,7 +1329,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
 
                     if( !g_solver )
                     {
-                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }
                 else // after fork
@@ -1342,7 +1342,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
 
                     if( !g_solver184_7 )
                     {
-                        g_solver184_7 = new eq_cuda_context1847(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver184_7 = new eq_cuda_context1847(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }                
             }

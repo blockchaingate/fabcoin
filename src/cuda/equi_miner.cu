@@ -210,14 +210,14 @@ struct htalloc {
 
 typedef u32 bsizes[NBUCKETS];
 
-struct equi210_9 {
+struct equi1847 {
 	blake2b_state blake_ctx;
 	htalloc hta;
 	bsizes *nslots;
 	proof *sols;
 	u32 nsols;
 	u32 nthreads;
-	equi210_9(const u32 n_threads) {
+	equi1847(const u32 n_threads) {
 		nthreads = n_threads;
 	}
 	void setheadernonce(unsigned char *header, const u32 len, unsigned char* nonce, const u32 nlen) {
@@ -374,7 +374,7 @@ struct equi210_9 {
     u32 prevbo;
     u32 nextbo;
 
-		__device__ htlayout(equi210_9 *eq, u32 r) : hta(eq->hta), prevhashunits(0), dunits(0) {
+		__device__ htlayout(equi1847 *eq, u32 r) : hta(eq->hta), prevhashunits(0), dunits(0) {
 			u32 nexthashbytes = hashsize(r);
 			nexthashunits = hashwords(nexthashbytes);
 			prevbo = 0;
@@ -560,10 +560,10 @@ struct equi210_9 {
 	};
 		};
 
-__global__ void digitH(equi210_9 *eq) {
+__global__ void digitH(equi1847 *eq) {
 	uchar hash[HASHOUT];
 	blake2b_state state;
-	equi210_9::htlayout htl(eq, 0);
+	equi1847::htlayout htl(eq, 0);
 	const u32 hashbytes = hashsize(0); // always 23 ?
 	const u32 id = blockIdx.x * blockDim.x + threadIdx.x;
 	for (u32 block = id; block < NBLOCKS; block += eq->nthreads) {
@@ -609,9 +609,9 @@ __global__ void digitH(equi210_9 *eq) {
 	}
 }
 
-__global__ void digitO(equi210_9 *eq, const u32 r) {
-	equi210_9::htlayout htl(eq, r);
-	equi210_9::collisiondata cd;
+__global__ void digitO(equi1847 *eq, const u32 r) {
+	equi1847::htlayout htl(eq, r);
+	equi1847::collisiondata cd;
 	const u32 id = blockIdx.x * blockDim.x + threadIdx.x;
 	for (u32 bucketid = id; bucketid < NBUCKETS; bucketid += eq->nthreads) {
 		cd.clear();
@@ -668,9 +668,9 @@ __global__ void digitO(equi210_9 *eq, const u32 r) {
 	}
 }
 
-__global__ void digitE(equi210_9 *eq, const u32 r) {
-	equi210_9::htlayout htl(eq, r);
-	equi210_9::collisiondata cd;
+__global__ void digitE(equi1847 *eq, const u32 r) {
+	equi1847::htlayout htl(eq, r);
+	equi1847::collisiondata cd;
 	const u32 id = blockIdx.x * blockDim.x + threadIdx.x;
 	for (u32 bucketid = id; bucketid < NBUCKETS; bucketid += eq->nthreads) {
 		cd.clear();
@@ -722,9 +722,9 @@ __global__ void digitE(equi210_9 *eq, const u32 r) {
 	}
 }
 
-__global__ void digitK(equi210_9 *eq) {
-  equi210_9::collisiondata cd;
-  equi210_9::htlayout htl(eq, WK);
+__global__ void digitK(equi1847 *eq) {
+  equi1847::collisiondata cd;
+  equi1847::htlayout htl(eq, WK);
   const u32 id = blockIdx.x * blockDim.x + threadIdx.x;
   for (u32 bucketid = id; bucketid < NBUCKETS; bucketid += eq->nthreads) {
     cd.clear();
@@ -764,7 +764,7 @@ eq_cuda_context1847::eq_cuda_context1847(int thrid, int devid, fn_validate valid
     checkCudaErrors(cudaGetDeviceProperties(&device_props, device_id));
     totalblocks = device_props.multiProcessorCount * 7;
     
-	eq = new equi210_9(threadsperblock * totalblocks);
+	eq = new equi1847(threadsperblock * totalblocks);
 	sol_memory = malloc(sizeof(proof) * MAXSOLS + 4096);
 	solutions = (proof*)(((long long)sol_memory + 4095) & -4096);
 
@@ -784,7 +784,7 @@ eq_cuda_context1847::eq_cuda_context1847(int thrid, int devid, fn_validate valid
 	checkCudaErrors(cudaMalloc((void**)&eq->nslots, 2 * NBUCKETS * sizeof(u32)));
 	checkCudaErrors(cudaMalloc((void**)&eq->sols, MAXSOLS * sizeof(proof)));
 
-	checkCudaErrors(cudaMalloc((void**)&device_eq, sizeof(equi210_9)));
+	checkCudaErrors(cudaMalloc((void**)&device_eq, sizeof(equi1847)));
 }
 
 
@@ -808,7 +808,7 @@ bool eq_cuda_context1847::solve(unsigned char *pblock, unsigned char *header, un
 	checkCudaErrors(cudaSetDevice(device_id)); 
 
 	eq->setheadernonce(header, headerlen-32, header+headerlen-32, 32);
-	checkCudaErrors(cudaMemcpy(device_eq, eq, sizeof(equi210_9), cudaMemcpyHostToDevice));
+	checkCudaErrors(cudaMemcpy(device_eq, eq, sizeof(equi1847), cudaMemcpyHostToDevice));
 
 	digitH << <totalblocks, threadsperblock >> >(device_eq);
 	if (m_fnCancel()) return false;
@@ -821,7 +821,7 @@ bool eq_cuda_context1847::solve(unsigned char *pblock, unsigned char *header, un
 	if (m_fnCancel()) return false;
 	digitK << <totalblocks, threadsperblock >> >(device_eq);
 
-	checkCudaErrors(cudaMemcpy(eq, device_eq, sizeof(equi210_9), cudaMemcpyDeviceToHost));
+	checkCudaErrors(cudaMemcpy(eq, device_eq, sizeof(equi1847), cudaMemcpyDeviceToHost));
 	checkCudaErrors(cudaMemcpy(solutions, eq->sols, MAXSOLS * sizeof(proof), cudaMemcpyDeviceToHost));
 
 	for (unsigned s = 0; (s < eq->nsols) && (s < MAXSOLS); s++)

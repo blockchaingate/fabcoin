@@ -72,15 +72,15 @@ typedef bool (*fn_validate)(std::vector<unsigned char>, unsigned char *, int);
 
 #define PROOFSIZE1 (1<<7)
 typedef u32 proof[PROOFSIZE1];
-struct equi210_9;
+struct equi1847;
 struct eq_cuda_context1847
 {
 	int threadsperblock;
 	int totalblocks;
 	int device_id;
     int thread_id;
-	equi210_9* eq;
-	equi210_9* device_eq;
+	equi1847* eq;
+	equi1847* device_eq;
 	uint32_t *heap0, *heap1;
 	void* sol_memory;
 	proof* solutions;
