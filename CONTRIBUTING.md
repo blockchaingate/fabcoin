@@ -81,8 +81,12 @@ Examples:
     Qt: Add feed bump button
     Trivial: Fix typo in init.cpp
 
-If a pull request is specifically not to be considered for merging (yet) please
-prefix the title with [WIP] or use [Tasks Lists](https://help.github.com/articles/basic-writing-and-formatting-syntax/#task-lists)
+Note that translations should not be submitted as pull requests, please see
+[Translation Process](http://github.com/blockchaingate/fabcoin/blob/master/doc/translation_process.md) 
+for more information on helping with translations.
+
+If a pull request is not to be considered for merging (yet), please
+prefix the title with [WIP] or use [Tasks Lists](http://help.github.com/articles/basic-writing-and-formatting-syntax/#task-lists)
 in the body of the pull request to indicate tasks are pending.
 
 The body of the pull request should contain enough description about what the
@@ -153,6 +157,14 @@ behaviour of code within the pull request (bugs must be preserved as is).
 Project maintainers aim for a quick turnaround on refactoring pull requests, so
 where possible keep them short, uncomplex and easy to verify.
 
+Pull requests that refactor the code should not be made by new contributors. It
+requires a certain level of experience to know where the code belongs to and to
+understand the full ramification (including rebase effort of open pull requests).
+
+Trivial pull requests or pull requests that refactor the code with no clear
+benefits may be immediately closed by the maintainers to reduce unnecessary
+workload on reviewing.
+
 
 "Decision Making" Process
 -------------------------
@@ -174,7 +186,7 @@ In general, all pull requests must:
     the project (for example refactoring for modularisation);
   - Be well peer reviewed;
   - Have unit tests and functional tests where appropriate;
-  - Follow code style guidelines;
+  - Follow code style guidelines ([C++](doc/developer-notes.md), [functional tests](test/functional/README.md));
   - Not break the existing test suite;
   - Where bugs are fixed, where possible, there should be unit tests
     demonstrating the bug and also proving the fix. This helps prevent regression.

@@ -1,10 +1,10 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bench.h"
-#include "policy/policy.h"
-#include "txmempool.h"
+#include <bench/bench.h>
+#include <policy/policy.h>
+#include <txmempool.h>
 
 #include <list>
 #include <vector>
@@ -16,9 +16,6 @@ static void AddTx(const CTransaction& tx, const CAmount& nFee, CTxMemPool& pool)
     bool spendsCoinbase = false;
     unsigned int sigOpCost = 4;
     LockPoints lp;
-    CAmount inChainInputValue = 0.0;
-    double dPriority = .0;
-    dev::u256 txMinGasPrice = 0;
     pool.addUnchecked(tx.GetHash(), CTxMemPoolEntry(
                                         MakeTransactionRef(tx), nFee, nTime, nHeight,
                                         spendsCoinbase, sigOpCost, lp));
@@ -114,4 +111,4 @@ static void MempoolEviction(benchmark::State& state)
     }
 }
 
-BENCHMARK(MempoolEviction);
+BENCHMARK(MempoolEviction, 41000);
