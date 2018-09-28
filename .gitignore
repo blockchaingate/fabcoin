@@ -1,5 +1,6 @@
 *.tar.gz
 
+
 *.exe
 src/fabcoin
 src/fabcoind
@@ -7,6 +8,8 @@ src/fabcoin-cli
 src/fabcoin-tx
 src/test/test_fabcoin
 src/qt/test/test_fabcoin-qt
+
+test/config.ini
 
 # autoreconf
 Makefile.in
