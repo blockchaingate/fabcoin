@@ -16,7 +16,7 @@
 
 #define WN	184
 #define WK	7
-#define RESTBITS	4 
+#define RESTBITS	2 
 
 #define NDIGITS		(WK+1)
 #define DIGITBITS	(WN/(NDIGITS))
@@ -27,7 +27,7 @@
 #define BUCKBITS    (DIGITBITS-RESTBITS)
 
 #ifndef SAVEMEM
-#if RESTBITS == 4
+#if RESTBITS == 4 || RESTBITS == 2
 // can't save memory in such small buckets
 #define SAVEMEM 1
 #elif RESTBITS >= 8
@@ -334,7 +334,7 @@ struct equi1847 {
 #elif WK==7
       listindices7(t, sols[soli]);
 #elif WK==5
-			listindices5(t, sols[soli]);
+      listindices5(t, sols[soli]);
 #else
 #error not implemented
 #endif
@@ -414,6 +414,23 @@ struct equi1847 {
               return 0;
           }
       }      
+#elif DIGITBITS % 8 == 7 && RESTBITS == 2  // 184,7
+        if( r != 0 )
+        {
+            switch(r)
+            {
+            case 1:
+                return (pslot->hash->bytes[prevbo] & 0x07) >> 1;
+            case 3:
+                return ((pslot->hash->bytes[prevbo] & 0x1f) >> 3);
+            case 5:
+                return ((pslot->hash->bytes[prevbo] & 0x7f) >> 5);
+            case 7:
+                return ((pslot->hash->bytes[prevbo] & 0x1) << 1) | (pslot->hash->bytes[prevbo+1] >> 7);
+            default:
+                return 0;
+            }
+        }      
 #elif DIGITBITS % 8 == 0 && RESTBITS == 4
       return pslot->hash->bytes[prevbo] & 0xf;
 #elif RESTBITS == 0
@@ -449,6 +466,21 @@ struct equi1847 {
                 return 0;
             }
         }      
+#elif DIGITBITS % 8 == 7 && RESTBITS == 2  // 184,7
+        if( r != 0 )
+        {
+            switch(r)
+            {
+            case 2:
+                return ((pslot->hash->bytes[prevbo] & 0x0f) >> 2);
+            case 4:
+                return ((pslot->hash->bytes[prevbo] & 0x3f) >> 4);
+            case 6:
+                return pslot->hash->bytes[prevbo] >> 6;
+            default:
+                return 0;
+            }
+        }      
 #elif RESTBITS == 0
       return 0;
 #else
@@ -458,7 +490,7 @@ struct equi1847 {
     }
     __device__ void getxorbucket(const uchar *bytes0, const uchar *bytes1, u32 &xorbucketid, u32 &xhash, int r = 0 ) const {
     
-#if WN == 184 && WK == 7
+#if WN == 184 && WK == 7 && RESTBITS == 4
         switch( r )
         {
             case 1:
@@ -493,6 +525,44 @@ struct equi1847 {
                     | ((u32)(bytes0[prevbo+2] ^ bytes1[prevbo+2])) << 5
                     | (bytes0[prevbo+3] ^ bytes1[prevbo+3]) >> 3;
                 break;
+        }
+#elif WN == 184 && WK == 7 && RESTBITS == 2
+        switch( r )
+        {
+        case 1:
+            xorbucketid = ((u32)(bytes0[prevbo] ^ bytes1[prevbo]) & 0x1) << 20
+                | ((u32)(bytes0[prevbo+1] ^ bytes1[prevbo+1])) << 12
+                | ((u32)(bytes0[prevbo+2] ^ bytes1[prevbo+2])) << 4
+                | (bytes0[prevbo+3] ^ bytes1[prevbo+3]) >> 4;
+            break;
+        case 2:
+            xorbucketid = ((u32)(bytes0[prevbo] ^ bytes1[prevbo]) & 0x3) << 19
+                | ((u32)(bytes0[prevbo+1] ^ bytes1[prevbo+1])) << 11
+                | ((u32)(bytes0[prevbo+2] ^ bytes1[prevbo+2])) << 3
+                | (bytes0[prevbo+3] ^ bytes1[prevbo+3]) >> 5;
+            break;
+        case 3:
+            xorbucketid = ((u32)(bytes0[prevbo] ^ bytes1[prevbo]) & 0x7) << 18
+                | ((u32)(bytes0[prevbo+1] ^ bytes1[prevbo+1])) << 10
+                | ((u32)(bytes0[prevbo+2] ^ bytes1[prevbo+2])) << 2
+                | (bytes0[prevbo+3] ^ bytes1[prevbo+3]) >> 6;
+            break;
+        case 4:
+            xorbucketid = ((u32)(bytes0[prevbo] ^ bytes1[prevbo]) & 0xf) << 17
+                | ((u32)(bytes0[prevbo+1] ^ bytes1[prevbo+1])) << 9
+                | ((u32)(bytes0[prevbo+2] ^ bytes1[prevbo+2])) << 1
+                | (bytes0[prevbo+3] ^ bytes1[prevbo+3]) >> 7;
+            break;
+        case 5:
+            xorbucketid = ((u32)(bytes0[prevbo+0] ^ bytes1[prevbo+0]) & 0x1f ) << 16
+                | ((u32)(bytes0[prevbo+1] ^ bytes1[prevbo+1])) << 8
+                | (bytes0[prevbo+2] ^ bytes1[prevbo+2]);
+            break;
+        case 6:
+            xorbucketid = (((u32)(bytes0[prevbo+0] ^ bytes1[prevbo+0]) & 0x3f ) << 15 )
+                | ((u32)(bytes0[prevbo+1] ^ bytes1[prevbo+1])) << 7
+                | (bytes0[prevbo+2] ^ bytes1[prevbo+2]) >> 1;
+            break;
         }
 #endif
     }        
@@ -582,6 +652,8 @@ __global__ void digitH(equi1847 *eq) {
       const u32 bucketid = ((u32)ph[0] << 4) | ph[1] >> 4;
 #elif BUCKBITS == 19 && RESTBITS == 4 // 184,7     
       const u32 bucketid = ((((u32)ph[0] << 8) | ph[1]) << 3) | ph[2] >> 5;
+#elif BUCKBITS == 21 && RESTBITS == 2 // 184,7     
+      const u32 bucketid = ((((u32)ph[0] << 8) | ph[1]) << 5) | ph[2] >> 3;
 #elif BUCKBITS == 20 && RESTBITS == 4
 			const u32 bucketid = ((((u32)ph[0] << 8) | ph[1]) << 4) | ph[2] >> 4;
 #ifdef XINTREE
