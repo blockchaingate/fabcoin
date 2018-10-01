@@ -320,7 +320,7 @@ crypto_libfabcoin_crypto_a_SOURCES = \
   cpp-ethereum/utils/libscrypt/sysendian.h
 
 
-if EXPERIMENTAL_ASM
+if USE_ASM
 crypto_libfabcoin_crypto_a_SOURCES += crypto/sha256_sse4.cpp
 endif
 
