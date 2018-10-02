@@ -967,7 +967,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
     GPUSolver * g_solver = NULL;
     if(conf.useGPU) 
     {
-        g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
+        g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
         header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
     }

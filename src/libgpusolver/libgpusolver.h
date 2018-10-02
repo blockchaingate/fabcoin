@@ -32,8 +32,6 @@
 #include "libclwrapper.h"
 #include "uint256.h"
 
-
-#include "param.h"
 #include <cassert>
 
 #ifdef __APPLE__
@@ -44,8 +42,6 @@
 
 // The maximum size of the .cl file we read in and compile
 #define MAX_SOURCE_SIZE 	(0x200000)
-
-#define DIGITBITS_S	PREFIX
 
 class GPUSolverCancelledException : public std::exception
 {
@@ -63,8 +59,8 @@ enum GPUSolverCancelCheck
 class GPUSolver {
 
 public:
-	GPUSolver();
-	GPUSolver(unsigned platform, unsigned device);
+	GPUSolver(unsigned int n, unsigned k);
+	GPUSolver(unsigned platform, unsigned device, unsigned int n, unsigned int k);
 	~GPUSolver();
     bool run(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 nonce,
         const std::function<bool(std::vector<unsigned char>)> validBlock,
@@ -75,9 +71,8 @@ private:
 	cl_gpuminer * miner;
 	bool GPU;
 	bool initOK;
-	static const uint32_t PROOFSIZE = 1 << PARAM_K;
 	//TODO 20?
-	sols_t * indices;
+	sols_t *indices;
 	uint32_t n_sol;
 	//Avg
 	uint32_t counter = 0;

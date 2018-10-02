@@ -41,12 +41,12 @@ char *s_hexdump(const void *_a, uint32_t a_len)
 	return buf;
 }
 
-GPUSolver::GPUSolver() {
+GPUSolver::GPUSolver(unsigned int n, unsigned k) {
 
 	size_t global_work_size = 1 << 20;
   size_t local_work_size = 32;
 
-	miner = new cl_gpuminer();
+	miner = new cl_gpuminer(n,k);
 
 	indices = (sols_t *) malloc(sizeof(sols_t));
 	if(indices == NULL)
@@ -59,14 +59,23 @@ GPUSolver::GPUSolver() {
 	/*Initialize the kernel, compile it and create buffers
 	Currently runs for the gpu-list-gen.c kernel DATA_SIZE=100 times
 	*/
-	std::vector<std::string> kernels {"kernel_init_ht", "kernel_round0", "kernel_round1", "kernel_round2","kernel_round3", "kernel_round4", "kernel_round5", "kernel_round6", "kernel_round7", "kernel_round8", "kernel_sols"};
 
-	if(GPU)
-		initOK = miner->init(0, 0, kernels);
+    if( n == 200 && k == 9 )
+    {
+        std::vector<std::string> kernels {"kernel_init_ht", "kernel_round0", "kernel_round1", "kernel_round2","kernel_round3", "kernel_round4", "kernel_round5", "kernel_round6", "kernel_round7", "kernel_round8", "kernel_sols"};
+        if(GPU)
+            initOK = miner->init(0, 0, kernels);
+    }
+    else if( n == 184 && k == 7 )
+    {
+        std::vector<std::string> kernels {"kernel_init_ht", "kernel_round0", "kernel_round1", "kernel_round2","kernel_round3", "kernel_round4", "kernel_round5", "kernel_round6", "kernel_sols"};
+        if(GPU)
+            initOK = miner->init(0, 0, kernels);
+    }
 
 }
 
-GPUSolver::GPUSolver(unsigned platform, unsigned device) {
+GPUSolver::GPUSolver(unsigned platform, unsigned device, unsigned int n, unsigned int k) {
 
 	/* Notes
 	I've added some extra parameters in this interface to assist with dev, such as
@@ -76,7 +85,7 @@ GPUSolver::GPUSolver(unsigned platform, unsigned device) {
 	size_t global_work_size = 1 << 20;
   	size_t local_work_size = 32;
 
-	miner = new cl_gpuminer();
+	miner = new cl_gpuminer(n,k);
 
 	indices = (sols_t *) malloc(sizeof(sols_t));
 	if(indices == NULL)
@@ -99,9 +108,18 @@ GPUSolver::GPUSolver(unsigned platform, unsigned device) {
 	@params: unsigned _deviceId
 	@params: string& _kernel - The name of the kernel for dev purposes
 	*/
-	std::vector<std::string> kernels {"kernel_init_ht", "kernel_round0", "kernel_round1", "kernel_round2","kernel_round3", "kernel_round4", "kernel_round5", "kernel_round6", "kernel_round7", "kernel_round8", "kernel_sols"};
-	if(GPU)
-		initOK = miner->init(platform, device, kernels);
+    if( n == 200 && k == 9 )
+    {
+        std::vector<std::string> kernels {"kernel_init_ht", "kernel_round0", "kernel_round1", "kernel_round2","kernel_round3", "kernel_round4", "kernel_round5", "kernel_round6", "kernel_round7", "kernel_round8", "kernel_sols"};
+        if(GPU)
+            initOK = miner->init(platform, device, kernels);
+    }
+    else if( n == 184 && k == 7 )
+    {
+        std::vector<std::string> kernels {"kernel_init_ht", "kernel_round0", "kernel_round1", "kernel_round2","kernel_round3", "kernel_round4", "kernel_round5", "kernel_round6", "kernel_sols"};
+        if(GPU)
+            initOK = miner->init(platform, device, kernels);
+    }
 
 }
 
@@ -122,11 +140,7 @@ bool GPUSolver::run(unsigned int n, unsigned int k, uint8_t *header, size_t head
 				const std::function<bool(GPUSolverCancelCheck)> cancelled,
 			crypto_generichash_blake2b_state base_state) 
 {
-    if (n == 200 && k == 9) {
-        return GPUSolve(n, k, header, header_len, nonce, validBlock, cancelled, base_state);
-    } else {
-        throw std::invalid_argument("Unsupported Equihash parameters");
-    }
+    return GPUSolve(n, k, header, header_len, nonce, validBlock, cancelled, base_state);
 }
 
 bool GPUSolver::GPUSolve(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 &nonce,
@@ -173,12 +187,15 @@ bool GPUSolver::GPUSolve(unsigned int n, unsigned int k, uint8_t *header, size_t
 			else
 				continue;
 
-            std::vector<eh_index> index_vector(PROOFSIZE);
-            for (size_t i = 0; i < PROOFSIZE; i++) 
+            std::vector<eh_index> index_vector(512);
+
+            index_vector.resize(1<<k);
+            for (size_t i = 0; i < (unsigned int)1 << k; i++) 
             {
             	index_vector[i] = indices->values[s-1][i];
             }
-            std::vector<unsigned char> sol_char = GetMinimalFromIndices(index_vector, DIGITBITS_S);
+
+            std::vector<unsigned char> sol_char = GetMinimalFromIndices(index_vector, miner->PREFIX());
             //LogPrint(BCLog::POW, "Checking with = %s, %d sols\n",nNonce.ToString(), n_sol);
 #ifdef DEBUG
             bool isValid;
