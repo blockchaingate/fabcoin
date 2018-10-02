@@ -1,14 +1,14 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "primitives/transaction.h"
+#include <primitives/transaction.h>
 
-#include "hash.h"
-#include "tinyformat.h"
-#include "utilstrencodings.h"
-#include "consensus/consensus.h"
+#include <hash.h>
+#include <tinyformat.h>
+#include <utilstrencodings.h>
+#include <consensus/consensus.h>
 
 std::string COutPoint::ToString() const
 {
@@ -56,7 +56,7 @@ std::string CTxOut::ToString() const
 }
 
 CMutableTransaction::CMutableTransaction() : nVersion(CTransaction::CURRENT_VERSION), nLockTime(0) {}
-CMutableTransaction::CMutableTransaction(const CTransaction& tx) : nVersion(tx.nVersion), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime) {}
+CMutableTransaction::CMutableTransaction(const CTransaction& tx) : vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime) {}
 
 uint256 CMutableTransaction::GetHash() const
 {
@@ -77,9 +77,9 @@ uint256 CTransaction::GetWitnessHash() const
 }
 
 /* For backward compatibility, the hash is initialized to 0. TODO: remove the need for this default constructor entirely. */
-CTransaction::CTransaction() : nVersion(CTransaction::CURRENT_VERSION), vin(), vout(), nLockTime(0), hash() {}
-CTransaction::CTransaction(const CMutableTransaction &tx) : nVersion(tx.nVersion), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime), hash(ComputeHash()) {}
-CTransaction::CTransaction(CMutableTransaction &&tx) : nVersion(tx.nVersion), vin(std::move(tx.vin)), vout(std::move(tx.vout)), nLockTime(tx.nLockTime), hash(ComputeHash()) {}
+CTransaction::CTransaction() : vin(), vout(), nVersion(CTransaction::CURRENT_VERSION), nLockTime(0), hash() {}
+CTransaction::CTransaction(const CMutableTransaction &tx) : vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime), hash(ComputeHash()) {}
+CTransaction::CTransaction(CMutableTransaction &&tx) : vin(std::move(tx.vin)), vout(std::move(tx.vout)), nVersion(tx.nVersion), nLockTime(tx.nLockTime), hash(ComputeHash()) {}
 
 CAmount CTransaction::GetValueOut() const
 {
@@ -92,24 +92,6 @@ CAmount CTransaction::GetValueOut() const
     return nValueOut;
 }
 
-double CTransaction::ComputePriority(double dPriorityInputs, unsigned int nTxSize) const
-{
-    nTxSize = CalculateModifiedSize(nTxSize);
-    if (nTxSize == 0) return 0.0;
-    return dPriorityInputs / nTxSize;
-}
-unsigned int CTransaction::CalculateModifiedSize(unsigned int nTxSize) const
-{
-    if (nTxSize == 0)
-        nTxSize = (GetTransactionWeight(*this) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
-    for (std::vector<CTxIn>::const_iterator it(vin.begin()); it != vin.end(); ++it)
-    {
-        unsigned int offset = 41U + std::min(110U, (unsigned int)it->scriptSig.size());
-        if (nTxSize > offset)
-            nTxSize -= offset;
-    }
-    return nTxSize;
-}
 unsigned int CTransaction::GetTotalSize() const
 {
     return ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION);
@@ -136,7 +118,7 @@ int64_t GetTransactionWeight(const CTransaction& tx)
 {
     return ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR -1) + ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
 }
-///////////////////////////////////////////////////////////// fasc
+///////////////////////////////////////////////////////////// fabcoin
 bool CTransaction::HasCreateOrCall() const{
     for(const CTxOut& v : vout){
         if(v.scriptPubKey.HasOpCreate() || v.scriptPubKey.HasOpCall()){
