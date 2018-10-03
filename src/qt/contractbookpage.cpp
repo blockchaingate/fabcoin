@@ -1,12 +1,12 @@
-#include "contractbookpage.h"
-#include "ui_contractbookpage.h"
+#include <contractbookpage.h>
+#include <ui_contractbookpage.h>
 
-#include "contracttablemodel.h"
-#include "csvmodelwriter.h"
-#include "editcontractinfodialog.h"
-#include "guiutil.h"
-#include "platformstyle.h"
-#include "styleSheet.h"
+#include <contracttablemodel.h>
+#include <csvmodelwriter.h>
+#include <editcontractinfodialog.h>
+#include <guiutil.h>
+#include <platformstyle.h>
+#include <styleSheet.h>
 
 #include <QIcon>
 #include <QMenu>

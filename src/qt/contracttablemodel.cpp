@@ -1,9 +1,9 @@
-#include "contracttablemodel.h"
+#include <contracttablemodel.h>
 
-#include "guiutil.h"
-#include "walletmodel.h"
+#include <guiutil.h>
+#include <walletmodel.h>
 
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 
 #include <QFont>
 #include <QDebug>

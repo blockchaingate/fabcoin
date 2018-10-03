@@ -2,15 +2,15 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "receiverequestdialog.h"
-#include "ui_receiverequestdialog.h"
+#include <receiverequestdialog.h>
+#include <ui_receiverequestdialog.h>
 
-#include "fabcoinunits.h"
-#include "guiconstants.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "walletmodel.h"
-#include "styleSheet.h"
+#include <fabcoinunits.h>
+#include <guiconstants.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
+#include <walletmodel.h>
+#include <styleSheet.h>
 
 #include <QClipboard>
 #include <QDrag>
@@ -23,7 +23,7 @@
 #endif
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h" /* for USE_QRCODE */
+#include <config/fabcoin-config.h> /* for USE_QRCODE */
 #endif
 
 #ifdef USE_QRCODE

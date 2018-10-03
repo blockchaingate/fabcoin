@@ -1,12 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Fabcoin Core developers
+// Copyright (c) 2009-2017 The Fabcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_AMOUNT_H
 #define FABCOIN_AMOUNT_H
 
-#include "serialize.h"
+#include <serialize.h>
 
 #include <stdlib.h>
 #include <string>

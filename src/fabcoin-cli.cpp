@@ -1,25 +1,25 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "chainparamsbase.h"
-#include "clientversion.h"
-#include "fs.h"
-#include "rpc/client.h"
-#include "rpc/protocol.h"
-#include "util.h"
-#include "utilstrencodings.h"
+#include <chainparamsbase.h>
+#include <clientversion.h>
+#include <fs.h>
+#include <rpc/client.h>
+#include <rpc/protocol.h>
+#include <util.h>
+#include <utilstrencodings.h>
 
 #include <stdio.h>
 
 #include <event2/buffer.h>
 #include <event2/keyvalq_struct.h>
-#include "support/events.h"
+#include <support/events.h>
 
 #include <univalue.h>
 

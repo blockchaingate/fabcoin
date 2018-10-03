@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_TRANSACTIONVIEW_H
 #define FABCOIN_QT_TRANSACTIONVIEW_H
 
-#include "guiutil.h"
+#include <guiutil.h>
 
 #include <QWidget>
 #include <QKeyEvent>

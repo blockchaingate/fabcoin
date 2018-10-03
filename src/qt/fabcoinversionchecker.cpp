@@ -1,5 +1,5 @@
-#include "fabcoinversionchecker.h"
-#include "../clientversion.h"
+#include <fabcoinversionchecker.h>
+#include <../clientversion.h>
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>

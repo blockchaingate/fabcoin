@@ -1,20 +1,20 @@
-#include "sendtokenpage.h"
-#include "ui_sendtokenpage.h"
+#include <sendtokenpage.h>
+#include <ui_sendtokenpage.h>
 
-#include "walletmodel.h"
-#include "clientmodel.h"
-#include "optionsmodel.h"
-#include "validation.h"
-#include "utilmoneystr.h"
-#include "token.h"
-#include "fabcoinunits.h"
-#include "wallet/wallet.h"
-#include "validation.h"
-#include "guiutil.h"
-#include "sendcoinsdialog.h"
-#include "fabcoinaddressvalidator.h"
-#include "uint256.h"
-#include "styleSheet.h"
+#include <walletmodel.h>
+#include <clientmodel.h>
+#include <optionsmodel.h>
+#include <validation.h>
+#include <utilmoneystr.h>
+#include <token.h>
+#include <fabcoinunits.h>
+#include <wallet/wallet.h>
+#include <validation.h>
+#include <guiutil.h>
+#include <sendcoinsdialog.h>
+#include <fabcoinaddressvalidator.h>
+#include <uint256.h>
+#include <styleSheet.h>
 
 static const CAmount SINGLE_STEP = 0.00000001*COIN;
 

@@ -1,5 +1,5 @@
-#include "execrpccommand.h"
-#include "rpcconsole.h"
+#include <execrpccommand.h>
+#include <rpcconsole.h>
 #include <QJsonDocument>
 #include <univalue.h>
 

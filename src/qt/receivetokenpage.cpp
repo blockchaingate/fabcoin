@@ -1,10 +1,10 @@
-#include "receivetokenpage.h"
-#include "ui_receivetokenpage.h"
+#include <receivetokenpage.h>
+#include <ui_receivetokenpage.h>
 
-#include "guiutil.h"
-#include "guiconstants.h"
-#include "receiverequestdialog.h"
-#include "platformstyle.h"
+#include <guiutil.h>
+#include <guiconstants.h>
+#include <receiverequestdialog.h>
+#include <platformstyle.h>
 
 ReceiveTokenPage::ReceiveTokenPage(const PlatformStyle *_platformStyle, QWidget *parent) :
     QWidget(parent),

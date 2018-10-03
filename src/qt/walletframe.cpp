@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "walletframe.h"
+#include <walletframe.h>
 
-#include "fabcoingui.h"
-#include "walletview.h"
-#include "tabbarinfo.h"
-#include "wallet/wallet.h"
+#include <fabcoingui.h>
+#include <walletview.h>
+#include <tabbarinfo.h>
+#include <wallet/wallet.h>
 
 #include <cstdio>
 

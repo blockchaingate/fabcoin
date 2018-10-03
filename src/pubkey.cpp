@@ -1,8 +1,8 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "pubkey.h"
+#include <pubkey.h>
 
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>

@@ -1,22 +1,22 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_CHAIN_H
 #define FABCOIN_CHAIN_H
 
-#include "arith_uint256.h"
-#include "primitives/block.h"
-#include "pow.h"
-#include "tinyformat.h"
-#include "uint256.h"
-#include "util.h"
+#include <arith_uint256.h>
+#include <primitives/block.h>
+#include <pow.h>
+#include <tinyformat.h>
+#include <uint256.h>
+#include <util.h>
 
 ///////////////////////////////////////////// // fasc
 #include <libdevcore/SHA3.h>
 #include <libdevcore/RLP.h>
-#include "arith_uint256.h"
+#include <arith_uint256.h>
 /////////////////////////////////////////////
 
 #include <vector>

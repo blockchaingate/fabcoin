@@ -1,11 +1,11 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Fabcoin Core developers
+// Copyright (c) 2009-2017 The Fabcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "uint256.h"
+#include <uint256.h>
 
-#include "utilstrencodings.h"
+#include <utilstrencodings.h>
 
 #include <stdio.h>
 #include <string.h>

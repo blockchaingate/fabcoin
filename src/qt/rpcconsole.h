@@ -5,10 +5,10 @@
 #ifndef FABCOIN_QT_RPCCONSOLE_H
 #define FABCOIN_QT_RPCCONSOLE_H
 
-#include "guiutil.h"
-#include "peertablemodel.h"
+#include <guiutil.h>
+#include <peertablemodel.h>
 
-#include "net.h"
+#include <net.h>
 
 #include <QWidget>
 #include <QCompleter>

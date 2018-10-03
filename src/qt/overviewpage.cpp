@@ -2,22 +2,22 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "overviewpage.h"
-#include "ui_overviewpage.h"
+#include <overviewpage.h>
+#include <ui_overviewpage.h>
 
-#include "fabcoinunits.h"
-#include "clientmodel.h"
-#include "guiconstants.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "platformstyle.h"
-#include "transactionfilterproxy.h"
-#include "transactiontablemodel.h"
-#include "walletmodel.h"
-#include "tokenitemmodel.h"
-#include "wallet/wallet.h"
-#include "transactiondescdialog.h"
-#include "styleSheet.h"
+#include <fabcoinunits.h>
+#include <clientmodel.h>
+#include <guiconstants.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
+#include <platformstyle.h>
+#include <transactionfilterproxy.h>
+#include <transactiontablemodel.h>
+#include <walletmodel.h>
+#include <tokenitemmodel.h>
+#include <wallet/wallet.h>
+#include <transactiondescdialog.h>
+#include <styleSheet.h>
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -211,7 +211,7 @@ public:
     const PlatformStyle *platformStyle;
 };
 
-#include "overviewpage.moc"
+#include <overviewpage.moc>
 
 OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent),

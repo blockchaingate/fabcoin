@@ -1,8 +1,8 @@
-﻿#include "tokenamountfield.h"
+﻿#include <tokenamountfield.h>
 
-#include "fabcoinunits.h"
-#include "styleSheet.h"
-#include "qvaluecombobox.h"
+#include <fabcoinunits.h>
+#include <styleSheet.h>
+#include <qvaluecombobox.h>
 
 #include <QApplication>
 #include <QAbstractSpinBox>
@@ -178,7 +178,7 @@ Q_SIGNALS:
     void valueChanged();
 };
 
-#include "tokenamountfield.moc"
+#include <tokenamountfield.moc>
 
 TokenAmountField::TokenAmountField(QWidget *parent) :
     QWidget(parent),

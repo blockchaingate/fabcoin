@@ -1,19 +1,19 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_MINER_H
 #define FABCOIN_MINER_H
 
-#include "primitives/block.h"
-#include "libgpusolver/gpuconfig.h"
-#include "txmempool.h"
+#include <primitives/block.h>
+#include <libgpusolver/gpuconfig.h>
+#include <txmempool.h>
 
 #include <stdint.h>
 #include <memory>
-#include "boost/multi_index_container.hpp"
-#include "boost/multi_index/ordered_index.hpp"
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 
 #include <validation.h> // fasc
 

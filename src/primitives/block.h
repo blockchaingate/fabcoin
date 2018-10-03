@@ -6,12 +6,12 @@
 #ifndef FABCOIN_PRIMITIVES_BLOCK_H
 #define FABCOIN_PRIMITIVES_BLOCK_H
 
-#include "arith_uint256.h"
-#include "primitives/transaction.h"
-#include "serialize.h"
-#include "uint256.h"
-#include "version.h"
-#include "util.h"
+#include <arith_uint256.h>
+#include <primitives/transaction.h>
+#include <serialize.h>
+#include <uint256.h>
+#include <version.h>
+#include <util.h>
 #include <string.h>
 
 static const int SER_WITHOUT_SIGNATURE = 1 << 3;

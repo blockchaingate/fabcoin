@@ -4,9 +4,9 @@
 #include <QWidget>
 #include <QLabel>
 #include <QVBoxLayout>
-#include "qvalidatedlineedit.h"
-#include "contractabi.h"
-#include "abiparamitem.h"
+#include <qvalidatedlineedit.h>
+#include <contractabi.h>
+#include <abiparamitem.h>
 
 class PlatformStyle;
 class ParameterABI;

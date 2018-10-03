@@ -1,9 +1,9 @@
-﻿#include "tokenitemmodel.h"
-#include "token.h"
-#include "walletmodel.h"
-#include "wallet/wallet.h"
-#include "validation.h"
-#include "fabcoinunits.h"
+﻿#include <tokenitemmodel.h>
+#include <token.h>
+#include <walletmodel.h>
+#include <wallet/wallet.h>
+#include <validation.h>
+#include <fabcoinunits.h>
 #include <algorithm>
 
 #include <QDateTime>
@@ -174,7 +174,7 @@ private Q_SLOTS:
     }
 };
 
-#include "tokenitemmodel.moc"
+#include <tokenitemmodel.moc>
 
 struct TokenItemEntryLessThan
 {

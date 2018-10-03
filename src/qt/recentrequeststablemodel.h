@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_RECENTREQUESTSTABLEMODEL_H
 #define FABCOIN_QT_RECENTREQUESTSTABLEMODEL_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QAbstractTableModel>
 #include <QStringList>

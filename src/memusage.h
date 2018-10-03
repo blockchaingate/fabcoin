@@ -5,7 +5,7 @@
 #ifndef FABCOIN_MEMUSAGE_H
 #define FABCOIN_MEMUSAGE_H
 
-#include "indirectmap.h"
+#include <indirectmap.h>
 
 #include <stdlib.h>
 

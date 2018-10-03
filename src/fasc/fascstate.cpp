@@ -1,8 +1,8 @@
 #include <sstream>
 #include <util.h>
 #include <validation.h>
-#include "chainparams.h"
-#include "fascstate.h"
+#include <chainparams.h>
+#include <fasc/fascstate.h>
 
 using namespace std;
 using namespace dev;

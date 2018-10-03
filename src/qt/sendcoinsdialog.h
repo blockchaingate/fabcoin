@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_SENDCOINSDIALOG_H
 #define FABCOIN_QT_SENDCOINSDIALOG_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QDialog>
 #include <QMessageBox>

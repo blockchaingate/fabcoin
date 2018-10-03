@@ -32,8 +32,8 @@
 // sends them to the server.
 //
 
-#include "paymentrequestplus.h"
-#include "walletmodel.h"
+#include <paymentrequestplus.h>
+#include <walletmodel.h>
 
 #include <QObject>
 #include <QString>

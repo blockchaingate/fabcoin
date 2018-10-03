@@ -1,15 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_POLICY_POLICY_H
 #define FABCOIN_POLICY_POLICY_H
 
-#include "consensus/consensus.h"
-#include "feerate.h"
-#include "script/interpreter.h"
-#include "script/standard.h"
+#include <consensus/consensus.h>
+#include <policy/feerate.h>
+#include <script/interpreter.h>
+#include <script/standard.h>
 
 #include <string>
 

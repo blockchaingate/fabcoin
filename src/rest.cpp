@@ -1,22 +1,22 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chain.h"
-#include "chainparams.h"
-#include "core_io.h"
-#include "primitives/block.h"
-#include "primitives/transaction.h"
-#include "validation.h"
-#include "httpserver.h"
-#include "rpc/blockchain.h"
-#include "rpc/server.h"
-#include "streams.h"
-#include "sync.h"
-#include "txmempool.h"
-#include "utilstrencodings.h"
-#include "version.h"
+#include <chain.h>
+#include <chainparams.h>
+#include <core_io.h>
+#include <primitives/block.h>
+#include <primitives/transaction.h>
+#include <validation.h>
+#include <httpserver.h>
+#include <rpc/blockchain.h>
+#include <rpc/server.h>
+#include <streams.h>
+#include <sync.h>
+#include <txmempool.h>
+#include <utilstrencodings.h>
+#include <version.h>
 
 #include <boost/algorithm/string.hpp>
 

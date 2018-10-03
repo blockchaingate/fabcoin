@@ -1,7 +1,7 @@
 #ifndef FABCOIN_QT_TOKENTOKENTRANSACTIONTABLEMODEL_H
 #define FABCOIN_QT_TOKENTOKENTRANSACTIONTABLEMODEL_H
 
-#include "fabcoinunits.h"
+#include <fabcoinunits.h>
 
 #include <QAbstractTableModel>
 #include <QStringList>

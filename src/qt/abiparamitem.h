@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QToolButton>
-#include "qvalidatedlineedit.h"
+#include <qvalidatedlineedit.h>
 
 class PlatformStyle;
 class ParameterABI;
