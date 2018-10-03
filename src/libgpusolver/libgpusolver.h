@@ -62,6 +62,22 @@ public:
 	GPUSolver(unsigned int n, unsigned k);
 	GPUSolver(unsigned platform, unsigned device, unsigned int n, unsigned int k);
 	~GPUSolver();
+
+    std::pair<int, int> getparam() 
+    { 
+        std::pair<int, int> param;
+        if(  miner )
+        {
+            param.first = miner->PARAM_N;
+            param.second = miner->PARAM_K;
+        }
+        else
+        {
+            param.first = 0;
+            param.second = 0;
+        }            
+        return param;
+    }
     bool run(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 nonce,
         const std::function<bool(std::vector<unsigned char>)> validBlock,
         const std::function<bool(GPUSolverCancelCheck)> cancelled,

@@ -41,10 +41,10 @@ char *s_hexdump(const void *_a, uint32_t a_len)
 	return buf;
 }
 
-GPUSolver::GPUSolver(unsigned int n, unsigned k) {
-
-	size_t global_work_size = 1 << 20;
-  size_t local_work_size = 32;
+GPUSolver::GPUSolver(unsigned int n, unsigned k) 
+{
+    size_t global_work_size = 1 << 20;
+    size_t local_work_size = 32;
 
 	miner = new cl_gpuminer(n,k);
 

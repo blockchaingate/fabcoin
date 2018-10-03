@@ -1032,8 +1032,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 
             nCounter = 0;
             if (conf.useGPU)
-               LogPrint(BCLog::POW, "Equihash solver in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
-            else LogPrint(BCLog::POW, "Equihash solver in CPU with nNonce = %s hashTarget=%s\n", pblock->nNonce.ToString(), hashTarget.GetHex());
+                LogPrint(BCLog::POW, "Equihash solver (%d,%d) in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", n, k, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+            else 
+                LogPrint(BCLog::POW, "Equihash solver (%d,%d) in CPU with nNonce = %s hashTarget=%s\n", n, k, pblock->nNonce.ToString(), hashTarget.GetHex());
   
             double secs, solps;
             g_nSols[thr_id] = 0;
@@ -1134,6 +1135,15 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
                     else 
                     {
 #ifdef ENABLE_GPU
+                        if( g_solver )
+                        {
+                            std::pair<int,int> param = g_solver->getparam();
+                            if( param.first != n || param.second != k )
+                            {
+                                delete g_solver;
+                                g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
+                            }
+                        }
                         bool found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, cancelledGPU, curr_state);
                         if (found)
                             break;

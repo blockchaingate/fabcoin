@@ -250,9 +250,11 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             crypto_generichash_blake2b_state eh_state;
             if( conf.useGPU )
             {
+#ifdef ENABLE_GPU
                 memcpy(header, &ss[0], ss.size());
                 if( !g_solver )
                     g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
+#endif
             }
             else
             {
