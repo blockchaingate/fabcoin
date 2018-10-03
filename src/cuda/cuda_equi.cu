@@ -87,8 +87,6 @@ u32 umax(const u32, const u32);
 #define __shfl2 __shfl
 #endif
 
-typedef u32 proof[PROOFSIZE];
-
 struct __align__(32) slot {
 	u32 hash[8];
 };

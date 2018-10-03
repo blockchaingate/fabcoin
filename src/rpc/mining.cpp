@@ -175,6 +175,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     int nHeightEnd = 0;
     int nHeight = 0;
     int nCounter = 0;
+    int headerlen = 0;
 
     {   // Don't keep cs_main locked
         LOCK(cs_main);
@@ -195,12 +196,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
     conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
 
-
-#if defined(ENABLE_GPU) &&  defined(USE_CUDA)
     uint8_t * header = NULL;
-    int headerlen = 0;
-    eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
-    eq_cuda_context210_9 *g_solver210_9 = NULL;
+#ifdef ENABLE_GPU
+    GPUSolver * g_solver = NULL;
     if( conf.useGPU )
     {        
         header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
@@ -226,7 +224,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         n = params.EquihashN(pblock->nHeight);
         k = params.EquihashK(pblock->nHeight);
 
-        LogPrint(BCLog::POW, "Using Equihash solver with n = %u, k = %u\n", n, k);
+        LogPrintf("Using Equihash solver with n = %u, k = %u\n", n, k);
 
         if (pblock->nHeight < (uint32_t)params.GetConsensus().FABHeight)
         {
@@ -249,45 +247,22 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
             CDataStream ss(SER_NETWORK, PROTOCOL_VERSION );
             ss << I;
 
-#if defined(ENABLE_GPU) &&  defined(USE_CUDA)
-            int ser_flags = ((uint32_t)(nHeight+1) < params.GetConsensus().ContractHeight) ? SERIALIZE_BLOCK_NO_CONTRACT : 0;
+            crypto_generichash_blake2b_state eh_state;
             if( conf.useGPU )
             {
-                if( ser_flags & SERIALIZE_BLOCK_NO_CONTRACT ) // before fork
-                {
-                    if( g_solver210_9 ) 
-                    {
-                        delete g_solver210_9;
-                        g_solver210_9 = NULL;
-                    }
-
-                    if( !g_solver )
-                    {
-                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(1, conf.currentDevice,&cb_validate, &cb_cancel);
-                    }
-                }
-                else // after fork
-                {
-                    if( g_solver ) 
-                    {
-                        delete g_solver;
-                        g_solver = NULL;
-                    }
-
-                    if( !g_solver210_9 )
-                    {
-                        g_solver210_9 = new eq_cuda_context210_9(1, conf.currentDevice,&cb_validate, &cb_cancel);
-                    }
-                }                
+#ifdef ENABLE_GPU
                 memcpy(header, &ss[0], ss.size());
-            }
+                if( !g_solver )
+                    g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
 #endif
-            // Solve Equihash.
-            crypto_generichash_blake2b_state eh_state;
-            EhInitialiseState(n, k, eh_state);
-
-            // H(I||...
-            crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
+            }
+            else
+            {
+                // Solve Equihash.
+                EhInitialiseState(n, k, eh_state);
+                // H(I||...
+                crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
+            }
 
             while ( nMaxTries > 0  && nCounter < nInnerLoopCount ) 
             {
@@ -301,15 +276,18 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
                 if( conf.useGPU )
                 {
-#if defined(ENABLE_GPU) &&  defined(USE_CUDA)
+#ifdef ENABLE_GPU
                     headerlen = ((uint32_t)(nHeight+1) < (uint32_t)params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
                     for (size_t i = 0; i < FABCOIN_NONCE_LEN; ++i)
                         header[ headerlen-32 + i] = pblock->nNonce.begin()[i];
 #endif
                 }
-
-                // H(I||V||...
-                crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());               
+                else
+                {
+                    // H(I||V||...
+                    curr_state = eh_state;
+                    crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
+                }
 
                 // (x_1, x_2, ...) = A(I, V, n, k)
                 std::function<bool(std::vector<unsigned char>)> validBlock =
@@ -324,17 +302,8 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 bool found = false;
                 if( conf.useGPU )
                 {
-#if defined(ENABLE_GPU) &&  defined(USE_CUDA)
-                    if( ser_flags & SERIALIZE_BLOCK_NO_CONTRACT ) // before fork
-                    {
-                        if( g_solver )
-                            found = g_solver->solve((unsigned char *)pblock, header, headerlen);
-                    }
-                    else
-                    {
-                        if( g_solver210_9 )
-                            found = g_solver210_9->solve((unsigned char *)pblock, header, headerlen);
-                    }
+#ifdef ENABLE_GPU
+                    found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, false, curr_state);
 #endif
                 }
                 else
@@ -365,13 +334,8 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     if( conf.useGPU )
     {
-#if defined(ENABLE_GPU) &&  defined(USE_CUDA)
-        if( g_solver)
-            delete g_solver;
-
-        if( g_solver210_9 )
-            delete g_solver210_9;
-
+#ifdef ENABLE_GPU
+        delete g_solver;
         free(header);
 #endif
     }
