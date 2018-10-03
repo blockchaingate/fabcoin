@@ -788,7 +788,7 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
     GPUSolver * g_solver = NULL;
     if(conf.useGPU) 
     {
-        g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice);
+        g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
         LogPrint(BCLog::POW, "Using Equihash solver GPU with n = %u, k = %u\n", n, k);
         header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
     }
@@ -853,8 +853,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 
             nCounter = 0;
             if (conf.useGPU)
-               LogPrint(BCLog::POW, "Equihash solver in %d @GPU (%u-%u) with nNonce = %s hashTarget=%s\n", thr_id, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
-            else LogPrint(BCLog::POW, "Equihash solver in CPU with nNonce = %s hashTarget=%s\n", pblock->nNonce.ToString(), hashTarget.GetHex());
+                LogPrint(BCLog::POW, "Equihash solver (%d,%d) in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", n, k, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+            else 
+                LogPrint(BCLog::POW, "Equihash solver (%d,%d) in CPU with nNonce = %s hashTarget=%s\n", n, k, pblock->nNonce.ToString(), hashTarget.GetHex());
   
             double secs, solps;
             g_nSols[thr_id] = 0;
@@ -954,6 +955,15 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
                     else 
                     {
 #ifdef ENABLE_GPU
+                        if( g_solver )
+                        {
+                            std::pair<int,int> param = g_solver->getparam();
+                            if( param.first != n || param.second != k )
+                            {
+                                delete g_solver;
+                                g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
+                            }
+                        }
                         bool found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, cancelledGPU, curr_state);
                         if (found)
                             break;
@@ -1094,7 +1104,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
 
     uint8_t * header = NULL;
     eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
-    eq_cuda_context210_9 *g_solver210_9 = NULL;
+    eq_cuda_context1847 *g_solver184_7 = NULL;
     header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
 
     try {
@@ -1141,15 +1151,15 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             {
                 if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight)   // before fork
                 {
-                    if( g_solver210_9 ) 
+                    if( g_solver184_7 ) 
                     {
-                        delete g_solver210_9;
-                        g_solver210_9 = NULL;
+                        delete g_solver184_7;
+                        g_solver184_7 = NULL;
                     }
 
                     if( !g_solver )
                     {
-                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }
                 else // after fork
@@ -1160,9 +1170,9 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                         g_solver = NULL;
                     }
 
-                    if( !g_solver210_9 )
+                    if( !g_solver184_7 )
                     {
-                        g_solver210_9 = new eq_cuda_context210_9(1, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver184_7 = new eq_cuda_context1847(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }                
             }
@@ -1208,8 +1218,8 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                     }
                     else
                     {
-                        if( g_solver210_9 )
-                            found = g_solver210_9->solve((unsigned char *)pblock, header, headerlen);                        
+                        if( g_solver184_7 )
+                            found = g_solver184_7->solve((unsigned char *)pblock, header, headerlen);                        
                     }
                     if (found)
                         break;
@@ -1261,8 +1271,8 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
         if( g_solver)
             delete g_solver;
 
-        if( g_solver210_9 )
-            delete g_solver210_9;
+        if( g_solver184_7 )
+            delete g_solver184_7;
 
         free(header);
         throw;
@@ -1273,8 +1283,8 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
         if( g_solver)
             delete g_solver;
 
-        if( g_solver210_9 )
-            delete g_solver210_9;
+        if( g_solver184_7 )
+            delete g_solver184_7;
 
         free(header);
         return;
@@ -1283,8 +1293,8 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
     if( g_solver)
         delete g_solver;
 
-    if( g_solver210_9 )
-        delete g_solver210_9;
+    if( g_solver184_7 )
+        delete g_solver184_7;
 
     free(header);
 }
