@@ -2,31 +2,31 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "walletview.h"
+#include <walletview.h>
 
-#include "addressbookpage.h"
-#include "askpassphrasedialog.h"
-#include "fabcoingui.h"
-#include "clientmodel.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "overviewpage.h"
-#include "platformstyle.h"
-#include "receivecoinsdialog.h"
-#include "sendcoinsdialog.h"
-#include "signverifymessagedialog.h"
-#include "transactiontablemodel.h"
-#include "tokentransactiontablemodel.h"
-#include "tokentransactionrecord.h"
-#include "transactionview.h"
-#include "walletmodel.h"
-#include "createcontract.h"
-#include "sendtocontract.h"
-#include "callcontract.h"
-#include "qrctoken.h"
-#include "restoredialog.h"
+#include <addressbookpage.h>
+#include <askpassphrasedialog.h>
+#include <fabcoingui.h>
+#include <clientmodel.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
+#include <overviewpage.h>
+#include <platformstyle.h>
+#include <receivecoinsdialog.h>
+#include <sendcoinsdialog.h>
+#include <signverifymessagedialog.h>
+#include <transactiontablemodel.h>
+#include <tokentransactiontablemodel.h>
+#include <tokentransactionrecord.h>
+#include <transactionview.h>
+#include <walletmodel.h>
+#include <createcontract.h>
+#include <sendtocontract.h>
+#include <callcontract.h>
+#include <qrctoken.h>
+#include <restoredialog.h>
 
-#include "ui_interface.h"
+#include <ui_interface.h>
 
 #include <QAction>
 #include <QActionGroup>

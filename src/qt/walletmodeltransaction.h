@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_WALLETMODELTRANSACTION_H
 #define FABCOIN_QT_WALLETMODELTRANSACTION_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QObject>
 

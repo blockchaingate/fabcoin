@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_BANTABLEMODEL_H
 #define FABCOIN_QT_BANTABLEMODEL_H
 
-#include "net.h"
+#include <net.h>
 
 #include <QAbstractTableModel>
 #include <QStringList>

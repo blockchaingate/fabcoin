@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,14 +11,14 @@
 #define FABCOIN_UTIL_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "compat.h"
-#include "fs.h"
-#include "sync.h"
-#include "tinyformat.h"
-#include "utiltime.h"
+#include <compat.h>
+#include <fs.h>
+#include <sync.h>
+#include <tinyformat.h>
+#include <utiltime.h>
 
 #include <atomic>
 #include <exception>

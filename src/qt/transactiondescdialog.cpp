@@ -2,11 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "transactiondescdialog.h"
-#include "ui_transactiondescdialog.h"
+#include <transactiondescdialog.h>
+#include <ui_transactiondescdialog.h>
 
-#include "transactiontablemodel.h"
-#include "styleSheet.h"
+#include <transactiontablemodel.h>
+#include <styleSheet.h>
 
 #include <QModelIndex>
 

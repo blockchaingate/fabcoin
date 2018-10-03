@@ -3,19 +3,19 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "addressbookpage.h"
-#include "ui_addressbookpage.h"
+#include <addressbookpage.h>
+#include <ui_addressbookpage.h>
 
-#include "addresstablemodel.h"
-#include "fabcoingui.h"
-#include "csvmodelwriter.h"
-#include "editaddressdialog.h"
-#include "guiutil.h"
-#include "platformstyle.h"
-#include "styleSheet.h"
+#include <addresstablemodel.h>
+#include <fabcoingui.h>
+#include <csvmodelwriter.h>
+#include <editaddressdialog.h>
+#include <guiutil.h>
+#include <platformstyle.h>
+#include <styleSheet.h>
 
 #include <QIcon>
 #include <QMenu>

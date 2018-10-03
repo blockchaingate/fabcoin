@@ -3,32 +3,32 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "optionsmodel.h"
+#include <optionsmodel.h>
 
-#include "fabcoinunits.h"
-#include "wallet/wallet.h"
-#include "guiutil.h"
+#include <fabcoinunits.h>
+#include <wallet/wallet.h>
+#include <guiutil.h>
 
-#include "amount.h"
-#include "init.h"
-#include "validation.h" // For DEFAULT_SCRIPTCHECK_THREADS
-#include "net.h"
-#include "netbase.h"
-#include "txdb.h" // for -dbcache defaults
-#include "intro.h" 
+#include <amount.h>
+#include <init.h>
+#include <validation.h> // For DEFAULT_SCRIPTCHECK_THREADS
+#include <net.h>
+#include <netbase.h>
+#include <txdb.h> // for -dbcache defaults
+#include <intro.h> 
 
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
-#include "wallet/walletdb.h"
+#include <wallet/wallet.h>
+#include <wallet/walletdb.h>
 #endif
 
 #include <QNetworkProxy>
 #include <QSettings>
 #include <QStringList>
-#include "utilmoneystr.h"
+#include <utilmoneystr.h>
 
 OptionsModel::OptionsModel(QObject *parent, bool resetSettings) :
     QAbstractListModel(parent)

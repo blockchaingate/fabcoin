@@ -1,4 +1,4 @@
-#include "styleSheet.h"
+#include <styleSheet.h>
 
 #include <QFile>
 #include <QWidget>

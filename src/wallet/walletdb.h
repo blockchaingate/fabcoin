@@ -1,15 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_WALLET_WALLETDB_H
 #define FABCOIN_WALLET_WALLETDB_H
 
-#include "amount.h"
-#include "primitives/transaction.h"
-#include "wallet/db.h"
-#include "key.h"
+#include <amount.h>
+#include <primitives/transaction.h>
+#include <wallet/db.h>
+#include <key.h>
 
 #include <list>
 #include <stdint.h>

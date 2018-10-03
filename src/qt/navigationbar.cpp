@@ -1,11 +1,11 @@
-#include "navigationbar.h"
+#include <navigationbar.h>
 #include <QActionGroup>
 #include <QToolButton>
 #include <QLayout>
 #include <QStylePainter>
 #include <QStyleOptionToolButton>
 #include <QStyle>
-#include "styleSheet.h"
+#include <styleSheet.h>
 
 namespace NavigationBar_NS
 {

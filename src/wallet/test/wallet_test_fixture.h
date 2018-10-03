@@ -5,7 +5,7 @@
 #ifndef FABCOIN_WALLET_TEST_FIXTURE_H
 #define FABCOIN_WALLET_TEST_FIXTURE_H
 
-#include "test/test_fabcoin.h"
+#include <test/test_fabcoin.h>
 
 /** Testing setup and teardown for wallet.
  */

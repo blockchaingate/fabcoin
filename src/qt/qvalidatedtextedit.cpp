@@ -1,5 +1,5 @@
-#include "qvalidatedtextedit.h"
-#include "styleSheet.h"
+#include <qvalidatedtextedit.h>
+#include <styleSheet.h>
 
 #include <QValidator>
 

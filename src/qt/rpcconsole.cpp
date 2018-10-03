@@ -3,22 +3,22 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "rpcconsole.h"
-#include "ui_debugwindow.h"
+#include <rpcconsole.h>
+#include <ui_debugwindow.h>
 
-#include "bantablemodel.h"
-#include "clientmodel.h"
-#include "guiutil.h"
-#include "platformstyle.h"
-#include "chainparams.h"
-#include "netbase.h"
-#include "rpc/server.h"
-#include "rpc/client.h"
-#include "util.h"
-#include "styleSheet.h"
+#include <bantablemodel.h>
+#include <clientmodel.h>
+#include <guiutil.h>
+#include <platformstyle.h>
+#include <chainparams.h>
+#include <netbase.h>
+#include <rpc/server.h>
+#include <rpc/client.h>
+#include <util.h>
+#include <styleSheet.h>
 
 #include <openssl/crypto.h>
 
@@ -128,7 +128,7 @@ public:
 };
 
 
-#include "rpcconsole.moc"
+#include <rpcconsole.moc>
 
 /**
  * Split shell command line into a list of arguments and optionally execute the command(s).

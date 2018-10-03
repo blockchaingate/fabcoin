@@ -1,10 +1,10 @@
-#include "qrctoken.h"
-#include "ui_qrctoken.h"
-#include "tokenitemmodel.h"
-#include "walletmodel.h"
-#include "tokentransactionview.h"
-#include "platformstyle.h"
-#include "styleSheet.h"
+#include <qrctoken.h>
+#include <ui_qrctoken.h>
+#include <tokenitemmodel.h>
+#include <walletmodel.h>
+#include <tokentransactionview.h>
+#include <platformstyle.h>
+#include <styleSheet.h>
 
 #include <QPainter>
 #include <QAbstractItemDelegate>

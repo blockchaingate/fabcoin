@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_RECEIVECOINSDIALOG_H
 #define FABCOIN_QT_RECEIVECOINSDIALOG_H
 
-#include "guiutil.h"
+#include <guiutil.h>
 
 #include <QDialog>
 #include <QHeaderView>

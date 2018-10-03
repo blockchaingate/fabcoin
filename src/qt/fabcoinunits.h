@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_FABCOINUNITS_H
 #define FABCOIN_QT_FABCOINUNITS_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QAbstractListModel>
 #include <QString>

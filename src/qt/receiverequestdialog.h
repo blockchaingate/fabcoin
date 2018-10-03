@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_RECEIVEREQUESTDIALOG_H
 #define FABCOIN_QT_RECEIVEREQUESTDIALOG_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QDialog>
 #include <QImage>

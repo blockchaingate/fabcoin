@@ -1,9 +1,9 @@
-#include "eventlog.h"
-#include "execrpccommand.h"
+#include <eventlog.h>
+#include <execrpccommand.h>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonDocument>
-#include "uint256.h"
+#include <uint256.h>
 
 namespace EventLog_NS
 {

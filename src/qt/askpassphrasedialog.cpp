@@ -3,18 +3,18 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "askpassphrasedialog.h"
-#include "ui_askpassphrasedialog.h"
+#include <askpassphrasedialog.h>
+#include <ui_askpassphrasedialog.h>
 
-#include "guiconstants.h"
-#include "walletmodel.h"
-#include "wallet/wallet.h"
-#include "styleSheet.h"
+#include <guiconstants.h>
+#include <walletmodel.h>
+#include <wallet/wallet.h>
+#include <styleSheet.h>
 
-#include "support/allocators/secure.h"
+#include <support/allocators/secure.h>
 
 #include <QKeyEvent>
 #include <QMessageBox>

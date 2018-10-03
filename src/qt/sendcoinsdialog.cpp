@@ -2,29 +2,29 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "sendcoinsdialog.h"
-#include "ui_sendcoinsdialog.h"
+#include <sendcoinsdialog.h>
+#include <ui_sendcoinsdialog.h>
 
-#include "addresstablemodel.h"
-#include "fabcoinunits.h"
-#include "clientmodel.h"
-#include "coincontroldialog.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "platformstyle.h"
-#include "sendcoinsentry.h"
-#include "walletmodel.h"
-#include "guiconstants.h"
-#include "styleSheet.h"
+#include <addresstablemodel.h>
+#include <fabcoinunits.h>
+#include <clientmodel.h>
+#include <coincontroldialog.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
+#include <platformstyle.h>
+#include <sendcoinsentry.h>
+#include <walletmodel.h>
+#include <guiconstants.h>
+#include <styleSheet.h>
 
-#include "base58.h"
-#include "chainparams.h"
-#include "wallet/coincontrol.h"
-#include "validation.h" // mempool and minRelayTxFee
-#include "ui_interface.h"
-#include "txmempool.h"
-#include "policy/fees.h"
-#include "wallet/wallet.h"
+#include <base58.h>
+#include <chainparams.h>
+#include <wallet/coincontrol.h>
+#include <validation.h> // mempool and minRelayTxFee
+#include <ui_interface.h>
+#include <txmempool.h>
+#include <policy/fees.h>
+#include <wallet/wallet.h>
 
 #include <QFontMetrics>
 #include <QMessageBox>

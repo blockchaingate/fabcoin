@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_COINCONTROLDIALOG_H
 #define FABCOIN_QT_COINCONTROLDIALOG_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QAbstractButton>
 #include <QAction>

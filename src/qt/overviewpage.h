@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_OVERVIEWPAGE_H
 #define FABCOIN_QT_OVERVIEWPAGE_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QWidget>
 #include <memory>

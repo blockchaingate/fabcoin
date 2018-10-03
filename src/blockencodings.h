@@ -5,7 +5,7 @@
 #ifndef FABCOIN_BLOCK_ENCODINGS_H
 #define FABCOIN_BLOCK_ENCODINGS_H
 
-#include "primitives/block.h"
+#include <primitives/block.h>
 
 #include <memory>
 

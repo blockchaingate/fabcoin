@@ -2,11 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "fabcoinamountfield.h"
+#include <fabcoinamountfield.h>
 
-#include "fabcoinunits.h"
-#include "styleSheet.h"
-#include "qvaluecombobox.h"
+#include <fabcoinunits.h>
+#include <styleSheet.h>
+#include <qvaluecombobox.h>
 
 #include <QApplication>
 #include <QAbstractSpinBox>
@@ -204,7 +204,7 @@ Q_SIGNALS:
     void valueChanged();
 };
 
-#include "fabcoinamountfield.moc"
+#include <fabcoinamountfield.moc>
 
 FabcoinAmountField::FabcoinAmountField(QWidget *parent) :
     QWidget(parent),

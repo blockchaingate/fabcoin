@@ -5,10 +5,10 @@
 #ifndef FABCOIN_QT_WALLETMODEL_H
 #define FABCOIN_QT_WALLETMODEL_H
 
-#include "paymentrequestplus.h"
-#include "walletmodeltransaction.h"
+#include <paymentrequestplus.h>
+#include <walletmodeltransaction.h>
 
-#include "support/allocators/secure.h"
+#include <support/allocators/secure.h>
 
 #include <map>
 #include <vector>

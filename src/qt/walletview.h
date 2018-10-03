@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_WALLETVIEW_H
 #define FABCOIN_QT_WALLETVIEW_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QStackedWidget>
 
