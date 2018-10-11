@@ -77,6 +77,20 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
     return nNewTime - nOldTime;
 }
 
+bool IsBlockTooLate(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
+{
+    if( pblock->GetBlockTime() > pindexPrev->GetBlockTime() + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
+    {   
+        return false;
+    }
+
+    if( GetAdjustedTime() > pindexPrev->GetBlockTime() + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
+    {
+        return true;
+    }
+    return false;
+}
+
 BlockAssembler::Options::Options() {
     blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
     nBlockMaxWeight = DEFAULT_BLOCK_MAX_WEIGHT;
@@ -998,6 +1012,12 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
                 //if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
                 //    break; // Recreate the block if the clock has run backwards,
 
+                // check if the new block will come too late. If so, create the block again to change block time
+                if( IsBlockTooLate( pblock, chainparams.GetConsensus(), pindexPrev ) )
+                {
+                    break;
+                }
+
                 // so that we can use the correct time.
                 if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
                 {
@@ -1382,15 +1402,29 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                     devices[device].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
 
                     int maxThreads = nThreads;
+                    CBlockIndex* pindexPrev = chainActive.Tip();
+
                     if (!conf.forceGenProcLimit) {
-                        if (result > 7500000000) {
-                            maxThreads = std::min(4, nThreads);
-                        } else if (result > 5500000000) {
-                            maxThreads = std::min(3, nThreads);
-                        } else if (result > 3500000000) {
-                            maxThreads = std::min(2, nThreads);
-                        } else {
-                            maxThreads = std::min(1, nThreads);
+
+                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().ContractHeight )
+                        {
+                            if (result > 7500000000) {
+                                maxThreads = std::min(4, nThreads);
+                            } else if (result > 5500000000) {
+                                maxThreads = std::min(3, nThreads);
+                            } else if (result > 3500000000) {
+                                maxThreads = std::min(2, nThreads);
+                            } else {
+                                maxThreads = std::min(1, nThreads);
+                            }
+                        }
+                        else
+                        {
+                            if (result > 7500000000) {
+                                maxThreads = std::min(2, nThreads);
+                            } else {
+                                maxThreads = std::min(1, nThreads);
+                            }
                         }
                     }
 

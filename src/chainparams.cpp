@@ -135,7 +135,8 @@ public:
  
         consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
-        consensus.ContractHeight = 200000;
+        consensus.ContractHeight = 250000;
+        consensus.LWMAHeight = 250000;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -146,11 +147,17 @@ public:
         consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.powLimitLegacy = uint256S("0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-        consensus.nPowAveragingWindow = 17;
-        assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow);
+        //Digishield parameters
+        consensus.nDigishieldPowAveragingWindow = 17;
+        assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nDigishieldPowAveragingWindow);
+        consensus.nDigishieldPowMaxAdjustDown = 32;
+        consensus.nDigishieldPowMaxAdjustUp = 16;
 
-        consensus.nPowMaxAdjustDown = 32;
-        consensus.nPowMaxAdjustUp = 16;
+        //LWMA parameters
+        consensus.nZawyLwmaAveragingWindow = 45;
+        consensus.bZawyLwmaSolvetimeLimitation = true;
+        consensus.MaxFutureBlockTime = 10 * 60; // 10 mins
+        consensus.MaxBlockInterval = 10; // 10 T
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
@@ -255,6 +262,7 @@ public:
         consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
         consensus.ContractHeight = 192430 ;
+        consensus.LWMAHeight = 250000;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -264,10 +272,18 @@ public:
 
         consensus.powLimit = uint256S("07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.powLimitLegacy = uint256S("0003ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowAveragingWindow = 17;
-        assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nPowAveragingWindow);
-        consensus.nPowMaxAdjustDown = 32; // 32% adjustment down
-        consensus.nPowMaxAdjustUp = 16; // 16% adjustment up
+
+        //Digishield parameters
+        consensus.nDigishieldPowAveragingWindow = 17;
+        assert(maxUint/UintToArith256(consensus.powLimit) >= consensus.nDigishieldPowAveragingWindow);
+        consensus.nDigishieldPowMaxAdjustDown = 32;
+        consensus.nDigishieldPowMaxAdjustUp = 16;
+
+        //LWMA parameters
+        consensus.nZawyLwmaAveragingWindow = 45;
+        consensus.bZawyLwmaSolvetimeLimitation = true;
+        consensus.MaxFutureBlockTime = 10 * 60; // 10 mins
+        consensus.MaxBlockInterval = 10; // 10 T
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days, for SHA256 mining only
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
@@ -374,22 +390,22 @@ public:
         consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
-        consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
-        consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.fPowAllowMinDifficultyBlocks = true;
-        consensus.fPowNoRetargeting = true;
-
         consensus.FABHeight = 1000000;
         consensus.ContractHeight = 100;
+        consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
 
+        //Digishield parameters
+        consensus.nDigishieldPowAveragingWindow = 17;
+        consensus.nDigishieldPowMaxAdjustDown = 32;
+        consensus.nDigishieldPowMaxAdjustUp = 16;
 
-        consensus.nPowAveragingWindow = 17;
-        consensus.nPowMaxAdjustDown = 32;
-        consensus.nPowMaxAdjustUp = 16;
+        //LWMA parameters
+        consensus.nZawyLwmaAveragingWindow = 45;
+        consensus.bZawyLwmaSolvetimeLimitation = true;
+        consensus.MaxFutureBlockTime = 10 * 60; // 10 mins
+        consensus.MaxBlockInterval = 10; // 10 T
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
         consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
@@ -397,7 +413,6 @@ public:
         consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
-
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
