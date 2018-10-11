@@ -60,7 +60,7 @@ unsigned int LwmaGetNextWorkRequired(const CBlockIndex* pindexLast, const CBlock
     if ( //params.fPowAllowMinDifficultyBlocks &&
         pblock->GetBlockTime() > pindexLast->GetBlockTime() + Params().GetnPowTargetSpacing(pindexLast->nHeight+1) * params.MaxBlockInterval) 
     {
-        LogPrintf("The new block will come too late. Use minimum difficulty.\n");
+        LogPrintf("The new block(height=%d) will come too late. Use minimum difficulty.\n", pblock->nHeight);
         return UintToArith256(params.PowLimit(true)).GetCompact();
     }
     return LwmaCalculateNextWorkRequired(pindexLast, params);

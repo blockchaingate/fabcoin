@@ -1169,7 +1169,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
 
             try
             {
-                if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight)   // before fork
+                if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().EquihashFABHeight)   // before fork
                 {
                     if( g_solver184_7 ) 
                     {
@@ -1231,7 +1231,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                 try {
                     bool found = false;
 
-                    if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight )   // before fork
+                    if ( pblock->nHeight < (uint32_t)chainparams.GetConsensus().EquihashFABHeight )   // before fork
                     {
                         if( g_solver )
                             found = g_solver->solve((unsigned char *)pblock, header, headerlen);
@@ -1406,7 +1406,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
                     if (!conf.forceGenProcLimit) {
 
-                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().ContractHeight )
+                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
                         {
                             if (result > 7500000000) {
                                 maxThreads = std::min(4, nThreads);
