@@ -15,65 +15,83 @@
 #include <crypto/equihash.h>
 #include <util.h>
 
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
+unsigned int GetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlockHeader *pblock, const Consensus::Params& params)
 {
     unsigned int nProofOfWorkLimit = UintToArith256(params.PowLimit(true)).GetCompact();
 
     // Genesis block
-    if (pindexLast == NULL)
+    if (pindexPrev == NULL)
         return nProofOfWorkLimit;
 
     if (params.fPowNoRetargeting)
-        return pindexLast->nBits;
+        return pindexPrev->nBits;
 
-    uint32_t nHeight = pindexLast->nHeight + 1;
+    uint32_t nHeight = pindexPrev->nHeight + 1;
 
     if (nHeight < params.LWMAHeight) 
     {
         // Digishield v3.
-        return DigishieldGetNextWorkRequired(pindexLast, pblock, params);
+        return DigishieldGetNextWorkRequired(pindexPrev, pblock, params);
     } 
     else if (nHeight < params.LWMAHeight + params.nZawyLwmaAveragingWindow) 
     {
         // Reduce the difficulty of the first forked block by 100x and keep it for N blocks.
         if (nHeight == params.LWMAHeight) 
         {
-            return ReduceDifficultyBy(pindexLast, 100, params);
+            return ReduceDifficultyBy(pindexPrev, 100, params);
         } 
         else 
         {
-            return pindexLast->nBits;
+            return pindexPrev->nBits;
         }
     } 
     else 
     {
         // Zawy's LWMA.
-        return LwmaGetNextWorkRequired(pindexLast, pblock, params);
+        return LwmaGetNextWorkRequired(pindexPrev, pblock, params);
     }
 }
 
-unsigned int LwmaGetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
+unsigned int LwmaGetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlockHeader *pblock, const Consensus::Params& params)
 {
-    // Special difficulty rule for testnet:
     // If the new block's timestamp is more than 10 * T minutes
-    // then allow mining of a min-difficulty block.
-    if ( //params.fPowAllowMinDifficultyBlocks &&
-        pblock->GetBlockTime() > pindexLast->GetBlockTime() + Params().GetnPowTargetSpacing(pindexLast->nHeight+1) * params.MaxBlockInterval) 
+    // then halve the difficulty
+    int64_t diff = pblock->GetBlockTime() - pindexPrev->GetBlockTime();
+    if ( params.fPowAllowMinDifficultyBlocks && diff > Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * params.MaxBlockInterval ) 
     {
+#if 1
         LogPrintf("The new block(height=%d) will come too late. Use minimum difficulty.\n", pblock->nHeight);
         return UintToArith256(params.PowLimit(true)).GetCompact();
+#else
+        arith_uint256 target;
+        target.SetCompact(pindexPrev->nBits);
+        int n = diff / (Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * params.MaxBlockInterval);
+
+        while( n-- > 0 )
+        {
+            target <<= 1;
+        }
+
+        const arith_uint256 pow_limit = UintToArith256(params.PowLimit(true));
+        if (target > pow_limit) {
+            target = pow_limit;
+        }
+
+        LogPrintf("The new block(height=%d) will come too late. Halve the difficulty to %x.\n", pblock->nHeight, target.GetCompact());
+        return target.GetCompact();
+#endif
     }
-    return LwmaCalculateNextWorkRequired(pindexLast, params);
+    return LwmaCalculateNextWorkRequired(pindexPrev, params);
 }
 
-unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexLast, const Consensus::Params& params)
+unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexPrev, const Consensus::Params& params)
 {
     if (params.fPowNoRetargeting)
     {
-        return pindexLast->nBits;
+        return pindexPrev->nBits;
     }
 
-    const int height = pindexLast->nHeight + 1;
+    const int height = pindexPrev->nHeight + 1;
     
     const int64_t T = Params().GetnPowTargetSpacing(height);
     const int N = params.nZawyLwmaAveragingWindow;
@@ -89,7 +107,7 @@ unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexLast, const 
 
     // Loop through N most recent blocks.
     for (int i = height - N; i < height; i++) {
-        const CBlockIndex* block = pindexLast->GetAncestor(i);
+        const CBlockIndex* block = pindexPrev->GetAncestor(i);
         const CBlockIndex* block_Prev = block->GetAncestor(i - 1);
         int64_t solvetime = block->GetBlockTime() - block_Prev->GetBlockTime();
 
@@ -149,7 +167,7 @@ unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexLast, const 
     }
     
     arith_uint256 last_target;
-    last_target.SetCompact(pindexLast->nBits);       
+    last_target.SetCompact(pindexPrev->nBits);       
     if( next_target > last_target * 13/10 ) next_target = last_target * 13/10;    
     /*in case difficulty drops too soon compared to the last block, especially
      *when the effect of the last rule wears off in the new block
@@ -163,14 +181,14 @@ unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexLast, const 
     return next_target.GetCompact();
 }
 
-unsigned int DigishieldGetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock,
+unsigned int DigishieldGetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlockHeader *pblock,
                                            const Consensus::Params& params)
 {
-    assert(pindexLast != nullptr);
+    assert(pindexPrev != nullptr);
     unsigned int nProofOfWorkLimit = UintToArith256(params.PowLimit(true)).GetCompact();
 
     // Find the first block in the averaging interval
-    const CBlockIndex* pindexFirst = pindexLast;
+    const CBlockIndex* pindexFirst = pindexPrev;
     arith_uint256 bnTot {0};
     for (int i = 0; pindexFirst && i < params.nDigishieldPowAveragingWindow; i++) {
         arith_uint256 bnTmp;
@@ -184,7 +202,7 @@ unsigned int DigishieldGetNextWorkRequired(const CBlockIndex* pindexLast, const 
         return nProofOfWorkLimit;
 
     arith_uint256 bnAvg {bnTot / params.nDigishieldPowAveragingWindow};
-    return DigishieldCalculateNextWorkRequired(bnAvg, pindexLast->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
+    return DigishieldCalculateNextWorkRequired(bnAvg, pindexPrev->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
 }
 
 
@@ -212,11 +230,11 @@ unsigned int DigishieldCalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nL
     return bnNew.GetCompact();
 }
 
-unsigned int ReduceDifficultyBy(const CBlockIndex* pindexLast, int64_t multiplier, const Consensus::Params& params) 
+unsigned int ReduceDifficultyBy(const CBlockIndex* pindexPrev, int64_t multiplier, const Consensus::Params& params) 
 {
     arith_uint256 target;
 
-    target.SetCompact(pindexLast->nBits);
+    target.SetCompact(pindexPrev->nBits);
     target *= multiplier;
 
     const arith_uint256 pow_limit = UintToArith256(params.PowLimit(true));

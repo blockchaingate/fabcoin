@@ -79,12 +79,7 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
 
 bool IsBlockTooLate(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
-    if( pblock->GetBlockTime() > pindexPrev->GetBlockTime() + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
-    {   
-        return false;
-    }
-
-    if( GetAdjustedTime() > pindexPrev->GetBlockTime() + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
+    if( GetAdjustedTime() > std::max(pblock->GetBlockTime(), pindexPrev->GetBlockTime()) + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
     {
         return true;
     }
@@ -1011,14 +1006,18 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
                 // Update nTime every few seconds
                 //if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
                 //    break; // Recreate the block if the clock has run backwards,
+                // so that we can use the correct time.
 
-                // check if the new block will come too late. If so, create the block again to change block time
-                if( IsBlockTooLate( pblock, chainparams.GetConsensus(), pindexPrev ) )
+
+                if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
                 {
-                    break;
+                    // check if the new block will come too late. If so, create the block again to change block time
+                    if( IsBlockTooLate( pblock, chainparams.GetConsensus(), pindexPrev ) )
+                    {
+                        break;
+                    }
                 }
 
-                // so that we can use the correct time.
                 if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
                 {
                     // Changing pblock->nTime can change work required on testnet:
@@ -1271,6 +1270,17 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                 //if (UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev) < 0)
                 //    break; // Recreate the block if the clock has run backwards,
                 // so that we can use the correct time.
+
+
+                if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
+                {
+                    // check if the new block will come too late. If so, create the block again to change block time
+                    if( IsBlockTooLate( pblock, chainparams.GetConsensus(), pindexPrev ) )
+                    {
+                        break;
+                    }
+                }
+
                 if (chainparams.GetConsensus().fPowAllowMinDifficultyBlocks)
                 {
                     // Changing pblock->nTime can change work required on testnet:

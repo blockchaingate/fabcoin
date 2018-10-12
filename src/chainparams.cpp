@@ -157,7 +157,7 @@ public:
         //LWMA parameters
         consensus.nZawyLwmaAveragingWindow = 45;
         consensus.bZawyLwmaSolvetimeLimitation = true;
-        consensus.MaxFutureBlockTime = 10 * 60; // 10 mins
+        consensus.MaxFutureBlockTime = 20 * 60; // 20 mins
         consensus.MaxBlockInterval = 10; // 10 T
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
@@ -284,7 +284,7 @@ public:
         //LWMA parameters
         consensus.nZawyLwmaAveragingWindow = 45;
         consensus.bZawyLwmaSolvetimeLimitation = true;
-        consensus.MaxFutureBlockTime = 10 * 60; // 10 mins
+        consensus.MaxFutureBlockTime = 20 * 60; // 20 mins
         consensus.MaxBlockInterval = 10; // 10 T
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days, for SHA256 mining only
@@ -407,7 +407,7 @@ public:
         //LWMA parameters
         consensus.nZawyLwmaAveragingWindow = 45;
         consensus.bZawyLwmaSolvetimeLimitation = true;
-        consensus.MaxFutureBlockTime = 10 * 60; // 10 mins
+        consensus.MaxFutureBlockTime = 20 * 60; // 20 mins
         consensus.MaxBlockInterval = 10; // 10 T
 
         consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
