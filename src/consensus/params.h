@@ -50,8 +50,14 @@ struct Params {
     int BIP66Height;
     /** Block height at which Fabcoin Equihash hard fork becomes active */
     uint32_t FABHeight;
+    /** Block height at which LWMA becomes active */
+    uint32_t LWMAHeight;
     /** Block height at which Fabcoin Smart Contract hard fork becomes active */
     uint32_t ContractHeight;
+    /** Block height at which EquihashFAB (184,7) becomes active */
+    uint32_t EquihashFABHeight;
+    /** Limit BITCOIN_MAX_FUTURE_BLOCK_TIME **/
+    int64_t MaxFutureBlockTime;
     /** Block height before which the coinbase subsidy will be locked for the same period */
     int CoinbaseLock;
     /** whether segwit is active */
@@ -64,8 +70,8 @@ struct Params {
     uint32_t nRuleChangeActivationThreshold;
     uint32_t nMinerConfirmationWindow;
     BIP9Deployment vDeployments[MAX_VERSION_BITS_DEPLOYMENTS];
-    /** Proof of work parameters */
 
+    /** Proof of work parameters */
     uint256 powLimit;
     uint256 powLimitLegacy;
 
@@ -80,13 +86,18 @@ struct Params {
     
     int nFixUTXOCacheHFHeight; //fasc
 
-    //Zcash logic for diff adjustment
-    int64_t nPowAveragingWindow;
-    int64_t nPowMaxAdjustDown;
-    int64_t nPowMaxAdjustUp;
-    int64_t AveragingWindowTimespan() const { return nPowAveragingWindow * nPowTargetSpacing; }
-    int64_t MinActualTimespan() const { return (AveragingWindowTimespan() * (100 - nPowMaxAdjustUp  )) / 100; }
-    int64_t MaxActualTimespan() const { return (AveragingWindowTimespan() * (100 + nPowMaxAdjustDown)) / 100; }
+    // Params for Zawy's LWMA difficulty adjustment algorithm.
+    int64_t nZawyLwmaAveragingWindow;
+    bool bZawyLwmaSolvetimeLimitation;
+    uint8_t MaxBlockInterval;
+
+    //Digishield logic for difficulty adjustment
+    int64_t nDigishieldPowAveragingWindow;
+    int64_t nDigishieldPowMaxAdjustDown;
+    int64_t nDigishieldPowMaxAdjustUp;
+    int64_t DigishieldAveragingWindowTimespan() const { return nDigishieldPowAveragingWindow * nPowTargetSpacing; }
+    int64_t DigishieldMinActualTimespan() const { return (DigishieldAveragingWindowTimespan() * (100 - nDigishieldPowMaxAdjustUp  )) / 100; }
+    int64_t DigishieldMaxActualTimespan() const { return (DigishieldAveragingWindowTimespan() * (100 + nDigishieldPowMaxAdjustDown)) / 100; }
 };
 } // namespace Consensus
 
