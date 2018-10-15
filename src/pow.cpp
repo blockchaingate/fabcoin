@@ -57,7 +57,7 @@ unsigned int LwmaGetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlock
     // If the new block's timestamp is more than 10 * T minutes
     // then halve the difficulty
     int64_t diff = pblock->GetBlockTime() - pindexPrev->GetBlockTime();
-    if ( params.fPowAllowMinDifficultyBlocks && diff > Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * params.MaxBlockInterval ) 
+    if ( params.fPowAllowMinDifficultyBlocks && diff > ( pindexPrev->nHeight+1 < params.EquihashFABHeight ? params.nPowTargetSpacing : 2*params.nPowTargetSpacing ) * params.MaxBlockInterval ) 
     {
 #if 1
         LogPrintf("The new block(height=%d) will come too late. Use minimum difficulty.\n", pblock->nHeight);
@@ -65,7 +65,7 @@ unsigned int LwmaGetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlock
 #else
         arith_uint256 target;
         target.SetCompact(pindexPrev->nBits);
-        int n = diff / (Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * params.MaxBlockInterval);
+        int n = diff / ( pindexPrev->nHeight+1<params.EquihashFABHeight:params.nPowTargetSpacing:2*params.nPowTargetSpacing ) * params.MaxBlockInterval);
 
         while( n-- > 0 )
         {
@@ -93,7 +93,7 @@ unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexPrev, const 
 
     const int height = pindexPrev->nHeight + 1;
     
-    const int64_t T = Params().GetnPowTargetSpacing(height);
+    const int64_t T = height<params.EquihashFABHeight ? params.nPowTargetSpacing : 2*params.nPowTargetSpacing;
     const int N = params.nZawyLwmaAveragingWindow;
     const int k = (N+1)/2 * 0.998 * T;  // ( (N+1)/2 * adjust * T )
 
@@ -201,27 +201,27 @@ unsigned int DigishieldGetNextWorkRequired(const CBlockIndex* pindexPrev, const 
     if (pindexFirst == NULL)
         return nProofOfWorkLimit;
 
-    arith_uint256 bnAvg {bnTot / params.nDigishieldPowAveragingWindow};
-    return DigishieldCalculateNextWorkRequired(bnAvg, pindexPrev->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
+    arith_uint256 bnAvg { bnTot / params.nDigishieldPowAveragingWindow };
+    return DigishieldCalculateNextWorkRequired(pindexPrev, bnAvg, pindexPrev->GetMedianTimePast(), pindexFirst->GetMedianTimePast(), params);
 }
 
 
-unsigned int DigishieldCalculateNextWorkRequired(arith_uint256 bnAvg, int64_t nLastBlockTime, int64_t nFirstBlockTime, const Consensus::Params& params)
+unsigned int DigishieldCalculateNextWorkRequired(const CBlockIndex* pindexPrev, arith_uint256 bnAvg, int64_t nLastBlockTime, int64_t nFirstBlockTime, const Consensus::Params& params)
 {
     // Limit adjustment
     // Use medians to prevent time-warp attacks
     int64_t nActualTimespan = nLastBlockTime - nFirstBlockTime;
-    nActualTimespan = params.DigishieldAveragingWindowTimespan() + (nActualTimespan - params.DigishieldAveragingWindowTimespan())/4;
+    nActualTimespan = params.DigishieldAveragingWindowTimespan(pindexPrev->nHeight) + (nActualTimespan - params.DigishieldAveragingWindowTimespan(pindexPrev->nHeight))/4;
 
-    if (nActualTimespan < params.DigishieldMinActualTimespan())
-        nActualTimespan = params.DigishieldMinActualTimespan();
-    if (nActualTimespan > params.DigishieldMaxActualTimespan())
-        nActualTimespan = params.DigishieldMaxActualTimespan();
+    if (nActualTimespan < params.DigishieldMinActualTimespan(pindexPrev->nHeight))
+        nActualTimespan = params.DigishieldMinActualTimespan(pindexPrev->nHeight);
+    if (nActualTimespan > params.DigishieldMaxActualTimespan(pindexPrev->nHeight))
+        nActualTimespan = params.DigishieldMaxActualTimespan(pindexPrev->nHeight);
 
     // Retarget
     const arith_uint256 bnPowLimit = UintToArith256(params.PowLimit(true));
     arith_uint256 bnNew {bnAvg};
-    bnNew /= params.DigishieldAveragingWindowTimespan();
+    bnNew /= params.DigishieldAveragingWindowTimespan(pindexPrev->nHeight);
     bnNew *= nActualTimespan;
 
     if (bnNew > bnPowLimit)

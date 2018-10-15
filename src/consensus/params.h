@@ -78,9 +78,10 @@ struct Params {
     const uint256& PowLimit(bool postfork) const { return postfork ? powLimit : powLimitLegacy; }
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
-    int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
-    int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
+    int64_t nPowTargetSpacing;
+
+    int64_t DifficultyAdjustmentInterval(uint32_t nheight=0) const { return nPowTargetTimespan / (nheight<EquihashFABHeight?nPowTargetSpacing:2*nPowTargetSpacing); }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
     
@@ -95,9 +96,10 @@ struct Params {
     int64_t nDigishieldPowAveragingWindow;
     int64_t nDigishieldPowMaxAdjustDown;
     int64_t nDigishieldPowMaxAdjustUp;
-    int64_t DigishieldAveragingWindowTimespan() const { return nDigishieldPowAveragingWindow * nPowTargetSpacing; }
-    int64_t DigishieldMinActualTimespan() const { return (DigishieldAveragingWindowTimespan() * (100 - nDigishieldPowMaxAdjustUp  )) / 100; }
-    int64_t DigishieldMaxActualTimespan() const { return (DigishieldAveragingWindowTimespan() * (100 + nDigishieldPowMaxAdjustDown)) / 100; }
+    int64_t DigishieldAveragingWindowTimespan(uint32_t nheight=0) const { return nDigishieldPowAveragingWindow * (nheight<EquihashFABHeight?nPowTargetSpacing:2*nPowTargetSpacing); }
+    int64_t DigishieldMinActualTimespan(uint32_t nheight=0) const { return (DigishieldAveragingWindowTimespan(nheight) * (100 - nDigishieldPowMaxAdjustUp  )) / 100; }
+    int64_t DigishieldMaxActualTimespan(uint32_t nheight=0) const { return (DigishieldAveragingWindowTimespan(nheight) * (100 + nDigishieldPowMaxAdjustDown)) / 100; }
+
 };
 } // namespace Consensus
 

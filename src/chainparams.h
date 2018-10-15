@@ -71,7 +71,7 @@ public:
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
     unsigned int EquihashN(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) || (strNetworkID != CBaseChainParams::MAIN) ? nEquihashN : 184; }
     unsigned int EquihashK(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) || (strNetworkID != CBaseChainParams::MAIN) ? nEquihashK : 7; }
-    int64_t GetnPowTargetSpacing( uint32_t nHeight = 0 ) const { return (nHeight < consensus.ContractHeight) ? consensus.nPowTargetSpacing : 2* consensus.nPowTargetSpacing; }
+    int64_t GetnPowTargetSpacing( uint32_t nHeight = 0 ) const { return (nHeight < consensus.EquihashFABHeight) ? consensus.nPowTargetSpacing : 2* consensus.nPowTargetSpacing; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
     /** Return the BIP70 network string (main, test or regtest) */
