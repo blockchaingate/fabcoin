@@ -69,8 +69,8 @@ public:
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
-    unsigned int EquihashN(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) || (strNetworkID != CBaseChainParams::MAIN) ? nEquihashN : 184; }
-    unsigned int EquihashK(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) || (strNetworkID != CBaseChainParams::MAIN) ? nEquihashK : 7; }
+    unsigned int EquihashN(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) /*|| (strNetworkID != CBaseChainParams::MAIN)*/ ? nEquihashN : 184; }
+    unsigned int EquihashK(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) /*|| (strNetworkID != CBaseChainParams::MAIN)*/ ? nEquihashK : 7; }
     int64_t GetnPowTargetSpacing( uint32_t nHeight = 0 ) const { return (nHeight < consensus.EquihashFABHeight) ? consensus.nPowTargetSpacing : 2* consensus.nPowTargetSpacing; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }

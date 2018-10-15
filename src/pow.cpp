@@ -33,7 +33,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlockHead
         // Digishield v3.
         return DigishieldGetNextWorkRequired(pindexPrev, pblock, params);
     } 
-    else if (nHeight < params.LWMAHeight + params.nZawyLwmaAveragingWindow) 
+    else if (nHeight < params.LWMAHeight + params.nZawyLwmaAveragingWindow && params.LWMAHeight == params.EquihashFABHeight ) 
     {
         // Reduce the difficulty of the first forked block by 100x and keep it for N blocks.
         if (nHeight == params.LWMAHeight) 

@@ -849,8 +849,8 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
             n = chainparams.EquihashN(pblock->nHeight);
             k = chainparams.EquihashK(pblock->nHeight);
 
-            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  \n", pblock->vtx.size(),
-                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU" );
+            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  n=%d, k=%d\n", pblock->vtx.size(),
+                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU", n, k );
 
             headerlen = (pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
             //
@@ -862,9 +862,9 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 
             nCounter = 0;
             if (conf.useGPU)
-                LogPrint(BCLog::POW, "Equihash solver (%d,%d) in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", n, k, conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
+                LogPrint(BCLog::POW, "Equihash solver in GPU (%u, %u) with nNonce = %s hashTarget=%s\n", conf.currentPlatform, conf.currentDevice, pblock->nNonce.ToString(), hashTarget.GetHex());
             else 
-                LogPrint(BCLog::POW, "Equihash solver (%d,%d) in CPU with nNonce = %s hashTarget=%s\n", n, k, pblock->nNonce.ToString(), hashTarget.GetHex());
+                LogPrint(BCLog::POW, "Equihash solver in CPU with nNonce = %s hashTarget=%s\n", pblock->nNonce.ToString(), hashTarget.GetHex());
   
             double secs, solps;
             g_nSols[thr_id] = 0;

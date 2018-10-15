@@ -263,8 +263,8 @@ public:
         consensus.nSubsidyHalvingInterval = 3360000;
         consensus.FABHeight = 0;
         consensus.ContractHeight = 192430 ;
-        consensus.EquihashFABHeight = 250000;
-        consensus.LWMAHeight = 250000;
+        consensus.EquihashFABHeight = 221370;
+        consensus.LWMAHeight = 221370;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
