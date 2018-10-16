@@ -1815,7 +1815,7 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         + HelpExampleRpc("gettxoutset", "")
         );
 
-    UniValue ret(UniValue::VOBJ);
+    UniValue ret(UniValue::VARR);
 
     CCoinsStats stats;
     FlushStateToDisk();
@@ -1847,19 +1847,19 @@ UniValue gettxoutset(const JSONRPCRequest& request)
 
                     strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
 
-                    ret.push_back(Pair("UTXO", strUtxo.str()));
+                    ret.push_back(strUtxo.str());
                 }
             }
             else
             {
-                strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue ;
-                ret.push_back(Pair("UTXO", strUtxo.str()));
+                strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << "noaddress" << ", " << coin.out.nValue ;
+                ret.push_back(strUtxo.str());
             }
             outputs[key.n] = std::move(coin);
         }
         else
         {
-            ret.push_back(Pair("ERROR: ", "unable to read value"));
+            ret.push_back("ERROR: unable to read value");
             return ret;
         }
         pcursor->Next();
