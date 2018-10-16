@@ -1815,7 +1815,7 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         + HelpExampleRpc("gettxoutset", "")
         );
 
-    UniValue ret(UniValue::VOBJ);
+    UniValue ret(UniValue::VARR);
 
     CCoinsStats stats;
     FlushStateToDisk();
@@ -1829,6 +1829,7 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         boost::this_thread::interruption_point();
         COutPoint key;
         Coin coin;
+
 
         if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
             if (!outputs.empty() && key.hash != prevkey) {
@@ -1844,22 +1845,26 @@ UniValue gettxoutset(const JSONRPCRequest& request)
                 for( const CTxDestination addr: addresses )
                 {
                     //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
-
+                    UniValue utxo(UniValue::VOBJ);
                     strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
-
-                    ret.push_back(Pair("UTXO", strUtxo.str()));
+                    utxo.push_back(Pair("UTXO", strUtxo.str()));
+                    ret.push_back(utxo);
                 }
             }
             else
             {
+                UniValue utxo(UniValue::VOBJ);
                 strUtxo << coin.nHeight << ", " << "noaddress" << ", " << coin.out.nValue ;
-                ret.push_back(Pair("UTXO", strUtxo.str()));
+                utxo.push_back(Pair("UTXO", strUtxo.str()));
+                ret.push_back(utxo);
             }
             outputs[key.n] = std::move(coin);
         }
         else
         {
-            ret.push_back(Pair("ERROR: ", "unable to read value"));
+            UniValue utxo(UniValue::VOBJ);
+            utxo.push_back(Pair("ERROR: ", "unable to read value"));
+            ret.push_back(utxo);
             return ret;
         }
         pcursor->Next();
