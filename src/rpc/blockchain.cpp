@@ -1830,6 +1830,7 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         COutPoint key;
         Coin coin;
 
+
         if (pcursor->GetKey(key) && pcursor->GetValue(coin)) {
             if (!outputs.empty() && key.hash != prevkey) {
                 outputs.clear();
@@ -1846,7 +1847,6 @@ UniValue gettxoutset(const JSONRPCRequest& request)
                     //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
 
                     strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
-
                     ret.push_back(strUtxo.str());
                 }
             }
