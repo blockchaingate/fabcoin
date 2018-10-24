@@ -59,6 +59,51 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             throw Exception();
         }
         e.finalize();
+        //using bytes = std::vector<byte>;
+        //using bytesRef = vector_ref<byte>;
+        //using bytesConstRef = vector_ref<byte const>;
+        //
+
+        bool flagAggregationFound = false;
+        std::vector<std::vector<uint8_t> > aggregationData;
+        std::string kanbanShardCreationString = "KanbanAggregateSignatureUnlock";
+        dev::h160 contractAddress;
+        std::stringstream debugOut2;
+        debugOut2 << "DEBUG: author address: ";
+        debugOut2 << std::hex << _envInfo.author().asBytes() << "\n";
+        LogPrintStr(debugOut2.str());
+        std::vector<uint8_t> kanbanShardCreationToken;
+        for (int unsigned i = 0; i < kanbanShardCreationString.size(); i ++) {
+            kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
+        }
+        const std::vector<dev::eth::LogEntry>& theLogEntries = e.logs();
+        for (unsigned i = 0; i < theLogEntries.size(); i ++) {
+            std::stringstream debugOut;
+            const dev::eth::LogEntry& current = theLogEntries[i];
+            const std::vector<uint8_t>& data = current.data;
+            if (flagAggregationFound) {
+                aggregationData.push_back(data);
+            }
+            if (data == kanbanShardCreationToken) {
+                LogPrintStr("DEBUG: Found kanban shard creation token!!!!\n");
+                flagAggregationFound = true;
+                contractAddress = current.address;
+            }
+            debugOut << "DEBUG: log entry: " << std::hex << data << "\n";
+            LogPrintStr(debugOut.str());
+        }
+
+        std::stringstream debugOut;
+        debugOut << "DEBUG: number of transfers this time around: " << this->transfers.size() << "\n";
+        LogPrintStr(debugOut.str());
+        for (const TransferInfo& currentTransfer : this->transfers) {
+            std::stringstream out;
+            out << "DEBUG: current transfer: from: " << currentTransfer.from << ", to: "
+                << currentTransfer.to << ", value: " << currentTransfer.value << "\n";
+            LogPrintStr(out.str());
+        }
+
+
         if (_p == Permanence::Reverted) {
             m_cache.clear();
             cacheUTXO.clear();
@@ -66,9 +111,9 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             deleteAccounts(_sealEngine.deleteAddresses);
             if(res.excepted == TransactionException::None) {
                 CondensingTX ctx(this, transfers, _t, _sealEngine.deleteAddresses);
-                tx = MakeTransactionRef(ctx.createCondensingTX());
-                if(ctx.reachedVoutLimit()) {
 
+                tx = MakeTransactionRef(ctx.createCondensingTX(aggregationData, contractAddress));
+                if(ctx.reachedVoutLimit()) {
                     voutLimit = true;
                     e.revert();
                     throw Exception();
@@ -276,14 +321,78 @@ void FascState::printfErrorLog(const dev::eth::TransactionException er) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-CTransaction CondensingTX::createCondensingTX() {
+CTransaction CondensingTX::createCondensingTX(const std::vector<std::vector<uint8_t> >& aggregationData, const dev::h160& contractAddress) {
+    for (const TransferInfo& ti : transfers) {
+        std::stringstream debugOut;
+        debugOut << "DEBUG: transfer from: " << ti.from << ", to: " << ti.to << ", value: " << ti.value << "\n";
+        LogPrintStr(debugOut.str());
+    }
+    if (aggregationData.size() > 0) {
+        std::stringstream debugOut;
+        debugOut << "DEBUG: got non-trivial aggregation data! \n";
+        LogPrintStr(debugOut.str());
+    }
     selectionVin();
+    if (this->vins.size() == 0 && aggregationData.size() > 0) {
+        std::stringstream debugOut;
+        debugOut << "DEBUG: I'm in the vin case. \n";
+        LogPrintStr(debugOut.str());
+        this->vins[contractAddress] = Vin{transaction.getHashWith(), transaction.getNVout(), 0, 1};
+    }
+
     calculatePlusAndMinus();
     if(!createNewBalances())
         return CTransaction();
     CMutableTransaction tx;
-    tx.vin = createVins();;
+    LogPrintStr("DEBUG: about to create vins.\n");
+    for (auto& theVIN : this->vins) {
+        std::stringstream debugOut;
+        debugOut << "vin_" << theVIN.first << ": hash: " << theVIN.second.hash.asBytesReversed() << ", value: " << theVIN.second.value << "\n";
+        LogPrintStr(debugOut.str());
+    }
+    tx.vin = createVins();
+    Vin* proposedTX = this->state->vin(contractAddress);
+    std::stringstream debugOut1;
+    debugOut1 << "DEBUG: state vin:  this->state->vin(ti.from) ptr: " << proposedTX;
+    if (proposedTX != 0){
+         debugOut1 << ", hash: " << proposedTX->hash;
+    }
+    debugOut1 << "\n";
+    LogPrintStr(debugOut1.str());
+
+    std::stringstream debugOut2;
+    debugOut2 << "DEBUG: transaction gethashwith: " << this->transaction.getHashWith() << "\n ";
+    debugOut2 << "DEBUG: transaction nvout: " << this->transaction.getNVout() << "\n ";
+    debugOut2 << "DEBUG: about to create vouts.\n";
+    LogPrintStr(debugOut2.str());
     tx.vout = createVout();
+
+    if (aggregationData.size() > 0) {
+        CScript extraScript = CScript();
+        extraScript << OP_RETURN;
+        for (unsigned counterData = 0; counterData < aggregationData.size(); counterData ++) {
+            extraScript << aggregationData[counterData];
+        }
+        tx.vout.push_back(CTxOut(0, extraScript));
+        if (tx.vin.size() == 0) {
+
+            CTxIn theTX(h256Touint(this->transaction.getHashWith()), this->transaction.getNVout(), CScript() << OP_SPEND);
+            std::stringstream debugOut;
+            debugOut << "I'm adding the transaction: " << theTX.ToString() << "\n";
+            tx.vin.push_back(theTX);
+            debugOut << "DEBUG: problem: tx.vin.size() is 0. vins size: " << this->vins.size() << "\n";
+            LogPrintStr(debugOut.str());
+        }
+    }
+    std::stringstream debugOut3;
+    debugOut3 << "DEBUG: result has: " << tx.vout.size() << " vouts and " << tx.vin.size() << " vins. \n**********\n*********\n";
+    for (unsigned i = 0; i < tx.vout.size(); i ++) {
+        debugOut3 << "DEBUG: tx.vout[" << i << "]: " << tx.vout[i].ToString() << "\n";
+    }
+    for (unsigned i = 0; i < tx.vin.size(); i ++) {
+        debugOut3 << "DEBUG: tx.vin[" << i << "]: " << tx.vin[i].ToString() << "\n";
+    }
+    LogPrintStr(debugOut3.str());
     return !tx.vin.size() || !tx.vout.size() ? CTransaction() : CTransaction(tx);
 }
 
@@ -303,20 +412,39 @@ std::unordered_map<dev::Address, Vin> CondensingTX::createVin(const CTransaction
 }
 
 void CondensingTX::selectionVin() {
+    int i  = 0;
     for(const TransferInfo& ti : transfers) {
+        i++;
         if(!vins.count(ti.from)) {
-            if(auto a = state->vin(ti.from))
-                vins[ti.from] = *a;
+            if(auto a = state->vin(ti.from)) {
+                this->vins[ti.from] = *a;
+                std::stringstream debugStream;
+                debugStream << "DEBUG: auto a case: vin address: " << ti.from << ", vin hash: " << this->vins[ti.from].hash.asBytesReversed() << ", vinvout: "
+                            << this->vins[ti.from].nVout << "\n";
+                LogPrintStr(debugStream.str());
+            }
             if(ti.from == transaction.sender() && transaction.value() > 0) {
                 vins[ti.from] = Vin{transaction.getHashWith(), transaction.getNVout(), transaction.value(), 1};
+                std::stringstream debugStream;
+                debugStream << "DEBUG: positive tr. value: vin address: " << ti.from << ", vin hash: " << vins[ti.from].hash.asBytesReversed() << ", vinvout: "
+                            << this->vins[ti.from].nVout << "\n";
+                LogPrintStr(debugStream.str());
             }
         }
 
         if(!vins.count(ti.to)) {
-            if(auto a = state->vin(ti.to))
+            if(auto a = state->vin(ti.to)) {
                 vins[ti.to] = *a;
+                std::stringstream debugStream;
+                debugStream << "DEBUG: case no tito: vin address: " << ti.to << ", vin hash: " << this->vins[ti.to].hash.asBytesReversed() << ", vinvout: "
+                            << this->vins[ti.to].nVout << "\n";
+                LogPrintStr(debugStream.str());
+            }
         }
     }
+    std::stringstream debugStream2;
+    debugStream2 << "DEBUG: Selection vin ran " << i  << " times. \n";
+    LogPrintStr(debugStream2.str());
 }
 
 void CondensingTX::calculatePlusAndMinus() {
@@ -353,8 +481,17 @@ bool CondensingTX::createNewBalances() {
 std::vector<CTxIn> CondensingTX::createVins() {
     std::vector<CTxIn> ins;
     for(auto& v : vins) {
-        if((v.second.value > 0 && v.second.alive) || (v.second.value > 0 && !vins[v.first].alive && !checkDeleteAddress(v.first)))
-            ins.push_back(CTxIn(h256Touint(v.second.hash), v.second.nVout, CScript() << OP_SPEND));
+        std::stringstream debugOut;
+        Vin& vinRefDebug = v.second;
+        const dev::Address& theAddress = v.first;
+        debugOut << "DEBUG: considering: vin address: " << theAddress.asBytes() << " with vin hash: " << vinRefDebug.hash.asBytesReversed()
+                 << ", vin nvout: " << vinRefDebug.nVout << "\n";
+        if((v.second.value > 0 && v.second.alive) || (v.second.value > 0 && !vins[v.first].alive && !checkDeleteAddress(v.first))) {
+            CTxIn theTX(h256Touint(v.second.hash), v.second.nVout, CScript() << OP_SPEND);
+            debugOut << "DEBUG: the considered vin results in the transaction: " << theTX.ToString() << "\n";
+            ins.push_back(theTX);
+        }
+        LogPrintStr(debugOut.str());
     }
     return ins;
 }
@@ -363,6 +500,9 @@ std::vector<CTxOut> CondensingTX::createVout() {
     size_t count = 0;
     std::vector<CTxOut> outs;
     for(auto& b : balances) {
+        std::stringstream debugStream;
+        debugStream << "DEBUG: creavevout: address: " << b.first << ", value: " << b.second << "\n";
+        LogPrintStr(debugStream.str());
         if(b.second > 0) {
             CScript script;
             auto* a = state->account(b.first);

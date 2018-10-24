@@ -244,9 +244,20 @@ void Executive::initialize(Transaction const& _transaction)
 	m_gasCost = (u256)gasCost;  // Convert back to 256-bit, safe now.
 }
 
+#include <fstream>
+std::fstream& myDebugLogFile() {
+    static std::fstream temp(
+                "/home/todor/work/kanban/secrets_data_fabcoin/regtest/myDebug.log",
+                std::fstream::in | std::fstream::out | std::fstream::trunc
+    );
+    return temp;
+}
+
 bool Executive::execute()
 {
 	// Entry point for a user-executed transaction.
+    myDebugLogFile() << "DEBUG: here I am in execute. \n";
+    myDebugLogFile().flush();
 
 	// Pay...
 	clog(StateDetail) << "Paying" << formatBalance(m_gasCost) << "from sender for gas (" << m_t.gas() << "gas at" << formatBalance(m_t.gasPrice()) << ")";
@@ -266,7 +277,9 @@ bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _valu
 
 bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin)
 {
-	// If external transaction.
+    myDebugLogFile() << "DEBUG: here I am in call. \n";
+    myDebugLogFile().flush();
+    // If external transaction.
 	if (m_t)
 	{
 		// FIXME: changelog contains unrevertable balance change that paid
@@ -325,6 +338,8 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 		m_sealEngine.deleteAddresses.insert(_p.receiveAddress);
 	////////////////////////////////////////////////
 
+    myDebugLogFile() << "DEBUG: Transfer ether from: " << _p.senderAddress << ", to: " << _p.receiveAddress << ", value: " << _p.valueTransfer << "\n";
+    myDebugLogFile().flush();
 	// Transfer ether.
 	m_s.transferBalance(_p.senderAddress, _p.receiveAddress, _p.valueTransfer);
 	return !m_ext;

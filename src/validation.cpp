@@ -2876,7 +2876,39 @@ bool ByteCodeExec::performByteCode(dev::eth::Permanence type){
 }
 
 bool ByteCodeExec::processingResults(ByteCodeExecResult& resultBCE){
+    //std::stringstream debugOut;
+    //std::string kanbanShardCreationString = "KanbanAggregateSignatureUnlock";
+    //std::vector<uint8_t> kanbanShardCreationToken;
+    //for (int unsigned i = 0; i < kanbanShardCreationString.size(); i ++) {
+    //    kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
+    //}
+    //debugOut << "DEBUG: got to processing results. result.size(): " << result.size() << "\n";
+    //LogPrintStr(debugOut.str());
     for(size_t i = 0; i < result.size(); i++){
+
+
+        //ResultExecute& currentResult = this->result[i];
+        //auto& currentLog = currentResult.txRec.log();
+        //bool foundAggregation = false;
+        //auto theScript = CScript() << OP_RETURN;
+        //for (int j = 0; j < currentLog.size(); j ++) {
+        //    const std::vector<uint8_t>& data = currentLog[j].data;
+        //    if (foundAggregation) {
+        //        theScript << data;
+        //    }
+        //    if (data == kanbanShardCreationToken) {
+        //        debugOut << "DEBUG: Found KanbanAggregateSignatureUnlock!!! in log: " << i << "," << j << ".\n";
+        //        foundAggregation = true;
+        //    }
+        //    debugOut << "DEBUG: log: " << i << ", " << j << ": " << dev::toHex(data) << "\n";
+        //}
+        //if (foundAggregation) {
+        //    CMutableTransaction newAggregateTransaction;
+        //    newAggregateTransaction.vin.push_back(CTxIn(h256Touint(txs[i].getHashWith()), txs[i].getNVout(), theScript));
+        //}
+
+
+
         uint64_t gasUsed = (uint64_t) result[i].execRes.gasUsed;
         if(result[i].execRes.excepted != dev::eth::TransactionException::None){
             if(txs[i].value() > 0){
