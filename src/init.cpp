@@ -31,6 +31,7 @@
 #include <rpc/server.h>
 #include <rpc/register.h>
 #include <rpc/blockchain.h>
+#include <rpc/aggregate_signature_test.h>
 #include <script/standard.h>
 #include <script/sigcache.h>
 #include <scheduler.h>
@@ -1081,6 +1082,10 @@ bool AppInitParameterInteraction()
     }
 
     RegisterAllCoreRPCCommands(tableRPC);
+    int64_t isRegtest = gArgs.GetArg("-regtest", 0);
+    if (isRegtest) {
+        RegisterTestCommands(tableRPC);
+    }
 #ifdef ENABLE_WALLET
     RegisterWalletRPCCommands(tableRPC);
 #endif

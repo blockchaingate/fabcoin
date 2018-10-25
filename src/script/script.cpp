@@ -126,12 +126,12 @@ const char* GetOpName(opcodetype opcode)
     case OP_CHECKSIGVERIFY         : return "OP_CHECKSIGVERIFY";
     case OP_CHECKMULTISIG          : return "OP_CHECKMULTISIG";
     case OP_CHECKMULTISIGVERIFY    : return "OP_CHECKMULTISIGVERIFY";
-    case OP_AGGREGATEVERIFY        : return "OP_AGGREGATEVERIFY";
 
     // expansion
     case OP_NOP1                   : return "OP_NOP1";
     case OP_CHECKLOCKTIMEVERIFY    : return "OP_CHECKLOCKTIMEVERIFY";
     case OP_CHECKSEQUENCEVERIFY    : return "OP_CHECKSEQUENCEVERIFY";
+    case OP_NOP4                   : return "OP_NOP4";
     case OP_NOP5                   : return "OP_NOP5";
     case OP_NOP6                   : return "OP_NOP6";
     case OP_NOP7                   : return "OP_NOP7";
@@ -143,6 +143,9 @@ const char* GetOpName(opcodetype opcode)
     case OP_CREATE                 : return "OP_CREATE";
     case OP_CALL                   : return "OP_CALL";
     case OP_SPEND                  : return "OP_SPEND";
+
+    //aggregate signature
+    case OP_AGGREGATEVERIFY        : return "OP_AGGREGATEVERIFY";
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 

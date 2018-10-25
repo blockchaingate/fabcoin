@@ -134,6 +134,10 @@ FABCOIN_CORE_H = \
   rpc/protocol.h \
   rpc/server.h \
   rpc/register.h \
+  rpc/test.h \
+  encodings_crypto.h \
+  aggregate_schnorr_signature.h \
+  crypto/secp256k1_all_in_one.h \
   scheduler.h \
   script/sigcache.h \
   script/sign.h \
@@ -226,6 +230,7 @@ libfabcoin_server_a_SOURCES = \
   rpc/net.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
+  rpc/aggregate_signature_test.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \
@@ -303,6 +308,8 @@ crypto_libfabcoin_crypto_a_SOURCES = \
   crypto/sha256.h \
   crypto/sha512.cpp \
   crypto/sha512.h \
+  crypto/sha3.cpp \
+  crypto/sha3.h \
   cpp-ethereum/utils/libscrypt/b64.c \
   cpp-ethereum/utils/libscrypt/b64.h \
   cpp-ethereum/utils/libscrypt/crypto-mcf.c \
@@ -380,6 +387,10 @@ libfabcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   warnings.cpp \
+  crypto/sha3.cpp \
+  crypto/secp256k1_all_in_one.cpp \
+  encodings_crypto.cpp \
+  aggregate_schnorr_signature.cpp \
   cpp-ethereum/libdevcore/Base64.cpp \
   cpp-ethereum/libdevcore/Base64.h \
   cpp-ethereum/libdevcore/Common.cpp \

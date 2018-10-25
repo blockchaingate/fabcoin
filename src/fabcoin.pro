@@ -2571,7 +2571,27 @@ SOURCES += \
     secp256k1/src/gen_context.c \
     secp256k1/src/secp256k1.c \
     secp256k1/src/tests.c \
-    secp256k1/src/tests_exhaustive.c
+    secp256k1/src/tests_exhaustive.c \
+    crypto/aes.cpp \
+    crypto/aggregate_schnorr_signature.cpp \
+    crypto/chacha20.cpp \
+    crypto/encodings_crypto.cpp \
+    crypto/equihash.cpp \
+    crypto/hmac_sha256.cpp \
+    crypto/hmac_sha512.cpp \
+    crypto/ripemd160.cpp \
+    crypto/secp256k1_all_in_one.cpp \
+    crypto/sha1.cpp \
+    crypto/sha256.cpp \
+    crypto/sha256_sse4.cpp \
+    crypto/sha3.cpp \
+    crypto/sha512.cpp \
+    crypto/ctaes/bench.c \
+    crypto/ctaes/ctaes.c \
+    crypto/ctaes/test.c \
+    aggregate_schnorr_signature.cpp \
+    encodings_crypto.cpp \
+    rpc/aggregate_signature_test.cpp
 
 
 SUBDIRS += \
@@ -5071,4 +5091,21 @@ HEADERS += \
     validationinterface.h \
     version.h \
     versionbits.h \
-    warnings.h
+    warnings.h \
+    crypto/ctaes/ctaes.h \
+    crypto/aes.h \
+    crypto/chacha20.h \
+    crypto/common.h \
+    crypto/encodings_crypto.h \
+    crypto/equihash.h \
+    crypto/hmac_sha256.h \
+    crypto/hmac_sha512.h \
+    crypto/ripemd160.h \
+    crypto/secp256k1_all_in_one.h \
+    crypto/sha1.h \
+    crypto/sha256.h \
+    crypto/sha3.h \
+    crypto/sha512.h \
+    aggregate_schnorr_signature.h \
+    encodings_crypto.h \
+    rpc/aggregate_signature_test.h
