@@ -1083,7 +1083,7 @@ bool AppInitParameterInteraction()
 
     RegisterAllCoreRPCCommands(tableRPC);
     int64_t isRegtest = gArgs.GetArg("-regtest", 0);
-    if (isRegtest) {
+    if (chainparams.NetworkIDString() == "regtest") {
         RegisterTestCommands(tableRPC);
     }
 #ifdef ENABLE_WALLET
