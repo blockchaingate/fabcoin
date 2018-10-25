@@ -68,40 +68,40 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
         std::vector<std::vector<uint8_t> > aggregationData;
         std::string kanbanShardCreationString = "KanbanAggregateSignatureUnlock";
         dev::h160 contractAddress;
-        std::stringstream debugOut2;
-        debugOut2 << "DEBUG: author address: ";
-        debugOut2 << std::hex << _envInfo.author().asBytes() << "\n";
-        LogPrintStr(debugOut2.str());
+        //std::stringstream debugOut2;
+        //debugOut2 << "DEBUG: author address: ";
+        //debugOut2 << std::hex << _envInfo.author().asBytes() << "\n";
+        //LogPrintStr(debugOut2.str());
         std::vector<uint8_t> kanbanShardCreationToken;
         for (int unsigned i = 0; i < kanbanShardCreationString.size(); i ++) {
             kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
         }
         const std::vector<dev::eth::LogEntry>& theLogEntries = e.logs();
         for (unsigned i = 0; i < theLogEntries.size(); i ++) {
-            std::stringstream debugOut;
+            //std::stringstream debugOut;
             const dev::eth::LogEntry& current = theLogEntries[i];
             const std::vector<uint8_t>& data = current.data;
             if (flagAggregationFound) {
                 aggregationData.push_back(data);
             }
             if (data == kanbanShardCreationToken) {
-                LogPrintStr("DEBUG: Found kanban shard creation token!!!!\n");
+                //LogPrintStr("DEBUG: Found kanban shard creation token!!!!\n");
                 flagAggregationFound = true;
                 contractAddress = current.address;
             }
-            debugOut << "DEBUG: log entry: " << std::hex << data << "\n";
-            LogPrintStr(debugOut.str());
+            //debugOut << "DEBUG: log entry: " << std::hex << data << "\n";
+            //LogPrintStr(debugOut.str());
         }
 
-        std::stringstream debugOut;
-        debugOut << "DEBUG: number of transfers this time around: " << this->transfers.size() << "\n";
-        LogPrintStr(debugOut.str());
-        for (const TransferInfo& currentTransfer : this->transfers) {
-            std::stringstream out;
-            out << "DEBUG: current transfer: from: " << currentTransfer.from << ", to: "
-                << currentTransfer.to << ", value: " << currentTransfer.value << "\n";
-            LogPrintStr(out.str());
-        }
+        //std::stringstream debugOut;
+        //debugOut << "DEBUG: number of transfers this time around: " << this->transfers.size() << "\n";
+        //LogPrintStr(debugOut.str());
+        //for (const TransferInfo& currentTransfer : this->transfers) {
+        //    std::stringstream out;
+        //    out << "DEBUG: current transfer: from: " << currentTransfer.from << ", to: "
+        //        << currentTransfer.to << ", value: " << currentTransfer.value << "\n";
+        //    LogPrintStr(out.str());
+        //}
 
 
         if (_p == Permanence::Reverted) {
@@ -369,10 +369,10 @@ CTransaction CondensingTX::createCondensingTX(const std::vector<std::vector<uint
 
     if (aggregationData.size() > 0) {
         CScript extraScript = CScript();
-        extraScript << OP_RETURN;
         for (unsigned counterData = 0; counterData < aggregationData.size(); counterData ++) {
             extraScript << aggregationData[counterData];
         }
+        extraScript << OP_AGGREGATEVERIFY;
         tx.vout.push_back(CTxOut(0, extraScript));
         if (tx.vin.size() == 0) {
 
