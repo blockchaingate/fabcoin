@@ -559,11 +559,27 @@ UniValue testshathree(const JSONRPCRequest& request)
     return result;
 }
 
-UniValue testpublickeygeneration(const JSONRPCRequest& request)
+UniValue testprivatekeygeneration(const JSONRPCRequest& request) {
+    if (request.fHelp)
+        throw std::runtime_error(
+            "testprivatekeygeneration ( privatekey )\n"
+            "\nTests private key generation. Available in -regtest only."
+            "\nTo be documented further.\n"
+        );
+    PrivateKeyKanban thePrivateKey;
+    thePrivateKey.GenerateRandomSecurely();
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("privateKeyHex", thePrivateKey.ToHex());
+    result.pushKV("privateKeyBase58WithoutCheck", thePrivateKey.ToBase58());
+    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58Check());
+    return result;
+}
+
+UniValue testpublickeyfromprivate(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error(
-            "testpublickeygeneration ( privatekey )\n"
+            "testpublickeyfromprivate ( privatekey )\n"
             "\nTests public key generation. Available in -testkanban mode only."
             "\nTo be documented further.\n"
         );
@@ -602,7 +618,8 @@ UniValue testpublickeygeneration(const JSONRPCRequest& request)
 static const CRPCCommand testCommands[] =
 { //  category name                                      actor (function)                         okSafe   argNames
   //  -------- ----------------------------------------- ---------------------------------------- -------- ---------------------
-  { "test",     "testpublickeygeneration",                &testpublickeygeneration,                true,    {"privatekey"} },
+  { "test",     "testprivatekeygeneration",               &testprivatekeygeneration,               true,    {} },
+  { "test",     "testpublickeyfromprivate",               &testpublickeyfromprivate,               true,    {"privatekey"} },
   { "test",     "testshathree",                           &testshathree,                           true,    {"message"} },
   { "test",     "testschnorrsignature",                   &testschnorrsignature,                   true,    {"secret", "message", "nonce"} },
   { "test",     "testschnorrverification",                &testschnorrverification,                true,    {"publickey", "message", "signature"} },
