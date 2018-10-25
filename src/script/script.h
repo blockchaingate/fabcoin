@@ -670,6 +670,7 @@ public:
      */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsPayToAggregateSignature() const;
     bool IsPayToScriptHash() const;
     ///////////////////////////////////////////////// // fasc
     bool IsPayToPubkey() const;

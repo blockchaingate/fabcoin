@@ -80,6 +80,10 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         vSolutionsRet.push_back(hashBytes);
         return true;
     }
+    if (scriptPubKey.IsPayToAggregateSignature()) {
+        typeRet = TX_AGRREGATE_SIGNATURE;
+        return true;
+    }
 
     int witnessversion;
     std::vector<unsigned char> witnessprogram;
