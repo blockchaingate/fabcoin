@@ -27,6 +27,7 @@ const char* GetTxnOutputType(txnouttype t)
     switch (t)
     {
     case TX_NONSTANDARD: return "nonstandard";
+    case TX_AGRREGATE_SIGNATURE: return "aggregate_signature";
     case TX_PUBKEY: return "pubkey";
     case TX_PUBKEYHASH: return "pubkeyhash";
     case TX_SCRIPTHASH: return "scripthash";

@@ -166,6 +166,7 @@ enum opcodetype
     OP_CHECKSIGVERIFY = 0xad,
     OP_CHECKMULTISIG = 0xae,
     OP_CHECKMULTISIGVERIFY = 0xaf,
+    OP_AGGREGATEVERIFY = 0xb3, //<-Aggregate signature, expanded using OP_NOP4
 
     // expansion
     OP_NOP1 = 0xb0,
@@ -173,7 +174,7 @@ enum opcodetype
     OP_NOP2 = OP_CHECKLOCKTIMEVERIFY,
     OP_CHECKSEQUENCEVERIFY = 0xb2,
     OP_NOP3 = OP_CHECKSEQUENCEVERIFY,
-    OP_NOP4 = 0xb3,
+    OP_NOP4 = OP_AGGREGATEVERIFY, //taken up for aggregate signature
     OP_NOP5 = 0xb4,
     OP_NOP6 = 0xb5,
     OP_NOP7 = 0xb6,
