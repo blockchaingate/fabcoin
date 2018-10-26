@@ -588,28 +588,20 @@ UniValue testpublickeyfromprivate(const JSONRPCRequest& request)
     UniValue result(UniValue::VOBJ);
     PrivateKeyKanban thePrivateKey;
     std::stringstream errorStream;
-    //std::cout << "DEBUG: got to before making the private key. " << std::endl;
     if (!thePrivateKey.MakeFromUniValueRecognizeFormat(request.params[0], &errorStream)) {
         result.pushKV("error", errorStream.str());
         return result;
     }
-    //std::cout << "DEBUG: private key generated. " << std::endl;
     PublicKeyKanban thePublicKey;
 
-    //std::cout << "DEBUG: Computing public key ... " << std::endl;
     if (!thePrivateKey.ComputePublicKey(thePublicKey, &errorStream)) {
         result.pushKV("error", errorStream.str());
         return result;
     }
     //std::cout << "DEBUG: Public key computed:  " << thePublicKey.ToHexCompressedWithLength() << std::endl;
     result.pushKV("secretHex",  thePrivateKey.ToHex());
-    //std::cout << "DEBUG: computing base 58 check private key ...   " << std::endl;
-    result.pushKV("secretBase58CheckRecodedToBeUsedWithCompressedPublicKey", thePrivateKey.ToBase58Check());
-    //std::cout << "DEBUG: computing publicKeyKanbanHexCompressedWithLength ...   " << std::endl;
-    result.pushKV("publicKeyKanbanHexCompressedWithLength",  thePublicKey.ToHexCompressed());
-    result.pushKV("result", thePublicKey.ToHexCompressed());
-
-    //ret.pushKV("publicKeyKanbanHexUncompressed",  thePublicKey.ToHexUncompressed());
+    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58Check());
+    result.pushKV("publicKeyHexCompressed",  thePublicKey.ToHexCompressed());
 
     result.pushKV("input", request.params);
     return result;
