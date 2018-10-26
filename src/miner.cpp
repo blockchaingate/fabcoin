@@ -1197,7 +1197,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
             }
             catch (const std::runtime_error &e)
             {
-                LogPrint(BCLog::POW, "failed to create cuda context\n");
+                LogPrint(BCLog::POW, "failed to create cuda context: %s\n", e.what());
                 std::lock_guard<std::mutex> lock{g_cs};
                 g_cancelSolver = false;
                 return;
@@ -1416,7 +1416,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
                     if (!conf.forceGenProcLimit) {
 
-                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
+                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight || conf.useCUDA )
                         {
                             if (result > 7500000000) {
                                 maxThreads = std::min(4, nThreads);
@@ -1488,16 +1488,29 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                 devices[conf.currentDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
 
                 int maxThreads = nThreads;
+                CBlockIndex* pindexPrev = chainActive.Tip();
 
                 if (!conf.forceGenProcLimit) {
-                    if (result > 7500000000) {
-                        maxThreads = std::min(4, nThreads);
-                    } else if (result > 5500000000) {
-                        maxThreads = std::min(3, nThreads);
-                    } else if (result > 3500000000) {
-                        maxThreads = std::min(2, nThreads);
-                    } else {
-                        maxThreads = std::min(1, nThreads);
+
+                    if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight || conf.useCUDA )
+                    {
+                        if (result > 7500000000) {
+                            maxThreads = std::min(4, nThreads);
+                        } else if (result > 5500000000) {
+                            maxThreads = std::min(3, nThreads);
+                        } else if (result > 3500000000) {
+                            maxThreads = std::min(2, nThreads);
+                        } else {
+                            maxThreads = std::min(1, nThreads);
+                        }
+                    }
+                    else
+                    {
+                        if (result > 7500000000) {
+                            maxThreads = std::min(2, nThreads);
+                        } else {
+                            maxThreads = std::min(1, nThreads);
+                        }
                     }
                 }
 

@@ -84,6 +84,7 @@ struct eq_cuda_context1847
 	uint32_t *heap0, *heap1;
 	void* sol_memory;
 	proof* solutions;
+    CUcontext pctx;
 
     fn_validate m_fnValidate;
     fn_cancel m_fnCancel;
