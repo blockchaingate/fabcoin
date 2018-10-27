@@ -1417,7 +1417,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                     CBlockIndex* pindexPrev = chainActive.Tip();
                     if (!conf.forceGenProcLimit) {
                         int ThreadsMem = 1750000000;
-                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
+                        if( (pindexPrev->nHeight+1) >= chainparams.GetConsensus().EquihashFABHeight )
                         {
                             ThreadsMem = 3500000000;
                         }
@@ -1487,7 +1487,7 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                 CBlockIndex* pindexPrev = chainActive.Tip();
                 if (!conf.forceGenProcLimit) {
                     int ThreadsMem = 1750000000;
-                    if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
+                    if( (pindexPrev->nHeight+1) >= chainparams.GetConsensus().EquihashFABHeight )
                     {
                         ThreadsMem = 3500000000;
                     }
