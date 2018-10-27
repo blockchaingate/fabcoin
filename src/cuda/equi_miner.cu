@@ -17,7 +17,7 @@
 #define WN	184
 #define WK	7
 #ifndef MAX_GPUS
-#define MAX_GPUS 16
+#define MAX_GPUS 128
 #endif
 #define RESTBITS	2 
 

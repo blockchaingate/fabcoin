@@ -27,7 +27,7 @@
 #define WN 200
 #define WK 9
 #ifndef MAX_GPUS
-#define MAX_GPUS 16
+#define MAX_GPUS 128
 #endif
 
 #define NDIGITS		(WK+1)

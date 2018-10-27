@@ -1178,6 +1178,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
 
                     if( !g_solver )
                     {
+                        std::lock_guard<std::mutex> lock{g_cs};
                         g_solver = new eq_cuda_context<CONFIG_MODE_1>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }
@@ -1191,6 +1192,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
 
                     if( !g_solver184_7 )
                     {
+                        std::lock_guard<std::mutex> lock{g_cs};
                         g_solver184_7 = new eq_cuda_context1847(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }                
@@ -1413,29 +1415,22 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
                     int maxThreads = nThreads;
                     CBlockIndex* pindexPrev = chainActive.Tip();
-
                     if (!conf.forceGenProcLimit) {
-
-                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight || conf.useCUDA )
+                        int ThreadsMem = 1750000000;
+                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
                         {
-                            if (result > 7500000000) {
-                                maxThreads = std::min(4, nThreads);
-                            } else if (result > 5500000000) {
-                                maxThreads = std::min(3, nThreads);
-                            } else if (result > 3500000000) {
-                                maxThreads = std::min(2, nThreads);
-                            } else {
-                                maxThreads = std::min(1, nThreads);
-                            }
+                            ThreadsMem = 3500000000;
                         }
-                        else
+#ifdef USE_CUDA
+                        if (bNvidiaDev && conf.useCUDA )
                         {
-                            if (result > 7500000000) {
-                                maxThreads = std::min(2, nThreads);
-                            } else {
-                                maxThreads = std::min(1, nThreads);
-                            }
-                        }
+                            if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
+                                ThreadsMem =  500000000;
+                            else
+                                ThreadsMem =  2000000000;
+                        }                   
+#endif
+                        maxThreads = std::min( (int) (result / ThreadsMem ), nThreads);
                     }
 
                     LogPrintf("GenerateFabcoins GPU (platform=%d device=%d) maxThread =%d.\n", conf.currentPlatform, conf.currentDevice, maxThreads );
@@ -1488,30 +1483,24 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
                 devices[conf.currentDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
 
                 int maxThreads = nThreads;
+
                 CBlockIndex* pindexPrev = chainActive.Tip();
-
                 if (!conf.forceGenProcLimit) {
-
-                    if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight || conf.useCUDA )
+                    int ThreadsMem = 1750000000;
+                    if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
                     {
-                        if (result > 7500000000) {
-                            maxThreads = std::min(4, nThreads);
-                        } else if (result > 5500000000) {
-                            maxThreads = std::min(3, nThreads);
-                        } else if (result > 3500000000) {
-                            maxThreads = std::min(2, nThreads);
-                        } else {
-                            maxThreads = std::min(1, nThreads);
-                        }
+                        ThreadsMem = 3500000000;
                     }
-                    else
+#ifdef USE_CUDA
+                    if (bNvidiaDev && conf.useCUDA )
                     {
-                        if (result > 7500000000) {
-                            maxThreads = std::min(2, nThreads);
-                        } else {
-                            maxThreads = std::min(1, nThreads);
-                        }
-                    }
+                        if( (pindexPrev->nHeight+1) < chainparams.GetConsensus().EquihashFABHeight )
+                            ThreadsMem =  500000000;
+                        else
+                            ThreadsMem =  2000000000;
+                    }                   
+#endif
+                    maxThreads = std::min( (int) (result / ThreadsMem ), nThreads);
                 }
 
 
