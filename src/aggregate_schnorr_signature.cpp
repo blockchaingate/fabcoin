@@ -877,6 +877,42 @@ bool SignatureAggregate::leftHasSmallerPublicKey(const SignatureAggregate& left,
     return left.myPublicKey < right.myPublicKey;
 }
 
+std::string SignatureAggregate::toStringMyState()
+{
+    std::stringstream out;
+    out << this->currentState << " (";
+    switch (this->currentState) {
+    case SignatureAggregate::state1ready:
+        out << "ready";
+        break;
+    case SignatureAggregate::state2MessageSent:
+        out << "message sent";
+        break;
+    case SignatureAggregate::state3MessageReceivedCommitmentsSent:
+        out << "committed";
+        break;
+    case SignatureAggregate::state4CommitmentsReceivedChallengesSent:
+        out << "challenges sent";
+        break;
+    case SignatureAggregate::state5ChallengesReceivedSolutionsSent:
+        out << "solutions sent";
+        break;
+    case SignatureAggregate::state6SolutionsReceivedAggregateSignatureSent:
+        out << "aggregated";
+        break;
+    case SignatureAggregate::stateUninitialized:
+        out << "uninitialized";
+        break;
+    case SignatureAggregate::stateVerifyingAggregateSignatures:
+        out << "verifying";
+        break;
+    default:
+        out << "uknown";
+        break;
+    }
+    out << ")";
+    return out.str();
+}
 std::string SignatureAggregate::toStringSignersBitmap()
 {
     std::stringstream out;
@@ -1038,8 +1074,8 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
     if (this->allPublicKeys.size() > 0) {
         result.pushKV("knownPublicKeys", this->allPublicKeys.size());
     }
+    result.pushKV("state", this->toStringMyState());
     if (this->currentState == this->state1ready) {
-        result.pushKV("state", "1ready");
         if (this->flagIsSigner) {
             result.pushKV("privateKeyBase58", this->myPrivateKey__KEEP_SECRET.ToBase58());
         }
@@ -1047,12 +1083,10 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         return result;
     }
     if (this->currentState == this->state2MessageSent) {
-        result.pushKV("state", "2message");
         this->toUniValueAppendMessage(result);
         return result;
     }
     if (this->currentState == this->state3MessageReceivedCommitmentsSent) {
-        result.pushKV("state", "3MessageReceivedCommitmentsSent");
         this->toUniValueAppendMessage(result);
         result.pushKV("myNonceBase58", this->myNonce_DO_Not_Disclose_To_Aggregator.ToBase58());
         result.pushKV("commitmentHexCompressed", this->myCommitment.ToHexCompressed());
@@ -1060,7 +1094,6 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         return result;
     }
     if (this->currentState == this->state4CommitmentsReceivedChallengesSent) {
-        result.pushKV("state", "4CommitmentsReceivedChallengesSent");
         this->toUniValueAppendPublicKeys(result);
         this->toUniValueAppendCommitments(result);
         this->toUniValueAppendBitmapSigners(result);
@@ -1070,12 +1103,10 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         this->toUniValueAppendAllLockingCoefficients(result);
     }
     if (this->currentState == this->state5ChallengesReceivedSolutionsSent) {
-        result.pushKV("state", "5ChallengesReceivedSolutionsSent");
         this->toUniValueAppendMyLockingCoefficient(result);
         this->toUniValueAppendMySolution(result);
     }
     if (this->currentState == this->state6SolutionsReceivedAggregateSignatureSent) {
-        result.pushKV("state", "6SolutionsReceivedAggregateSignatureSent");
         this->toUniValueAppendMessage(result);
         this->toUniValueAppendAllLockingCoefficients(result);
         //this->ToUniValueAppendAllSolutions(result);
@@ -1089,7 +1120,6 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         this->toUniValueAppendBitmapSigners(result);
     }
     if (this->currentState == this->stateVerifyingAggregateSignatures) {
-        result.pushKV("state", "verifier");
         this->toUniValueAppendMessage(result);
         this->toUniValueAppendAllLockingCoefficients(result);
         this->toUniValueConcatenatedPublicKeys(result);
@@ -1117,7 +1147,8 @@ bool SignatureAggregate::TransitionAggregatorState1ToState2(const std::string& m
     if (this->currentState != this->state1ready) {
         if (commentsOnFailure != 0) {
             *commentsOnFailure << "Transition from state 1 (ready) to state 2 "
-            << "requires that the current state be state 1. Current state: " << this->currentState;
+            << "requires that the current state be state 1. Current state: "
+            << this->toStringMyState() << ". ";
         }
         return false;
     }
@@ -1144,7 +1175,8 @@ bool SignatureAggregate::TransitionSignerState1or2ToState3
     if (this->currentState != this->state1ready && this->currentState != this->state2MessageSent) {
         if (commentsOnFailure != 0) {
             *commentsOnFailure << "Transition from state 1 (ready) or 2 (message sent) to state 3 "
-            << "(message received by signer) requires that the current state be state 1 or 2. Current state: " << this->currentState;
+            << "(message received by signer) requires that the current state be state 1 or 2. Current state: "
+            << this->toStringMyState();
         }
         return false;
     }
@@ -1233,7 +1265,8 @@ bool SignatureAggregate::TransitionSignerState2or3ToState4
     if (this->currentState != this->state2MessageSent && this->currentState != this->state3MessageReceivedCommitmentsSent) {
         if (commentsOnFailure != 0) {
             *commentsOnFailure << "Commitment step is to be carried out on a signature protocol "
-            << "in state 2 (message sent) or state 3 (commitment sent)";
+            << "in state 2 (message sent) or state 3 (commitment sent). Current state: "
+            << this->toStringMyState() << ". ";
         }
         return false;
     }

@@ -359,6 +359,7 @@ public:
     void toUniValueAppendAggregateCommitmentFromSignature(UniValue& output);
     void toUniValueAppendSignatureSerializationBase58WithoutCheckNoBitmap(UniValue& output);
     static bool leftHasSmallerPublicKey(const SignatureAggregate& left, const SignatureAggregate& right);
+    std::string toStringMyState();
     std::string toStringSignersBitmap();
     //Prepares a human-readable JSON (UniValue) with
     //internal information.

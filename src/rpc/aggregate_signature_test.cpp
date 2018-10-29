@@ -233,7 +233,7 @@ UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
     std::lock_guard<std::mutex> guard1(aggregateSignatureLock);
     UniValue result;
     result.setObject();
-    result.pushKV("xinput", request.params);
+    result.pushKV("input", request.params);
     std::stringstream errorStream;
     SignatureAggregate theVerifier;
     theVerifier.flagIsAggregator = true;
@@ -261,10 +261,15 @@ UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
     theVerifier.messageImplied = DecodeBase64(messageBase64);
     bool resultBool = theVerifier.Verify(&errorStream);
     result.pushKV("result", resultBool);
+    if (resultBool) {
+        result.pushKV("resultHTML", "<b style='color:green'>Verified</b>");
+    } else {
+        result.pushKV("resultHTML", "<b style='color:red'>Failed</b>");
+    }
     if (!resultBool) {
-        result.pushKV("1verifier", theVerifier.toUniValueTransitionState__SENSITIVE());
-        result.pushKV("2aggregator", currentAggregator.toUniValueTransitionState__SENSITIVE());
-        result.pushKV("3reason", errorStream.str());
+        result.pushKV("verifier", theVerifier.toUniValueTransitionState__SENSITIVE());
+        result.pushKV("aggregator", currentAggregator.toUniValueTransitionState__SENSITIVE());
+        result.pushKV("reason", errorStream.str());
     }
     return result;
 }
@@ -433,7 +438,7 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
     std::vector<std::string> inputNonces;
     std::stringstream errorStream;
     if (request.params.size() == 2) {
-        if (! getVectorOfStrings(request.params[1], inputNonces, &errorStream)) {
+        if (!getVectorOfStrings(request.params[1], inputNonces, &errorStream)) {
             errorStream << "Failed to extract vector of string from: " << request.params[1].write();
             result.pushKV("error", errorStream.str());
             return result;
@@ -645,7 +650,7 @@ static const CRPCCommand testCommands[] =
   { "test",     "testaggregatesignatureinitialize",       &testaggregatesignatureinitialize,       true,    {"numberOfSigners"} },
   { "test",     "testaggregatesignaturecommit",           &testaggregatesignaturecommit,           true,    {"message", "desiredNoncesCommaSeparatedBase64"} },
   { "test",     "testaggregatesignaturechallenge",        &testaggregatesignaturechallenge,        true,    {"committedSignersBitmap", "commitments"} },
-  { "test",     "testaggregatesignaturesolutions",        &testaggregatesignaturesolutions,        true,    {"committedSignersBitmap", "challenge", "aggregatedCommitment", "aggregatedPublicKey"} },
+  { "test",     "testaggregatesignaturesolutions",        &testaggregatesignaturesolutions,        true,    {"committedSignersBitmap", "challenge", "aggregateCommitment", "aggregatePublicKey"} },
   { "test",     "testaggregatesignatureaggregation",      &testaggregatesignatureaggregation,      true,    {"solutions"} },
   { "test",     "testaggregatesignatureverification",     &testaggregatesignatureverification,     true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
 };
