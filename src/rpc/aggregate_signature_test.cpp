@@ -35,7 +35,15 @@ void splitString(const std::string& input, const std::string& delimiters, std::v
     }
 }
 
-bool getVectorOfStringsFromBase64List(const UniValue& input, std::vector<std::string>& output, std::stringstream* commentsOnFailure)
+bool getVectorOfStringsFromBase64List(const std::string& input, std::vector<std::string>& output, std::stringstream* commentsOnFailure)
+{
+    std::string decoded = DecodeBase64(input);
+    splitString(decoded, ", ", output);
+    return true;
+}
+
+//Attempts to recognize the input encoding (comma delimited string vs base64 encoded comma delimited string).
+bool getVectorOfStrings(const UniValue& input, std::vector<std::string>& output, std::stringstream* commentsOnFailure)
 {
     output.clear();
     if (!input.isStr()) {
@@ -46,10 +54,24 @@ bool getVectorOfStringsFromBase64List(const UniValue& input, std::vector<std::st
         }
         return false;
     }
-    if (input.get_str() == "")
+    std::string inputString = input.get_str();
+    if (inputString == "")
         return true;
-    std::string decoded = DecodeBase64(input.get_str());
-    splitString(decoded, ", ", output);
+    std::vector<std::string> candidateOutputNoBase64;
+    std::vector<std::string> candidateOutputBase64;
+    std::stringstream commentsBase64, commentsRegular;
+    bool goodBase64 = getVectorOfStringsFromBase64List(inputString, candidateOutputBase64, commentsOnFailure);
+    splitString(inputString, ", ", candidateOutputNoBase64);
+    if (!goodBase64) {
+        output = candidateOutputNoBase64;
+        return true;
+    }
+    //Both the base64 and regular encoding are valid. Return whichever resulted in more entries.
+    if (candidateOutputBase64.size() >= candidateOutputNoBase64.size()) {
+        output = candidateOutputBase64;
+        return true;
+    }
+    output = candidateOutputNoBase64;
     return true;
 }
 
@@ -99,7 +121,7 @@ bool getBitmap(const UniValue input, std::vector<bool>& output, std::stringstrea
 bool getVectorOfEllipticCurveElements(const UniValue& input, std::vector<PublicKeyKanban>& output, std::stringstream* commentsOnFailure)
 {
     std::vector<std::string> inputVector;
-    if (!getVectorOfStringsFromBase64List(input, inputVector, commentsOnFailure)) {
+    if (! getVectorOfStrings(input, inputVector, commentsOnFailure)) {
         return false;
     }
     output.resize(inputVector.size());
@@ -125,7 +147,7 @@ bool getVectorOfEllipticCurveElements(const UniValue& input, std::vector<PublicK
 bool getVectorOfSecp256k1Scalars(const UniValue& input, std::vector<PrivateKeyKanban>& output, std::stringstream* commentsOnFailure)
 {
     std::vector<std::string> inputVector;
-    if (!getVectorOfStringsFromBase64List(input, inputVector, commentsOnFailure)) {
+    if (!getVectorOfStrings(input, inputVector, commentsOnFailure)) {
         return false;
     }
     output.resize(inputVector.size());
@@ -411,7 +433,7 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
     std::vector<std::string> inputNonces;
     std::stringstream errorStream;
     if (request.params.size() == 2) {
-        if (!getVectorOfStringsFromBase64List(request.params[1], inputNonces, &errorStream)) {
+        if (! getVectorOfStrings(request.params[1], inputNonces, &errorStream)) {
             errorStream << "Failed to extract vector of string from: " << request.params[1].write();
             result.pushKV("error", errorStream.str());
             return result;
@@ -539,6 +561,11 @@ UniValue testschnorrverification(const JSONRPCRequest& request)
     SchnorrKanban crypto;
     bool verificationResult = crypto.Verify(theSignature, &errorStream);
     result.pushKV("result", verificationResult);
+    if (verificationResult) {
+        result.pushKV("resultHTML", "<b style = 'color:green'>Verified</b>");
+    } else  {
+        result.pushKV("resultHTML", "<b style = 'color:red'>Failed</b>");
+    }
     return result;
 }
 
