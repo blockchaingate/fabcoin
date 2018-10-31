@@ -534,6 +534,7 @@ public:
      std::stringstream* commentsOnFailure);
 
     bool Verify(std::stringstream* reasonForFailure);
+    bool VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure);
 };
 
 class SchnorrKanban

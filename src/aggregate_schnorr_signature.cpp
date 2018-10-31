@@ -783,6 +783,14 @@ std::string SignatureAggregate::ExampleRunSampleAggregateSignatureOutputHumanRea
     return out.str();
 }
 
+bool SignatureAggregate::VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure)
+{
+    if (reasonForFailure != 0) {
+        *reasonForFailure << "Not implemented yet.";
+    }
+    return false;
+}
+
 bool SignatureAggregate::Verify(std::stringstream* reasonForFailure)
 {
     //first some basic checks

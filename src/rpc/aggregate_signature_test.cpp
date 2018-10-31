@@ -222,11 +222,50 @@ UniValue testaggregatesignatureinitialize(const JSONRPCRequest& request)
     return result;
 }
 
+UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error(
+            "testaggregateverificationcomplete(...)\n"
+            "\nTests schnorr aggregate signature aggregation. Available in -testkanban mode only."
+            "\nTo be documented further.\n"
+        );
+    UniValue result;
+    result.setObject();
+    result.pushKV("input", request.params);
+    std::stringstream errorStream;
+    SignatureAggregate theVerifier;
+    theVerifier.currentState = theVerifier.stateVerifyingAggregateSignatures;
+    if (!request.params[0].isStr()) {
+        errorStream << "The first argument (signatureComplete), is not a string, as expected. Instead, it is: " << request.params[0].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!request.params[1].isStr()) {
+        errorStream << "The second argument (messageBase64), is not a string, as expected. Instead, it is: " << request.params[1].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    bool resultBool = theVerifier.VerifyFromSignatureComplete(request.params[0].get_str(), request.params[1].get_str(), &errorStream);
+    result.pushKV("result", resultBool);
+    if (resultBool) {
+        result.pushKV("resultHTML", "<b style='color:green'>Verified</b>");
+    } else {
+        result.pushKV("resultHTML", "<b style='color:red'>Failed</b>");
+    }
+    if (!resultBool) {
+        result.pushKV("verifier", theVerifier.toUniValueTransitionState__SENSITIVE());
+        result.pushKV("reason", errorStream.str());
+    }
+    return result;
+}
+
+
 UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 4)
         throw std::runtime_error(
-            "testaggregatesignatureaggregation ( solutionsBase58CheckThenCommaSeparatedThenBase64Encoded)\n"
+            "testaggregatesignatureaggregation ( ...)\n"
             "\nTests schnorr aggregate signature aggregation. Available in -testkanban mode only."
             "\nTo be documented further.\n"
         );
@@ -640,19 +679,20 @@ UniValue testpublickeyfromprivate(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand testCommands[] =
-{ //  category name                                      actor (function)                         okSafe   argNames
-  //  -------- ----------------------------------------- ---------------------------------------- -------- ---------------------
-  { "test",     "testprivatekeygeneration",               &testprivatekeygeneration,               true,    {} },
-  { "test",     "testpublickeyfromprivate",               &testpublickeyfromprivate,               true,    {"privatekey"} },
-  { "test",     "testshathree",                           &testshathree,                           true,    {"message"} },
-  { "test",     "testschnorrsignature",                   &testschnorrsignature,                   true,    {"secret", "message", "nonce"} },
-  { "test",     "testschnorrverification",                &testschnorrverification,                true,    {"publickey", "message", "signature"} },
-  { "test",     "testaggregatesignatureinitialize",       &testaggregatesignatureinitialize,       true,    {"numberOfSigners"} },
-  { "test",     "testaggregatesignaturecommit",           &testaggregatesignaturecommit,           true,    {"message", "desiredNoncesCommaSeparatedBase64"} },
-  { "test",     "testaggregatesignaturechallenge",        &testaggregatesignaturechallenge,        true,    {"committedSignersBitmap", "commitments"} },
-  { "test",     "testaggregatesignaturesolutions",        &testaggregatesignaturesolutions,        true,    {"committedSignersBitmap", "challenge", "aggregateCommitment", "aggregatePublicKey"} },
-  { "test",     "testaggregatesignatureaggregation",      &testaggregatesignatureaggregation,      true,    {"solutions"} },
-  { "test",     "testaggregatesignatureverification",     &testaggregatesignatureverification,     true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
+{ //  category name                                    actor (function)                       okSafe   argNames
+  //  -------- -------------------------------------- -------------------------------------- -------- ---------------------
+  { "test",     "testprivatekeygeneration",             &testprivatekeygeneration,             true,    {} },
+  { "test",     "testpublickeyfromprivate",             &testpublickeyfromprivate,             true,    {"privatekey"} },
+  { "test",     "testshathree",                         &testshathree,                         true,    {"message"} },
+  { "test",     "testschnorrsignature",                 &testschnorrsignature,                 true,    {"secret", "message", "nonce"} },
+  { "test",     "testschnorrverification",              &testschnorrverification,              true,    {"publickey", "message", "signature"} },
+  { "test",     "testaggregatesignatureinitialize",     &testaggregatesignatureinitialize,     true,    {"numberOfSigners"} },
+  { "test",     "testaggregatesignaturecommit",         &testaggregatesignaturecommit,         true,    {"message", "desiredNoncesCommaSeparatedBase64"} },
+  { "test",     "testaggregatesignaturechallenge",      &testaggregatesignaturechallenge,      true,    {"committedSignersBitmap", "commitments"} },
+  { "test",     "testaggregatesignaturesolutions",      &testaggregatesignaturesolutions,      true,    {"committedSignersBitmap", "challenge", "aggregateCommitment", "aggregatePublicKey"} },
+  { "test",     "testaggregatesignatureaggregation",    &testaggregatesignatureaggregation,    true,    {"solutions"} },
+  { "test",     "testaggregatesignatureverification",   &testaggregatesignatureverification,   true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
+  { "test",     "testaggregateverificationcomplete",    &testaggregateverificationcomplete,    true,    {"signatureComplete", "messageBase64"} },
 };
 
 void RegisterTestCommands(CRPCTable &t)
