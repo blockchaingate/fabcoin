@@ -246,7 +246,16 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
         result.pushKV("error", errorStream.str());
         return result;
     }
-    bool resultBool = theVerifier.VerifyFromSignatureComplete(request.params[0].get_str(), request.params[1].get_str(), &errorStream);
+    bool encodingIsOK = false;
+    std::vector<unsigned char> decodedMessageVector = DecodeBase64(request.params[0].get_str().c_str(), &encodingIsOK);
+    if (!encodingIsOK) {
+        errorStream << "Failed to base-64 decode your input: " << request.params[1].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    std::string decodedMessage((const char*)decodedMessageVector.data(), decodedMessageVector.size());
+
+    bool resultBool = theVerifier.VerifyFromSignatureComplete(request.params[0].get_str(), decodedMessage, &errorStream);
     result.pushKV("result", resultBool);
     if (resultBool) {
         result.pushKV("resultHTML", "<b style='color:green'>Verified</b>");

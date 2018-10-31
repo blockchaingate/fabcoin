@@ -179,6 +179,7 @@ class SignatureAggregate
 {
 public:
     static const unsigned lengthInBytesBitmapSigners;
+    static const unsigned lengthInBytesUncompressedSignature;
 
 
     bool flagIsAggregator;
@@ -533,7 +534,6 @@ public:
     bool parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure);
     std::string serializeCommittedSignersBitmap();
     bool deserializeSignersBitmapFromBigEndianBits(const std::string& inputRaw, std::stringstream* reasonForFailure);
-    bool parseCommittedSignersBitmap();
     bool VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure);
 };
 
