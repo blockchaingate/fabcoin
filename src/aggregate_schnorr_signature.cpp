@@ -714,8 +714,16 @@ bool PublicKeyKanban::MakeFromUniValueRecognizeFormat(const UniValue& input, std
 bool PublicKeyKanban::MakeFromStringRecognizeFormat(const std::string& input, std::stringstream* commentsOnFailure)
 {
     std::vector<unsigned char> serializer;
-    if (!fromHex(input, serializer, commentsOnFailure))
-        return false;
+    unsigned inputSize = input.size();
+    if (inputSize == 66 || inputSize == 128 || inputSize == 130) {
+        if (!fromHex(input, serializer, commentsOnFailure))
+            return false;
+    } else {
+        serializer.resize(input.size());
+        for (unsigned i = 0; i < input.size(); i ++) {
+            serializer[i] = input[i];
+        }
+    }
     if (!this->MakeFromBytesSerialization(serializer, commentsOnFailure)) {
         if (commentsOnFailure != 0) {
             *commentsOnFailure << "Failed to read public key from input: " << input;
@@ -795,6 +803,7 @@ bool SignatureAggregate::VerifyFromSignatureComplete(const std::string& signatur
 
 bool SignatureAggregate::Verify(std::stringstream* reasonForFailure)
 {
+    this->currentState = this->stateVerifyingAggregateSignatures;
     //first some basic checks
     if (this->allPublicKeys.size() < 1) {
         if (reasonForFailure != 0)
@@ -1719,10 +1728,25 @@ bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComp
     if (!this->InitializePublicKeys(thePublicKeys, reasonForFailure)) {
         return false;
     }
-    std::string signatureUncompressedBytes = signatureComplete.substr(0, lengthRawSignatureUncompressed);
-    if (!this->parseCompleteSignature(signatureUncompressedBytes, reasonForFailure)) {
+    std::string signatureUncompressedString = signatureComplete.substr(0, lengthSchnorr);
+    std::vector<unsigned char> signatureUncompressedBytes;
+    signatureUncompressedBytes.resize(signatureUncompressedString.size());
+    for (unsigned i = 0; i < signatureUncompressedString.size(); i ++) {
+        signatureUncompressedBytes[i] = signatureUncompressedString[i];
+    }
+    if (!this->serializerSignature.MakeFromBytes(signatureUncompressedBytes, reasonForFailure)) {
         return false;
     }
+    std::string signersBitmap = signatureComplete.substr(lengthSchnorr, this->lengthInBytesBitmapSigners);
+    //if (reasonForFailure != 0) {
+    //   *reasonForFailure << "DEBUG: signers bitmap: " << HexStr(signersBitmap) << ". ";
+    //}
+    if (!this->deserializeSignersBitmapFromBigEndianBits(signersBitmap, reasonForFailure)) {
+        return false;
+    }
+    //if (reasonForFailure != 0) {
+    //   *reasonForFailure << "DEBUG: after deserialize: signers bitmap: " << this->toStringSignersBitmap() << ". ";
+    //}
     return true;
 }
 
@@ -1740,10 +1764,23 @@ bool SignatureAggregate::deserializeSignersBitmapFromBigEndianBits(const std::st
         this->committedSigners.resize(numberOfSigners);
     }
     for (unsigned i = 0; i < numberOfSigners; i ++) {
-        int byteIndex = i / 8;
-        int bitOffset = i % 8;
-        int bitOfInterestInLastPosition = (inputRaw[byteIndex] << bitOffset) >> 7;
+        unsigned byteIndex = i / 8;
+        unsigned bitOffset = i % 8;
+        unsigned char currentByte = inputRaw[byteIndex];
+        unsigned char shiftedLeft = currentByte << bitOffset;
+        unsigned char bitOfInterestInLastPosition = shiftedLeft >> 7;
         this->committedSigners[i] = (bitOfInterestInLastPosition == 1);
+        //if (reasonForFailure != 0) {
+        //    std::string temp;
+        //    temp = currentByte;
+        //    *reasonForFailure << "DEBUG: byte current: " << HexStr(temp)
+        //                      << ", shiftedLeft: "
+        //                      << shiftedLeft
+        //                      << " and (inputRaw[byteIndex] << bitOffset) >> 7: "
+        //                      << bitOfInterestInLastPosition
+        //                      << ", finally, boolean: "
+        //                      << this->committedSigners[i];
+        //}
     }
     return true;
 }

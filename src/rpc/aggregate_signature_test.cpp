@@ -246,16 +246,21 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
         result.pushKV("error", errorStream.str());
         return result;
     }
-    bool encodingIsOK = false;
-    std::vector<unsigned char> decodedMessageVector = DecodeBase64(request.params[0].get_str().c_str(), &encodingIsOK);
-    if (!encodingIsOK) {
+    bool encodingIsBAD = true;
+    std::vector<unsigned char> decodedMessageVector = DecodeBase64(request.params[1].get_str().c_str(), &encodingIsBAD);
+    if (encodingIsBAD) {
         errorStream << "Failed to base-64 decode your input: " << request.params[1].write();
         result.pushKV("error", errorStream.str());
         return result;
     }
     std::string decodedMessage((const char*)decodedMessageVector.data(), decodedMessageVector.size());
-
-    bool resultBool = theVerifier.VerifyFromSignatureComplete(request.params[0].get_str(), decodedMessage, &errorStream);
+    std::string decodedCompleteSignature;
+    if (!fromHex(request.params[0].get_str(), decodedCompleteSignature, &errorStream)) {
+        errorStream << "Failed to hex-decode your input: " << request.params[0].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    bool resultBool = theVerifier.VerifyFromSignatureComplete(decodedCompleteSignature, decodedMessage, &errorStream);
     result.pushKV("result", resultBool);
     if (resultBool) {
         result.pushKV("resultHTML", "<b style='color:green'>Verified</b>");
