@@ -47,6 +47,7 @@ bool char2int(char input, int& output, std::stringstream* commentsOnFailure)
 
 
 unsigned char SignatureSchnorr::prefixSignature = 65;
+unsigned char SignatureSchnorr::prefixAggregateSignature = 24;
 
 void SignatureSchnorr::SerializeCompressedChallenge(std::vector<unsigned char>& output, unsigned char prefix)
 {
@@ -815,8 +816,8 @@ bool SignatureAggregate::Verify(std::stringstream* reasonForFailure)
             *reasonForFailure << "I need at least 1 committed signer. The signer bitmap is: " << this->toStringSignersBitmap();
         return false;
     }
-    this->solutionAggregate = this->commitmentSolutionSerializer.solution;
-    this->commitmentAggregate = this->commitmentSolutionSerializer.challenge;
+    this->solutionAggregate = this->serializerSignature.solution;
+    this->commitmentAggregate = this->serializerSignature.challenge;
     //time to do the real work:
     return this->verifyPartTwo(reasonForFailure);
 }
@@ -833,7 +834,7 @@ bool SignatureAggregate::verifyPartTwo(std::stringstream* reasonForFailure)
     if (!this->computeMessageDigest(reasonForFailure))
         return false;
     PublicKeyKanban leftHandSide, rightHandSide;
-    this->commitmentSolutionSerializer.solution.ComputePublicKey(leftHandSide, nullptr);
+    this->serializerSignature.solution.ComputePublicKey(leftHandSide, nullptr);
     bool found = false;
     for (unsigned i = 0; i < this->allPublicKeys.size(); i ++) {
         if (!this->committedSigners[i])
@@ -851,7 +852,7 @@ bool SignatureAggregate::verifyPartTwo(std::stringstream* reasonForFailure)
     }
     if (!rightHandSide.Exponentiate(this->digestedMessage, reasonForFailure))
         return false;
-    rightHandSide *= this->commitmentSolutionSerializer.challenge;
+    rightHandSide *= this->serializerSignature.challenge;
     if (! (leftHandSide == rightHandSide)) {
         if (reasonForFailure != 0)
             *reasonForFailure
@@ -979,7 +980,12 @@ void SignatureAggregate::toUniValueAppendBitmapSigners(UniValue& output)
 
 void SignatureAggregate::toUniValueAppendSignatureSerializationBase58WithoutCheckNoBitmap(UniValue& output)
 {
-    output.pushKV("signatureNoBitmap", this->commitmentSolutionSerializer.ToBase58CustomPrefix(24));
+    output.pushKV("signatureNoBitmap", this->serializerSignature.ToBase58CustomPrefix(24));
+}
+
+void SignatureAggregate::toUniValueAppendSignatureComplete(UniValue& output)
+{
+    output.pushKV("signatureComplete", HexStr(this->aggregateSignatureComplete));
 }
 
 void SignatureAggregate::toUniValueAppendMessageDigest(UniValue& output)
@@ -1005,7 +1011,7 @@ void SignatureAggregate::toUniValueAppendAggregateCommitment(UniValue& output)
 
 void SignatureAggregate::toUniValueAppendAggregateCommitmentFromSignature(UniValue& output)
 {
-    output.pushKV("aggregateCommitmentFromSignature", this->commitmentSolutionSerializer.challenge.ToHexCompressed());
+    output.pushKV("aggregateCommitmentFromSignature", this->serializerSignature.challenge.ToHexCompressed());
 }
 
 void SignatureAggregate::toUniValueAppendMyLockingCoefficient(UniValue& output)
@@ -1125,6 +1131,7 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         this->toUniValueAppendAggregateCommitment(result);
         this->toUniValueAppendAggregateCommitmentFromSignature(result);
         this->toUniValueAppendSignatureSerializationBase58WithoutCheckNoBitmap(result);
+        this->toUniValueAppendSignatureComplete(result);
         this->toUniValueAppendBitmapSigners(result);
     }
     if (this->currentState == this->stateVerifyingAggregateSignatures) {
@@ -1138,6 +1145,7 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         this->toUniValueAppendAggregateCommitment(result);
         this->toUniValueAppendAggregateCommitmentFromSignature(result);
         this->toUniValueAppendSignatureSerializationBase58WithoutCheckNoBitmap(result);
+        this->toUniValueAppendSignatureComplete(result);
         this->toUniValueAppendBitmapSigners(result);
     }
     return result;
@@ -1388,8 +1396,8 @@ bool SignatureAggregate::TransitionSignerState4or5ToState6(const std::vector<Pri
             continue;
         this->solutionAggregate += this->allSolutions[i];
     }
-    this->commitmentSolutionSerializer.challenge = this->commitmentAggregate;
-    this->commitmentSolutionSerializer.solution = this->solutionAggregate;
+    this->serializerSignature.challenge = this->commitmentAggregate;
+    this->serializerSignature.solution = this->solutionAggregate;
     this->currentState = this->state6SolutionsReceivedAggregateSignatureSent;
     return true;
     ///After returning, the aggregate solution is complete.
@@ -1652,4 +1660,72 @@ bool SignatureAggregate::ResetGeneratePrivateKey(bool isAggregator, bool isSigne
             break;
     }
     return true;
+}
+
+bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure)
+{
+//    this->aggregateSignatureComplete
+
+}
+
+bool SignatureAggregate::deserializeSignersBitmapFromBigEndianBits(const std::string& inputRaw, std::stringstream* reasonForFailure)
+{
+    if (inputRaw.size() != this->lengthInBytesBitmapSigners) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Signer bitmap has: " << inputRaw.size()
+                              << " bytes, instead of the expected: " << this->lengthInBytesBitmapSigners << ". ";
+        }
+        return false;
+    }
+    unsigned numberOfSigners = this->allPublicKeys.size();
+    if (this->committedSigners.size() != numberOfSigners) {
+        this->committedSigners.resize(numberOfSigners);
+    }
+    for (unsigned i = 0; i < numberOfSigners; i ++) {
+        int byteIndex = i / 8;
+        int bitOffset = i % 8;
+        int bitOfInterestInLastPosition = (inputRaw[byteIndex] << bitOffset) >> 7;
+        this->committedSigners[i] = (bitOfInterestInLastPosition == 1);
+    }
+    return true;
+}
+
+const unsigned SignatureAggregate::lengthInBytesBitmapSigners = 32;
+
+std::string SignatureAggregate::serializeCommittedSignersBitmap()
+{
+    int numberOfSigners = this->allPublicKeys.size();
+    std::string result;
+    result.resize(this->lengthInBytesBitmapSigners);
+    unsigned char currentByte = 0;
+    for (int i = 0; i < numberOfSigners; i ++ ) {
+        int bitOffset = i % 8;
+        if (this->committedSigners[i]) {
+            currentByte |= 1 << (7 - bitOffset);
+        }
+        if (bitOffset == 7 || i == numberOfSigners - 1) {
+            result[i / 8] = currentByte;
+            currentByte = 0;
+        }
+    }
+    return result;
+}
+
+void SignatureAggregate::ComputeCompleteSignature()
+{
+    std::stringstream resultStream;
+    std::vector<unsigned char> signatureSerialization;
+    this->serializerSignature.SerializeCompressedChallenge(signatureSerialization, SignatureSchnorr::prefixAggregateSignature);
+    for (unsigned i = 0; i < signatureSerialization.size(); i ++) {
+        resultStream << signatureSerialization[i];
+    }
+    resultStream << this->serializeCommittedSignersBitmap();
+    unsigned numberOfSigners = this->allPublicKeys.size();
+    unsigned char topByte = numberOfSigners / 256;
+    unsigned char bottomByte = numberOfSigners % 256;
+    resultStream << topByte << bottomByte;
+    for (unsigned i = 0; i < this->allPublicKeys.size(); i ++) {
+        resultStream << this->allPublicKeys[i].ToBytesCompressed();
+    }
+    this->aggregateSignatureComplete = resultStream.str();
 }

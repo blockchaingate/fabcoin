@@ -277,7 +277,7 @@ UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
     SignatureAggregate theVerifier;
     theVerifier.flagIsAggregator = true;
     theVerifier.currentState = theVerifier.stateVerifyingAggregateSignatures;
-    if (!theVerifier.commitmentSolutionSerializer.MakeFromUniValueRecognizeFormat(request.params[0], &errorStream)) {
+    if (!theVerifier.serializerSignature.MakeFromUniValueRecognizeFormat(request.params[0], &errorStream)) {
         errorStream << "Failed to read signature serialization. ";
         result.pushKV("error", errorStream.str());
         return result;
@@ -337,6 +337,7 @@ UniValue testaggregatesignatureaggregation(const JSONRPCRequest& request)
         result.pushKV("error", errorStream.str());
         return result;
     }
+    currentAggregator.ComputeCompleteSignature();
     result.pushKV("aggregator", currentAggregator.toUniValueTransitionState__SENSITIVE());
     return result;
 }

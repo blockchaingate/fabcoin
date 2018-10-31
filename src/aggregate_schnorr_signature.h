@@ -124,6 +124,7 @@ class SignatureSchnorr
 {
 public:
     static unsigned char prefixSignature;
+    static unsigned char prefixAggregateSignature;
     PublicKeyKanban challenge;
     PrivateKeyKanban solution;
     //Implied signature members are not
@@ -177,6 +178,9 @@ public:
 class SignatureAggregate
 {
 public:
+    static const unsigned lengthInBytesBitmapSigners;
+
+
     bool flagIsAggregator;
     bool flagIsSigner;
     int currentState;
@@ -315,19 +319,9 @@ public:
     //\sum_{i \in committedSigners} allSolutions[i]
     PrivateKeyKanban solutionAggregate;
 
-    SignatureSchnorr commitmentSolutionSerializer;
-    //Final signature:
-    // (commitmentAggregate, solutionAggregate), committedSigners
-    //Implied final signature data:
-    //publicKeyAggregate, message
-    //
-    //The message is implied to also contain:
-    //smartContractId
-    //blockHeaderHash
-    //- smartContractId is used to distinguish various tokens served by Kanban.
-    //- blockHeaderHash is used to identify an authority responsible for the public key registration.
-    //In our case, the registrations are given in a particular block with lots of confirmations.
-    //It should be practically impossible to overtake that particular block.
+    SignatureSchnorr serializerSignature;
+
+    std::string aggregateSignatureComplete;
 
     SignatureAggregate();
 
@@ -358,6 +352,7 @@ public:
     void toUniValueAppendMessageDigest(UniValue& output);
     void toUniValueAppendAggregateCommitmentFromSignature(UniValue& output);
     void toUniValueAppendSignatureSerializationBase58WithoutCheckNoBitmap(UniValue& output);
+    void toUniValueAppendSignatureComplete(UniValue& output);
     static bool leftHasSmallerPublicKey(const SignatureAggregate& left, const SignatureAggregate& right);
     std::string toStringMyState();
     std::string toStringSignersBitmap();
@@ -534,6 +529,11 @@ public:
      std::stringstream* commentsOnFailure);
 
     bool Verify(std::stringstream* reasonForFailure);
+    void ComputeCompleteSignature();
+    bool parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure);
+    std::string serializeCommittedSignersBitmap();
+    bool deserializeSignersBitmapFromBigEndianBits(const std::string& inputRaw, std::stringstream* reasonForFailure);
+    bool parseCommittedSignersBitmap();
     bool VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure);
 };
 
