@@ -274,7 +274,6 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
     return result;
 }
 
-
 UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 4)

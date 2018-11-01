@@ -322,6 +322,7 @@ public:
 
     SignatureSchnorr serializerSignature;
 
+    std::string aggregateSignatureUncompressed;
     std::string aggregateSignatureComplete;
 
     SignatureAggregate();

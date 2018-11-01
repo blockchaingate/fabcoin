@@ -996,6 +996,7 @@ void SignatureAggregate::toUniValueAppendSignatureSerializationBase58WithoutChec
 void SignatureAggregate::toUniValueAppendSignatureComplete(UniValue& output)
 {
     output.pushKV("signatureComplete", HexStr(this->aggregateSignatureComplete));
+    output.pushKV("signatureUncompressed", HexStr(this->aggregateSignatureUncompressed));
 }
 
 void SignatureAggregate::toUniValueAppendMessageDigest(UniValue& output)
@@ -1816,6 +1817,7 @@ void SignatureAggregate::ComputeCompleteSignature()
         resultStream << signatureSerialization[i];
     }
     resultStream << this->serializeCommittedSignersBitmap();
+    this->aggregateSignatureUncompressed = resultStream.str();
     unsigned numberOfSigners = this->allPublicKeys.size();
     unsigned char topByte = numberOfSigners / 256;
     unsigned char bottomByte = numberOfSigners % 256;

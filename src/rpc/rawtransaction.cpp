@@ -437,7 +437,7 @@ bool GetPublicKeysFromAggregateSignature(const UniValue& input, std::vector<unsi
     std::vector<std::string> publicKeysHex;
     if (input.exists("publicKeys")) {
         UniValue publicKeysUniValue = input["publicKeys"];
-        if (! GetPublicKeysHexFromArray(publicKeysUniValue, publicKeysHex, reasonForFailure)) {
+        if (!GetPublicKeysHexFromArray(publicKeysUniValue, publicKeysHex, reasonForFailure)) {
             return false;
         }
     }
