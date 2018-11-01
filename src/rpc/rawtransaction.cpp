@@ -25,6 +25,7 @@
 #include <uint256.h>
 #include <utilstrencodings.h>
 #include <utilmoneystr.h>
+#include "aggregate_schnorr_signature.h"
 #ifdef ENABLE_WALLET
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
@@ -342,11 +343,150 @@ UniValue verifytxoutproof(const JSONRPCRequest& request)
     return res;
 }
 
+bool GetPublicKeysHexFromArray(const UniValue& input, std::vector<std::string>& outputAppend, std::stringstream* reasonForFailure)
+{
+    unsigned maxNumberOfPublicKeys = 2048;
+    if (!input.isArray()) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "The public keys entry: " << input.write() << " does not appear to be an array. ";
+        }
+        return false;
+    }
+    if (input.size() > maxNumberOfPublicKeys) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Too many (" << input.size() << ") public keys. ";
+        }
+        return false;
+    }
+    for (unsigned i = 0; i < input.size(); i ++) {
+        if (!input[i].isStr()) {
+            if (reasonForFailure != 0) {
+                *reasonForFailure << "Failed to extract public key string at index: "
+                                  << i << "(" << i + 1 << " out of " << input.size() << "). "
+                                  << "The input was: " << input[i].write();
+            }
+            return false;
+        }
+        outputAppend.push_back(input[i].get_str());
+    }
+    return true;
+}
+
+bool GetPublicKeysHexFromString(const UniValue& input, std::vector<std::string>& outputAppend, std::stringstream* reasonForFailure)
+{
+    unsigned maxNumberOfPublicKeys = 2048;
+    unsigned lengthPublicKeyCompressed = PublicKeyKanban::lengthPublicKeySerializationCompressed; // = 33
+    if (!input.isStr()) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "The public keys entry: " << input.write() << " is not a hex string, as expected. ";
+        }
+        return false;
+    }
+    std::string inputString = input.get_str();
+    if (inputString.size() > maxNumberOfPublicKeys * lengthPublicKeyCompressed * 2 + 4) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Input too large ( " << inputString.size() << " bytes). ";
+        }
+        return false;
+    }
+
+    if (inputString.size() < 4) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Too few hex characters in public keys hex entry: "
+                              << inputString << ". At least 2 bytes = 4 hex characters expected. ";
+        }
+        return false;
+    }
+    std::string firstFour = inputString.substr(0, 4);
+    std::vector<unsigned char> firstTwoBytes;
+    if (!fromHex(firstFour, firstTwoBytes, reasonForFailure)) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Failed to extract 2 bytes from the first 4 hex characters of your input: " << firstFour;
+        }
+        return false;
+    }
+    if (firstTwoBytes.size() != 2) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Failed to extract 2 bytes from the first 4 characters of your input: " << firstFour;
+        }
+        return false;
+    }
+    unsigned expectedNumberOfPublicKeys = ((unsigned int)(firstTwoBytes[0])) * 256 + (unsigned int)(firstTwoBytes[1]);
+    unsigned expectedSize = 4 + lengthPublicKeyCompressed * 2 * expectedNumberOfPublicKeys;
+    if (inputString.size() != expectedSize) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Expected 4 + 33 * 2 * " << expectedNumberOfPublicKeys
+                              << " = " << expectedSize  << " hex characters, got " << inputString.size()
+                              << " instead. ";
+        }
+        return false;
+    }
+    unsigned offset = 4;
+    for (unsigned i = 0; i < expectedNumberOfPublicKeys; i ++) {
+        std::string currentSlice = inputString.substr(offset, lengthPublicKeyCompressed * 2);
+        outputAppend.push_back(currentSlice);
+        offset += 2 * lengthPublicKeyCompressed;
+    }
+    return true;
+}
+
+bool GetPublicKeysFromAggregateSignature(const UniValue& input, std::vector<unsigned char>& outputPublicKeysSerialized, std::stringstream* reasonForFailure)
+{
+    unsigned maxNumberOfPublicKeys = 2048;
+    unsigned lengthPublicKeyCompressed = PublicKeyKanban::lengthPublicKeySerializationCompressed; //=33
+    std::vector<std::string> publicKeysHex;
+    if (input.exists("publicKeys")) {
+        UniValue publicKeysUniValue = input["publicKeys"];
+        if (! GetPublicKeysHexFromArray(publicKeysUniValue, publicKeysHex, reasonForFailure)) {
+            return false;
+        }
+    }
+    if (input.exists("publicKeysHex")) {
+        UniValue publicKeysUniValue = input["publicKeysHex"];
+        if (!GetPublicKeysHexFromString(publicKeysUniValue, publicKeysHex, reasonForFailure)) {
+            return false;
+        }
+    }
+    if (publicKeysHex.size() > maxNumberOfPublicKeys) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Too many public keys: " << publicKeysHex.size() << ". Maximum allowed: " << maxNumberOfPublicKeys << ". ";
+        }
+        return false;
+    }
+    unsigned numKeys = publicKeysHex.size();
+    std::vector<PublicKeyKanban> thePublicKeys;
+    thePublicKeys.resize(numKeys);
+    for (unsigned i = 0; i < numKeys; i ++) {
+        if (!thePublicKeys[i].MakeFromStringRecognizeFormat(publicKeysHex[i], reasonForFailure)) {
+            if (reasonForFailure != 0) {
+                *reasonForFailure << "Failed to extract public key index "
+                                  << i << " (" << i + 1 << " out of " << numKeys << "). ";
+            }
+            return false;
+        }
+    }
+
+    outputPublicKeysSerialized.clear();
+    outputPublicKeysSerialized.reserve( 2 + numKeys * lengthPublicKeyCompressed);
+    unsigned char topByte = (unsigned char) (numKeys / 256);
+    unsigned char bottomByte = (unsigned char) (numKeys % 256);
+    outputPublicKeysSerialized.push_back(topByte);
+    outputPublicKeysSerialized.push_back(bottomByte);
+    std::vector<unsigned char> currentBytes;
+    for (unsigned i = 0; i < numKeys; i ++) {
+        thePublicKeys[i].SerializeCompressed(currentBytes);
+        for (unsigned j = 0; j < currentBytes.size(); j ++) {
+            outputPublicKeysSerialized.push_back(currentBytes[j]);
+        }
+    }
+    return true;
+}
+
 UniValue createrawtransaction(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
         throw std::runtime_error(
-            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
+            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"aggregation\": {...(see below)}, \"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
             "\nCreate a transaction spending the given inputs and creating new outputs.\n"
             "Outputs can be addresses or data.\n"
             "Returns hex-encoded raw transaction.\n"
@@ -365,7 +505,12 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "     ]\n"
             "2. \"outputs\"               (object, required) a json object with outputs\n"
             "    {\n"
-            "      \"address\": x.xxx,    (numeric or string, required) The key is the fabcoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
+            "      \"aggregateSignature\":{\n       (required when address not present)\n"
+            "           \"publicKeys\": [\"pubKeyCompressedHex1\", \"pubKeyCompressedHex2\", ...],      (array, required when pubKeysHex not present) \n"
+            "           \"publicKeysHex\": \"serializedPubKeysHex\",                                    (string, required when pubKeys not present) First two bytes: number of pubkeys, big-endian. Next 33*numPubKeys: the public keys compressed. All data hex-encoded.\n"
+            "           \"amount\": x.xxx (numeric or string) Amount to be transferred."
+            "      },\n"
+            "      \"address\": x.xxx,    (numeric or string, required when aggregation not present) The key is the fabcoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
             "      \"data\": \"hex\"      (string, required) The key is \"data\", the value is hex encoded data\n"
             "      \"contract\":{\n"
             "         \"contractAddress\":\"address\", (string, required) Valid contract address (valid hash160 hex data)\n"
@@ -533,6 +678,30 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
 
             // Add call contract output
             CScript scriptPubKey = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex(datahex) << ParseHex(contractaddress) << OP_CALL;
+            CTxOut out(nAmount, scriptPubKey);
+            rawTx.vout.push_back(out);
+        } else if (name_ == "aggregateSignature" ) {
+            std::stringstream errorStream;
+            if ((uint32_t) chainActive.Height() <  (uint32_t) Params().GetConsensus().AggregateSignatureHeight) {
+                errorStream << "This method can only be used after aggregate signature fork, block "
+                            << Params().GetConsensus().AggregateSignatureHeight << ". ";
+                throw JSONRPCError(RPC_METHOD_NOT_FOUND, errorStream.str());
+            }
+            UniValue aggregation = sendTo[name_];
+            std::vector<unsigned char> publicKeysSerialized;
+            if (!GetPublicKeysFromAggregateSignature(aggregation, publicKeysSerialized, &errorStream)) {
+                errorStream << "Error processing aggregation input: " << aggregation.write();
+                throw JSONRPCError(RPC_INVALID_PARAMETER, errorStream.str());
+            }
+            // Get amount
+            CAmount nAmount = 0;
+            if (aggregation.exists("amount")){
+                nAmount = AmountFromValue(aggregation["amount"]);
+                errorStream << "Error: the amount I got: " << nAmount << " appears to be negative. ";
+                if (nAmount < 0)
+                    throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+            }
+            CScript scriptPubKey = CScript() << publicKeysSerialized << OP_AGGREGATEVERIFY;
             CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         } else {
