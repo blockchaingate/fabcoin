@@ -7,10 +7,19 @@
 #include "crypto/sha3.h"
 #include "../aggregate_schnorr_signature.h"
 #include "utilstrencodings.h"
+#include <primitives/transaction.h>
+#include <core_io.h>
+#include <coins.h>
+#include <txmempool.h>
+#include <validation.h>
+
 
 #include <univalue.h>
 #include <iostream>
 #include <mutex>
+
+extern CTxMemPool mempool;
+
 
 std::vector<SignatureAggregate> currentSigners;
 SignatureAggregate currentAggregator;
@@ -692,6 +701,91 @@ UniValue testpublickeyfromprivate(const JSONRPCRequest& request)
     return result;
 }
 
+UniValue insertaggregatesignature(const JSONRPCRequest& request)
+{
+    std::stringstream errorStream;
+    if (request.fHelp || request.params.size() != 2) {
+        errorStream << "insertaggregatesignature not fully documented yet. \n"
+                    << "Inputs: rawtransaction (hexstring), rawAggregateSignatureHex (hex string). \n";
+        throw std::runtime_error(errorStream.str());
+    }
+    if (!request.params[0].isStr()) {
+        errorStream << "First pararameter is expected to be a hex string, got: " << request.params[0].write() << " instead. ";
+        throw JSONRPCError(RPC_INVALID_PARAMETER, errorStream.str());
+    }
+    if (!request.params[1].isStr()) {
+        errorStream << "Third pararameter is expected to be a hex string, got: " << request.params[2].write() << " instead. ";
+        throw JSONRPCError(RPC_INVALID_PARAMETER, errorStream.str());
+    }
+    std::string inputRawTransaction = request.params[0].get_str();
+    std::string aggregateSignatureHex = request.params[1].get_str();
+    UniValue result;
+    result.setObject();
+    CMutableTransaction transactionWithoutSignatures;
+    if (!DecodeHexTx(transactionWithoutSignatures, inputRawTransaction, true)) {
+        errorStream << "Failed to decode your input to raw transaction. Your input: " << inputRawTransaction << ". ";
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, errorStream.str());
+    }
+    std::vector<unsigned char> aggregateSignatureBytes;
+    if (!fromHex(aggregateSignatureHex, aggregateSignatureBytes, &errorStream)) {
+        errorStream << "Failed to decode your raw aggregate signature. Your input: " << aggregateSignatureHex << ". ";
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, errorStream.str());
+    }
+    if (!DecodeHexTx(transactionWithoutSignatures, inputRawTransaction, true)) {
+        errorStream << "Failed to decode your input to raw transaction. Your input: " << request.params[0].write() << ". ";
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, errorStream.str());
+    }
+    result.pushKV("inputRawTransaction", inputRawTransaction);
+    result.pushKV("inputTransactionDecodedAndRecoded", EncodeHexTx(transactionWithoutSignatures));
+
+
+    std::stringstream commentsStream;
+    // Fetch previous transactions (inputs):
+    CCoinsView viewDummy;
+    CCoinsViewCache view(&viewDummy);
+    {
+        //commentsStream << " Locking mempool ... <br>";
+        LOCK(mempool.cs);
+        CCoinsViewCache &viewChain = *pcoinsTip;
+        CCoinsViewMemPool viewMempool(&viewChain, mempool);
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+        //commentsStream << "Transaction vin size: " << transactionWithoutSignatures.vin.size() << "<br>";
+
+        for (const CTxIn& txin : transactionWithoutSignatures.vin) {
+            //commentsStream << "Accessing: " << txin.prevout.ToString() << "<br>";
+            view.AccessCoin(txin.prevout); // Load entries from viewChain into view; can fail.
+        }
+        //commentsStream << view.ToString();
+        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+    }
+    for (unsigned int i = 0; i < transactionWithoutSignatures.vin.size(); i++) {
+        CTxIn& currentInput = transactionWithoutSignatures.vin[i];
+        const Coin& coin = view.AccessCoin(currentInput.prevout);
+        if (coin.IsSpent()) {
+            errorStream << "Input " << currentInput.ToString() << " not found or already spent. <br>";
+            //errorStream << "Coin: " << coin.out.ToString() << "<br>";
+            //errorStream << "Coin is spent: " << coin.IsSpent() << "<br>";
+            //errorStream << "Out is empty: " << coin.out.IsEmpty() << "<br>";
+            //errorStream << "Out is null: " << coin.out.IsNull() << "<br>";
+            result.pushKV("comments", commentsStream.str());
+            result.pushKV("error", errorStream.str());
+            return result;
+        }
+        commentsStream << "Input coin: " << currentInput.ToString() << " is unspent as expected. <br>";
+        //const CScript& prevPubKey = coin.out.scriptPubKey;
+        //const CAmount& amount = coin.out.nValue;
+        if (!coin.out.scriptPubKey.IsPayToAggregateSignature()) {
+            commentsStream << "Found unspent UTXO but it is not an aggregate one: " << currentInput.ToString();
+            continue;
+        }
+        commentsStream << "Found unspent aggregate UTXO: " << currentInput.ToString();
+        currentInput.scriptSig << aggregateSignatureBytes;
+    }
+    result.pushKV("comments", commentsStream.str());
+    result.pushKV("hex", EncodeHexTx(transactionWithoutSignatures));
+    return result;
+}
+
 static const CRPCCommand testCommands[] =
 { //  category name                                    actor (function)                       okSafe   argNames
   //  -------- -------------------------------------- -------------------------------------- -------- ---------------------
@@ -707,6 +801,7 @@ static const CRPCCommand testCommands[] =
   { "test",     "testaggregatesignatureaggregation",    &testaggregatesignatureaggregation,    true,    {"solutions"} },
   { "test",     "testaggregatesignatureverification",   &testaggregatesignatureverification,   true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
   { "test",     "testaggregateverificationcomplete",    &testaggregateverificationcomplete,    true,    {"signatureComplete", "messageBase64"} },
+  { "test",     "insertaggregatesignature",             &insertaggregatesignature,             true,    {"hexstring", "number", "hexstring"} },
 };
 
 void RegisterTestCommands(CRPCTable &t)

@@ -1223,6 +1223,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     // Script verification errors
     UniValue vErrors(UniValue::VARR);
 
+    //std::stringstream transactionConstructionProgress;
     // Use CTransaction for the constant parts of the
     // transaction to avoid rehashing.
     const CTransaction txConst(mtx);
@@ -1244,7 +1245,8 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
         sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, i, amount), sigdata, DataFromTransaction(mtx, i));
 
         UpdateTransaction(mtx, i, sigdata);
-
+        //transactionConstructionProgress << "DEBUG: got to script verification. Signature script: "
+        //                                << txin.scriptSig.ToString() << ". Unlock script: " << prevPubKey.ToString() << ". ";
         ScriptError serror = SCRIPT_ERR_OK;
         if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, i, amount), &serror)) {
             TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
@@ -1255,6 +1257,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     UniValue result(UniValue::VOBJ);
     result.push_back(Pair("hex", EncodeHexTx(mtx)));
     result.push_back(Pair("complete", fComplete));
+    //result.pushKV("transactionConstructionProgress", transactionConstructionProgress.str());
     if (!vErrors.empty()) {
         result.push_back(Pair("errors", vErrors));
     }
@@ -1311,9 +1314,11 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
         CValidationState state;
         bool fMissingInputs;
         bool fLimitFree = true;
-        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true)) {
+        std::stringstream commentsOnFailure;
+        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true, &commentsOnFailure)) {
             if (state.IsInvalid()) {
-                throw JSONRPCError(RPC_TRANSACTION_REJECTED, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
+                commentsOnFailure << state.GetRejectCode() << ": " << state.GetRejectReason();
+                throw JSONRPCError(RPC_TRANSACTION_REJECTED, commentsOnFailure.str());
             } else {
                 if (fMissingInputs) {
                     throw JSONRPCError(RPC_TRANSACTION_ERROR, "Missing inputs");
@@ -1336,21 +1341,21 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         okSafeMode
-  //  --------------------- ------------------------  -----------------------  ----------
-    { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      true,  {"txid","verbose"} },
-    { "rawtransactions",    "createrawtransaction",   &createrawtransaction,   true,  {"inputs","outputs","locktime","replaceable"} },
-    { "rawtransactions",    "decoderawtransaction",   &decoderawtransaction,   true,  {"hexstring"} },
-    { "rawtransactions",    "getcontractaddress",     &getcontractaddress,     true,  {"hexstring"} },
-    { "rawtransactions",    "decodescript",           &decodescript,           true,  {"hexstring"} },
-    { "rawtransactions",    "sendrawtransaction",     &sendrawtransaction,     false, {"hexstring","allowhighfees"} },
-    { "rawtransactions",    "combinerawtransaction",  &combinerawtransaction,  true,  {"txs"} },
-    { "rawtransactions",    "signrawtransaction",     &signrawtransaction,     false, {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
-    { "rawtransactions",    "gethexaddress",          &gethexaddress,          true,  {"address",} },
-    { "rawtransactions",    "fromhexaddress",         &fromhexaddress,         true,  {"hexaddress",} },
+{ //  category                       name                         actor (function)             okSafeMode
+  //  ----------------------------  ---------------------------  ----------------------------  ----------
+    { "rawtransactions",             "getrawtransaction",         &getrawtransaction,           true,     {"txid","verbose"} },
+    { "rawtransactions",             "createrawtransaction",      &createrawtransaction,        true,     {"inputs","outputs","locktime","replaceable"} },
+    { "rawtransactions",             "decoderawtransaction",      &decoderawtransaction,        true,     {"hexstring"} },
+    { "rawtransactions",             "getcontractaddress",        &getcontractaddress,          true,     {"hexstring"} },
+    { "rawtransactions",             "decodescript",              &decodescript,                true,     {"hexstring"} },
+    { "rawtransactions",             "sendrawtransaction",        &sendrawtransaction,          false,    {"hexstring","allowhighfees"} },
+    { "rawtransactions",             "combinerawtransaction",     &combinerawtransaction,       true,     {"txs"} },
+    { "rawtransactions",             "signrawtransaction",        &signrawtransaction,          false,    {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
+    { "rawtransactions",             "gethexaddress",             &gethexaddress,               true,     {"address",} },
+    { "rawtransactions",             "fromhexaddress",            &fromhexaddress,              true,     {"hexaddress",} },
 
-    { "blockchain",         "gettxoutproof",          &gettxoutproof,          true,  {"txids", "blockhash"} },
-    { "blockchain",         "verifytxoutproof",       &verifytxoutproof,       true,  {"proof"} },
+    { "blockchain",                  "gettxoutproof",             &gettxoutproof,               true,     {"txids", "blockhash"} },
+    { "blockchain",                  "verifytxoutproof",          &verifytxoutproof,            true,     {"proof"} },
 };
 
 void RegisterRawTransactionRPCCommands(CRPCTable &t)

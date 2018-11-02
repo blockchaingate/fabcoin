@@ -67,6 +67,9 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
         // Call contract tx
         mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
+
+        // Aggregate signature
+        mTemplates.insert(std::make_pair(TX_AGRREGATE_SIGNATURE, CScript() << OP_DATA << OP_AGGREGATEVERIFY));
     }
 
     vSolutionsRet.clear();

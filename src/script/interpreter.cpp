@@ -250,7 +250,7 @@ bool static CheckMinimalPush(const valtype& data, opcodetype opcode) {
     return true;
 }
 
-bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* serror)
+bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* serror, std::stringstream* commentsOnFailure)
 {
     static const CScriptNum bnZero(0);
     static const CScriptNum bnOne(1);
@@ -1046,6 +1046,11 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 break;
                 ////////////////////////////////////////////////////////
                 default:
+                    if (commentsOnFailure != nullptr) {
+                        *commentsOnFailure << "Don't know how to handle op code: "
+                                           << opcode <<  " ("
+                                           << GetOpName(opcode) << "). ";
+                    }
                     return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
             }
 
@@ -1059,9 +1064,9 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
         return set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
     }
 
-    if (!vfExec.empty())
+    if (!vfExec.empty()) {
         return set_error(serror, SCRIPT_ERR_UNBALANCED_CONDITIONAL);
-
+    }
     return set_success(serror);
 }
 
@@ -1426,7 +1431,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
     return true;
 }
 
-bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror)
+bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror, std::stringstream *comments)
 {
     static const CScriptWitness emptyWitness;
     if (witness == nullptr) {
@@ -1441,14 +1446,20 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     }
 
     std::vector<std::vector<unsigned char> > stack, stackCopy;
-    if (!EvalScript(stack, scriptSig, flags, checker, SIGVERSION_BASE, serror))
+    if (!EvalScript(stack, scriptSig, flags, checker, SIGVERSION_BASE, serror, comments))
         // serror is set
         return false;
     if (flags & SCRIPT_VERIFY_P2SH)
         stackCopy = stack;
-    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_BASE, serror))
+    //if (comments != nullptr) {
+    //    *comments << "Got to second eval script. ";
+    //}
+    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_BASE, serror, comments))
         // serror is set
         return false;
+    //if (comments != nullptr) {
+    //    *comments << "Second eval script passed. ";
+    //}
     if (stack.empty())
         return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
     if (CastToBool(stack.back()) == false)
