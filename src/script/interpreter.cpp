@@ -1271,6 +1271,18 @@ void PrecomputedTransactionData::GetSerialization(std::vector<unsigned char>& ou
     }
 }
 
+void PrecomputedTransactionData::operator=(const PrecomputedTransactionData& other)
+{
+    this->hashOutputs = other.hashOutputs;
+    this->hashSequence = other.hashSequence;
+    this->hashPrevouts = other.hashPrevouts;
+}
+
+void PrecomputedTransactionData::PrecomputedTransactionData(const PrecomputedTransactionData& other)
+{
+    *this = other;
+}
+
 PrecomputedTransactionData::PrecomputedTransactionData()
 {
     this->hashOutputs.SetNull();

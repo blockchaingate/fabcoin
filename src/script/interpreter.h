@@ -120,8 +120,10 @@ struct PrecomputedTransactionData
 
     PrecomputedTransactionData();
     PrecomputedTransactionData(const CTransaction& tx);
+    PrecomputedTransactionData(const PrecomputedTransactionData& other);
     std::string ToString() const;
     void GetSerialization(std::vector<unsigned char>& output)const;
+    void operator=(const PrecomputedTransactionData& other);
 };
 
 enum SigVersion
