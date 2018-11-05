@@ -94,8 +94,7 @@ static int verify_script(const unsigned char *scriptPubKey, unsigned int scriptP
         // Regardless of the verification result, the tx did not error.
         set_error(err, fabcoinconsensus_ERR_OK);
 
-        PrecomputedTransactionData txdata;
-        txdata.initFromPrecomputedTransactionData(tx);
+        PrecomputedTransactionData txdata(tx);
         return VerifyScript(tx.vin[nIn].scriptSig, CScript(scriptPubKey, scriptPubKey + scriptPubKeyLen), &tx.vin[nIn].scriptWitness, flags, TransactionSignatureChecker(&tx, nIn, amount, txdata), nullptr);
     } catch (const std::exception&) {
         return set_error(err, fabcoinconsensus_ERR_TX_DESERIALIZE); // Error deserializing
