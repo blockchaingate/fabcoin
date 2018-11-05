@@ -1068,12 +1068,12 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     //if (commentsOnFailure != nullptr) {
                     //    *commentsOnFailure << "DEBUG: stack status: " << printStackForDebug(stack) << ". ";
                     //}
-                    if (stack.size() <= 1) {
+                    if (stack.size() < 2) {
                         if (commentsOnFailure != nullptr) {
                             *commentsOnFailure << "Opcode OP_AGGREGATEVERIFY requires at least two items on the stack,"
                                                << " but there are only: " << stack.size() << ". ";
                         }
-                        break;
+                        return false;
                     }
                     //if (commentsOnFailure != nullptr) {
                     //    *commentsOnFailure << "DEBUG: got to stack evaluation. Stack size: " << stack.size() << ". ";

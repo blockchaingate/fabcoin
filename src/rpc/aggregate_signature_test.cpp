@@ -251,14 +251,13 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
         return result;
     }
     if (!request.params[1].isStr()) {
-        errorStream << "The second argument (messageBase64), is not a string, as expected. Instead, it is: " << request.params[1].write();
+        errorStream << "The second argument (messageHex), is not a string, as expected. Instead, it is: " << request.params[1].write();
         result.pushKV("error", errorStream.str());
         return result;
     }
-    bool encodingIsBAD = true;
-    std::vector<unsigned char> decodedMessageVector = DecodeBase64(request.params[1].get_str().c_str(), &encodingIsBAD);
-    if (encodingIsBAD) {
-        errorStream << "Failed to base-64 decode your input: " << request.params[1].write();
+    std::vector<unsigned char> decodedMessageVector;
+    if (!fromHex(request.params[1].get_str(), decodedMessageVector, &errorStream)) {
+        errorStream << "Failed to hex-decode your input: " << request.params[1].write();
         result.pushKV("error", errorStream.str());
         return result;
     }
@@ -315,11 +314,15 @@ UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
         return result;
     }
     if (!request.params[3].isStr()) {
-        result.pushKV("error", "The fourth parameter expected to be a base64-encoded string.");
+        result.pushKV("error", "The fourth parameter expected to be a hex-encoded string.");
         return result;
     }
-    std::string messageBase64 = request.params[3].get_str();
-    theVerifier.messageImplied = DecodeBase64(messageBase64);
+    std::string messageHex = request.params[3].get_str();
+    if (!fromHex(messageHex, theVerifier.messageImplied, &errorStream)) {
+        errorStream << "Failed to hex-decode your input: " << messageHex;
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
     bool resultBool = theVerifier.Verify(&errorStream, true);
     result.pushKV("result", resultBool);
     if (resultBool) {
@@ -482,7 +485,7 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
-            "testaggregatesignaturecommit ( message, desiredNoncesCommaSeparatedBase64)\n"
+            "testaggregatesignaturecommit ( messageHex, desiredNoncesCommaSeparatedBase64)\n"
             "\nTests schnorr aggregate signature commitment. Available in -testkanban mode only."
             "\nTo be documented further.\n"
         );
@@ -491,14 +494,19 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
     result.setObject();
     result.pushKV("input", request.params);
     if (!request.params[0].isStr()) {
-        result.pushKV("error", "Parameter 0 expected to be a base64-encoded string.");
+        result.pushKV("error", "Parameter 0 expected to be a hex-encoded string.");
         return result;
     }
-    std::string messageBase64 = request.params[0].get_str();
-    std::string theMessage = DecodeBase64(messageBase64);
+    std::string messageHex = request.params[0].get_str();
+    std::string theMessage;
+    std::stringstream errorStream;
+    if (! fromHex(messageHex, theMessage, &errorStream)) {
+        errorStream << "Failed to hex-decode your message: " << messageHex << ". ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
     result.pushKV("messageDecoded", theMessage);
     std::vector<std::string> inputNonces;
-    std::stringstream errorStream;
     if (request.params.size() == 2) {
         if (!getVectorOfStrings(request.params[1], inputNonces, &errorStream)) {
             errorStream << "Failed to extract vector of string from: " << request.params[1].write();

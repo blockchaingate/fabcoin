@@ -947,6 +947,7 @@ std::string SignatureAggregate::toStringSignersBitmap()
 void SignatureAggregate::toUniValueAppendMessage(UniValue& output)
 {
     output.pushKV("message", this->messageImplied);
+    output.pushKV("messageHex", HexStr(this->messageImplied));
 }
 
 void SignatureAggregate::toUniValueAppendPublicKeys(UniValue& output)
@@ -1719,6 +1720,9 @@ bool SignatureAggregate::ParsePublicKeysAndInitialize(const std::string& publicK
         offset += lengthCompressedPublicKey;
     }
     if (!this->InitializePublicKeys(thePublicKeys, reasonForFailure)) {
+        if (reasonForFailure != nullptr) {
+            *reasonForFailure << "While parsing aggregate signature: failed to initialize the public keys. ";
+        }
         return false;
     }
     return true;
@@ -1742,6 +1746,9 @@ bool SignatureAggregate::ParseUncompressedSignature(const std::string& uncompres
         signatureUncompressedBytes[i] = signatureUncompressedString[i];
     }
     if (!this->serializerSignature.MakeFromBytes(signatureUncompressedBytes, reasonForFailure)) {
+        if (reasonForFailure != nullptr) {
+            *reasonForFailure << "Failed to parse the (challenge, solution) part of the aggregate signature. ";
+        }
         return false;
     }
     std::string signersBitmap = uncompressedSignature.substr(lengthSchnorr, this->lengthInBytesBitmapSigners);
@@ -1780,7 +1787,7 @@ bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComp
     if (!this->ParsePublicKeysAndInitialize(publicKeySerialization, reasonForFailure)) {
         return false;
     }
-    std::string uncompressedSignatureSerialization = signatureComplete.substr(lengthRawSignatureUncompressed);
+    std::string uncompressedSignatureSerialization = signatureComplete.substr(0, lengthRawSignatureUncompressed);
     if (!this->ParseUncompressedSignature(uncompressedSignatureSerialization, reasonForFailure)) {
         return false;
     }
