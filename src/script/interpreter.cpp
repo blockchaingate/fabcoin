@@ -1278,7 +1278,7 @@ void PrecomputedTransactionData::operator=(const PrecomputedTransactionData& oth
     this->hashPrevouts = other.hashPrevouts;
 }
 
-void PrecomputedTransactionData::PrecomputedTransactionData(const PrecomputedTransactionData& other)
+PrecomputedTransactionData::PrecomputedTransactionData(const PrecomputedTransactionData& other)
 {
     *this = other;
 }
