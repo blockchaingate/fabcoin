@@ -350,7 +350,6 @@ libfabcoin_consensus_a_SOURCES = \
   primitives/transaction.h \
   pubkey.cpp \
   pubkey.h \
-  script/fabcoinconsensus.cpp \
   script/script.cpp \
   script/script.h \
   script/script_error.cpp \
@@ -389,6 +388,7 @@ libfabcoin_common_a_SOURCES = \
   crypto/secp256k1_all_in_one.cpp \
   encodings_crypto.cpp \
   aggregate_schnorr_signature.cpp \
+  script/fabcoinconsensus.cpp \
   script/interpreter.cpp \
   script/interpreter.h \
   cpp-ethereum/libdevcore/Base64.cpp \

@@ -1290,6 +1290,13 @@ PrecomputedTransactionData::PrecomputedTransactionData()
     this->hashPrevouts.SetNull();
 }
 
+void PrecomputedTransactionData::initFromPrecomputedTransactionData(const CTransaction& txTo)
+{
+    this->hashPrevouts = GetPrevoutHash(txTo);
+    this->hashSequence = GetSequenceHash(txTo);
+    this->hashOutputs = GetOutputsHash(txTo);
+}
+
 PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
 {
     this->hashPrevouts = GetPrevoutHash(txTo);
@@ -1470,10 +1477,6 @@ void BaseSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionD
     output.hashOutputs.SetNull();
     output.hashPrevouts.SetNull();
     output.hashSequence.SetNull();
-}
-
-BaseSignatureChecker::~BaseSignatureChecker()
-{
 }
 
 bool TransactionSignatureChecker::CheckSequence(const CScriptNum& nSequence) const

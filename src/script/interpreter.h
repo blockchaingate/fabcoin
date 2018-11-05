@@ -119,6 +119,7 @@ struct PrecomputedTransactionData
     uint256 hashPrevouts, hashSequence, hashOutputs;
 
     PrecomputedTransactionData();
+    void initFromPrecomputedTransactionData(const CTransaction& tx);
     PrecomputedTransactionData(const CTransaction& tx);
     PrecomputedTransactionData(const PrecomputedTransactionData& other);
     std::string ToString() const;
@@ -141,7 +142,7 @@ public:
     virtual bool CheckLockTime(const CScriptNum& nLockTime) const;
     virtual bool CheckSequence(const CScriptNum& nSequence) const;
     virtual void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const;
-    virtual ~BaseSignatureChecker();
+    virtual ~BaseSignatureChecker(){}
 };
 
 class TransactionSignatureChecker : public BaseSignatureChecker
@@ -162,6 +163,7 @@ public:
     bool CheckLockTime(const CScriptNum& nLockTime) const override;
     bool CheckSequence(const CScriptNum& nSequence) const override;
     void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const override;
+    ~TransactionSignatureChecker(){}
 };
 
 class MutableTransactionSignatureChecker : public TransactionSignatureChecker
@@ -171,6 +173,7 @@ private:
 
 public:
     MutableTransactionSignatureChecker(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : TransactionSignatureChecker(&txTo, nInIn, amountIn), txTo(*txToIn) {}
+    ~MutableTransactionSignatureChecker(){}
 };
 
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* error = nullptr, std::stringstream *commentsOnFailure = nullptr);
