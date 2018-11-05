@@ -796,10 +796,10 @@ bool SignatureAggregate::VerifyFromSignatureComplete(const std::string& signatur
         return false;
     }
     this->messageImplied = message;
-    return this->Verify(reasonForFailure);
+    return this->Verify(reasonForFailure, true);
 }
 
-bool SignatureAggregate::Verify(std::stringstream* reasonForFailure)
+bool SignatureAggregate::Verify(std::stringstream* reasonForFailure, bool detailsOnFailure)
 {
     this->currentState = this->stateVerifyingAggregateSignatures;
     //first some basic checks
@@ -1095,7 +1095,7 @@ UniValue SignatureAggregate::toUniValueTransitionState__SENSITIVE()
         result.pushKV("role", "signer+aggregator");
     }
     if (this->allPublicKeys.size() > 0) {
-        result.pushKV("knownPublicKeys", this->allPublicKeys.size());
+        result.pushKV("knownPublicKeys", (int64_t) this->allPublicKeys.size());
     }
     result.pushKV("state", this->toStringMyState());
     if (this->currentState == this->state1ready) {
@@ -1889,5 +1889,5 @@ bool SignatureAggregate::VerifyMessageSignaturePublicKeys(
         return false;
     }
     verifier.messageImplied = std::string((const char*) message.data(), message.size());
-    return verifier.Verify(reasonForFailure);
+    return verifier.Verify(reasonForFailure, true);
 }

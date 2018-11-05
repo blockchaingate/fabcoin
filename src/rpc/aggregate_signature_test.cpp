@@ -320,7 +320,7 @@ UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
     }
     std::string messageBase64 = request.params[3].get_str();
     theVerifier.messageImplied = DecodeBase64(messageBase64);
-    bool resultBool = theVerifier.Verify(&errorStream);
+    bool resultBool = theVerifier.Verify(&errorStream, true);
     result.pushKV("result", resultBool);
     if (resultBool) {
         result.pushKV("resultHTML", "<b style='color:green'>Verified</b>");

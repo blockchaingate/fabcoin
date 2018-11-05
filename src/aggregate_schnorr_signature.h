@@ -530,7 +530,7 @@ public:
     (const std::vector<PrivateKeyKanban>& inputSolutions,
      std::stringstream* commentsOnFailure);
 
-    bool Verify(std::stringstream* reasonForFailure);
+    bool Verify(std::stringstream* reasonForFailure, bool detailsOnFailure);
     void ComputeCompleteSignature();
     bool ParsePublicKeysAndInitialize(const std::string& publicKeySerialization, std::stringstream* reasonForFailure);
     bool ParseUncompressedSignature(const std::string& uncompressedSignature, std::stringstream* reasonForFailure);
