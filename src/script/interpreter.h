@@ -135,28 +135,11 @@ uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsig
 class BaseSignatureChecker
 {
 public:
-    virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
-    {
-        return false;
-    }
-
-    virtual bool CheckLockTime(const CScriptNum& nLockTime) const
-    {
-         return false;
-    }
-
-    virtual bool CheckSequence(const CScriptNum& nSequence) const
-    {
-         return false;
-    }
-    virtual void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
-    {
-        output.hashOutputs.SetNull();
-        output.hashPrevouts.SetNull();
-        output.hashSequence.SetNull();
-    }
-
-    virtual ~BaseSignatureChecker() {}
+    virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const;
+    virtual bool CheckLockTime(const CScriptNum& nLockTime) const;
+    virtual bool CheckSequence(const CScriptNum& nSequence) const;
+    virtual void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const;
+    virtual ~BaseSignatureChecker();
 };
 
 class TransactionSignatureChecker : public BaseSignatureChecker
@@ -171,21 +154,12 @@ protected:
     virtual bool VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
 
 public:
-    TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(nullptr) {}
-    TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(&txdataIn) {}
+    TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn);
+    TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn);
     bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override;
     bool CheckLockTime(const CScriptNum& nLockTime) const override;
     bool CheckSequence(const CScriptNum& nSequence) const override;
-    void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const override
-    {
-        if (this->txdata == nullptr) {
-            output.hashOutputs.SetNull();
-            output.hashPrevouts.SetNull();
-            output.hashSequence.SetNull();
-            return;
-        }
-        output = *this->txdata;
-    }
+    void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const override;
 };
 
 class MutableTransactionSignatureChecker : public TransactionSignatureChecker

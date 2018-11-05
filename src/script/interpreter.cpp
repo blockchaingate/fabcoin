@@ -1360,6 +1360,27 @@ bool TransactionSignatureChecker::VerifySignature(const std::vector<unsigned cha
     return pubkey.Verify(sighash, vchSig);
 }
 
+TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(nullptr)
+{
+
+}
+
+TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(&txdataIn)
+{
+
+}
+
+void TransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        return;
+    }
+    output = *this->txdata;
+}
+
 bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
 {
     CPubKey pubkey(vchPubKey);
@@ -1415,6 +1436,32 @@ bool TransactionSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) con
         return false;
 
     return true;
+}
+
+bool BaseSignatureChecker::CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
+{
+    return false;
+}
+
+bool BaseSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) const
+{
+     return false;
+}
+
+bool BaseSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
+{
+     return false;
+}
+
+void BaseSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+{
+    output.hashOutputs.SetNull();
+    output.hashPrevouts.SetNull();
+    output.hashSequence.SetNull();
+}
+
+BaseSignatureChecker::~BaseSignatureChecker()
+{
 }
 
 bool TransactionSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
