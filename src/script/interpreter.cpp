@@ -1417,6 +1417,17 @@ bool TransactionSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) con
     return true;
 }
 
+void TransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData &output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        return;
+    }
+    output = *this->txdata;
+}
+
 bool TransactionSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
 {
     // Relative lock times are supported by comparing the passed
