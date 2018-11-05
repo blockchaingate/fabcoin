@@ -1078,7 +1078,10 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     //if (commentsOnFailure != nullptr) {
                     //    *commentsOnFailure << "DEBUG: got to stack evaluation. Stack size: " << stack.size() << ". ";
                     //}
-                    if (!SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1], commentsOnFailure)) {
+                    if (!SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(
+                                messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1],
+                                commentsOnFailure, true
+                    )) {
                         return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
                     }
                     popstack(stack);

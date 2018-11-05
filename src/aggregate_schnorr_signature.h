@@ -363,7 +363,7 @@ public:
     //Reveals secrets, do not display this information in the open.
     UniValue toUniValueTransitionState__SENSITIVE();
 
-    bool verifyPartTwo(std::stringstream* reasonForFailure);
+    bool verifyPartTwo(std::stringstream* reasonForFailure, bool detailsOnFailure);
     bool transitionSignerState2or3ToState4PartTwo(std::stringstream* commentsOnFailure);
     bool transitionSignerState3or4ToState5PartTwo(std::stringstream* commentsOnFailure);
 
@@ -544,13 +544,15 @@ public:
             std::vector<unsigned char>& message,
             std::vector<unsigned char>& signatureUncompressed,
             std::vector<unsigned char>& publicKeysSerialized,
-            std::stringstream* reasonForFailure
+            std::stringstream* reasonForFailure,
+            bool detailsOnFailure = false
     );
     static bool VerifyMessageSignaturePublicKeysStatic(
             std::vector<unsigned char>& message,
             std::vector<unsigned char>& signatureUncompressed,
             std::vector<unsigned char>& publicKeysSerialized,
-            std::stringstream* reasonForFailure
+            std::stringstream* reasonForFailure,
+            bool detailsOnFailure = false
     );
 };
 

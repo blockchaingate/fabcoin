@@ -827,10 +827,10 @@ bool SignatureAggregate::Verify(std::stringstream* reasonForFailure, bool detail
     this->solutionAggregate = this->serializerSignature.solution;
     this->commitmentAggregate = this->serializerSignature.challenge;
     //time to do the real work:
-    return this->verifyPartTwo(reasonForFailure);
+    return this->verifyPartTwo(reasonForFailure, detailsOnFailure);
 }
 
-bool SignatureAggregate::verifyPartTwo(std::stringstream* reasonForFailure)
+bool SignatureAggregate::verifyPartTwo(std::stringstream* reasonForFailure, bool detailsOnFailure)
 {
     //time to do the real work:
     std::sort(this->allPublicKeys.begin(), this->allPublicKeys.end());
@@ -862,11 +862,16 @@ bool SignatureAggregate::verifyPartTwo(std::stringstream* reasonForFailure)
         return false;
     rightHandSide *= this->serializerSignature.challenge;
     if (! (leftHandSide == rightHandSide)) {
-        if (reasonForFailure != 0)
+        if (reasonForFailure != 0) {
             *reasonForFailure
-            << "Signature not verified: left-hand side: "
-            << leftHandSide.ToHexCompressed() << " does not match the right-hand side: "
-            << rightHandSide.ToHexCompressed() << ". ";
+            << "Signature not verified: all input was valid but the cryptography did not match.  ";
+            if (detailsOnFailure) {
+                *reasonForFailure
+                        << "Message hex: " << HexStr(this->messageImplied) << ". Left hand side: "
+                        << leftHandSide.ToHexCompressed() << " does not match the right-hand side: "
+                        << rightHandSide.ToHexCompressed() << ". ";
+            }
+        }
         return false;
     }
     return true;
@@ -1859,15 +1864,15 @@ void SignatureAggregate::ComputeCompleteSignature()
     this->aggregateSignatureComplete = resultStream.str();
 }
 
-bool SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(
-        std::vector<unsigned char>& message,
+bool SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(std::vector<unsigned char>& message,
         std::vector<unsigned char>& signatureUncompressed,
         std::vector<unsigned char>& publicKeysSerialized,
-        std::stringstream *reasonForFailure
+        std::stringstream *reasonForFailure,
+        bool detailsOnFailure
 )
 {
     SignatureAggregate verifier;
-    return verifier.VerifyMessageSignaturePublicKeys(message, signatureUncompressed, publicKeysSerialized, reasonForFailure);
+    return verifier.VerifyMessageSignaturePublicKeys(message, signatureUncompressed, publicKeysSerialized, reasonForFailure, detailsOnFailure);
 }
 
 // The order of arguments is the order in which they appear on the stack.
@@ -1876,7 +1881,8 @@ bool SignatureAggregate::VerifyMessageSignaturePublicKeys(
         std::vector<unsigned char>& message,
         std::vector<unsigned char>& signatureUncompressed,
         std::vector<unsigned char>& publicKeysSerialized,
-        std::stringstream *reasonForFailure
+        std::stringstream *reasonForFailure,
+        bool detailsOnFailure
 )
 {
     SignatureAggregate verifier;
@@ -1889,5 +1895,5 @@ bool SignatureAggregate::VerifyMessageSignaturePublicKeys(
         return false;
     }
     verifier.messageImplied = std::string((const char*) message.data(), message.size());
-    return verifier.Verify(reasonForFailure, true);
+    return verifier.Verify(reasonForFailure, detailsOnFailure);
 }
