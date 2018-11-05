@@ -1825,3 +1825,17 @@ void SignatureAggregate::ComputeCompleteSignature()
     }
     this->aggregateSignatureComplete = resultStream.str();
 }
+
+
+bool SignatureAggregate::VerifyMessageSignaturePublicKeys(
+        std::vector<unsigned char>& message,
+        std::vector<unsigned char>& signatureUncompressed,
+        std::vector<unsigned char>& publicKeysSerialized,
+        std::stringstream *reasonForFailure
+)
+{
+    if (reasonForFailure != 0) {
+        *reasonForFailure << "Not implemented yet. ";
+    }
+    return false;
+}

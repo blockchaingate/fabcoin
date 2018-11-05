@@ -351,8 +351,6 @@ libfabcoin_consensus_a_SOURCES = \
   pubkey.cpp \
   pubkey.h \
   script/fabcoinconsensus.cpp \
-  script/interpreter.cpp \
-  script/interpreter.h \
   script/script.cpp \
   script/script.h \
   script/script_error.cpp \
@@ -391,6 +389,8 @@ libfabcoin_common_a_SOURCES = \
   crypto/secp256k1_all_in_one.cpp \
   encodings_crypto.cpp \
   aggregate_schnorr_signature.cpp \
+  script/interpreter.cpp \
+  script/interpreter.h \
   cpp-ethereum/libdevcore/Base64.cpp \
   cpp-ethereum/libdevcore/Base64.h \
   cpp-ethereum/libdevcore/Common.cpp \
@@ -674,12 +674,15 @@ if TARGET_WINDOWS
 fabcoin_tx_SOURCES += fabcoin-tx-res.rc
 endif
 
+# WARNING: the build order of files matters.
+# Shuffling files in the list below may break the build (or fix it).
+# You've been warned.
 fabcoin_tx_LDADD = \
-  $(LIBUNIVALUE) \
   $(LIBFABCOIN_COMMON) \
   $(LIBFABCOIN_UTIL) \
   $(LIBFABCOIN_CONSENSUS) \
   $(LIBFABCOIN_CRYPTO) \
+  $(LIBUNIVALUE) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \

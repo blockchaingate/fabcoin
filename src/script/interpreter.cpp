@@ -12,6 +12,8 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "uint256.h"
+#include "aggregate_schnorr_signature.h"
+#include "utilstrencodings.h"
 
 typedef std::vector<unsigned char> valtype;
 
@@ -272,7 +274,8 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
         return set_error(serror, SCRIPT_ERR_SCRIPT_SIZE);
     int nOpCount = 0;
     bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
-
+    PrecomputedTransactionData aggregateData;
+    std::vector<unsigned char> messageForAggregateData;
     try
     {
         while (pc < pend)
@@ -1045,6 +1048,24 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 }
                 break;
                 ////////////////////////////////////////////////////////
+                case OP_AGGREGATEVERIFY:
+                checker.GetPrecomputedTransactionData(aggregateData);
+                aggregateData.GetSerialization(messageForAggregateData);
+                if (commentsOnFailure != nullptr) {
+                    *commentsOnFailure << "Don't know how to handle op code: "
+                                       << opcode <<  " ("
+                                       << GetOpName(opcode) << "). "
+                                       << aggregateData.ToString();
+                }
+                if (stack.size() > 1) {
+                    if (!SignatureAggregate::VerifyMessageSignaturePublicKeys(messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1], commentsOnFailure)) {
+                        return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
+                    }
+                }
+                popstack(stack);
+                popstack(stack);
+                stack.push_back(vchTrue);
+                break;
                 default:
                     if (commentsOnFailure != nullptr) {
                         *commentsOnFailure << "Don't know how to handle op code: "
@@ -1193,11 +1214,52 @@ uint256 GetOutputsHash(const CTransaction& txTo) {
 
 } // namespace
 
+std::string PrecomputedTransactionData::ToString() const
+{
+    std::vector<unsigned char> serialization;
+    this->GetSerialization(serialization);
+    std::stringstream out;
+    out << "PrecomputedData{outs: " << this->hashOutputs.GetHex()
+        << ", prevouts: " << this->hashPrevouts.GetHex()
+        << ", sequence: " << this->hashSequence.GetHex()
+        << ", serialization: " << HexStr(serialization)
+        << " }";
+    return out.str();
+}
+
+void PrecomputedTransactionData::GetSerialization(std::vector<unsigned char>& output) const
+{
+    output.resize(32 * 3);
+    int i = 0;
+    for (const unsigned char* iterator = this->hashOutputs.begin(); iterator != this->hashOutputs.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (const unsigned char* iterator = this->hashPrevouts.begin(); iterator != this->hashPrevouts.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (const unsigned char* iterator = this->hashSequence.begin(); iterator != this->hashSequence.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (; i < 32 * 3; i ++) {
+        output[i] = 0;
+    }
+}
+
+PrecomputedTransactionData::PrecomputedTransactionData()
+{
+    this->hashOutputs.SetNull();
+    this->hashSequence.SetNull();
+    this->hashPrevouts.SetNull();
+}
+
 PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
 {
-    hashPrevouts = GetPrevoutHash(txTo);
-    hashSequence = GetSequenceHash(txTo);
-    hashOutputs = GetOutputsHash(txTo);
+    this->hashPrevouts = GetPrevoutHash(txTo);
+    this->hashSequence = GetSequenceHash(txTo);
+    this->hashOutputs = GetOutputsHash(txTo);
 }
 
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)

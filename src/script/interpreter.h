@@ -118,7 +118,10 @@ struct PrecomputedTransactionData
 {
     uint256 hashPrevouts, hashSequence, hashOutputs;
 
+    PrecomputedTransactionData();
     PrecomputedTransactionData(const CTransaction& tx);
+    std::string ToString() const;
+    void GetSerialization(std::vector<unsigned char>& output)const;
 };
 
 enum SigVersion
@@ -146,6 +149,12 @@ public:
     {
          return false;
     }
+    virtual void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+    {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+    }
 
     virtual ~BaseSignatureChecker() {}
 };
@@ -156,9 +165,9 @@ private:
     const CTransaction* txTo;
     unsigned int nIn;
     const CAmount amount;
-    const PrecomputedTransactionData* txdata;
 
 protected:
+    const PrecomputedTransactionData* txdata;
     virtual bool VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
 
 public:

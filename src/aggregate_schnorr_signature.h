@@ -536,6 +536,12 @@ public:
     std::string serializeCommittedSignersBitmap();
     bool deserializeSignersBitmapFromBigEndianBits(const std::string& inputRaw, std::stringstream* reasonForFailure);
     bool VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure);
+    static bool VerifyMessageSignaturePublicKeys(
+            std::vector<unsigned char>& message,
+            std::vector<unsigned char>& signatureUncompressed,
+            std::vector<unsigned char>& publicKeysSerialized,
+            std::stringstream* reasonForFailure
+    );
 };
 
 class SchnorrKanban

@@ -722,6 +722,7 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
     UniValue result;
     result.setObject();
     CMutableTransaction transactionWithoutSignatures;
+
     if (!DecodeHexTx(transactionWithoutSignatures, inputRawTransaction, true)) {
         errorStream << "Failed to decode your input to raw transaction. Your input: " << inputRawTransaction << ". ";
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, errorStream.str());
@@ -737,6 +738,7 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
     }
     result.pushKV("inputRawTransaction", inputRawTransaction);
     result.pushKV("inputTransactionDecodedAndRecoded", EncodeHexTx(transactionWithoutSignatures));
+    PrecomputedTransactionData dataBeforeSignature(transactionWithoutSignatures);
 
 
     std::stringstream commentsStream;
@@ -781,6 +783,10 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
         commentsStream << "Found unspent aggregate UTXO: " << currentInput.ToString();
         currentInput.scriptSig << aggregateSignatureBytes;
     }
+    PrecomputedTransactionData dataAfterSignature(transactionWithoutSignatures);
+
+    result.pushKV("precomputedTransactionDataBeforeSignature", dataBeforeSignature.ToString());
+    result.pushKV("precomputedTransactionDataAfterSignature", dataAfterSignature.ToString());
     result.pushKV("comments", commentsStream.str());
     result.pushKV("hex", EncodeHexTx(transactionWithoutSignatures));
     return result;
