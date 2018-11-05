@@ -1377,9 +1377,9 @@ TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txT
 
 }
 
-TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(&txdataIn)
+TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn) : txTo(txToIn), nIn(nInIn), amount(amountIn)
 {
-
+    this->txdata = &txdataIn;
 }
 
 void TransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
