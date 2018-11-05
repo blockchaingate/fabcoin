@@ -14,6 +14,7 @@
 #include "uint256.h"
 #include "aggregate_schnorr_signature.h"
 #include "utilstrencodings.h"
+#include "util.h"
 
 typedef std::vector<unsigned char> valtype;
 
@@ -250,6 +251,18 @@ bool static CheckMinimalPush(const valtype& data, opcodetype opcode) {
         return opcode == OP_PUSHDATA2;
     }
     return true;
+}
+
+std::string printStackForDebug(std::vector<std::vector<unsigned char> >& stack)
+{
+    std::stringstream out;
+    for (unsigned i = 0; i < stack.size(); i ++) {
+        if (i > 0) {
+            out << " ";
+        }
+        out << HexStr(stack[i]);
+    }
+    return out.str();
 }
 
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* serror, std::stringstream* commentsOnFailure)
@@ -1049,22 +1062,29 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 break;
                 ////////////////////////////////////////////////////////
                 case OP_AGGREGATEVERIFY:
-                checker.GetPrecomputedTransactionData(aggregateData);
-                aggregateData.GetSerialization(messageForAggregateData);
-                if (commentsOnFailure != nullptr) {
-                    *commentsOnFailure << "Don't know how to handle op code: "
-                                       << opcode <<  " ("
-                                       << GetOpName(opcode) << "). "
-                                       << aggregateData.ToString();
-                }
-                if (stack.size() > 1) {
-                    if (!SignatureAggregate::VerifyMessageSignaturePublicKeys(messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1], commentsOnFailure)) {
+                {
+                    checker.GetPrecomputedTransactionData(aggregateData);
+                    aggregateData.GetSerialization(messageForAggregateData);
+                    //if (commentsOnFailure != nullptr) {
+                    //    *commentsOnFailure << "DEBUG: stack status: " << printStackForDebug(stack) << ". ";
+                    //}
+                    if (stack.size() <= 1) {
+                        if (commentsOnFailure != nullptr) {
+                            *commentsOnFailure << "Opcode OP_AGGREGATEVERIFY requires at least two items on the stack,"
+                                               << " but there are only: " << stack.size() << ". ";
+                        }
+                        break;
+                    }
+                    //if (commentsOnFailure != nullptr) {
+                    //    *commentsOnFailure << "DEBUG: got to stack evaluation. Stack size: " << stack.size() << ". ";
+                    //}
+                    if (!SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1], commentsOnFailure)) {
                         return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
                     }
+                    popstack(stack);
+                    popstack(stack);
+                    stack.push_back(vchTrue);
                 }
-                popstack(stack);
-                popstack(stack);
-                stack.push_back(vchTrue);
                 break;
                 default:
                     if (commentsOnFailure != nullptr) {

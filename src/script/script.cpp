@@ -7,6 +7,7 @@
 
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+//#include "core_io.h"
 
 const char* GetOpName(opcodetype opcode)
 {
@@ -214,6 +215,34 @@ bool CScript::IsPayToScriptHash() const
             (*this)[0] == OP_HASH160 &&
             (*this)[1] == 0x14 &&
             (*this)[22] == OP_EQUAL);
+}
+
+std::string CScript::ToString() const {
+    std::stringstream out;
+    opcodetype opcode;
+    std::vector<unsigned char> vch;
+    CScript::const_iterator pc = this->begin();
+    bool found = false;
+    while (pc < this->end()) {
+        if (!found) {
+            out << " ";
+        }
+        found = true;
+        if (!this->GetOp(pc, opcode, vch)) {
+            out << "[error]";
+            return out.str();
+        }
+        if (0 <= opcode && opcode <= OP_PUSHDATA4) {
+            if (vch.size() <= static_cast<std::vector<unsigned char>::size_type>(4)) {
+                out << strprintf("%d", CScriptNum(vch, false).getint());
+            } else {
+                out << HexStr(vch);
+            }
+        } else {
+            out << GetOpName(opcode);
+        }
+    }
+    return out.str();
 }
 
 bool CScript::IsPayToAggregateSignature() const

@@ -1671,26 +1671,15 @@ bool SignatureAggregate::ResetGeneratePrivateKey(bool isAggregator, bool isSigne
     return true;
 }
 
-bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure)
+bool SignatureAggregate::parseCompleteSignature(const std::vector<unsigned char>& signatureComplete, std::stringstream* reasonForFailure)
+{
+    std::string stringCopy((const char *) signatureComplete.data(), signatureComplete.size());
+    return this->parseCompleteSignature(stringCopy, reasonForFailure);
+}
+
+bool SignatureAggregate::ParsePublicKeysAndInitialize(const std::string& publicKeySerialization, std::stringstream *reasonForFailure)
 {
     unsigned lengthCompressedPublicKey = 33;
-    unsigned lengthSchnorr = 66;
-    unsigned lengthRawSignatureUncompressed = lengthSchnorr + this->lengthInBytesBitmapSigners;
-    unsigned minimumAllowedLength = lengthRawSignatureUncompressed + 2 + lengthCompressedPublicKey;
-    unsigned maxAllowedLength = lengthRawSignatureUncompressed + 2 + lengthCompressedPublicKey * 256;
-    if (signatureComplete.size() < minimumAllowedLength || signatureComplete.size() > maxAllowedLength) {
-        if (reasonForFailure != 0) {
-            *reasonForFailure << "Complete signature needs to have at least "
-                              << minimumAllowedLength
-                              << ", at most "
-                              << maxAllowedLength
-                              << " bytes, but the one given has "
-                              << signatureComplete.size()
-                              << ". ";
-        }
-        return false;
-    }
-    std::string publicKeySerialization = signatureComplete.substr(lengthRawSignatureUncompressed);
     std::string publicKeyBytes = publicKeySerialization.substr(2);
     unsigned expectedNumberOfPublicKeys = unsigned(publicKeySerialization[0]) * 256 + unsigned(publicKeySerialization[1]);
     unsigned expectedPublicKeyLength = lengthCompressedPublicKey * expectedNumberOfPublicKeys;
@@ -1727,7 +1716,21 @@ bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComp
     if (!this->InitializePublicKeys(thePublicKeys, reasonForFailure)) {
         return false;
     }
-    std::string signatureUncompressedString = signatureComplete.substr(0, lengthSchnorr);
+    return true;
+}
+
+bool SignatureAggregate::ParseUncompressedSignature(const std::string& uncompressedSignature, std::stringstream* reasonForFailure)
+{
+    unsigned lengthSchnorr = 66;
+    unsigned expectedSize = lengthSchnorr + this->lengthInBytesBitmapSigners;
+    if (uncompressedSignature.size() < expectedSize) {
+        if (reasonForFailure != nullptr) {
+            *reasonForFailure << "Uncompressed aggregate signature is expected to have at least " << expectedSize
+                              << " bytes, but instead it has: " << uncompressedSignature.size() << ". ";
+        }
+        return false;
+    }
+    std::string signatureUncompressedString = uncompressedSignature.substr(0, lengthSchnorr);
     std::vector<unsigned char> signatureUncompressedBytes;
     signatureUncompressedBytes.resize(signatureUncompressedString.size());
     for (unsigned i = 0; i < signatureUncompressedString.size(); i ++) {
@@ -1736,7 +1739,7 @@ bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComp
     if (!this->serializerSignature.MakeFromBytes(signatureUncompressedBytes, reasonForFailure)) {
         return false;
     }
-    std::string signersBitmap = signatureComplete.substr(lengthSchnorr, this->lengthInBytesBitmapSigners);
+    std::string signersBitmap = uncompressedSignature.substr(lengthSchnorr, this->lengthInBytesBitmapSigners);
     //if (reasonForFailure != 0) {
     //   *reasonForFailure << "DEBUG: signers bitmap: " << HexStr(signersBitmap) << ". ";
     //}
@@ -1746,6 +1749,36 @@ bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComp
     //if (reasonForFailure != 0) {
     //   *reasonForFailure << "DEBUG: after deserialize: signers bitmap: " << this->toStringSignersBitmap() << ". ";
     //}
+    return true;
+}
+
+bool SignatureAggregate::parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure)
+{
+    unsigned lengthCompressedPublicKey = 33;
+    unsigned lengthSchnorr = 66;
+    unsigned lengthRawSignatureUncompressed = lengthSchnorr + this->lengthInBytesBitmapSigners;
+    unsigned minimumAllowedLength = lengthRawSignatureUncompressed + 2 + lengthCompressedPublicKey;
+    unsigned maxAllowedLength = lengthRawSignatureUncompressed + 2 + lengthCompressedPublicKey * 256;
+    if (signatureComplete.size() < minimumAllowedLength || signatureComplete.size() > maxAllowedLength) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Complete signature needs to have at least "
+                              << minimumAllowedLength
+                              << ", at most "
+                              << maxAllowedLength
+                              << " bytes, but the one given has "
+                              << signatureComplete.size()
+                              << ". ";
+        }
+        return false;
+    }
+    std::string publicKeySerialization = signatureComplete.substr(lengthRawSignatureUncompressed);
+    if (!this->ParsePublicKeysAndInitialize(publicKeySerialization, reasonForFailure)) {
+        return false;
+    }
+    std::string uncompressedSignatureSerialization = signatureComplete.substr(lengthRawSignatureUncompressed);
+    if (!this->ParseUncompressedSignature(uncompressedSignatureSerialization, reasonForFailure)) {
+        return false;
+    }
     return true;
 }
 
@@ -1826,7 +1859,19 @@ void SignatureAggregate::ComputeCompleteSignature()
     this->aggregateSignatureComplete = resultStream.str();
 }
 
+bool SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(
+        std::vector<unsigned char>& message,
+        std::vector<unsigned char>& signatureUncompressed,
+        std::vector<unsigned char>& publicKeysSerialized,
+        std::stringstream *reasonForFailure
+)
+{
+    SignatureAggregate verifier;
+    return verifier.VerifyMessageSignaturePublicKeys(message, signatureUncompressed, publicKeysSerialized, reasonForFailure);
+}
 
+// The order of arguments is the order in which they appear on the stack.
+// This does not coicide with the order in which they are used.
 bool SignatureAggregate::VerifyMessageSignaturePublicKeys(
         std::vector<unsigned char>& message,
         std::vector<unsigned char>& signatureUncompressed,
@@ -1834,8 +1879,15 @@ bool SignatureAggregate::VerifyMessageSignaturePublicKeys(
         std::stringstream *reasonForFailure
 )
 {
-    if (reasonForFailure != 0) {
-        *reasonForFailure << "Not implemented yet. ";
+    SignatureAggregate verifier;
+    std::string publicKeysSerializedString((const char *) publicKeysSerialized.data(), publicKeysSerialized.size());
+    if (!verifier.ParsePublicKeysAndInitialize(publicKeysSerializedString, reasonForFailure)) {
+        return false;
     }
-    return false;
+    std::string signatureUncompressedString((const char *) signatureUncompressed.data(), signatureUncompressed.size());
+    if (!verifier.ParseUncompressedSignature(signatureUncompressedString, reasonForFailure)) {
+        return false;
+    }
+    verifier.messageImplied = std::string((const char*) message.data(), message.size());
+    return verifier.Verify(reasonForFailure);
 }

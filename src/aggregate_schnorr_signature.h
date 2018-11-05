@@ -532,11 +532,21 @@ public:
 
     bool Verify(std::stringstream* reasonForFailure);
     void ComputeCompleteSignature();
+    bool ParsePublicKeysAndInitialize(const std::string& publicKeySerialization, std::stringstream* reasonForFailure);
+    bool ParseUncompressedSignature(const std::string& uncompressedSignature, std::stringstream* reasonForFailure);
+
     bool parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure);
+    bool parseCompleteSignature(const std::vector<unsigned char>& signatureComplete, std::stringstream* reasonForFailure);
     std::string serializeCommittedSignersBitmap();
     bool deserializeSignersBitmapFromBigEndianBits(const std::string& inputRaw, std::stringstream* reasonForFailure);
     bool VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure);
-    static bool VerifyMessageSignaturePublicKeys(
+    bool VerifyMessageSignaturePublicKeys(
+            std::vector<unsigned char>& message,
+            std::vector<unsigned char>& signatureUncompressed,
+            std::vector<unsigned char>& publicKeysSerialized,
+            std::stringstream* reasonForFailure
+    );
+    static bool VerifyMessageSignaturePublicKeysStatic(
             std::vector<unsigned char>& message,
             std::vector<unsigned char>& signatureUncompressed,
             std::vector<unsigned char>& publicKeysSerialized,
