@@ -374,10 +374,10 @@ bool PrivateKeyKanban::MakeFromBase58WithoutCheck(const std::string& input, std:
     for (unsigned i = 0; i < this->data.size(); i ++)
         this->data[i] = 0;
     int offset = 1;
-    this->flagCorrespondingPublicKeyUsedWithCompressedEncoding = true;
+    this->flagCorrespondingPublicKeyUsedWithCompressedEncoding = false;
     if (dataWithPrefix.size() == 34) {
         if (dataWithPrefix[33] == 0x01) {
-            this->flagCorrespondingPublicKeyUsedWithCompressedEncoding = false;
+            this->flagCorrespondingPublicKeyUsedWithCompressedEncoding = true;
         }
     }
     for (unsigned i = 0; i < this->lengthKey; i ++) {

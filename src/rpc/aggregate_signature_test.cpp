@@ -179,15 +179,73 @@ bool getVectorOfSecp256k1Scalars(const UniValue& input, std::vector<PrivateKeyKa
     return true;
 }
 
+UniValue testaggregatesignaturegeneratepublic(UniValue& result, std::vector<PrivateKeyKanban>& desiredPrivateKeys)
+{
+    std::lock_guard<std::mutex> lockGuard1(aggregateSignatureLock);
+    std::stringstream errorStream;
+    currentSigners.resize(desiredPrivateKeys.size());
+    for (unsigned i = 0; i < currentSigners.size(); i ++) {
+        currentSigners[i].ResetNoPrivateKeyGeneration(false, true);
+        currentSigners[i].myPrivateKey__KEEP_SECRET = desiredPrivateKeys[i];
+        if (!currentSigners[i].myPrivateKey__KEEP_SECRET.ComputePublicKey(currentSigners[i].myPublicKey, &errorStream)) {
+            errorStream << "Faled to generate public key index " << i << " (" << i + 1 << " out of " << currentSigners.size()
+                        << "). The private key seed was: " << currentSigners[i].myPrivateKey__KEEP_SECRET.ToHex();
+            result.pushKV("error", errorStream.str());
+            return result;
+        }
+    }
+    std::sort(currentSigners.begin(), currentSigners.end(), SignatureAggregate::leftHasSmallerPublicKey);
+    currentAggregator.ResetGeneratePrivateKey(true, false);
+    currentAggregator.allPublicKeys.clear();
+    for (unsigned i = 0; i < currentSigners.size(); i ++) {
+        currentAggregator.allPublicKeys.push_back(currentSigners[i].myPublicKey);
+    }
+    if (!currentAggregator.InitializePublicKeys(currentAggregator.allPublicKeys, &errorStream)) {
+        errorStream << "Failed to initialize aggregator's public keys. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    for (unsigned i = 0; i < currentSigners.size(); i ++) {
+        if (!currentSigners[i].InitializePublicKeys(currentAggregator.allPublicKeys, &errorStream)) {
+            errorStream << "Failed to initialize signer inded " << i << ".";
+            result.pushKV("error", errorStream.str());
+            return result;
+        }
+    }
+    appendSignerStateToUniValue(result);
+    result.pushKV("aggregator", currentAggregator.toUniValueTransitionState__SENSITIVE());
+    return result;
+}
+
 UniValue testaggregatesignatureinitialize(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error(
-            "testshathree (numberOfSigners)\n"
-            "\nTests schnorr aggregate signature initialization. Available in -testkanban mode only."
+            "testaggregatesignatureinitialize (desiredPrivateKeysBase64)\n"
+            "\nTests schnorr aggregate signature initialization."
             "\nTo be documented further.\n"
         );
-    std::lock_guard<std::mutex> lockGuard1(aggregateSignatureLock);
+    std::vector<PrivateKeyKanban> desiredPublicKeys;
+    std::stringstream errorStream;
+    UniValue result;
+    result.setObject();
+    result.pushKV("input", request.params[0]);
+    if (!getVectorOfSecp256k1Scalars(request.params[0], desiredPublicKeys, &errorStream)) {
+        errorStream << "Failed to read the desired private keys from: " << request.params[0].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    return testaggregatesignaturegeneratepublic(result, desiredPublicKeys);
+}
+
+UniValue testaggregatesignaturegenerateprivatekeys(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "testaggregatesignaturegenerateprivatekeys (numberOfSigners)\n"
+            "\nTests schnorr aggregate signature initialization."
+            "\nTo be documented further.\n"
+        );
     UniValue result;
     result.setObject();
     result.pushKV("input", request.params);
@@ -208,26 +266,20 @@ UniValue testaggregatesignatureinitialize(const JSONRPCRequest& request)
         result.pushKV("error", errorStream.str());
         return result;
     }
-    currentSigners.resize(numPrivateKeys);
-    for (unsigned i = 0; i < currentSigners.size(); i ++) {
-        currentSigners[i].ResetGeneratePrivateKey(false, true);
-    }
-    std::sort(currentSigners.begin(), currentSigners.end(), SignatureAggregate::leftHasSmallerPublicKey);
-    currentAggregator.ResetGeneratePrivateKey(true, false);
-    currentAggregator.allPublicKeys.clear();
-    for (unsigned i = 0; i < currentSigners.size(); i ++) {
-        currentAggregator.allPublicKeys.push_back(currentSigners[i].myPublicKey);
-    }
-    currentAggregator.InitializePublicKeys(currentAggregator.allPublicKeys, &errorStream);
-    for (unsigned i = 0; i < currentSigners.size(); i ++) {
-        if (!currentSigners[i].InitializePublicKeys(currentAggregator.allPublicKeys, &errorStream)) {
-            errorStream << "Failed to initialize signer inded " << i << ".";
+    std::vector<PrivateKeyKanban> desiredPrivateKeys;
+    desiredPrivateKeys.resize(numPrivateKeys);
+    UniValue privateKeyArray;
+    privateKeyArray.setArray();
+    for (unsigned i = 0; i < desiredPrivateKeys.size(); i ++) {
+        if (!desiredPrivateKeys[i].GenerateRandomSecurely()) {
+            errorStream << "Failed to generate public key index " << i << " (" << i + 1 << " out of " << numPrivateKeys << "). "
+                        << "This means the random generator is not working: perhaps something is wrong with the crypto library? ";
             result.pushKV("error", errorStream.str());
             return result;
         }
+        privateKeyArray.push_back(desiredPrivateKeys[i].ToBase58());
     }
-    appendSignerStateToUniValue(result);
-    result.pushKV("aggregator", currentAggregator.toUniValueTransitionState__SENSITIVE());
+    result.pushKV("privateKeys", privateKeyArray);
     return result;
 }
 
@@ -801,21 +853,22 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand testCommands[] =
-{ //  category name                                    actor (function)                       okSafe   argNames
-  //  -------- -------------------------------------- -------------------------------------- -------- ---------------------
-  { "test",     "testprivatekeygeneration",             &testprivatekeygeneration,             true,    {} },
-  { "test",     "testpublickeyfromprivate",             &testpublickeyfromprivate,             true,    {"privatekey"} },
-  { "test",     "testshathree",                         &testshathree,                         true,    {"message"} },
-  { "test",     "testschnorrsignature",                 &testschnorrsignature,                 true,    {"secret", "message", "nonce"} },
-  { "test",     "testschnorrverification",              &testschnorrverification,              true,    {"publickey", "message", "signature"} },
-  { "test",     "testaggregatesignatureinitialize",     &testaggregatesignatureinitialize,     true,    {"numberOfSigners"} },
-  { "test",     "testaggregatesignaturecommit",         &testaggregatesignaturecommit,         true,    {"message", "desiredNoncesCommaSeparatedBase64"} },
-  { "test",     "testaggregatesignaturechallenge",      &testaggregatesignaturechallenge,      true,    {"committedSignersBitmap", "commitments"} },
-  { "test",     "testaggregatesignaturesolutions",      &testaggregatesignaturesolutions,      true,    {"committedSignersBitmap", "challenge", "aggregateCommitment", "aggregatePublicKey"} },
-  { "test",     "testaggregatesignatureaggregation",    &testaggregatesignatureaggregation,    true,    {"solutions"} },
-  { "test",     "testaggregatesignatureverification",   &testaggregatesignatureverification,   true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
-  { "test",     "testaggregateverificationcomplete",    &testaggregateverificationcomplete,    true,    {"signatureComplete", "messageBase64"} },
-  { "test",     "insertaggregatesignature",             &insertaggregatesignature,             true,    {"hexstring", "number", "hexstring"} },
+{ //  category name                                          actor (function)                            okSafe   argNames
+  //  -------- -------------------------------------------- ------------------------------------------- -------- ---------------------
+  { "test",     "testprivatekeygeneration",                   &testprivatekeygeneration,                  true,    {} },
+  { "test",     "testpublickeyfromprivate",                   &testpublickeyfromprivate,                  true,    {"privatekey"} },
+  { "test",     "testshathree",                               &testshathree,                              true,    {"message"} },
+  { "test",     "testschnorrsignature",                       &testschnorrsignature,                      true,    {"secret", "message", "nonce"} },
+  { "test",     "testschnorrverification",                    &testschnorrverification,                   true,    {"publickey", "message", "signature"} },
+  { "test",     "testaggregatesignaturegenerateprivatekeys",  &testaggregatesignaturegenerateprivatekeys, true,    {"numberOfSigners"} },
+  { "test",     "testaggregatesignatureinitialize",           &testaggregatesignatureinitialize,          true,    {"publicKeys"} },
+  { "test",     "testaggregatesignaturecommit",               &testaggregatesignaturecommit,              true,    {"message", "desiredNoncesCommaSeparatedBase64"} },
+  { "test",     "testaggregatesignaturechallenge",            &testaggregatesignaturechallenge,           true,    {"committedSignersBitmap", "commitments"} },
+  { "test",     "testaggregatesignaturesolutions",            &testaggregatesignaturesolutions,           true,    {"committedSignersBitmap", "challenge", "aggregateCommitment", "aggregatePublicKey"} },
+  { "test",     "testaggregatesignatureaggregation",          &testaggregatesignatureaggregation,         true,    {"solutions"} },
+  { "test",     "testaggregatesignatureverification",         &testaggregatesignatureverification,        true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
+  { "test",     "testaggregateverificationcomplete",          &testaggregateverificationcomplete,         true,    {"signatureComplete", "messageBase64"} },
+  { "test",     "insertaggregatesignature",                   &insertaggregatesignature,                  true,    {"hexstring", "number", "hexstring"} },
 };
 
 void RegisterTestCommands(CRPCTable &t)
