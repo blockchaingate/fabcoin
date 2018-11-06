@@ -26,6 +26,8 @@ src/test/test_fabcoin
 src/qt/test/test_fabcoin-qt
 src/test/test_fabcoin_fuzzy
 
+src/fabcoin.pro.user
+
 # autoreconf
 Makefile.in
 aclocal.m4
