@@ -268,8 +268,6 @@ UniValue testaggregatesignaturegenerateprivatekeys(const JSONRPCRequest& request
     }
     std::vector<PrivateKeyKanban> desiredPrivateKeys;
     desiredPrivateKeys.resize(numPrivateKeys);
-    UniValue privateKeyArray;
-    privateKeyArray.setArray();
     for (unsigned i = 0; i < desiredPrivateKeys.size(); i ++) {
         if (!desiredPrivateKeys[i].GenerateRandomSecurely()) {
             errorStream << "Failed to generate public key index " << i << " (" << i + 1 << " out of " << numPrivateKeys << "). "
@@ -277,6 +275,13 @@ UniValue testaggregatesignaturegenerateprivatekeys(const JSONRPCRequest& request
             result.pushKV("error", errorStream.str());
             return result;
         }
+    }
+    if (numPrivateKeys < 15) {
+        std::sort(desiredPrivateKeys.begin(), desiredPrivateKeys.end(), PrivateKeyKanban::leftSmallerThanRightByPublicKeyCompressed);
+    }
+    UniValue privateKeyArray;
+    privateKeyArray.setArray();
+    for (unsigned i = 0; i < desiredPrivateKeys.size(); i ++) {
         privateKeyArray.push_back(desiredPrivateKeys[i].ToBase58());
     }
     result.pushKV("privateKeys", privateKeyArray);

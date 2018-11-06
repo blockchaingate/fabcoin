@@ -110,7 +110,8 @@ public:
     void operator+=(const PrivateKeyKanban& other);
     void MultiplyMeBy(const PrivateKeyKanban& other, bool otherIsSensitive);
     void AddToMe(const PrivateKeyKanban& other, bool otherIsSensitive);
-    bool ComputePublicKey(PublicKeyKanban& output, std::stringstream *commentsOnFailure__SENSITIVE__NULL_SAFE);
+    static bool leftSmallerThanRightByPublicKeyCompressed(const PrivateKeyKanban& left, const PrivateKeyKanban& right);
+    bool ComputePublicKey(PublicKeyKanban& output, std::stringstream *commentsOnFailure__SENSITIVE__NULL_SAFE) const;
     bool SignMessageSchnorr();
     bool GenerateRandomSecurely();
     void reset();

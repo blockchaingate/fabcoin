@@ -511,7 +511,15 @@ std::string PrivateKeyKanban::ToBase58() const
     return EncodeBase58(prefixedData);
 }
 
-bool PrivateKeyKanban::ComputePublicKey(PublicKeyKanban& output, std::stringstream* commentsOnFailure__SENSITIVE__NULL_SAFE)
+bool PrivateKeyKanban::leftSmallerThanRightByPublicKeyCompressed(const PrivateKeyKanban& left, const PrivateKeyKanban& right)
+{
+    PublicKeyKanban leftPublic, rightPublic;
+    left.ComputePublicKey(leftPublic, nullptr);
+    right.ComputePublicKey(rightPublic, nullptr);
+    return leftPublic < rightPublic;
+}
+
+bool PrivateKeyKanban::ComputePublicKey(PublicKeyKanban& output, std::stringstream* commentsOnFailure__SENSITIVE__NULL_SAFE) const
 {
     if (this->data.size() != this->lengthKey) {
         std::cout << "Non-initialized private cannot be used to compute a public key. " << std::endl;
