@@ -8,6 +8,8 @@ using namespace std;
 using namespace dev;
 using namespace dev::eth;
 
+extern std::fstream& myDebugLogFile();
+
 FascState::FascState(u256 const& _accountStartNonce, OverlayDB const& _db, const string& _path, BaseState _bs) :
     State(_accountStartNonce, _db, _bs) {
     dbUTXO = FascState::openDB(_path + "/fascDB", sha3(rlp("")), WithExisting::Trust);
@@ -77,6 +79,7 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
         }
         const std::vector<dev::eth::LogEntry>& theLogEntries = e.logs();
+        myDebugLogFile() << "about to process smart contract logs" << theLogEntries.size() << "\n";
         for (unsigned i = 0; i < theLogEntries.size(); i ++) {
             //std::stringstream debugOut;
             const dev::eth::LogEntry& current = theLogEntries[i];
@@ -89,6 +92,9 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
                 flagAggregationFound = true;
                 contractAddress = current.address;
             }
+            std::stringstream out;
+            out << std::hex << data << "\n";
+            myDebugLogFile() << out.str();
             //debugOut << "DEBUG: log entry: " << std::hex << data << "\n";
             //LogPrintStr(debugOut.str());
         }

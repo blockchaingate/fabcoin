@@ -31,6 +31,7 @@
 #include "ExtVM.h"
 #include "BlockChain.h"
 #include "Block.h"
+#include <util.h>
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
@@ -247,7 +248,7 @@ void Executive::initialize(Transaction const& _transaction)
 #include <fstream>
 std::fstream& myDebugLogFile() {
     static std::fstream temp(
-                "/home/todor/work/kanban/secrets_data_fabcoin/regtest/myDebug.log",
+                (GetDataDir() / "myEvm.log").string(),
                 std::fstream::in | std::fstream::out | std::fstream::trunc
     );
     return temp;
@@ -261,7 +262,10 @@ bool Executive::execute()
 
 	// Pay...
 	clog(StateDetail) << "Paying" << formatBalance(m_gasCost) << "from sender for gas (" << m_t.gas() << "gas at" << formatBalance(m_t.gasPrice()) << ")";
+    myDebugLogFile() << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << "gas at " << formatBalance(m_t.gasPrice()) << ")\n";
+    myDebugLogFile().flush();
 	m_s.subBalance(m_t.sender(), m_gasCost);
+    myDebugLogFile() << "Paid " << m_gasCost << " Wei\n";
 
 	if (m_t.isCreation())
 		return create(m_t.sender(), m_t.value(), m_t.gasPrice(), m_t.gas() - (u256)m_baseGasRequired, &m_t.data(), m_t.sender());
@@ -417,8 +421,10 @@ bool Executive::go(OnOpFunc const& _onOp)
 					m_res->gasForDeposit = m_gas;
 					m_res->depositSize = out.size();
 				}
-				if (out.size() > m_ext->evmSchedule().maxCodeSize)
-					BOOST_THROW_EXCEPTION(OutOfGas());
+                if (out.size() > m_ext->evmSchedule().maxCodeSize) {
+                    myDebugLogFile() << "Debug: I got to this point of code in executive::go\n";
+                    BOOST_THROW_EXCEPTION(OutOfGas());
+                }
 				else if (out.size() * m_ext->evmSchedule().createDataGas <= m_gas)
 				{
 					if (m_res)
@@ -427,9 +433,12 @@ bool Executive::go(OnOpFunc const& _onOp)
 				}
 				else
 				{
-					if (m_ext->evmSchedule().exceptionalFailedCodeDeposit)
-						BOOST_THROW_EXCEPTION(OutOfGas());
-					else
+                    if (m_ext->evmSchedule().exceptionalFailedCodeDeposit){
+                        myDebugLogFile() << "Debug: I got to this point of code in executive::go, part 2\n";
+                        BOOST_THROW_EXCEPTION(OutOfGas());
+
+                    }
+                    else
 					{
 						if (m_res)
 							m_res->codeDeposit = CodeDeposit::Failed;
@@ -442,6 +451,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			}
 			else
 			{
+                myDebugLogFile() << "DEBUG: remaining gas " << m_gas << "\n";
 				m_output = vm->exec(m_gas, *m_ext, _onOp);
 				if (m_res)
 					// Copy full output:
@@ -453,6 +463,8 @@ bool Executive::go(OnOpFunc const& _onOp)
 			clog(StateSafeExceptions) << "Safe VM Exception. " << diagnostic_information(_e);
 			m_gas = 0;
 			m_excepted = toTransactionException(_e);
+            myDebugLogFile() << "Debug: I am in the exception of executive::go\n";
+
 			revert();
 		}
 		catch (Exception const& _e)
@@ -513,6 +525,8 @@ void Executive::finalize()
 		m_res->newAddress = m_newAddress;
 		m_res->gasRefunded = m_ext ? m_ext->sub.refunds : 0;
 	}
+    myDebugLogFile() << "Debug: about to finish finalization in executive::finalize.\n";
+
 }
 
 void Executive::revert()
