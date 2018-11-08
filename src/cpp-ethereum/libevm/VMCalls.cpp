@@ -19,12 +19,10 @@
 #include <libethereum/ExtVM.h>
 #include "VMConfig.h"
 #include "VM.h"
+#include "log_session.h"
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
-
-#include <fstream>
-extern std::fstream& myDebugLogFile();
 
 void VM::copyDataToMemory(bytesConstRef _data, u256*& _sp)
 {
@@ -46,9 +44,8 @@ void VM::copyDataToMemory(bytesConstRef _data, u256*& _sp)
 
 void VM::throwOutOfGas()
 {
-    myDebugLogFile() << "OoG!!! remaining gas: " << m_io_gas << "\n";
-    myDebugLogFile().flush();
-	BOOST_THROW_EXCEPTION(OutOfGas());
+    LogSession::evmLog() << "OoG!!! remaining gas: " << m_io_gas << LogSession::endL;
+    BOOST_THROW_EXCEPTION(OutOfGas());
 }
 
 void VM::throwBadInstruction()

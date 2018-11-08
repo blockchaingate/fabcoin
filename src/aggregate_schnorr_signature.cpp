@@ -174,7 +174,7 @@ bool SchnorrKanban::Verify(SignatureSchnorr& input, std::stringstream* commentsO
 {
     std::stringstream* commentsOnFailure = commentsOnFailure_NULL_for_no_comments; //keeping it short
     std::string messageToSha3 = input.publicKeyImplied.ToBytesCompressed() + input.challenge.ToBytesCompressed() + input.messageImplied;
-    Sha3New theSha;
+    Sha3 theSha;
     std::string messageSha3ed = theSha.computeSha3_256(messageToSha3);
     secp256k1_ge publicKeyEC, challengeEC, solutionProposedComputed, gPowerSolution;
     //std::cout << "DEBUG: got to pubkey loading " << std::endl;
@@ -268,7 +268,7 @@ bool SchnorrKanban::Sign(PrivateKeyKanban& input,
     }
     output.messageImplied = message;
     std::string messageToSha3 = output.publicKeyImplied.ToBytesCompressed() + output.challenge.ToBytesCompressed() + message;
-    Sha3New theSha;
+    Sha3 theSha;
     std::string messageSha3ed = theSha.computeSha3_256(messageToSha3);
     secp256k1_scalar scalarMessage, scalarSecret, scalarNonce, scalarDigestTimesSecret, scalarSolution;
     secp256k1_scalar_set_b32(&scalarMessage, (unsigned char *)  messageSha3ed.c_str(), NULL);
@@ -1489,14 +1489,15 @@ bool SignatureAggregate::TransitionSignerState3or4ToState5
 bool SignatureAggregate::computeMessageDigest(std::stringstream* commentsOnFailure)
 {
     this->challengeDigester.init();
-    std::vector<unsigned char> serializationAggregateKey, serializationCommitment;
+    std::vector<unsigned char> serializationAggregateKey, serializationCommitment, challengeDigestResult;
     this->publicKeyAggregate.SerializeCompressed(serializationAggregateKey);
     this->challengeDigester.update(serializationAggregateKey);
     this->commitmentAggregate.SerializeCompressed(serializationCommitment);
     this->challengeDigester.update(serializationCommitment);
     this->challengeDigester.update(this->messageImplied);
     this->challengeDigester.finalize();
-    bool mustBeTrue = this->digestedMessage.MakeFromByteSequence(this->challengeDigester.getResultVector(), commentsOnFailure);
+    this->challengeDigester.getResultVector(challengeDigestResult);
+    bool mustBeTrue = this->digestedMessage.MakeFromByteSequence(challengeDigestResult, commentsOnFailure);
     if (!mustBeTrue)  {
         std::cout << "Failed to construct challenge. This should not happen.";
         assert(false);
@@ -1579,7 +1580,7 @@ bool SignatureAggregate::computeLockingCoefficientsMultiple(std::stringstream *c
     }
     this->lockingCoefficientPrecomputedData.init();
     this->lockingCoefficientPrecomputedData.update(this->committedPublicKeysSortedConcatenated);
-    std::vector<unsigned char> publicKeySerialization;
+    std::vector<unsigned char> publicKeySerialization, sha3Result;
     for (unsigned i = 0; i < this->committedSigners.size(); i ++) {
         if (!this->committedSigners[i])
             continue;
@@ -1587,8 +1588,9 @@ bool SignatureAggregate::computeLockingCoefficientsMultiple(std::stringstream *c
         this->allPublicKeys[i].SerializeCompressed(publicKeySerialization);
         this->lockingCoefficientComputer.update(publicKeySerialization);
         this->lockingCoefficientComputer.finalize();
+        this->lockingCoefficientComputer.getResultVector(sha3Result);
         bool shouldBeTrue =
-        this->allLockingCoefficients[i].MakeFromByteSequence(this->lockingCoefficientComputer.getResultVector(), commentsOnFailure);
+        this->allLockingCoefficients[i].MakeFromByteSequence(sha3Result, commentsOnFailure);
         if (!shouldBeTrue) {
             std::cout << "Programming error: failed to make locking coefficient. " << std::endl;
             assert(false);

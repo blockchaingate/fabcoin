@@ -17,6 +17,7 @@
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
+#include <log_session.h>
 #include <httpserver.h>
 #include <httprpc.h>
 #include <key.h>
@@ -1084,6 +1085,7 @@ bool AppInitParameterInteraction()
     RegisterAllCoreRPCCommands(tableRPC);
     int64_t isRegtest = gArgs.GetArg("-regtest", 0);
     if (chainparams.NetworkIDString() == "regtest") {
+        LogSession::currentNetName = "regtest";
         RegisterTestCommands(tableRPC);
     }
 #ifdef ENABLE_WALLET

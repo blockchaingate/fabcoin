@@ -2591,7 +2591,9 @@ SOURCES += \
     crypto/ctaes/test.c \
     aggregate_schnorr_signature.cpp \
     encodings_crypto.cpp \
-    rpc/aggregate_signature_test.cpp
+    rpc/aggregate_signature_test.cpp \
+    rpc/log_files.cpp \
+    log_session.cpp
 
 
 SUBDIRS += \
@@ -5108,4 +5110,5 @@ HEADERS += \
     crypto/sha512.h \
     aggregate_schnorr_signature.h \
     encodings_crypto.h \
-    rpc/aggregate_signature_test.h
+    rpc/aggregate_signature_test.h \
+    log_session.h

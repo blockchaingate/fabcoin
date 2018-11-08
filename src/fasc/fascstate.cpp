@@ -1,14 +1,12 @@
 #include <sstream>
-#include <util.h>
 #include <validation.h>
 #include <chainparams.h>
 #include <fasc/fascstate.h>
+#include "log_session.h"
 
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
-
-extern std::fstream& myDebugLogFile();
 
 FascState::FascState(u256 const& _accountStartNonce, OverlayDB const& _db, const string& _path, BaseState _bs) :
     State(_accountStartNonce, _db, _bs) {
@@ -79,7 +77,7 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
         }
         const std::vector<dev::eth::LogEntry>& theLogEntries = e.logs();
-        myDebugLogFile() << "about to process smart contract logs" << theLogEntries.size() << "\n";
+        LogSession::evmLog() << "DEBUG: about to process smart contract logs: " << theLogEntries.size() << LogSession::endL;
         for (unsigned i = 0; i < theLogEntries.size(); i ++) {
             //std::stringstream debugOut;
             const dev::eth::LogEntry& current = theLogEntries[i];
@@ -94,7 +92,7 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
             }
             std::stringstream out;
             out << std::hex << data << "\n";
-            myDebugLogFile() << out.str();
+            LogSession::evmLog() << "DEBUG: log data: " << out.str() << LogSession::endL;
             //debugOut << "DEBUG: log entry: " << std::hex << data << "\n";
             //LogPrintStr(debugOut.str());
         }

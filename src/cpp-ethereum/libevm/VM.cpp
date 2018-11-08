@@ -22,12 +22,10 @@
 #include <libethereum/ExtVM.h>
 #include "VMConfig.h"
 #include "VM.h"
+#include "log_session.h"
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
-
-#include <fstream>
-extern std::fstream& myDebugLogFile();
 
 uint64_t VM::memNeed(u256 _offset, u256 _size)
 {
@@ -106,8 +104,7 @@ uint64_t VM::gasForMem(u512 _size)
 
 void VM::updateIOGas()
 {
-    myDebugLogFile() << "DEBUG: updateIOGas, IO gas " << m_io_gas << ", Run gas " << m_runGas << "\n";
-    myDebugLogFile().flush();
+    LogSession::evmLog() << "DEBUG: updateIOGas, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
 	if (m_io_gas < m_runGas)
 		throwOutOfGas();
 	m_io_gas -= m_runGas;
@@ -118,8 +115,7 @@ void VM::updateGas()
 	if (m_newMemSize > m_mem.size())
 		m_runGas += toInt63(gasForMem(m_newMemSize) - gasForMem(m_mem.size()));
 	m_runGas += (m_schedule->copyGas * ((m_copyMemSize + 31) / 32));
-    myDebugLogFile() << "DEBUG: updateGAS, IO gas " << m_io_gas << ", Run gas " << m_runGas << "\n";
-    myDebugLogFile().flush();
+    LogSession::evmLog() << "DEBUG: updateGAS, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
 	if (m_io_gas < m_runGas)
 		throwOutOfGas();
 }
@@ -199,9 +195,8 @@ owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
 //
 void VM::interpretCases()
 {
-    myDebugLogFile() << "Running instruction: " << uint8_t(m_OP) << ", remaining gas: " << m_io_gas << "\n";
-    myDebugLogFile().flush();
-	INIT_CASES
+    LogSession::evmLog() << "DEBUG: running instruction: " << uint8_t(m_OP) << ", remaining gas: " << m_io_gas << LogSession::endL;
+    INIT_CASES
 	DO_CASES
 	{	
 		//

@@ -31,7 +31,7 @@
 #include "ExtVM.h"
 #include "BlockChain.h"
 #include "Block.h"
-#include <util.h>
+#include "log_session.h"
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
@@ -245,27 +245,16 @@ void Executive::initialize(Transaction const& _transaction)
 	m_gasCost = (u256)gasCost;  // Convert back to 256-bit, safe now.
 }
 
-#include <fstream>
-std::fstream& myDebugLogFile() {
-    static std::fstream temp(
-                (GetDataDir() / "myEvm.log").string(),
-                std::fstream::in | std::fstream::out | std::fstream::trunc
-    );
-    return temp;
-}
-
 bool Executive::execute()
 {
 	// Entry point for a user-executed transaction.
-    myDebugLogFile() << "DEBUG: here I am in execute. \n";
-    myDebugLogFile().flush();
+    LogSession::evmLog() << "DEBUG: here I am in execute. " << LogSession::endL;
 
 	// Pay...
 	clog(StateDetail) << "Paying" << formatBalance(m_gasCost) << "from sender for gas (" << m_t.gas() << "gas at" << formatBalance(m_t.gasPrice()) << ")";
-    myDebugLogFile() << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << "gas at " << formatBalance(m_t.gasPrice()) << ")\n";
-    myDebugLogFile().flush();
+    LogSession::evmLog() << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << "gas at " << formatBalance(m_t.gasPrice()) << ")\n";
 	m_s.subBalance(m_t.sender(), m_gasCost);
-    myDebugLogFile() << "Paid " << m_gasCost << " Wei\n";
+    LogSession::evmLog() << "Paid " << m_gasCost << " Wei" << LogSession::endL;
 
 	if (m_t.isCreation())
 		return create(m_t.sender(), m_t.value(), m_t.gasPrice(), m_t.gas() - (u256)m_baseGasRequired, &m_t.data(), m_t.sender());
@@ -281,8 +270,7 @@ bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _valu
 
 bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin)
 {
-    myDebugLogFile() << "DEBUG: here I am in call. \n";
-    myDebugLogFile().flush();
+    LogSession::evmLog() << "DEBUG: here I am in call. " << LogSession::endL;
     // If external transaction.
 	if (m_t)
 	{
@@ -342,8 +330,9 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 		m_sealEngine.deleteAddresses.insert(_p.receiveAddress);
 	////////////////////////////////////////////////
 
-    myDebugLogFile() << "DEBUG: Transfer ether from: " << _p.senderAddress << ", to: " << _p.receiveAddress << ", value: " << _p.valueTransfer << "\n";
-    myDebugLogFile().flush();
+    LogSession::debugLog() << "DEBUG: Transfer ether from: "
+                           << _p.senderAddress << ", to: " << _p.receiveAddress << ", value: " << _p.valueTransfer
+                           << LogSession::endL;
 	// Transfer ether.
 	m_s.transferBalance(_p.senderAddress, _p.receiveAddress, _p.valueTransfer);
 	return !m_ext;
@@ -422,7 +411,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 					m_res->depositSize = out.size();
 				}
                 if (out.size() > m_ext->evmSchedule().maxCodeSize) {
-                    myDebugLogFile() << "Debug: I got to this point of code in executive::go\n";
+                    LogSession::evmLog() << "Debug: I got to this point of code in executive::go" << LogSession::endL;
                     BOOST_THROW_EXCEPTION(OutOfGas());
                 }
 				else if (out.size() * m_ext->evmSchedule().createDataGas <= m_gas)
@@ -434,7 +423,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 				else
 				{
                     if (m_ext->evmSchedule().exceptionalFailedCodeDeposit){
-                        myDebugLogFile() << "Debug: I got to this point of code in executive::go, part 2\n";
+                        LogSession::evmLog() << "Debug: I got to this point of code in executive::go, part 2\n" << LogSession::endL;
                         BOOST_THROW_EXCEPTION(OutOfGas());
 
                     }
@@ -451,7 +440,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			}
 			else
 			{
-                myDebugLogFile() << "DEBUG: remaining gas " << m_gas << "\n";
+                LogSession::evmLog() << "DEBUG: remaining gas " << m_gas << LogSession::endL;
 				m_output = vm->exec(m_gas, *m_ext, _onOp);
 				if (m_res)
 					// Copy full output:
@@ -463,7 +452,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			clog(StateSafeExceptions) << "Safe VM Exception. " << diagnostic_information(_e);
 			m_gas = 0;
 			m_excepted = toTransactionException(_e);
-            myDebugLogFile() << "Debug: I am in the exception of executive::go\n";
+            LogSession::evmLog() << "Debug: I am in the exception of executive::go\n";
 
 			revert();
 		}
@@ -525,7 +514,7 @@ void Executive::finalize()
 		m_res->newAddress = m_newAddress;
 		m_res->gasRefunded = m_ext ? m_ext->sub.refunds : 0;
 	}
-    myDebugLogFile() << "Debug: about to finish finalization in executive::finalize.\n";
+    LogSession::evmLog() << "Debug: about to finish finalization in executive::finalize." << LogSession::endL;
 
 }
 

@@ -288,8 +288,8 @@ public:
     std::vector<PrivateKeyKanban> allLockingCoefficients;
 
     //Hashers needed to compute the locking coefficients.
-    Sha3New lockingCoefficientPrecomputedData;
-    Sha3New lockingCoefficientComputer;
+    Sha3 lockingCoefficientPrecomputedData;
+    Sha3 lockingCoefficientComputer;
 
     //Computed from the publicKeysSigners and the committedSigners.
     //Computed both by the aggregator and the signers.
@@ -301,7 +301,7 @@ public:
     PublicKeyKanban publicKeyAggregate;
 
 
-    Sha3New challengeDigester;
+    Sha3 challengeDigester;
 
     //Aggregators generate this and send it to the signers.
     //Computed as:

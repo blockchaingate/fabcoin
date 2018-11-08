@@ -25,6 +25,8 @@ std::vector<SignatureAggregate> currentSigners;
 SignatureAggregate currentAggregator;
 static std::mutex aggregateSignatureLock;
 
+extern UniValue getlogfile(const JSONRPCRequest& request);
+
 void splitString(const std::string& input, const std::string& delimiters, std::vector<std::string>& output)
 {
     output.clear();
@@ -712,9 +714,10 @@ UniValue testshathree(const JSONRPCRequest& request)
 
 
     std::string message = DecodeBase64(request.params[0].get_str() );
-    Sha3New theSha3;
-    UniValue result(UniValue::VSTR);
-    result.setStr(toStringHex(theSha3.computeSha3_256(message)));
+    Sha3 theSha3;
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("sha3_256", toStringHex(theSha3.computeSha3_256(message)));
+    result.pushKV("keccak_256", toStringHex(theSha3.computeKeccak3_256(message)));
     return result;
 }
 
@@ -874,6 +877,7 @@ static const CRPCCommand testCommands[] =
   { "test",     "testaggregatesignatureverification",         &testaggregatesignatureverification,        true,    {"signature", "committedSignersBitmap", "publicKeys", "message"} },
   { "test",     "testaggregateverificationcomplete",          &testaggregateverificationcomplete,         true,    {"signatureComplete", "messageBase64"} },
   { "test",     "insertaggregatesignature",                   &insertaggregatesignature,                  true,    {"hexstring", "number", "hexstring"} },
+  { "test",     "getlogfile",                                 &getlogfile,                                true,    {"string"} },
 };
 
 void RegisterTestCommands(CRPCTable &t)

@@ -137,6 +137,7 @@ FABCOIN_CORE_H = \
   rpc/test.h \
   encodings_crypto.h \
   aggregate_schnorr_signature.h \
+  log_session.h \
   crypto/secp256k1_all_in_one.h \
   scheduler.h \
   script/sigcache.h \
@@ -159,6 +160,7 @@ FABCOIN_CORE_H = \
   ui_interface.h \
   undo.h \
   util.h \
+  log_session.h \
   utilmoneystr.h \
   utiltime.h \
   validation.h \
@@ -231,6 +233,7 @@ libfabcoin_server_a_SOURCES = \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
   rpc/aggregate_signature_test.cpp \
+  rpc/log_files.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \
@@ -388,6 +391,7 @@ libfabcoin_common_a_SOURCES = \
   crypto/secp256k1_all_in_one.cpp \
   encodings_crypto.cpp \
   aggregate_schnorr_signature.cpp \
+  aggregate_schnorr_signature.h \
   script/fabcoinconsensus.cpp \
   script/interpreter.cpp \
   script/interpreter.h \
@@ -592,6 +596,7 @@ libfabcoin_util_a_SOURCES = \
   sync.cpp \
   threadinterrupt.cpp \
   util.cpp \
+  log_session.cpp \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
   utiltime.cpp \
