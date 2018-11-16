@@ -740,6 +740,8 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
     UniValue aCaps(UniValue::VARR); aCaps.push_back("proposal");
 
     UniValue transactions(UniValue::VARR);
+    UniValue coinbasetxn(UniValue::VOBJ);
+
     std::map<uint256, int64_t> setTxIndex;
     int i = 0;
     for (const auto& it : pblock->vtx) {
@@ -748,7 +750,10 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         setTxIndex[txHash] = i++;
 
         if (tx.IsCoinBase())
+        {
+            coinbasetxn.push_back(Pair("data", EncodeHexTx(tx)));
             continue;
+        }
 
         UniValue entry(UniValue::VOBJ);
 
@@ -845,6 +850,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
         aMutable.push_back("version/force");
     }
 
+    result.push_back(Pair("coinbasetxn",coinbasetxn));
     result.push_back(Pair("previousblockhash", pblock->hashPrevBlock.GetHex()));
     result.push_back(Pair("transactions", transactions));
     result.push_back(Pair("coinbaseaux", aux));
