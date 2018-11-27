@@ -8,6 +8,8 @@ using namespace std;
 using namespace dev;
 using namespace dev::eth;
 
+std::string kanbanShardCreationString = "KanbanShardRegistration";
+
 FascState::FascState(u256 const& _accountStartNonce, OverlayDB const& _db, const string& _path, BaseState _bs) :
     State(_accountStartNonce, _db, _bs) {
     dbUTXO = FascState::openDB(_path + "/fascDB", sha3(rlp("")), WithExisting::Trust);
@@ -66,7 +68,6 @@ ResultExecute FascState::execute(EnvInfo const& _envInfo, SealEngineFace const& 
 
         bool flagAggregationFound = false;
         std::vector<std::vector<uint8_t> > aggregationData;
-        std::string kanbanShardCreationString = "KanbanAggregateSignatureUnlock";
         dev::h160 contractAddress;
         //std::stringstream debugOut2;
         //debugOut2 << "DEBUG: author address: ";

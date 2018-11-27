@@ -1695,6 +1695,13 @@ bool SignatureAggregate::parseCompleteSignature(const std::vector<unsigned char>
 
 bool SignatureAggregate::ParsePublicKeysAndInitialize(const std::string& publicKeySerialization, std::stringstream *reasonForFailure)
 {
+    if (publicKeySerialization.size() < 2) {
+        if (reasonForFailure != nullptr) {
+            *reasonForFailure << "Public key serialization needs to have at least 35 bytes, instead I got: "
+                              << publicKeySerialization.size() << ". ";
+        }
+        return false;
+    }
     unsigned lengthCompressedPublicKey = 33;
     std::string publicKeyBytes = publicKeySerialization.substr(2);
     unsigned expectedNumberOfPublicKeys = unsigned(publicKeySerialization[0]) * 256 + unsigned(publicKeySerialization[1]);
@@ -1742,7 +1749,7 @@ bool SignatureAggregate::ParseUncompressedSignature(const std::string& uncompres
 {
     unsigned lengthSchnorr = 66;
     unsigned expectedSize = lengthSchnorr + this->lengthInBytesBitmapSigners;
-    if (uncompressedSignature.size() < expectedSize) {
+    if (uncompressedSignature.size() < expectedSize && uncompressedSignature.size() != lengthSchnorr) {
         if (reasonForFailure != nullptr) {
             *reasonForFailure << "Uncompressed aggregate signature is expected to have at least " << expectedSize
                               << " bytes, but instead it has: " << uncompressedSignature.size() << ". ";
@@ -1761,16 +1768,23 @@ bool SignatureAggregate::ParseUncompressedSignature(const std::string& uncompres
         }
         return false;
     }
-    std::string signersBitmap = uncompressedSignature.substr(lengthSchnorr, this->lengthInBytesBitmapSigners);
-    //if (reasonForFailure != 0) {
-    //   *reasonForFailure << "DEBUG: signers bitmap: " << HexStr(signersBitmap) << ". ";
-    //}
-    if (!this->deserializeSignersBitmapFromBigEndianBits(signersBitmap, reasonForFailure)) {
-        return false;
+    if (uncompressedSignature.size() == lengthSchnorr) {
+        this->committedSigners.resize(this->allPublicKeys.size());
+        for (unsigned i = 0; i < this->allPublicKeys.size(); i ++) {
+            this->committedSigners[i] = true;
+        }
+    } else {
+        std::string signersBitmap = uncompressedSignature.substr(lengthSchnorr, this->lengthInBytesBitmapSigners);
+        //if (reasonForFailure != 0) {
+        //   *reasonForFailure << "DEBUG: signers bitmap: " << HexStr(signersBitmap) << ". ";
+        //}
+        if (!this->deserializeSignersBitmapFromBigEndianBits(signersBitmap, reasonForFailure)) {
+            return false;
+        }
+        //if (reasonForFailure != 0) {
+        //   *reasonForFailure << "DEBUG: after deserialize: signers bitmap: " << this->toStringSignersBitmap() << ". ";
+        //}
     }
-    //if (reasonForFailure != 0) {
-    //   *reasonForFailure << "DEBUG: after deserialize: signers bitmap: " << this->toStringSignersBitmap() << ". ";
-    //}
     return true;
 }
 
