@@ -21,6 +21,8 @@ public:
     static const std::string TESTNET;
     static const std::string REGTEST;
     static const std::string UNITTEST;
+    static std::string kanbanId;
+    static std::vector<unsigned char> kanbanIdBytes;
 
     const std::string& DataDir() const { return strDataDir; }
     int RPCPort() const { return nRPCPort; }

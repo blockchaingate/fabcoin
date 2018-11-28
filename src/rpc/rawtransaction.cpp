@@ -26,6 +26,7 @@
 #include <utilstrencodings.h>
 #include <utilmoneystr.h>
 #include "aggregate_schnorr_signature.h"
+#include <encodings_crypto.h>
 #ifdef ENABLE_WALLET
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
@@ -399,7 +400,7 @@ bool GetPublicKeysHexFromString(const UniValue& input, std::vector<std::string>&
     }
     std::string firstFour = inputString.substr(0, 4);
     std::vector<unsigned char> firstTwoBytes;
-    if (!fromHex(firstFour, firstTwoBytes, reasonForFailure)) {
+    if (!Encodings::fromHex(firstFour, firstTwoBytes, reasonForFailure)) {
         if (reasonForFailure != 0) {
             *reasonForFailure << "Failed to extract 2 bytes from the first 4 hex characters of your input: " << firstFour;
         }

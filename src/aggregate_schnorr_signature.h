@@ -569,37 +569,4 @@ public:
     bool Verify(SignatureSchnorr& output, std::stringstream *commentsOnFailure_NULL_for_no_comments);
 };
 
-template<typename otherType>
-std::string toStringHex(const otherType& other) {
-  std::stringstream out;
-  for (unsigned i = 0; i < other.size(); i ++)
-    out << std::hex << std::setfill('0') << std::setw(2) << ((int) ((unsigned char) other[i]));
-  return out.str();
-}
-
-template<typename otherType>
-std::string toStringHexOffset(const otherType& other, int offset) {
-  std::stringstream out;
-  for (unsigned i = offset; i < other.size(); i ++)
-    out << std::hex << std::setfill('0') << std::setw(2) << ((int) ((unsigned char) other[i]));
-  return out.str();
-}
-
-bool char2int(char input, int& output, std::stringstream* commentsOnFailure);
-template<typename inputType, typename outputType>
-bool fromHex(const inputType& input, outputType& result, std::stringstream* commentsOnFailure)
-{
-    result.clear();
-    int currentHigh, currentLow;
-    for (unsigned i = 0; i + 1 < input.size(); i += 2) {
-        if (!char2int(input[i], currentHigh, commentsOnFailure))
-            return false;
-        if (!char2int(input[i+1], currentLow, commentsOnFailure))
-            return false;
-        unsigned char current = ((unsigned char) currentHigh) * 16 + ((unsigned char) currentLow);
-        result.push_back(current);
-    }
-    return true;
-}
-
 #endif

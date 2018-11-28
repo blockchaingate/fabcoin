@@ -23,7 +23,7 @@
 #include <boost/thread.hpp>
 
 #include <stdio.h>
-
+#include "log_session.h"
 /* Introduction text for doxygen: */
 
 /*! \mainpage Developer documentation
@@ -115,7 +115,9 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr, "Error: %s\n", e.what());
             return false;
         }
-
+        if (Params().NetworkIDString() == CBaseChainParams::REGTEST) {
+            LogSession::currentNetName = CBaseChainParams::REGTEST;
+        }
         // Error out when loose non-argument tokens are encountered on command line
         for (int i = 1; i < argc; i++) {
             if (!IsSwitchChar(argv[i][0])) {
@@ -139,6 +141,7 @@ bool AppInit(int argc, char* argv[])
             // InitError will have been called with detailed error, which ends up on console
             exit(EXIT_FAILURE);
         }
+
         if (!AppInitSanityChecks())
         {
             // InitError will have been called with detailed error, which ends up on console

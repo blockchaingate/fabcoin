@@ -23,27 +23,6 @@
 //extern std::string EncodeBase58(const std::vector<unsigned char>& vch);
 //extern bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
-
-bool char2int(char input, int& output, std::stringstream* commentsOnFailure)
-{
-    if (input >= '0' && input <= '9') {
-        output = input - '0';
-        return true;
-    }
-    if (input >= 'A' && input <= 'F') {
-        output = input - 'A' + 10;
-        return true;
-    }
-    if (input >= 'a' && input <= 'f') {
-        output = input - 'a' + 10;
-        return true;
-    }
-    if (commentsOnFailure != 0)
-        *commentsOnFailure << "Failed to interpret character: " << input << " as a hex digit. ";
-    return false;
-}
-
-
 unsigned char SignatureSchnorr::prefixSignature = 65;
 unsigned char SignatureSchnorr::prefixAggregateSignature = 24;
 
@@ -490,7 +469,7 @@ std::string PrivateKeyKanban::ToHex() const
         return "(uninitialized)";
     std::vector<unsigned char> prefixedData;
     this->ToBytesWithPrefixAndSuffix(prefixedData);
-    return toStringHex(prefixedData);
+    return Encodings::toHexString(prefixedData);
 }
 
 std::string PrivateKeyKanban::ToBase58Check() const
@@ -698,7 +677,7 @@ bool PublicKeyKanban::MakeFromBytesSerializationOffset
             *commentsOnFailure
             << "Function secp256k1_ec_pubkey_parse failed to parse "
             << (serializer.size() - offset) << " bytes: "
-            << toStringHexOffset(serializer, offset) << ". ";
+            << Encodings::toHexStringOffset(serializer, offset) << ". ";
         }
         return false;
     }
@@ -722,7 +701,7 @@ bool PublicKeyKanban::MakeFromStringRecognizeFormat(const std::string& input, st
     std::vector<unsigned char> serializer;
     unsigned inputSize = input.size();
     if (inputSize == 66 || inputSize == 128 || inputSize == 130) {
-        if (!fromHex(input, serializer, commentsOnFailure))
+        if (!Encodings::fromHex(input, serializer, commentsOnFailure))
             return false;
     } else {
         serializer.resize(input.size());
@@ -745,7 +724,7 @@ std::string PublicKeyKanban::ToHexCompressed() const
         return "(uninitialized)";
     std::vector<unsigned char> serialized;
     this->SerializeCompressed(serialized);
-    return toStringHex(serialized);
+    return Encodings::toHexString(serialized);
 }
 
 std::string PublicKeyKanban::ToHexUncompressed() const
@@ -755,7 +734,7 @@ std::string PublicKeyKanban::ToHexUncompressed() const
     //<- leaving memory traces allowed.
     std::vector<unsigned char> serialized;
     this->SerializeUncompressed(serialized);
-    return toStringHex(serialized);
+    return Encodings::toHexString(serialized);
 }
 
 std::string PublicKeyKanban::ToAddressUncompressedBase58() const

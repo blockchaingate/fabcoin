@@ -61,6 +61,27 @@ bool Encodings::Base58ToBytes(const std::string& inputBigEndian, std::vector<uns
     return true;
 }
 
+
+bool Encodings::char2int(char input, int& output, std::stringstream* commentsOnFailure)
+{
+    if (input >= '0' && input <= '9') {
+        output = input - '0';
+        return true;
+    }
+    if (input >= 'A' && input <= 'F') {
+        output = input - 'A' + 10;
+        return true;
+    }
+    if (input >= 'a' && input <= 'f') {
+        output = input - 'a' + 10;
+        return true;
+    }
+    if (commentsOnFailure != 0)
+        *commentsOnFailure << "Failed to interpret character: " << input << " as a hex digit. ";
+    return false;
+}
+
+
 /*
 std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
 {

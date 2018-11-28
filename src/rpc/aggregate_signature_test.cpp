@@ -7,6 +7,7 @@
 #include "crypto/sha3.h"
 #include "../aggregate_schnorr_signature.h"
 #include "utilstrencodings.h"
+#include "encodings_crypto.h"
 #include <primitives/transaction.h>
 #include <core_io.h>
 #include <coins.h>
@@ -315,14 +316,14 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
         return result;
     }
     std::vector<unsigned char> decodedMessageVector;
-    if (!fromHex(request.params[1].get_str(), decodedMessageVector, &errorStream)) {
+    if (!Encodings::fromHex(request.params[1].get_str(), decodedMessageVector, &errorStream)) {
         errorStream << "Failed to hex-decode your input: " << request.params[1].write();
         result.pushKV("error", errorStream.str());
         return result;
     }
     std::string decodedMessage((const char*)decodedMessageVector.data(), decodedMessageVector.size());
     std::string decodedCompleteSignature;
-    if (!fromHex(request.params[0].get_str(), decodedCompleteSignature, &errorStream)) {
+    if (!Encodings::fromHex(request.params[0].get_str(), decodedCompleteSignature, &errorStream)) {
         errorStream << "Failed to hex-decode your input: " << request.params[0].write();
         result.pushKV("error", errorStream.str());
         return result;
@@ -377,7 +378,7 @@ UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
         return result;
     }
     std::string messageHex = request.params[3].get_str();
-    if (!fromHex(messageHex, theVerifier.messageImplied, &errorStream)) {
+    if (!Encodings::fromHex(messageHex, theVerifier.messageImplied, &errorStream)) {
         errorStream << "Failed to hex-decode your input: " << messageHex;
         result.pushKV("error", errorStream.str());
         return result;
@@ -559,7 +560,7 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
     std::string messageHex = request.params[0].get_str();
     std::string theMessage;
     std::stringstream errorStream;
-    if (! fromHex(messageHex, theMessage, &errorStream)) {
+    if (! Encodings::fromHex(messageHex, theMessage, &errorStream)) {
         errorStream << "Failed to hex-decode your message: " << messageHex << ". ";
         result.pushKV("error", errorStream.str());
         return result;
@@ -716,8 +717,8 @@ UniValue testshathree(const JSONRPCRequest& request)
     std::string message = DecodeBase64(request.params[0].get_str() );
     Sha3 theSha3;
     UniValue result(UniValue::VOBJ);
-    result.pushKV("sha3_256", toStringHex(theSha3.computeSha3_256(message)));
-    result.pushKV("keccak_256", toStringHex(theSha3.computeKeccak3_256(message)));
+    result.pushKV("sha3_256", Encodings::toHexString(theSha3.computeSha3_256(message)));
+    result.pushKV("keccak_256", Encodings::toHexString(theSha3.computeKeccak3_256(message)));
     return result;
 }
 
@@ -796,7 +797,7 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, errorStream.str());
     }
     std::vector<unsigned char> aggregateSignatureBytes;
-    if (!fromHex(aggregateSignatureHex, aggregateSignatureBytes, &errorStream)) {
+    if (!Encodings::fromHex(aggregateSignatureHex, aggregateSignatureBytes, &errorStream)) {
         errorStream << "Failed to decode your raw aggregate signature. Your input: " << aggregateSignatureHex << ". ";
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, errorStream.str());
     }
