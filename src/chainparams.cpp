@@ -232,6 +232,7 @@ public:
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
+        this->fIncludeTestCommands = false;
 
         checkpointData = (CCheckpointData) {
             {
@@ -358,6 +359,7 @@ public:
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
+        this->fIncludeTestCommands = false;
 
         checkpointData = (CCheckpointData) {
             {
@@ -478,6 +480,7 @@ for (int i=0;i<20;i++) {
         fDefaultConsistencyChecks = true;
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
+        this->fIncludeTestCommands = true;
 
         checkpointData = (CCheckpointData) {
             {
@@ -593,6 +596,7 @@ for (int i=0;i<20;i++) {
         fDefaultConsistencyChecks = true;
         fRequireStandard = false;
         fMineBlocksOnDemand = true;
+        this->fIncludeTestCommands = true;
 
         checkpointData = (CCheckpointData) {
             {
@@ -633,6 +637,7 @@ public:
         consensus.FABHeight = 24000;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
+        this->fIncludeTestCommands = false;
     }
 };
 

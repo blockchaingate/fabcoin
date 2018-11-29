@@ -1104,7 +1104,7 @@ bool AppInitParameterInteraction()
     ParseKanbanId();
 
     RegisterAllCoreRPCCommands(tableRPC);
-    if (chainparams.NetworkIDString() == CBaseChainParams::REGTEST) {
+    if (Params().IncludeTestCommands()) {
         RegisterTestCommands(tableRPC);
     }
 
