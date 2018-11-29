@@ -113,8 +113,6 @@ static CBlock CreateGenesisBlock_legacy(uint32_t nTime, uint32_t nNonce, uint32_
     return CreateGenesisBlock_legacy(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
 
-
-
 void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
 {
     consensus.vDeployments[d].nStartTime = nStartTime;
@@ -377,6 +375,127 @@ public:
 };
 
 /**
+ * RegtestWithNetwork
+ */
+class CRegTestWithNetParams : public CChainParams {
+public:
+    CRegTestWithNetParams() {
+        strNetworkID = CBaseChainParams::REGTESTWITHNET;
+        consensus.strNetworkID = "regtestwithnet";
+        consensus.nSubsidyHalvingInterval = 150;
+        consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
+        consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
+
+        consensus.BIP34Height = 0; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests) // activate for fabcoin
+        consensus.BIP34Hash = uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3");
+        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in rpc activation tests)
+        consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in rpc activation tests)
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+        consensus.FABHeight = 1000000;
+        consensus.ContractHeight = 100;
+        consensus.EquihashFABHeight = 100;
+        consensus.AggregateSignatureHeight = 100;
+        consensus.LWMAHeight = 100;
+        consensus.CoinbaseLock = 0;
+        consensus.ForceSegwit = false;
+
+        //Digishield parameters
+        consensus.nDigishieldPowAveragingWindow = 17;
+        consensus.nDigishieldPowMaxAdjustDown = 32;
+        consensus.nDigishieldPowMaxAdjustUp = 16;
+
+        //LWMA parameters
+        consensus.nZawyLwmaAveragingWindow = 45;
+        consensus.bZawyLwmaSolvetimeLimitation = true;
+        consensus.MaxFutureBlockTime = 20 * 60; // 20 mins
+        consensus.MaxBlockInterval = 10; // 10 T
+
+        consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
+        consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.fPowAllowMinDifficultyBlocks = true;
+        consensus.fPowNoRetargeting = true;
+
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
+        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
+        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
+        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
+
+        // The best chain should have at least this much work.
+        consensus.nMinimumChainWork = uint256S("0x00");
+
+        // By default assume that the signatures in ancestors of this block are valid.
+        consensus.defaultAssumeValid = uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3");
+
+        pchMessageStart[0] = 0xfa;
+        pchMessageStart[1] = 0xbf;
+        pchMessageStart[2] = 0xb5;
+        pchMessageStart[3] = 0xda;
+        this->nDefaultPort = 40665;
+        nPruneAfterHeight = 1000;
+
+        const size_t N = 48, K = 5;
+        BOOST_STATIC_ASSERT(equihash_parameters_acceptable(N, K));
+        nEquihashN = N;
+        nEquihashK = K;
+
+/*
+for (int i=0;i<20;i++) {
+        genesis = CreateGenesisBlock_legacy(1296688602, i, 0x207fffff, 5, 50 * COIN);
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
+        std::cout << consensus.hashGenesisBlock.GetHex() << std::endl;
+}
+*/
+
+        genesis = CreateGenesisBlock_legacy(1296688602, 12, 0x207fffff, 5, 50 * COIN);
+        consensus.hashGenesisBlock = genesis.GetHash(consensus);
+        assert(consensus.hashGenesisBlock == uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3"));
+        assert(genesis.hashMerkleRoot == uint256S("0x487e51f691fd29b1ee5c7fc3341eb4f91b86f4a8eace12d259f89f70af558ee1"));
+
+        vFixedSeeds.clear();
+        vSeeds.clear();      //!< Regtestwithnet mode doesn't have any DNS seeds.
+        SeedSpec6 seedRegtestWithNet[] = {
+            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x12,0x82,0x58,0x7e}, this->nDefaultPort},
+        };
+        this->vFixedSeeds = std::vector<SeedSpec6>(seedRegtestWithNet, seedRegtestWithNet + ARRAYLEN(seedRegtestWithNet));
+
+
+
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+
+        fMiningRequiresPeers = false;
+        fDefaultConsistencyChecks = true;
+        fRequireStandard = false;
+        fMineBlocksOnDemand = true;
+
+        checkpointData = (CCheckpointData) {
+            {
+                {0, uint256S("0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3")},
+
+            }
+        };
+
+        chainTxData = ChainTxData{
+            0,
+            0,
+            0
+        };
+
+    }
+};
+
+/**
  * Regression test
  */
 class CRegTestParams : public CChainParams {
@@ -536,6 +655,8 @@ std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
         return std::unique_ptr<CChainParams>(new CMainParams());
     else if (chain == CBaseChainParams::TESTNET)
         return std::unique_ptr<CChainParams>(new CTestNetParams());
+    else if (chain == CBaseChainParams::REGTESTWITHNET)
+        return std::unique_ptr<CChainParams>(new CRegTestWithNetParams());
     else if (chain == CBaseChainParams::REGTEST)
         return std::unique_ptr<CChainParams>(new CRegTestParams());
     else if (chain == CBaseChainParams::UNITTEST)

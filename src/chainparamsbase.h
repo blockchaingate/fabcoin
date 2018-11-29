@@ -20,6 +20,7 @@ public:
     static const std::string MAIN;
     static const std::string TESTNET;
     static const std::string REGTEST;
+    static const std::string REGTESTWITHNET;
     static const std::string UNITTEST;
     static std::string kanbanId;
     static std::vector<unsigned char> kanbanIdBytes;
