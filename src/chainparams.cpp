@@ -78,7 +78,6 @@ static CBlock CreateGenesisBlockTestnet(uint32_t nTime, const uint256& nNonce, c
 }
 
 static CBlock CreateGenesisBlock_legacy(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
-
 {
     CMutableTransaction txNew;
     txNew.nVersion = 1;
@@ -465,6 +464,7 @@ for (int i=0;i<20;i++) {
         vSeeds.clear();      //!< Regtestwithnet mode doesn't have any DNS seeds.
         SeedSpec6 seedRegtestWithNet[] = {
             {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x12,0x82,0x58,0x7e}, this->nDefaultPort},
+            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x0d,0xe8,0x14,0x0b}, this->nDefaultPort},
         };
         this->vFixedSeeds = std::vector<SeedSpec6>(seedRegtestWithNet, seedRegtestWithNet + ARRAYLEN(seedRegtestWithNet));
 
