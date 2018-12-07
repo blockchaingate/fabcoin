@@ -12,6 +12,9 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "uint256.h"
+#include "aggregate_schnorr_signature.h"
+#include "utilstrencodings.h"
+#include "util.h"
 
 typedef std::vector<unsigned char> valtype;
 
@@ -250,7 +253,19 @@ bool static CheckMinimalPush(const valtype& data, opcodetype opcode) {
     return true;
 }
 
-bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* serror)
+std::string printStackForDebug(std::vector<std::vector<unsigned char> >& stack)
+{
+    std::stringstream out;
+    for (unsigned i = 0; i < stack.size(); i ++) {
+        if (i > 0) {
+            out << " ";
+        }
+        out << HexStr(stack[i]);
+    }
+    return out.str();
+}
+
+bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* serror, std::stringstream* commentsOnFailure)
 {
     static const CScriptNum bnZero(0);
     static const CScriptNum bnOne(1);
@@ -272,7 +287,8 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
         return set_error(serror, SCRIPT_ERR_SCRIPT_SIZE);
     int nOpCount = 0;
     bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
-
+    PrecomputedTransactionData aggregateData;
+    std::vector<unsigned char> messageForAggregateData;
     try
     {
         while (pc < pend)
@@ -1045,7 +1061,40 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 }
                 break;
                 ////////////////////////////////////////////////////////
+                case OP_AGGREGATEVERIFY:
+                {
+                    checker.GetPrecomputedTransactionData(aggregateData);
+                    aggregateData.GetSerialization(messageForAggregateData);
+                    //if (commentsOnFailure != nullptr) {
+                    //    *commentsOnFailure << "DEBUG: stack status: " << printStackForDebug(stack) << ". ";
+                    //}
+                    if (stack.size() < 2) {
+                        if (commentsOnFailure != nullptr) {
+                            *commentsOnFailure << "Opcode OP_AGGREGATEVERIFY requires at least two items on the stack,"
+                                               << " but there are only: " << stack.size() << ". ";
+                        }
+                        return false;
+                    }
+                    //if (commentsOnFailure != nullptr) {
+                    //    *commentsOnFailure << "DEBUG: got to stack evaluation. Stack size: " << stack.size() << ". ";
+                    //}
+                    if (!SignatureAggregate::VerifyMessageSignaturePublicKeysStatic(
+                                messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1],
+                                commentsOnFailure, true
+                    )) {
+                        return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
+                    }
+                    popstack(stack);
+                    popstack(stack);
+                    stack.push_back(vchTrue);
+                }
+                break;
                 default:
+                    if (commentsOnFailure != nullptr) {
+                        *commentsOnFailure << "Don't know how to handle op code: "
+                                           << opcode <<  " ("
+                                           << GetOpName(opcode) << "). ";
+                    }
                     return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
             }
 
@@ -1059,9 +1108,9 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
         return set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
     }
 
-    if (!vfExec.empty())
+    if (!vfExec.empty()) {
         return set_error(serror, SCRIPT_ERR_UNBALANCED_CONDITIONAL);
-
+    }
     return set_success(serror);
 }
 
@@ -1188,11 +1237,71 @@ uint256 GetOutputsHash(const CTransaction& txTo) {
 
 } // namespace
 
+std::string PrecomputedTransactionData::ToString() const
+{
+    std::vector<unsigned char> serialization;
+    this->GetSerialization(serialization);
+    std::stringstream out;
+    out << "PrecomputedData{outs: " << this->hashOutputs.GetHex()
+        << ", prevouts: " << this->hashPrevouts.GetHex()
+        << ", sequence: " << this->hashSequence.GetHex()
+        << ", serialization: " << HexStr(serialization)
+        << " }";
+    return out.str();
+}
+
+void PrecomputedTransactionData::GetSerialization(std::vector<unsigned char>& output) const
+{
+    output.resize(32 * 3);
+    int i = 0;
+    for (const unsigned char* iterator = this->hashOutputs.begin(); iterator != this->hashOutputs.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (const unsigned char* iterator = this->hashPrevouts.begin(); iterator != this->hashPrevouts.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (const unsigned char* iterator = this->hashSequence.begin(); iterator != this->hashSequence.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (; i < 32 * 3; i ++) {
+        output[i] = 0;
+    }
+}
+
+void PrecomputedTransactionData::operator=(const PrecomputedTransactionData& other)
+{
+    this->hashOutputs = other.hashOutputs;
+    this->hashSequence = other.hashSequence;
+    this->hashPrevouts = other.hashPrevouts;
+}
+
+PrecomputedTransactionData::PrecomputedTransactionData(const PrecomputedTransactionData& other)
+{
+    *this = other;
+}
+
+PrecomputedTransactionData::PrecomputedTransactionData()
+{
+    this->hashOutputs.SetNull();
+    this->hashSequence.SetNull();
+    this->hashPrevouts.SetNull();
+}
+
+void PrecomputedTransactionData::initFromPrecomputedTransactionData(const CTransaction& txTo)
+{
+    this->hashPrevouts = GetPrevoutHash(txTo);
+    this->hashSequence = GetSequenceHash(txTo);
+    this->hashOutputs = GetOutputsHash(txTo);
+}
+
 PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
 {
-    hashPrevouts = GetPrevoutHash(txTo);
-    hashSequence = GetSequenceHash(txTo);
-    hashOutputs = GetOutputsHash(txTo);
+    this->hashPrevouts = GetPrevoutHash(txTo);
+    this->hashSequence = GetSequenceHash(txTo);
+    this->hashOutputs = GetOutputsHash(txTo);
 }
 
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)
@@ -1270,6 +1379,27 @@ bool TransactionSignatureChecker::VerifySignature(const std::vector<unsigned cha
     return pubkey.Verify(sighash, vchSig);
 }
 
+TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(nullptr)
+{
+
+}
+
+TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn) : txTo(txToIn), nIn(nInIn), amount(amountIn)
+{
+    this->txdata = &txdataIn;
+}
+
+void TransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        return;
+    }
+    output = *this->txdata;
+}
+
 bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
 {
     CPubKey pubkey(vchPubKey);
@@ -1325,6 +1455,28 @@ bool TransactionSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) con
         return false;
 
     return true;
+}
+
+bool BaseSignatureChecker::CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
+{
+    return false;
+}
+
+bool BaseSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) const
+{
+     return false;
+}
+
+bool BaseSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
+{
+     return false;
+}
+
+void BaseSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+{
+    output.hashOutputs.SetNull();
+    output.hashPrevouts.SetNull();
+    output.hashSequence.SetNull();
 }
 
 bool TransactionSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
@@ -1426,7 +1578,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
     return true;
 }
 
-bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror)
+bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror, std::stringstream *comments)
 {
     static const CScriptWitness emptyWitness;
     if (witness == nullptr) {
@@ -1441,14 +1593,20 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     }
 
     std::vector<std::vector<unsigned char> > stack, stackCopy;
-    if (!EvalScript(stack, scriptSig, flags, checker, SIGVERSION_BASE, serror))
+    if (!EvalScript(stack, scriptSig, flags, checker, SIGVERSION_BASE, serror, comments))
         // serror is set
         return false;
     if (flags & SCRIPT_VERIFY_P2SH)
         stackCopy = stack;
-    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_BASE, serror))
+    //if (comments != nullptr) {
+    //    *comments << "Got to second eval script. ";
+    //}
+    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_BASE, serror, comments))
         // serror is set
         return false;
+    //if (comments != nullptr) {
+    //    *comments << "Second eval script passed. ";
+    //}
     if (stack.empty())
         return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
     if (CastToBool(stack.back()) == false)

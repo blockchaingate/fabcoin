@@ -61,6 +61,7 @@ enum txnouttype
     TX_WITNESS_V0_KEYHASH,
     TX_CREATE,
     TX_CALL,
+    TX_AGRREGATE_SIGNATURE //<- newly added
 };
 
 class CNoDestination {

@@ -648,7 +648,7 @@ UniValue createcontract(const JSONRPCRequest& request)
         bytecode = bytecode.substr(10);
     }
     */
-    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if ((uint32_t) chainActive.Height() <  Params().GetConsensus().ContractHeight  )
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     if(bytecode.size() % 2 != 0 || !CheckHex(bytecode))
@@ -861,7 +861,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
                             "\nExamples:\n" +
             HelpExampleCli("sendtocontract", "\"c6ca2697719d00446d4ea51f6fac8fd1e9310214\" \"54f6127f\"") + HelpExampleCli("sendtocontract", "\"c6ca2697719d00446d4ea51f6fac8fd1e9310214\" \"54f6127f\" 12.0015 6000000 " + FormatMoney(minGasPrice) + " \"QM72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\""));
 
-    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if ((uint32_t) chainActive.Height() <  Params().GetConsensus().ContractHeight  )
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     std::string contractaddress = request.params[0].get_str();

@@ -162,7 +162,7 @@ public:
 
     CondensingTX(FascState* _state, const std::vector<TransferInfo>& _transfers, const FascTransaction& _transaction, std::set<dev::Address> _deleteAddresses = std::set<dev::Address>()) : transfers(_transfers), deleteAddresses(_deleteAddresses), transaction(_transaction), state(_state) {}
 
-    CTransaction createCondensingTX();
+    CTransaction createCondensingTX(const std::vector<std::vector<uint8_t> > &aggregationData, const dev::h160 &contractAddress);
 
     std::unordered_map<dev::Address, Vin> createVin(const CTransaction& tx);
 

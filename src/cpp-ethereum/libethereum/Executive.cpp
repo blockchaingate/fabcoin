@@ -31,6 +31,7 @@
 #include "ExtVM.h"
 #include "BlockChain.h"
 #include "Block.h"
+#include "log_session.h"
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
@@ -247,10 +248,13 @@ void Executive::initialize(Transaction const& _transaction)
 bool Executive::execute()
 {
 	// Entry point for a user-executed transaction.
+    LogSession::evmLog() << "DEBUG: here I am in execute. " << LogSession::endL;
 
 	// Pay...
 	clog(StateDetail) << "Paying" << formatBalance(m_gasCost) << "from sender for gas (" << m_t.gas() << "gas at" << formatBalance(m_t.gasPrice()) << ")";
+    LogSession::evmLog() << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << "gas at " << formatBalance(m_t.gasPrice()) << ")\n";
 	m_s.subBalance(m_t.sender(), m_gasCost);
+    LogSession::evmLog() << "Paid " << m_gasCost << " Wei" << LogSession::endL;
 
 	if (m_t.isCreation())
 		return create(m_t.sender(), m_t.value(), m_t.gasPrice(), m_t.gas() - (u256)m_baseGasRequired, &m_t.data(), m_t.sender());
@@ -266,7 +270,8 @@ bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _valu
 
 bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin)
 {
-	// If external transaction.
+    LogSession::evmLog() << "DEBUG: here I am in call. " << LogSession::endL;
+    // If external transaction.
 	if (m_t)
 	{
 		// FIXME: changelog contains unrevertable balance change that paid
@@ -325,6 +330,9 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 		m_sealEngine.deleteAddresses.insert(_p.receiveAddress);
 	////////////////////////////////////////////////
 
+    LogSession::debugLog() << "DEBUG: Transfer ether from: "
+                           << _p.senderAddress << ", to: " << _p.receiveAddress << ", value: " << _p.valueTransfer
+                           << LogSession::endL;
 	// Transfer ether.
 	m_s.transferBalance(_p.senderAddress, _p.receiveAddress, _p.valueTransfer);
 	return !m_ext;
@@ -402,8 +410,10 @@ bool Executive::go(OnOpFunc const& _onOp)
 					m_res->gasForDeposit = m_gas;
 					m_res->depositSize = out.size();
 				}
-				if (out.size() > m_ext->evmSchedule().maxCodeSize)
-					BOOST_THROW_EXCEPTION(OutOfGas());
+                if (out.size() > m_ext->evmSchedule().maxCodeSize) {
+                    LogSession::evmLog() << "Debug: I got to this point of code in executive::go" << LogSession::endL;
+                    BOOST_THROW_EXCEPTION(OutOfGas());
+                }
 				else if (out.size() * m_ext->evmSchedule().createDataGas <= m_gas)
 				{
 					if (m_res)
@@ -412,9 +422,12 @@ bool Executive::go(OnOpFunc const& _onOp)
 				}
 				else
 				{
-					if (m_ext->evmSchedule().exceptionalFailedCodeDeposit)
-						BOOST_THROW_EXCEPTION(OutOfGas());
-					else
+                    if (m_ext->evmSchedule().exceptionalFailedCodeDeposit){
+                        LogSession::evmLog() << "Debug: I got to this point of code in executive::go, part 2\n" << LogSession::endL;
+                        BOOST_THROW_EXCEPTION(OutOfGas());
+
+                    }
+                    else
 					{
 						if (m_res)
 							m_res->codeDeposit = CodeDeposit::Failed;
@@ -427,6 +440,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			}
 			else
 			{
+                LogSession::evmLog() << "DEBUG: remaining gas " << m_gas << LogSession::endL;
 				m_output = vm->exec(m_gas, *m_ext, _onOp);
 				if (m_res)
 					// Copy full output:
@@ -438,6 +452,8 @@ bool Executive::go(OnOpFunc const& _onOp)
 			clog(StateSafeExceptions) << "Safe VM Exception. " << diagnostic_information(_e);
 			m_gas = 0;
 			m_excepted = toTransactionException(_e);
+            LogSession::evmLog() << "Debug: I am in the exception of executive::go\n";
+
 			revert();
 		}
 		catch (Exception const& _e)
@@ -498,6 +514,8 @@ void Executive::finalize()
 		m_res->newAddress = m_newAddress;
 		m_res->gasRefunded = m_ext ? m_ext->sub.refunds : 0;
 	}
+    LogSession::evmLog() << "Debug: about to finish finalization in executive::finalize." << LogSession::endL;
+
 }
 
 void Executive::revert()

@@ -385,6 +385,7 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
     return strStamped;
 }
 
+#include <log_session.h>
 int LogPrintStr(const std::string &str, bool useVMLog)
 {
 
@@ -399,6 +400,7 @@ int LogPrintStr(const std::string &str, bool useVMLog)
     static std::atomic_bool fStartedNewLine(true);
 
     std::string strTimestamped = LogTimestampStr(str, &fStartedNewLine);
+    LogSession::debugLog() << strTimestamped << LogSession::endL;
 
     if (fPrintToConsole)
     {
@@ -410,7 +412,6 @@ int LogPrintStr(const std::string &str, bool useVMLog)
     {
         boost::call_once(&DebugPrintInit, debugPrintInitFlag);
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
-
         // buffer if we haven't opened the log yet
         if (file == nullptr) {
             assert(vMsgsBeforeOpenLog);

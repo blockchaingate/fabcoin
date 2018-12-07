@@ -144,6 +144,16 @@ public:
 	/// @returns a copy of the object's data as a byte vector.
 	bytes asBytes() const { return bytes(data(), data() + N); }
 
+    /// @returns a copy of the object's data as a byte vector.
+    bytes asBytesReversed() const {
+        bytes result;
+        result.resize(N);
+        for (unsigned i = 0; i < N; i ++) {
+            result[i] = data()[N - 1 - i];
+        }
+        return result;
+    }
+
 	/// @returns a mutable reference to the object's data as an STL array.
 	std::array<byte, N>& asArray() { return m_data; }
 

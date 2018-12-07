@@ -17,6 +17,7 @@
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
+#include <log_session.h>
 #include <httpserver.h>
 #include <httprpc.h>
 #include <key.h>
@@ -31,6 +32,7 @@
 #include <rpc/server.h>
 #include <rpc/register.h>
 #include <rpc/blockchain.h>
+#include <rpc/aggregate_signature_test.h>
 #include <script/standard.h>
 #include <script/sigcache.h>
 #include <scheduler.h>
@@ -40,6 +42,7 @@
 #include <torcontrol.h>
 #include <ui_interface.h>
 #include <util.h>
+#include <utilstrencodings.h>
 #include <utilmoneystr.h>
 #include <validationinterface.h>
 #ifdef ENABLE_WALLET
@@ -61,6 +64,7 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
+#include <encodings_crypto.h>
 
 #if ENABLE_ZMQ
 #include <zmq/zmqnotificationinterface.h>
@@ -930,6 +934,24 @@ bool AppInitBasicSetup()
     return true;
 }
 
+void ParseKanbanId()
+{
+    std::string& kanbanId = CBaseChainParams::kanbanId;
+    std::vector<unsigned char>& kanbanIdBytes = CBaseChainParams::kanbanIdBytes;
+    kanbanId = gArgs.GetArg("-kanbanSmartContractId", "");
+    std::stringstream errorStream;
+    if (!Encodings::fromHex(kanbanId, kanbanIdBytes, &errorStream)) {
+        LogSession::debugLog() << "Could not hex-decode the input kanban id: "
+                               << CBaseChainParams::kanbanId << ". " << errorStream.str() << LogSession::endL;
+        LogSession::debugLog() << "Clearing the kanban id. " << LogSession::endL;
+        kanbanId = "";
+        kanbanIdBytes.clear();
+    } else {
+        kanbanId = Encodings::toHexString(kanbanIdBytes); //<- ensure id string is encoded standardly (lower case).
+    }
+    LogSession::debugLog() << "DEBUG: got kanban id: " << CBaseChainParams::kanbanId << LogSession::endL;
+}
+
 bool AppInitParameterInteraction()
 {
     const CChainParams& chainparams = Params();
@@ -1009,7 +1031,6 @@ bool AppInitParameterInteraction()
 
     if (gArgs.IsArgSet("-blockminsize"))
         InitWarning("Unsupported argument -blockminsize ignored.");
-
     // Checkmempool and checkblockindex default to true in regtest mode
     int ratio = std::min<int>(std::max<int>(gArgs.GetArg("-checkmempool", chainparams.DefaultConsistencyChecks() ? 1 : 0), 0), 1000000);
     if (ratio != 0) {
@@ -1080,7 +1101,13 @@ bool AppInitParameterInteraction()
         fPruneMode = true;
     }
 
+    ParseKanbanId();
+
     RegisterAllCoreRPCCommands(tableRPC);
+    if (Params().IncludeTestCommands()) {
+        RegisterTestCommands(tableRPC);
+    }
+
 #ifdef ENABLE_WALLET
     RegisterWalletRPCCommands(tableRPC);
 #endif

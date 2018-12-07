@@ -233,6 +233,21 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
     return nResult;
 }
 
+std::string CCoinsViewCache::ToString() const
+{
+    std::stringstream out;
+    int counter = 0;
+    int total = this->cacheCoins.size();
+    out << "Coins view with: " << counter << " entries. ";
+    for (auto iterator = this->cacheCoins.begin(); iterator != this->cacheCoins.end(); iterator ++) {
+        const COutPoint& current = iterator->first;
+        counter ++;
+        out << "Coin " << counter  << " out of " << total  << ": " << current.ToString() << "<br>\n";
+    }
+    return out.str();
+
+}
+
 bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const
 {
     if (!tx.IsCoinBase()) {

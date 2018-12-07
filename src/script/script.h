@@ -186,6 +186,9 @@ enum opcodetype
     OP_CALL = 0xc2,
     OP_SPEND = 0xc3,
 
+    //Aggregate signature
+    OP_AGGREGATEVERIFY = 0xd1,
+
     // template matching params
     OP_GAS_PRICE = 0xf5,
     OP_VERSION = 0xf6,
@@ -667,6 +670,7 @@ public:
      */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsPayToAggregateSignature() const;
     bool IsPayToScriptHash() const;
     ///////////////////////////////////////////////// // fasc
     bool IsPayToPubkey() const;
@@ -715,6 +719,7 @@ public:
         CScriptBase::clear();
         shrink_to_fit();
     }
+    std::string ToString() const;
 };
 
 struct CScriptWitness

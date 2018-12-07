@@ -27,6 +27,7 @@ const char* GetTxnOutputType(txnouttype t)
     switch (t)
     {
     case TX_NONSTANDARD: return "nonstandard";
+    case TX_AGRREGATE_SIGNATURE: return "aggregate_signature";
     case TX_PUBKEY: return "pubkey";
     case TX_PUBKEYHASH: return "pubkeyhash";
     case TX_SCRIPTHASH: return "scripthash";
@@ -66,6 +67,9 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
         // Call contract tx
         mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
+
+        // Aggregate signature
+        mTemplates.insert(std::make_pair(TX_AGRREGATE_SIGNATURE, CScript() << OP_DATA << OP_AGGREGATEVERIFY));
     }
 
     vSolutionsRet.clear();
@@ -77,6 +81,10 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         typeRet = TX_SCRIPTHASH;
         std::vector<unsigned char> hashBytes(scriptPubKey.begin()+2, scriptPubKey.begin()+22);
         vSolutionsRet.push_back(hashBytes);
+        return true;
+    }
+    if (scriptPubKey.IsPayToAggregateSignature()) {
+        typeRet = TX_AGRREGATE_SIGNATURE;
         return true;
     }
 

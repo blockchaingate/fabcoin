@@ -80,6 +80,19 @@ void InitSignatureCache()
             (nElems*sizeof(uint256)) >>20, (nMaxCacheSize*2)>>20, nElems);
 }
 
+void CachingTransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        return;
+    }
+    output.hashOutputs = this->txdata->hashOutputs;
+    output.hashPrevouts = this->txdata->hashPrevouts;
+    output.hashSequence = this->txdata->hashSequence;
+}
+
 bool CachingTransactionSignatureChecker::VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const
 {
     uint256 entry;
