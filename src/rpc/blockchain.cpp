@@ -1012,7 +1012,7 @@ UniValue getblock(const JSONRPCRequest& request)
         // block).
         throw JSONRPCError(RPC_MISC_ERROR, "Block not found on disk");
 
-    LogPrintf("debug getblock()=%s", block.ToString());
+    //LogPrintf("debug getblock()=%s", block.ToString());
 
     if (verbosity <= 0)
     {

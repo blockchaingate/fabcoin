@@ -38,7 +38,16 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlockHead
         // Reduce the difficulty of the first forked block by 100x and keep it for N blocks.
         if (nHeight == params.LWMAHeight) 
         {
-            return ReduceDifficultyBy(pindexPrev, 100, params);
+            if( Params().NetworkIDString() == CBaseChainParams::MAIN )
+            {
+                LogPrintf("Use minimum difficulty for the first N blocks since forking. height=%d\n", nHeight);
+                return UintToArith256(params.PowLimit(true)).GetCompact();
+            }
+            else
+            {
+                // Reduce the difficulty of the first forked block by 100x and keep it for N blocks.
+                return ReduceDifficultyBy(pindexPrev, 100, params);
+            }
         } 
         else 
         {

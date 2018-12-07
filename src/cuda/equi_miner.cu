@@ -16,6 +16,9 @@
 
 #define WN	184
 #define WK	7
+#ifndef MAX_GPUS
+#define MAX_GPUS 128
+#endif
 #define RESTBITS	2 
 
 #define NDIGITS		(WK+1)
@@ -57,6 +60,10 @@ static const u32 NBLOCKS = (NHASHES + HASHESPERBLAKE - 1) / HASHESPERBLAKE;
 static const u32 MAXSOLS = 10;
 
 static const u32 HASHLEN = (WN+7)/8;
+
+//std::mutex dev_init;
+int dev_init_done184[MAX_GPUS] = { 0 };
+
 void setheader(blake2b_state *ctx, const unsigned char *header, const u32 headerLen, const unsigned char* nce, const u32 nonceLen) 
 {
   uint32_t le_N = WN;
@@ -840,13 +847,28 @@ eq_cuda_context1847::eq_cuda_context1847(int thrid, int devid, fn_validate valid
 	sol_memory = malloc(sizeof(proof) * MAXSOLS + 4096);
 	solutions = (proof*)(((long long)sol_memory + 4095) & -4096);
 
-	checkCudaErrors(cudaSetDevice(device_id));
-	checkCudaErrors(cudaDeviceReset());
-	checkCudaErrors(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
-	checkCudaErrors(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+	if (!dev_init_done184[device_id])
+	{	
+		checkCudaErrors(cudaSetDevice(device_id));
+		checkCudaErrors(cudaDeviceReset());
+		checkCudaErrors(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
+		pctx = nullptr;
+	}
+	else
+	{
+		// create new context
+		CUdevice dev;
+
+		checkCudaDriverErrors(cuDeviceGet(&dev, device_id));
+		checkCudaDriverErrors(cuCtxCreate(&pctx, CU_CTX_SCHED_BLOCKING_SYNC, dev));
+		checkCudaDriverErrors(cuCtxPushCurrent(pctx));
+	}
+	++dev_init_done184[device_id];
+	
 	checkCudaErrors(cudaMalloc((void**)&heap0, sizeof(digit0)));
 	checkCudaErrors(cudaMalloc((void**)&heap1, sizeof(digit1)));
+
 	for (u32 r = 0; r < WK; r++)
 		if ((r & 1) == 0)
 			eq->hta.trees0[r / 2] = (bucket0 *)(heap0 + r / 2);
@@ -862,14 +884,27 @@ eq_cuda_context1847::eq_cuda_context1847(int thrid, int devid, fn_validate valid
 
 eq_cuda_context1847::~eq_cuda_context1847()
 {
-	/*checkCudaErrors(cudaFree(eq->nslots));
+	checkCudaErrors(cudaFree(eq->nslots));
 	checkCudaErrors(cudaFree(eq->sols));
-	checkCudaErrors(cudaFree(eq->hta.trees0[0]));
-	checkCudaErrors(cudaFree(eq->hta.trees1[0]));*/
-	checkCudaErrors(cudaSetDevice(device_id));
-	checkCudaErrors(cudaDeviceReset());
+	checkCudaErrors(cudaFree(heap0));
+	checkCudaErrors(cudaFree(heap1));
 	free(sol_memory);
 	delete eq;
+
+	if (pctx) 
+	{
+		// non primary thread, destroy context
+#ifdef WIN32
+		checkCudaDriverErrors(_cuCtxDestroy(pctx));
+#else
+		checkCudaDriverErrors(cuCtxDestroy(pctx));
+#endif
+	}
+	else
+	{
+		checkCudaErrors(cudaDeviceReset());
+		dev_init_done184[device_id] = 0;
+	}
 }
 
 std::vector<unsigned char> GetMinimalFromIndices(std::vector<uint32_t> indices,
@@ -877,8 +912,6 @@ std::vector<unsigned char> GetMinimalFromIndices(std::vector<uint32_t> indices,
 
 bool eq_cuda_context1847::solve(unsigned char *pblock, unsigned char *header, unsigned int headerlen)
 {
-	checkCudaErrors(cudaSetDevice(device_id)); 
-
 	eq->setheadernonce(header, headerlen-32, header+headerlen-32, 32);
 	checkCudaErrors(cudaMemcpy(device_eq, eq, sizeof(equi1847), cudaMemcpyHostToDevice));
 
