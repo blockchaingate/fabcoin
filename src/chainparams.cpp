@@ -383,7 +383,7 @@ public:
     CRegTestWithNetParams() {
         strNetworkID = CBaseChainParams::REGTESTWITHNET;
         consensus.strNetworkID = "regtestwithnet";
-        consensus.nSubsidyHalvingInterval = 150;
+        consensus.nSubsidyHalvingInterval = 3360000;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
 
