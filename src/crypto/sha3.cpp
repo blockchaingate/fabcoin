@@ -325,12 +325,20 @@ void Sha3::computeKeccak3_256(const std::string& input, std::vector<unsigned cha
     theHasher.getResultVector(output);
 }
 
-void Sha3::computeSha3_256(const std::string& input, std::vector<unsigned char>& output)
-{
+void Sha3::computeSha3_256(const std::string& input, std::vector<unsigned char>& output) {
     Sha3 theHasher;
     theHasher.flagUseKeccak = false;
     theHasher.init();
     theHasher.update(input.c_str(), input.size());
+    theHasher.finalize();
+    theHasher.getResultVector(output);
+}
+
+void Sha3::computeSha3_256(const std::vector<unsigned char>& input, std::vector<unsigned char>& output) {
+    Sha3 theHasher;
+    theHasher.flagUseKeccak = false;
+    theHasher.init();
+    theHasher.update(input.data(), input.size());
     theHasher.finalize();
     theHasher.getResultVector(output);
 }

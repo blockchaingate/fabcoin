@@ -15,6 +15,10 @@
 #include <string>
 #include <stdio.h>
 
+void avoidCompilerWarningsDefinedButNotUsedUint256Tests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(uint256_tests, BasicTestingSetup)
 
 const unsigned char R1Array[] =

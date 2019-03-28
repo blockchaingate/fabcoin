@@ -16,6 +16,11 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedMultisigTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+
 BOOST_FIXTURE_TEST_SUITE(multisig_tests, BasicTestingSetup)
 
 CScript

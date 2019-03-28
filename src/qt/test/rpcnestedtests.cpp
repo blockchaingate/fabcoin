@@ -18,6 +18,10 @@
 #include <QDir>
 #include <QtGlobal>
 
+void avoidCompilerWarningsDefinedButNotUsedRPCNestedTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static UniValue rpcNestedTest_rpc(const JSONRPCRequest& request)
 {
     if (request.fHelp) {

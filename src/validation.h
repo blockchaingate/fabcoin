@@ -47,7 +47,7 @@ extern bool fIsVMlogFile;
 extern bool fGettingValuesDGP;
 struct EthTransactionParams;
 using valtype = std::vector<unsigned char>;
-using ExtractFascTX = std::pair<std::vector<FascTransaction>, std::vector<EthTransactionParams>>;
+using ExtractFascTX = std::pair<std::vector<FascTransaction>, std::vector<EthTransactionParams> >;
 class CBlockIndex;
 class CBlockTreeDB;
 class CBloomFilter;
@@ -64,7 +64,7 @@ class CWallet;
 struct CDiskTxPos;
 struct ChainTxData;
 
-struct PrecomputedTransactionData;
+struct PrecomputedTransactionDatA;
 struct LockPoints;
 
 /** Minimum gas limit that is allowed in a transaction within a block - prevent various types of tx and mempool spam **/
@@ -180,7 +180,7 @@ static const bool DEFAULT_PEERBLOOMFILTERS = true;
 
 /** Default for -stopatheight */
 static const int DEFAULT_STOPATHEIGHT = 0;
-static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=2500000;
+static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=10000000;
 static const uint64_t DEFAULT_GAS_LIMIT_OP_SEND=250000;
 static const CAmount DEFAULT_GAS_PRICE=0.00000040*COIN;
 static const CAmount MAX_RPC_GAS_PRICE=0.00000100*COIN;
@@ -476,9 +476,17 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
  * This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
  * instead of being performed inline.
  */
-bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &view, bool fScriptChecks,
-                 unsigned int flags, bool cacheStore, PrecomputedTransactionData& txdata, std::vector<CScriptCheck> *pvChecks = NULL,
-                 std::stringstream *comments = nullptr);
+bool CheckInputs(
+    const CTransaction& tx,
+    CValidationState &state,
+    const CCoinsViewCache &view,
+    bool fScriptChecks,
+    unsigned int flags,
+    bool cacheStore,
+    PrecomputedTransactionDatA& txdata,
+    std::vector<CScriptCheck> *pvChecks = NULL,
+    std::stringstream *comments = nullptr
+);
 
 /** Apply the effects of this transaction on the UTXO set represented by view */
 void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
@@ -495,7 +503,7 @@ namespace Consensus {
  * This does not modify the UTXO set. This does not check scripts and sigs.
  * Preconditions: tx.IsCoinBase() is false.
  */
-bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight);
+bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, std::stringstream* comments);
 
 } // namespace Consensus
 
@@ -535,7 +543,7 @@ bool SequenceLocks(const CTransaction &tx, int flags, std::vector<int>* prevHeig
  *
  * See consensus/consensus.h for flag definitions.
  */
-bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp = nullptr, bool useExistingLockPoints = false);
+bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp = nullptr, bool useExistingLockPoints = false, std::stringstream *commentsOnFailure = nullptr);
 
 /**
  * Closure representing one script verification
@@ -551,16 +559,21 @@ private:
     unsigned int nFlags;
     bool cacheStore;
     ScriptError error;
-    PrecomputedTransactionData *txdata;
+    PrecomputedTransactionDatA *txdata;
 public:
-    std::string comments;
-    bool flagUseComments;
-    CScriptCheck(): amount(0), ptxTo(0), nIn(0), nFlags(0), cacheStore(false), error(SCRIPT_ERR_UNKNOWN_ERROR), flagUseComments(false) {}
-    CScriptCheck(const CScript& scriptPubKeyIn, const CAmount amountIn, const CTransaction& txToIn, unsigned int nInIn, unsigned int nFlagsIn, bool cacheIn, PrecomputedTransactionData* txdataIn, bool doUseComments = false) :
-        scriptPubKey(scriptPubKeyIn), amount(amountIn),
-        ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), cacheStore(cacheIn), error(SCRIPT_ERR_UNKNOWN_ERROR), txdata(txdataIn), flagUseComments(doUseComments) { }
+    CScriptCheck(): amount(0), ptxTo(0), nIn(0), nFlags(0), cacheStore(false), error(SCRIPT_ERR_UNKNOWN_ERROR) {}
+    CScriptCheck(
+        const CScript& scriptPubKeyIn,
+        const CAmount amountIn,
+        const CTransaction& txToIn,
+        unsigned int nInIn,
+        unsigned int nFlagsIn,
+        bool cacheIn,
+        PrecomputedTransactionDatA* txdataIn
+    ) : scriptPubKey(scriptPubKeyIn), amount(amountIn),
+        ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), cacheStore(cacheIn), error(SCRIPT_ERR_UNKNOWN_ERROR), txdata(txdataIn) { }
 
-    bool operator()();
+    bool operator()(std::stringstream* commentsOnFailureNullForNone);
 
     void swap(CScriptCheck &check) {
         scriptPubKey.swap(check.scriptPubKey);
@@ -571,8 +584,6 @@ public:
         std::swap(cacheStore, check.cacheStore);
         std::swap(error, check.error);
         std::swap(txdata, check.txdata);
-        std::swap(this->comments, check.comments);
-        std::swap(this->flagUseComments, check.flagUseComments);
     }
 
     ScriptError GetScriptError() const { return error; }
@@ -605,7 +616,7 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
 
 
 /** Check a block is completely valid from start to finish (only works on top of our current best block, with cs_main held) */
-bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true, std::stringstream *commentsOnFailure = nullptr);
 
 /** Check whether witness commitments are required for block. */
 bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
@@ -690,14 +701,26 @@ void DumpMempool();
 /** Load the mempool from disk. */
 bool LoadMempool();
 
-bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, CAmount gasRefunds, const std::vector<CTxOut>& vouts);
+bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, const std::vector<CTxOut>& vouts);
 
 //////////////////////////////////////////////////////// fasc
-std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::vector<unsigned char> opcode, const dev::Address& sender = dev::Address(), uint64_t gasLimit=0);
+std::vector<ResultExecute> CallContract(const dev::Address& addrContract, const std::vector<unsigned char>& data, const dev::Address& sender = dev::Address(), dev::u256 gasLimit=0, std::stringstream *commentsNullForNone = nullptr);
+
+class UniValue;
+bool FetchSCARShardPublicKeysInternal(
+    const std::vector<unsigned char>& contractAddressBytes,
+    const std::vector<unsigned char>& shardId,
+    std::vector<std::vector<unsigned char> >& outputPublicKeysSerialized,
+    std::stringstream* commentsOnErrorNullForNone,
+    UniValue* comments
+);
+
+UniValue executionResultToJSON(const dev::eth::ExecutionResult& exRes);
+UniValue transactionReceiptToJSON(const dev::eth::TransactionReceipt& txRec);
 
 bool CheckSenderScript(const CCoinsViewCache& view, const CTransaction& tx);
 
-bool CheckMinGasPrice(std::vector<EthTransactionParams>& etps, const uint64_t& minGasPrice);
+bool CheckMinGasPrice(std::vector<EthTransactionParams>& etps, const dev::u256 &minGasPrice);
 
 struct ByteCodeExecResult;
 
@@ -710,16 +733,22 @@ struct EthTransactionParams{
     VersionVM version;
     dev::u256 gasLimit;
     dev::u256 gasPrice;
+    dev::u256 gasLoan;
     valtype code;
     dev::Address receiveAddress;
-
-    bool operator!=(EthTransactionParams etp){
-        if(this->version.toRaw() != etp.version.toRaw() || this->gasLimit != etp.gasLimit ||
-        this->gasPrice != etp.gasPrice || this->code != etp.code ||
-        this->receiveAddress != etp.receiveAddress)
+    bool fIsOpCoversFees;
+    bool operator!=(const EthTransactionParams& etp) {
+        if (this->version.toRaw() != etp.version.toRaw() || this->gasLimit != etp.gasLimit ||
+            this->gasLoan != etp.gasLoan ||
+            this->gasPrice != etp.gasPrice || this->code != etp.code ||
+            this->receiveAddress != etp.receiveAddress ||
+            this->fIsOpCoversFees != etp.fIsOpCoversFees
+        ) {
             return true;
+        }
         return false;
     }
+    bool constructFeeCoverage(const CScript& input, std::stringstream* commentsOnFailure);
 };
 
 struct ByteCodeExecResult{
@@ -735,15 +764,15 @@ public:
 
     FascTxConverter(CTransaction tx, CCoinsViewCache* v = NULL, const std::vector<CTransactionRef>* blockTxs = NULL) : txBit(tx), view(v), blockTransactions(blockTxs){}
 
-    bool extractionFascTransactions(ExtractFascTX& fascTx);
+    bool extractionFascTransactions(ExtractFascTX& fascTx, dev::u256& outputGasLoan, std::stringstream *comments);
 
 private:
 
-    bool receiveStack(const CScript& scriptPubKey);
+    bool receiveStack(const CScript& scriptPubKey, std::stringstream* comments);
 
-    bool parseEthTXParams(EthTransactionParams& params);
+    bool parseEthTXParams(EthTransactionParams& params, std::stringstream* comments);
 
-    FascTransaction createEthTX(const EthTransactionParams& etp, const uint32_t nOut);
+    FascTransaction createEthTX(const EthTransactionParams& etp, const uint32_t nOut, std::stringstream* comments);
 
     const CTransaction txBit;
     const CCoinsViewCache* view;
@@ -757,11 +786,12 @@ class ByteCodeExec {
 
 public:
 
-    ByteCodeExec(const CBlock& _block, std::vector<FascTransaction> _txs, const uint64_t _blockGasLimit) : txs(_txs), block(_block), blockGasLimit(_blockGasLimit) {}
+    ByteCodeExec(const CBlock& _block, std::vector<FascTransaction> _txs, const dev::u256& _blockGasLimit) : txs(_txs), block(_block), blockGasLimit(_blockGasLimit) {}
 
-    bool performByteCode(dev::eth::Permanence type = dev::eth::Permanence::Committed);
+    bool performByteCode(dev::eth::Permanence type = dev::eth::Permanence::Committed, std::stringstream* commentsNullForNone = nullptr);
 
-    bool processingResults(ByteCodeExecResult& result);
+    bool processingResults(ByteCodeExecResult& result, std::stringstream* comments = nullptr);
+    bool processingOneResult(ResultExecute& oneResult, FascTransaction& oneTransaction, ByteCodeExecResult& resultBCE, std::stringstream* comments);
 
     std::vector<ResultExecute>& getResult(){ return result; }
 

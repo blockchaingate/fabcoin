@@ -5111,4 +5111,5 @@ HEADERS += \
     aggregate_schnorr_signature.h \
     encodings_crypto.h \
     rpc/aggregate_signature_test.h \
-    log_session.h
+    log_session.h \
+    script/interpreter_avoid_compiler_warnings.h

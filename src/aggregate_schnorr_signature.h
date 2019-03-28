@@ -8,12 +8,11 @@
 #include <vector>
 #include <univalue/include/univalue.h>
 #include "crypto/sha3.h"
+#include <libdevcrypto/Common.h>
 
-class Secp256k1
-{
+class Secp256k1 {
 public:
     static secp256k1_context* ContextAllocateIfNeeded(secp256k1_context*& staticPointer);
-
     static secp256k1_context* ContextForSigning(); //<- use when handling/generating secrets
     static secp256k1_context* ContextForVerification(); //<- use when handling public info
 };
@@ -21,17 +20,16 @@ public:
 class SignatureAggregate;
 class PrivateKeyKanban;
 
-
 //See the remarks before class SignatureSchnorr
 //for more info on public keys.
-class PublicKeyKanban
-{
+class PublicKeyKanban {
 public:
     secp256k1_pubkey data;
     static const int lengthPublicKeySerializationCompressed = 33;
     static const int lengthPublicKeyData = 64;
     std::string ToHexCompressed() const;
     std::string ToHexUncompressed() const;
+    void ToAddressBytesCompressed(std::vector<unsigned char>& output) const;
     std::string ToAddressUncompressedBase58() const;
     std::string ToAddressCompressedBase58() const;
     std::string ToBytesUncompressed() const;
@@ -54,25 +52,22 @@ public:
     bool MakeFromStringRecognizeFormat(const std::string& input, std::stringstream* commentsOnFailure);
     bool MakeFromBytesSerialization(const std::vector<unsigned char>& serializer, std::stringstream* commentsOnFailure);
     bool isInitialized() const;
-    bool MakeFromBytesSerializationOffset
-    (const std::vector<unsigned char>& serializer, int offset, int length, std::stringstream* commentsOnFailure);
+    bool MakeFromBytesSerializationOffset(
+        const std::vector<unsigned char>& serializer, int offset, int length, std::stringstream* commentsOnFailure
+    );
 };
 
 //See the remarks before class SignatureSchnorr
 //for more info on private keys.
-class PrivateKeyKanban
-{
+class PrivateKeyKanban {
+    //Data structure used for serialization.
+    std::vector<unsigned char> dataBuffeR;
 public:
     static const unsigned int lengthKey = 32;
-    std::vector<unsigned char> data;
+    secp256k1_scalar scalar;
     bool flagCorrespondingPublicKeyUsedWithCompressedEncoding;
-    const std::vector<unsigned char> getData() const
-    {
-        return this->data;
-    }
     template <typename inputDataType>
-    bool MakeFromByteSequenceOffset(const inputDataType& input, int offset, std::stringstream* commentsOnFailure)
-    {
+    bool MakeFromByteSequenceOffset(const inputDataType& input, int offset, std::stringstream* commentsOnFailure) {
         if (offset + PrivateKeyKanban::lengthKey > input.size()) {
             if (commentsOnFailure != 0) {
                 *commentsOnFailure
@@ -82,29 +77,36 @@ public:
             }
             return false;
         }
-        this->data.resize(PrivateKeyKanban::lengthKey);
+        this->dataBuffeR.resize(PrivateKeyKanban::lengthKey);
         for (unsigned i = 0; i < PrivateKeyKanban::lengthKey; i ++) {
-            this->data[i] = input[offset + i];
+            this->dataBuffeR[i] = input[offset + i];
         }
+        secp256k1_scalar_set_b32(&this->scalar, this->dataBuffeR.data(), 0);
         return true;
     }
     template <typename inputDataType>
-    bool MakeFromByteSequence(const inputDataType& input, std::stringstream* commentsOnFailure)
-    { return this->MakeFromByteSequenceOffset(input, 0, commentsOnFailure);
+    bool MakeFromByteSequence(const inputDataType& input, std::stringstream* commentsOnFailure) {
+        return this->MakeFromByteSequenceOffset(input, 0, commentsOnFailure);
     }
     PrivateKeyKanban();
-    bool isInitialized();
+    ~PrivateKeyKanban();
     void MakeZero();
     void MakeSmallInt(unsigned int input);
     bool MakeFromBase58WithoutCheck(const std::string& input, std::stringstream *commentsOnFailure);
     bool MakeFromBase58DetectCheck(const std::string& input, std::stringstream *commentsOnFailure);
     bool MakeFromBase58Check(const std::string& input, std::stringstream *commentsOnFailure);
     bool MakeFromUniValueRecognizeFormat(const UniValue& input, std::stringstream* commentsOnFailure);
-    std::string ToHex() const;
-    std::string ToBase58Check() const;
-    std::string ToBase58() const;
-    void ToBytesWithPrefixAndSuffix(std::vector<unsigned char>& output) const;
+    void computeScalarFromData();
+    std::vector<unsigned char>& computeDataFromScalar();
+    std::string ToHexNonConst();
+    std::string ToBase58CheckNonConst();
+    std::string ToBase58NonConst();
+    std::string ToBase58NonConstFABMainnetPrefix();
+    void ToBytesWithPrefixAndSuffixNonConst(
+        std::vector<unsigned char>& output, unsigned char *desiredPrefixNullForAuto
+    );
     void operator=(const secp256k1_scalar& other);
+    void operator=(const PrivateKeyKanban& other);
     bool operator==(const PrivateKeyKanban& other) const;
     void operator*=(const PrivateKeyKanban& other);
     void operator+=(const PrivateKeyKanban& other);
@@ -112,17 +114,46 @@ public:
     void AddToMe(const PrivateKeyKanban& other, bool otherIsSensitive);
     static bool leftSmallerThanRightByPublicKeyCompressed(const PrivateKeyKanban& left, const PrivateKeyKanban& right);
     bool ComputePublicKey(PublicKeyKanban& output, std::stringstream *commentsOnFailure__SENSITIVE__NULL_SAFE) const;
-    bool SignMessageSchnorr();
     bool GenerateRandomSecurely();
     void reset();
+};
+
+//ECDSA signature.
+//A wrapper around the secp256k1 library.
+class SignatureECDSA {
+public:
+    PrivateKeyKanban challengeR;
+    PrivateKeyKanban solutionsS;
+    std::vector<unsigned char> messageImplied;
+    PrivateKeyKanban messageScalar;
+    PublicKeyKanban publicKeyImplied;
+    std::vector<unsigned char> signatureBytes;
+    bool MakeFromBytesWithSuffixOne(const std::vector<unsigned char>& input, std::stringstream* commentsOnFailure_NULL_for_no_comments);
+    bool MakeFromBytes(const std::vector<unsigned char>& input, std::stringstream* commentsOnFailure_NULL_for_no_comments);
+    bool Verify(std::stringstream *commentsOnFailure_NULL_for_no_comments);
+    bool SignSha256Squared(PrivateKeyKanban& secretKey, std::stringstream *commentsOnFailure_NULL_for_no_comments);
+    void GetMessageHash(std::vector<unsigned char>& output);
+    bool computeMessageScalar(std::stringstream *commentsOnFailure_NULL_for_no_comments);
+};
+
+class AddressKanban {
+public:
+    static const unsigned int addressSize;
+    std::vector<unsigned char> address;
+    bool MakeFromBytes(const std::string& input, std::stringstream* commentsOnFailure) {
+        std::vector<unsigned char> inputVector;
+        inputVector.assign(input.begin(), input.end());
+        return this->MakeFromBytes(inputVector, commentsOnFailure);
+    }
+    bool MakeFromBytes(const std::vector<unsigned char>& input, std::stringstream* commentsOnFailure);
+    dev::Address ToEthereumAddress() const;
 };
 
 //Schnorr signature.
 //for documentation, google search file secp256k1_kanban.md file from
 //the project presently named kanbanGO.
 
-class SignatureSchnorr
-{
+class SignatureSchnorr {
 public:
     static unsigned char prefixSignature;
     static unsigned char prefixAggregateSignature;
@@ -152,6 +183,14 @@ public:
     bool MakeFromBase58Check(const std::string& input, std::stringstream* commentsOnFailure);
     bool MakeFromBase58WithoutCheck(const std::string& input, std::stringstream* commentsOnFailure);
     bool MakeFromBytes(const std::vector<unsigned char>& serialization, std::stringstream* commentsOnFailure);
+
+    bool Sign(
+        PrivateKeyKanban& input,
+        const std::string& message,
+        PrivateKeyKanban *desiredNonce__NULL_SAFE__ALL_OTHER_VALUES_CRITICAL_SECURITY_RISK,
+        UniValue* commentsSensitive__NULL_SAFE__SECURITY_RISK_OTHERWISE
+    );
+    bool Verify(std::stringstream *commentsOnFailure_NULL_for_no_comments);
 };
 
 ///The elements of the class are given in the order in which they are populated/used.
@@ -169,15 +208,14 @@ public:
 ///
 ///Read-access to the internals of the SignatureAggregate is allowed.
 ///
-///The two data structures are sensitive and must not be shared with anyone
+///The following two data structures are sensitive and must not be shared with anyone:
 ///
 ///
 ///myNonce_DO_Not_Disclose_To_Aggregator
 ///myPrivateKey__KEEP_SECRET
 ///
 ///All other data structures are not sensitive and can be kept in the open.
-class SignatureAggregate
-{
+class SignatureAggregate {
 public:
     static const unsigned lengthInBytesBitmapSigners;
     static const unsigned lengthInBytesUncompressedSignature;
@@ -323,8 +361,8 @@ public:
 
     SignatureSchnorr serializerSignature;
 
-    std::string aggregateSignatureUncompressed;
-    std::string aggregateSignatureComplete;
+    std::vector<unsigned char> aggregateSignatureUncompressed;
+    std::vector<unsigned char> aggregateSignatureComplete;
 
     SignatureAggregate();
 
@@ -373,41 +411,6 @@ public:
     ///variables of this class directly, but instead
     ///use the function calls below.
 
-    //This function's only goal is to serve
-    //an example of using the public interface.
-    //
-    //Please inspect the functions' code as an example of how to use
-    //the public interface of the class.
-    //
-    //The function does the following:
-    //1. Create and initialize 1 aggregator, 6 signers.
-    //2. Create private keys for the signers.
-    //3. Carry out the aggregate signature protocol twice.
-    //3.1. First signature round (will be unsuccessful).
-    //In this round, the 6th signer will fail to send a commitment (this is allowed).
-    //Later, the 5th singer (who has sent a commitment already)
-    //will fail to send a challene solution.
-    //
-    //As a result, the protocol will be aborted and no aggregate signature will be generated.
-    //
-    //3.2 Second signature round (will succeed).
-    //In this round, the 6th signer will fail to send a commitment.
-    //After the failure of the 6th signer,
-    //no further problems with the protocol will be created.
-    //The aggregate signature will then succeed.
-    //4. We verify the successful signature generated in Step 3.
-    //5. We tamper 1 bit in the signature bitmap and demonstrate that the
-    //signature is not verified.
-    //6. We tamper 1 byte in the message and demonstrate that the signature is not verified.
-    //7. We replace 1 of the public keys with another valid one and demonstrate that the signature is not verified.
-    //8. We tamper 1 byte in the second part of the signature and demonstrate the signature is not verified.
-    //9. We replace the challenge part of the signature with a valid public key and demonstrate the signature is not verified.
-    //
-    //A human-readable ascii summary of the whole procedure will be generated and returned.
-    //
-    static std::string ExampleRunSampleAggregateSignatureOutputHumanReadable();
-
-
     //Resets everything.
     void ResetNoPrivateKeyGeneration(bool isAggregator, bool isSigner);
 
@@ -425,7 +428,7 @@ public:
     //it will contain a human-readable explanation of what failed.
     bool InitializePublicKeys(const std::vector<PublicKeyKanban>& registeredSigners, std::stringstream* commentsOnFailure);
 
-    //Call this function as an aggregator to starts the signing protocol.
+    //Call this function as an aggregator to start the signing protocol.
     //
     //After calling this function, ensure that the aggregator sends the message
     //to be signed to all signers.
@@ -435,9 +438,10 @@ public:
     //
     //If the function returns false and commentsOnFailure is non-null,
     //it will contain a human-readable explanation of what failed.
-    bool TransitionAggregatorState1ToState2
-    (const std::string& message,
-     std::stringstream* commentsOnFailure);
+    bool TransitionAggregatorState1ToState2(
+        const std::string& message,
+        std::stringstream* commentsOnFailure
+    );
 
     int GetNumberOfCommittedSigners();
     //Call this function as signer to commit to the signing protocol.
@@ -463,10 +467,11 @@ public:
     //
     //Please do not use the last argument unless you know what you are doing.
     //The last argument is used for debugging to specify particular nonces for the signers.
-    bool TransitionSignerState1or2ToState3
-    (const std::string& message,
-     std::stringstream* commentsOnFailure,
-     PrivateKeyKanban* desiredNonce__NULL_SAFE__ALL_OTHER_VALUES_CRITICAL_SECURITY_RISK = nullptr);
+    bool TransitionSignerState1or2ToState3(
+        const std::string& message,
+        std::stringstream* commentsOnFailure,
+        PrivateKeyKanban* desiredNonce__NULL_SAFE__ALL_OTHER_VALUES_CRITICAL_SECURITY_RISK = nullptr
+    );
 
     //Call this function to inform the aggregator
     //of the received commitments by the signers.
@@ -489,11 +494,12 @@ public:
     //
     //Please do not use the last argument unless you know what you are doing.
     //The last argument is used for debugging to specify particular nonces for the signers.
-    bool TransitionSignerState2or3ToState4
-    (const std::vector<PublicKeyKanban>& inputCommitments,
-     const std::vector<bool>& inputCommittedSigners,
-     const std::vector<PublicKeyKanban>* publicKeys__null_allowed,
-     std::stringstream* commentsOnFailure);
+    bool TransitionSignerState2or3ToState4(
+        const std::vector<PublicKeyKanban>& inputCommitments,
+        const std::vector<bool>& inputCommittedSigners,
+        const std::vector<PublicKeyKanban>* publicKeys__null_allowed,
+        std::stringstream* commentsOnFailure
+    );
 
     //Call this function to inform the signers
     //of the agregator's challenge.
@@ -510,12 +516,13 @@ public:
     //
     //If the function returns false and commentsOnFailure is non-null,
     //it will contain a human-readable explanation of what failed.
-    bool TransitionSignerState3or4ToState5
-    (const std::vector<bool>& inputcommittedSigners,
-     PrivateKeyKanban& inputChallenge,
-     PublicKeyKanban& inputAggregateCommitment,
-     PublicKeyKanban& inputAggregatePublicKey,
-     std::stringstream* commentsOnFailure);
+    bool TransitionSignerState3or4ToState5(
+        const std::vector<bool>& inputcommittedSigners,
+        PrivateKeyKanban& inputChallenge,
+        PublicKeyKanban& inputAggregateCommitment,
+        PublicKeyKanban& inputAggregatePublicKey,
+        std::stringstream* commentsOnFailure
+    );
 
     //Call this function to inform the aggregator of
     //the solutions sent by the signers.
@@ -527,46 +534,116 @@ public:
     //
     //If the function returns false and commentsOnFailure is non-null,
     //it will contain a human-readable explanation of what failed.
-    bool TransitionSignerState4or5ToState6
-    (const std::vector<PrivateKeyKanban>& inputSolutions,
-     std::stringstream* commentsOnFailure);
+    bool TransitionSignerState4or5ToState6(
+        const std::vector<PrivateKeyKanban>& inputSolutions,
+        std::stringstream* commentsOnFailure
+    );
 
     bool Verify(std::stringstream* reasonForFailure, bool detailsOnFailure);
     void ComputeCompleteSignature();
-    bool ParsePublicKeysAndInitialize(const std::string& publicKeySerialization, std::stringstream* reasonForFailure);
+    std::vector<unsigned char> ToBytesSignatureUncompressed() {
+        this->ComputeCompleteSignature();
+        return this->aggregateSignatureUncompressed;
+    }
+    std::vector<unsigned char> ToBytesSignatureComplete() {
+        this->ComputeCompleteSignature();
+        return this->aggregateSignatureComplete;
+    }
+    bool ParsePublicKeysFromVectorAndInitialize(const std::vector<unsigned char>& publicKeySerialization, std::stringstream* reasonForFailure);
+    bool ParsePublicKeysAndInitialize(const std::vector<std::vector<unsigned char> >& publicKeysSerialized, std::stringstream* reasonForFailure);
     bool ParseUncompressedSignature(const std::string& uncompressedSignature, std::stringstream* reasonForFailure);
 
     bool parseCompleteSignature(const std::string& signatureComplete, std::stringstream* reasonForFailure);
     bool parseCompleteSignature(const std::vector<unsigned char>& signatureComplete, std::stringstream* reasonForFailure);
     std::string serializeCommittedSignersBitmap();
     bool deserializeSignersBitmapFromBigEndianBits(const std::string& inputRaw, std::stringstream* reasonForFailure);
-    bool VerifyFromSignatureComplete(const std::string& signatureComplete, const std::string& message, std::stringstream* reasonForFailure);
-    bool VerifyMessageSignaturePublicKeys(
-            std::vector<unsigned char>& message,
-            std::vector<unsigned char>& signatureUncompressed,
-            std::vector<unsigned char>& publicKeysSerialized,
-            std::stringstream* reasonForFailure,
-            bool detailsOnFailure = false
-    );
-    static bool VerifyMessageSignaturePublicKeysStatic(
-            std::vector<unsigned char>& message,
-            std::vector<unsigned char>& signatureUncompressed,
-            std::vector<unsigned char>& publicKeysSerialized,
-            std::stringstream* reasonForFailure,
-            bool detailsOnFailure = false
-    );
-};
 
-class SchnorrKanban
-{
-public:
-    bool Sign(PrivateKeyKanban& input,
+
+    // There are 3 different aggregate signature serializations:
+    // compressed, uncompressed and complete.
+    //
+    //   **Attention** In many contexts, it is important to have unique
+    //   signature encoding. If that is not the case, there are potential replay attacks
+    //   in which an attacker takes a correct transaction, changes the signature encoding,
+    //   and re-submits the transaction. Since re-encoding changes the transaction id,
+    //   the transaction will be new. This poses no problem for classical bitcoin transaction since
+    //   there, spending a transaction consumes a previous transaction and that prevents a replay.
+    //   However, for the purpose of coordinating Kanban with the foundation chain,
+    //   we need to have ancestor-less transactions. Those do not consume previous transactions and
+    //   thus hold a risk of the decode-recode-in-different-format-replay attack.
+    //
+    //   To reduce that risk, we ensure that our transactions use only the uncompressed signature encoding.
+    //
+    //1. Compressed signature. The compressed signature does not store any information
+    //   about the signing public keys. If all signers among the implied
+    //   registered public keys
+    //   participated, the compressed signature does not include the signers bitmap
+    //   (hence the "compression").
+    //
+    //    Total size: 66 or 98 bytes.
+    //  - First byte equals 0x18 (== 24).
+    //  - Next 33 + 32 = 65 bytes give a no-prefix schnorr signature seriazation.
+    //    We recall here that the first 33 bytes are a
+    //    compressed elliptic curve point, i.e., same format as a public key.
+    //    We also recall that the next 32 bytes are an exponent of a point on the elliptic curve,
+    //    i.e., same format as a 32-byte private key (no prefixes or suffixes).
+    //  - Next 32 bytes are omitted if all implied registered public keys participated in the
+    //    aggregate signature. If not all implied registered public keys participated,
+    //    then a 256-bit (=32 bytes) follows. The first bit (big-endian) of the bitmap
+    //    indicates whether the first registered node participated, the second bit
+    //    indicates the participation of the second node, and so on.
+    //    If the number of signing nodes is smaller than 256, then the extra bits must be included
+    //    and must be set to 0.
+    //    Rationale for including all bits:
+    //    1. Pros.
+    //          - Easy to implement.
+    //          - Easier to ensure unique signature encoding.
+    //    2. Cons.
+    //          - Takes more space when not all singers participated. Since this is expected to not happen
+    //            too often, the current serialization specification should be good enough.
+    //2. Uncompressed signature. This is the same as the compressed signature, except that the
+    //   signers bitmap is always included. Signature size is always 98 bytes.
+    //3. Complete signature. This signature includes a serialization of the public keys.
+    //   - The first 98 bytes are the uncompressed signature.
+    //   - The next two bytes give the number of public keys. The number is serialized big-endian.
+    //     For example, the number 259 will be serialized as: first byte: 0x01, second byte: 0x03.
+    //     Right now, there are only 256 nodes allowed per signature, which means the leading byte
+    //     is going to be non-zero only when there are exactly 256 singers. However, we keep two bytes
+    //     to reserve room for expansion of the protocol.
+    //   - The next N x 33 bytes are the compressed public keys of all signers,
+    //     where N is the number of public keys serialized in the preceding point.
+    //     The public keys must be listed in lexicographic ascending order. An example of
+    //     properly sorted public keys follows.
+    //     0201..., 021a..., 02fb..., 0300..., 030e..., 0310..., 03fa...
+    //     Here, we recall that public keys are serialized either with
+    //     prefix 02 or 03 based on the odd-ness of the y coordinate of the elliptic curve point.
+
+    bool VerifyFromSignatureComplete(
+        const std::vector<unsigned char>& signatureComplete,
         const std::string& message,
-        SignatureSchnorr& output,
-        PrivateKeyKanban *desiredNonce__NULL_SAFE__ALL_OTHER_VALUES_CRITICAL_SECURITY_RISK,
-        UniValue* commentsSensitive__NULL_SAFE__SECURITY_RISK_OTHERWISE
+        std::stringstream* reasonForFailure
     );
-    bool Verify(SignatureSchnorr& output, std::stringstream *commentsOnFailure_NULL_for_no_comments);
+    bool VerifyMessageSignatureUncompressedPublicKeysSerialized(
+        std::vector<unsigned char>& message,
+        std::vector<unsigned char>& signatureUncompressed,
+        std::vector<unsigned char>& publicKeysSerialized,
+        std::stringstream* reasonForFailure,
+        bool detailsOnFailure = false
+    );
+    static bool VerifyMessageSignatureUncompressedPublicKeysDeserialized(
+        const std::vector<unsigned char>& message,
+        const std::vector<unsigned char>& signatureUncompressed,
+        const std::vector<std::vector<unsigned char> >& publicKeysSerialized,
+        std::stringstream* reasonForFailure,
+        bool detailsOnFailure = false
+    );
+    static bool VerifyMessageSignatureUncompressedPublicKeysSerializedStatic(
+        std::vector<unsigned char>& message,
+        std::vector<unsigned char>& signatureUncompressed,
+        std::vector<unsigned char>& publicKeysSerialized,
+        std::stringstream* reasonForFailure,
+        bool detailsOnFailure = false
+    );
 };
 
 #endif

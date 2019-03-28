@@ -19,6 +19,10 @@
 #include <QDebug>
 #include <QSslCertificate>
 
+void avoidCompilerWarningsDefinedButNotUsedPaymentRequestPlus() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 class SSLVerifyError : public std::runtime_error
 {
 public:

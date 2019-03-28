@@ -75,6 +75,10 @@ extern double NSAppKitVersionNumber;
 #endif
 #endif
 
+void avoidCompilerWarningsDefinedButNotUsedGUIUtils() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace GUIUtil {
 
 QString dateTimeStr(const QDateTime &date)

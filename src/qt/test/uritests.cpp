@@ -9,6 +9,10 @@
 
 #include <QUrl>
 
+void avoidCompilerWarningsDefinedButNotUsedURITests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 void URITests::uriTests()
 {
     SendCoinsRecipient rv;

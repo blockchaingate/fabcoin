@@ -529,7 +529,7 @@ std::pair<ExecutionResult, TransactionReceipt> State::execute(EnvInfo const& _en
 
 	// OK - transaction looks valid - execute.
 	u256 startGasUsed = _envInfo.gasUsed();
-	if (!e.execute())
+    if (!e.execute(nullptr))
 		e.go(onOp);
 	e.finalize();
 

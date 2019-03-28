@@ -10,6 +10,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedSkipListTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 #define SKIPLIST_LENGTH 300000
 
 BOOST_FIXTURE_TEST_SUITE(skiplist_tests, BasicTestingSetup)

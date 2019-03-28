@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionRecord() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 /* Convert the destination into hash160 string for contract.
  */
 std::string toStringHash160(const CTxDestination& address)
@@ -77,7 +81,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 if (ExtractDestination(txout.scriptPubKey, address) && IsMine(*wallet, address))
                 {
                     // Received by Fabcoin Address
-                    if(wtx.tx->HasCreateOrCall())
+                    if(wtx.tx->HasCreateOrCallInOutputs())
                     {
                         sub.type = TransactionRecord::ContractRecv;
                         sub.address = toStringHash160(address);
@@ -156,7 +160,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     continue;
                 }
 
-                if(wtx.tx->HasCreateOrCall())
+                if(wtx.tx->HasCreateOrCallInOutputs())
                     break;
 
                 CTxDestination address;
@@ -185,7 +189,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 parts.append(sub);
             }
 
-            if(wtx.tx->HasCreateOrCall()){
+            if(wtx.tx->HasCreateOrCallInOutputs()){
                 TransactionRecord sub(hash, nTime);
                 sub.idx = 0;
                 sub.credit = nNet;

@@ -15,6 +15,10 @@
 
 #include <unordered_map>
 
+void avoidCompilerWarningsDefinedButNotUsedBlockEncodings() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 CBlockHeaderAndShortTxIDs::CBlockHeaderAndShortTxIDs(const CBlock& block, bool fUseWTXID) :
         nonce(GetRand(std::numeric_limits<uint64_t>::max())),
         shorttxids(block.vtx.size() - 1), prefilledtxn(1), header(block) {

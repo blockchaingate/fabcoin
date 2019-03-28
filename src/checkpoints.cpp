@@ -12,6 +12,11 @@
 
 #include <stdint.h>
 
+void avoidCompilerWarningsDefinedButNotUsed() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+
 static const int nCheckpointSpan = 800;
 
 namespace Checkpoints {

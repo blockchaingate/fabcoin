@@ -12,6 +12,10 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCryptoTestsWallet() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(wallet_crypto, BasicTestingSetup)
 
 bool OldSetKeyFromPassphrase(const SecureString& strKeyData, const std::vector<unsigned char>& chSalt, const unsigned int nRounds, const unsigned int nDerivationMethod, unsigned char* chKey, unsigned char* chIV)

@@ -44,6 +44,10 @@
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedMining() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 unsigned int ParseConfirmTarget(const UniValue& value)
 {
     int target = value.get_int();
@@ -175,8 +179,6 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     int nHeightEnd = 0;
     int nHeight = 0;
     int nCounter = 0;
-    int headerlen = 0;
-
     {   // Don't keep cs_main locked
         LOCK(cs_main);
         nHeight = chainActive.Height();
@@ -196,8 +198,9 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     conf.allGPU = gArgs.GetBoolArg("-allgpu", 0);
     conf.forceGenProcLimit = gArgs.GetBoolArg("-forcenolimit", false);
 
-    uint8_t * header = NULL;
 #ifdef ENABLE_GPU
+    int headerlen = 0;
+    uint8_t * header = NULL;
     GPUSolver * g_solver = NULL;
     if( conf.useGPU )
     {        
@@ -208,9 +211,18 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     while (nHeight < nHeightEnd)
     {
+        std::stringstream comments;
+        std::stringstream* commentsPointer = &comments;
 
         //std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
-        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true, nullptr, 0, GetAdjustedTime()+POW_MINER_MAX_TIME));
+        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(
+            coinbaseScript->reserveScript,
+            commentsPointer,
+            true,
+            nullptr,
+            0,
+            GetAdjustedTime() + POW_MINER_MAX_TIME
+        ));
 
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
@@ -274,7 +286,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 pblock->nNonce = ArithToUint256(UintToArith256(pblock->nNonce) + 1);
                 ++nCounter;
 
-                if( conf.useGPU )
+                if (conf.useGPU)
                 {
 #ifdef ENABLE_GPU
                     headerlen = ((uint32_t)(nHeight+1) < (uint32_t)params.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
@@ -300,7 +312,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 };
 
                 bool found = false;
-                if( conf.useGPU )
+                if (conf.useGPU)
                 {
 #ifdef ENABLE_GPU
                     found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, false, curr_state);
@@ -323,7 +335,11 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
         if (!ProcessNewBlock(Params(), shared_pblock, true, nullptr))
             throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
         ++nHeight;
-        blockHashes.push_back(pblock->GetHash().GetHex());
+        UniValue currentBlock;
+        currentBlock.setObject();
+        currentBlock.pushKV("hash", pblock->GetHash().GetHex());
+        currentBlock.pushKV("comments", comments.str());
+        blockHashes.push_back(currentBlock);
 
         //mark script as important because it was used at least for one coinbase output if the script came from the wallet
         if (keepScript)
@@ -609,7 +625,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             // TestBlockValidity only supports blocks built on the current Tip
             if (block.hashPrevBlock != pindexPrev->GetBlockHash())
                 return "inconclusive-not-best-prevblk";
-            if (block.nHeight != (uint32_t)pindexPrev->nHeight + 1)
+            if (block.nHeight != (uint32_t) pindexPrev->nHeight + 1)
                 return "inconclusive-bad-height";
             CValidationState state;
             TestBlockValidity(state, Params(), block, pindexPrev, false, true);
@@ -719,10 +735,16 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
 
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
-        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(scriptDummy, fSupportsSegwit);
-        if (!pblocktemplate)
-            throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
+        std::stringstream errorStreaM;
+        std::stringstream* errorStreamPointer = &errorStreaM;
 
+        pblocktemplate = BlockAssembler(Params()).CreateNewBlock(
+            scriptDummy, errorStreamPointer, fSupportsSegwit, 0, 0, 0
+        );
+        if (!pblocktemplate) {
+            errorStreaM << "Out of memory. ";
+            throw JSONRPCError(RPC_OUT_OF_MEMORY, errorStreaM.str());
+        }
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }

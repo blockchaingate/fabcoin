@@ -88,7 +88,7 @@ protected:
 
     Consensus::Params consensus;
     CMessageHeader::MessageStartChars pchMessageStart;
-    int nDefaultPort;
+    uint16_t nDefaultPort;
     uint64_t nPruneAfterHeight;
     unsigned int nEquihashN = 0;
     unsigned int nEquihashK = 0;

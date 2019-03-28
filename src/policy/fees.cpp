@@ -16,6 +16,9 @@
 
 //??? static constexpr double INF_FEERATE = 1e99;
 
+void avoidCompilerWarningsDefinedButNotUsedFees() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 std::string StringForFeeEstimateHorizon(FeeEstimateHorizon horizon) {
     static const std::map<FeeEstimateHorizon, std::string> horizon_strings = {
@@ -565,6 +568,7 @@ CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee)
     shortStats = new TxConfirmStats(buckets, bucketMap, SHORT_BLOCK_PERIODS, SHORT_DECAY, SHORT_SCALE);
     longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 }
+
 CBlockPolicyEstimator::~CBlockPolicyEstimator()
 {
     delete feeStats;
@@ -572,7 +576,7 @@ CBlockPolicyEstimator::~CBlockPolicyEstimator()
     delete longStats;
 }
 
-void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate)
+void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate, std::stringstream* comments)
 {
     LOCK(cs_feeEstimator);
     unsigned int txHeight = entry.GetHeight();
@@ -638,9 +642,10 @@ bool CBlockPolicyEstimator::processBlockTx(unsigned int nBlockHeight, const CTxM
     return true;
 }
 
-void CBlockPolicyEstimator::processBlock(unsigned int nBlockHeight,
-                                         std::vector<const CTxMemPoolEntry*>& entries)
-{
+void CBlockPolicyEstimator::processBlock(
+    unsigned int nBlockHeight,
+    std::vector<const CTxMemPoolEntry*>& entries
+) {
     LOCK(cs_feeEstimator);
     if (nBlockHeight <= nBestSeenHeight) {
         // Ignore side chains and re-orgs; assuming they are random
@@ -687,8 +692,7 @@ void CBlockPolicyEstimator::processBlock(unsigned int nBlockHeight,
     untrackedTxs = 0;
 }
 
-CFeeRate CBlockPolicyEstimator::estimateFee(int confTarget) const
-{
+CFeeRate CBlockPolicyEstimator::estimateFee(int confTarget) const {
     // It's not possible to get reasonable estimates for confTarget of 1
     if (confTarget <= 1)
         return CFeeRate(0);
@@ -696,8 +700,9 @@ CFeeRate CBlockPolicyEstimator::estimateFee(int confTarget) const
     return estimateRawFee(confTarget, DOUBLE_SUCCESS_PCT, FeeEstimateHorizon::MED_HALFLIFE);
 }
 
-CFeeRate CBlockPolicyEstimator::estimateRawFee(int confTarget, double successThreshold, FeeEstimateHorizon horizon, EstimationResult* result) const
-{
+CFeeRate CBlockPolicyEstimator::estimateRawFee(
+    int confTarget, double successThreshold, FeeEstimateHorizon horizon, EstimationResult* result
+) const {
     TxConfirmStats* stats;
     double sufficientTxs = SUFFICIENT_FEETXS;
     switch (horizon) {
@@ -733,8 +738,8 @@ CFeeRate CBlockPolicyEstimator::estimateRawFee(int confTarget, double successThr
 
     return CFeeRate(median);
 }
-CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
-{
+
+CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool) {
     if (answerFoundAtTarget)
         *answerFoundAtTarget = confTarget;
     // Return failure if trying to analyze a target we're not tracking
@@ -764,12 +769,11 @@ CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoun
     return CFeeRate(median);
 }
 
-double CBlockPolicyEstimator::estimatePriority(int confTarget)
-{
+double CBlockPolicyEstimator::estimatePriority(int confTarget) {
     return -1;
 }
-unsigned int CBlockPolicyEstimator::HighestTargetTracked(FeeEstimateHorizon horizon) const
-{
+
+unsigned int CBlockPolicyEstimator::HighestTargetTracked(FeeEstimateHorizon horizon) const {
     switch (horizon) {
     case FeeEstimateHorizon::SHORT_HALFLIFE: {
         return shortStats->GetMaxConfirms();

@@ -104,7 +104,7 @@ uint64_t VM::gasForMem(u512 _size)
 
 void VM::updateIOGas()
 {
-    LogSession::evmLog() << "DEBUG: updateIOGas, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
+    //LogSession::evmLog() << "DEBUG: updateIOGas, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
 	if (m_io_gas < m_runGas)
 		throwOutOfGas();
 	m_io_gas -= m_runGas;
@@ -115,7 +115,7 @@ void VM::updateGas()
 	if (m_newMemSize > m_mem.size())
 		m_runGas += toInt63(gasForMem(m_newMemSize) - gasForMem(m_mem.size()));
 	m_runGas += (m_schedule->copyGas * ((m_copyMemSize + 31) / 32));
-    LogSession::evmLog() << "DEBUG: updateGAS, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
+    //LogSession::evmLog() << "DEBUG: updateGAS, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
 	if (m_io_gas < m_runGas)
 		throwOutOfGas();
 }
@@ -162,26 +162,33 @@ void VM::fetchInstruction()
 //
 // interpreter entry point
 
-owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
+owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp, std::stringstream* comments)
 {
 	io_gas = &_io_gas;
 	m_io_gas = uint64_t(_io_gas);
-	m_ext = &_ext;
-	m_schedule = &m_ext->evmSchedule();
+    this->m_ext = &_ext;
+    this->m_schedule = &m_ext->evmSchedule();
 	m_onOp = _onOp;
 	m_onFail = &VM::onOperation;
+    //if (comments != nullptr) {
+    //    *comments << "DEBUG: about to execute VM...\n";
+    //}
 	
 	try
 	{
 		// trampoline to minimize depth of call stack when calling out
-		m_bounce = &VM::initEntry;
+        this->m_bounce = &VM::initEntry;
 		do
-			(this->*m_bounce)();
-		while (m_bounce);
+            (this->*m_bounce)(comments);
+        while (this->m_bounce != nullptr);
 		
 	}
 	catch (...)
 	{
+        //if (comments != nullptr) {
+        //    *comments << "DEBUG: exception was raised during evm execution.\n";
+        //}
+
 		*io_gas = m_io_gas;
 		throw;
 	}
@@ -193,9 +200,12 @@ owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
 //
 // main interpreter loop and switch
 //
-void VM::interpretCases()
+void VM::interpretCases(std::stringstream* commentsOnFailure)
 {
-    LogSession::evmLog() << "DEBUG: running instruction: " << uint8_t(m_OP) << ", remaining gas: " << m_io_gas << LogSession::endL;
+    //LogSession::evmLog() << "DEBUG: running instruction: " << int(m_OP) << ", remaining gas: " << m_io_gas << LogSession::endL;
+    //if (commentsOnFailure != nullptr) {
+    //    *commentsOnFailure << "DEBUG: about to interpret: " << (int) this->m_OP << ".\n";
+    //}
     INIT_CASES
 	DO_CASES
 	{	
@@ -205,20 +215,24 @@ void VM::interpretCases()
 		
 		CASE(CREATE)
 		{
-			m_bounce = &VM::caseCreate;
+            this->m_bounce = &VM::caseCreate;
 		}
 		BREAK;
 
 		CASE(DELEGATECALL)
 
 			// Pre-homestead
-			if (!m_schedule->haveDelegateCall)
-				throwBadInstruction();
+        if (!m_schedule->haveDelegateCall) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "DEBUG: about to throw exception due to delegate call.\n";
+            }
+            throwBadInstruction();
+        }
 
 		CASE(CALL)
 		CASE(CALLCODE)
 		{
-			m_bounce = &VM::caseCall;
+            this->m_bounce = &VM::caseCall;
 		}
 		BREAK
 
@@ -319,10 +333,18 @@ void VM::interpretCases()
 
 		CASE(LOG0)
 		{
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: Log0 executed.\n";
+            //}
 			logGasMem();
 			ON_OP();
 			updateIOGas();
 
+            LogEntry theEntry = LogEntry(
+                this->m_ext->myAddress,
+                {},
+                (bytesConstRef(m_mem.data() + (uint64_t) *m_SP, (uint64_t) *(m_SP - 1))).toBytes()
+            );
 			m_ext->log({}, bytesConstRef(m_mem.data() + (uint64_t)*m_SP, (uint64_t)*(m_SP - 1)));
 			m_SP -= 2;
 		}
@@ -330,7 +352,10 @@ void VM::interpretCases()
 
 		CASE(LOG1)
 		{
-			logGasMem();
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: Log1 executed.\n";
+            //}
+            logGasMem();
 			ON_OP();
 			updateIOGas();
 
@@ -341,7 +366,10 @@ void VM::interpretCases()
 
 		CASE(LOG2)
 		{
-			logGasMem();
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: Log2 executed.\n";
+            //}
+            logGasMem();
 			ON_OP();
 			updateIOGas();
 
@@ -352,7 +380,10 @@ void VM::interpretCases()
 
 		CASE(LOG3)
 		{
-			logGasMem();
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: Log3 executed.\n";
+            //}
+            logGasMem();
 			ON_OP();
 			updateIOGas();
 
@@ -363,7 +394,10 @@ void VM::interpretCases()
 
 		CASE(LOG4)
 		{
-			logGasMem();
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: Log4 executed.\n";
+            //}
+            logGasMem();
 			ON_OP();
 			updateIOGas();
 
@@ -830,6 +864,9 @@ void VM::interpretCases()
 			++m_PC;
 			m_PC += m_code[m_PC];
 #else
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Bad instruction: " << (int) this->m_OP;
+            }
 			throwBadInstruction();
 #endif
 		}
@@ -978,6 +1015,9 @@ void VM::interpretCases()
 		CASE(JUMPSUBV)
 		CASE(RETURNSUB)
 		{
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: throwing exception at CASE(JUMPTO), CASE(JUMPIF)..." << (int) this->m_OP;
+            //}
 			throwBadInstruction();
 		}
 		CONTINUE
@@ -992,6 +1032,10 @@ void VM::interpretCases()
 			m_PC = uint64_t(*m_SP);
 			--m_SP;
 #else
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: throwing exception before jumpc. " << (int) this->m_OP;
+            //}
+
 			throwBadInstruction();
 #endif
 		}
@@ -1009,7 +1053,10 @@ void VM::interpretCases()
 				++m_PC;
 			m_SP -= 2;
 #else
-			throwBadInstruction();
+            //if (commentsOnFailure != nullptr) {
+            //    *commentsOnFailure << "DEBUG: throwing exception before JUMPCI. " << (int) this->m_OP;
+            //}
+            throwBadInstruction();
 #endif
 		}
 		CONTINUE
@@ -1151,7 +1198,12 @@ void VM::interpretCases()
 		CASE(BEGINDATA)
 		CASE(BAD)
 		DEFAULT
-			throwBadInstruction();
+        //if (commentsOnFailure != nullptr) {
+        //    *commentsOnFailure
+        //            << "DEBUG: throwing exception as default/bad/begindata operation. "
+        //            << "Instruction: " << instructionInfo(this->m_OP).name << "[" << (int) this->m_OP << "]\n";
+        //}
+        throwBadInstruction();
 	}	
 	WHILE_CASES
 }

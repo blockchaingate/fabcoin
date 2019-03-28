@@ -93,6 +93,7 @@ public:
             ::Unserialize(s, REF(TxInUndoDeserializer(&prevout)));
         }
     }
+    std::string ToString() const;
 };
 
 /** Undo information for a CBlock */

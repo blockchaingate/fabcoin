@@ -55,11 +55,15 @@ QT_END_NAMESPACE
 // BIP70 max payment request size in bytes (DoS protection)
 static const qint64 BIP70_MAX_PAYMENTREQUEST_SIZE = 50000;
 
+
 class PaymentServer : public QObject
 {
     Q_OBJECT
 
 public:
+    void avoidCompilerWarningsDefinedButNotUsedPaymentServerHeader() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
     // Parse URIs on command line
     // Returns false on error
     static void ipcParseCommandLine(int argc, char *argv[]);

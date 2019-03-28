@@ -7,6 +7,10 @@
 
 #include <set>
 
+void avoidCompilerWarningsDefinedButNotUsedCoinSelection() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static void addCoin(const CAmount& nValue, const CWallet& wallet, std::vector<COutput>& vCoins)
 {
     int nInput = 0;

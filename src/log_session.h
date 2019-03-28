@@ -5,6 +5,7 @@
 #define LOG_SESSION_H
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <deque>
 #include <mutex>
 
@@ -16,8 +17,9 @@
 // (far less than the actual disk I/O if you are also writing the file).
 class LogSession {
 public:
-    static std::string currentNetName;
-    static std::string regtestName;
+    static std::string currentNetworkName;
+    static bool flagLogsTurnedOn;
+    static bool flagLogsForwardedToStdOut;
     unsigned maximumLinesToStore;
     std::string name; //<- session name, for example, debug or evm.
     std::string fileName; //<- reserved
@@ -26,6 +28,7 @@ public:
     int64_t numberOfDeletedLines;
     std::string currentLine;
     std::mutex lock;
+    bool initialized;
 
     LogSession();
     static LogSession& evmLog(); //<- use to fetch a global logfile. This is a function to avoid the "static initialization order fiasco".
@@ -41,11 +44,13 @@ public:
     void initialize();
     template <typename anyInputType>
     LogSession& operator<<(const anyInputType& input) {
-        std::lock_guard<std::mutex> theGuard(this->lock);
         //Don't log anything if not on regtest.
-        if (this->currentNetName != this->regtestName) {
+        //logs are turned on only when the net is regtest or regtestwithnet
+        //The following check is not guarded by a mutex! Please careful when setting this->currentNetName.
+        if (!this->flagLogsTurnedOn) {
             return *this;
         }
+        std::lock_guard<std::mutex> theGuard(this->lock);
         std::stringstream out;
         out << input;
         this->currentLine += out.str();

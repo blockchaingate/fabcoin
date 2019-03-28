@@ -19,6 +19,10 @@
 #include <iostream>
 #include <mutex>
 
+void avoidCompilerWarningsDefinedButNotUsedAggregateSignature() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 extern CTxMemPool mempool;
 
 
@@ -28,15 +32,15 @@ static std::mutex aggregateSignatureLock;
 
 extern UniValue getlogfile(const JSONRPCRequest& request);
 
-void splitString(const std::string& input, const std::string& delimiters, std::vector<std::string>& output)
-{
+void splitString(const std::string& input, const std::string& delimiters, std::vector<std::string>& output) {
     output.clear();
     std::string current;
     for (unsigned i = 0; i < input.size(); i ++) {
         char currentChar = input[i];
         if (delimiters.find(currentChar) != std::string::npos) {
-            if (current.size() > 0)
+            if (current.size() > 0) {
                 output.push_back(current);
+            }
             current.clear();
             continue;
         }
@@ -47,8 +51,9 @@ void splitString(const std::string& input, const std::string& delimiters, std::v
     }
 }
 
-bool getVectorOfStringsFromBase64List(const std::string& input, std::vector<std::string>& output, std::stringstream* commentsOnFailure)
-{
+bool getVectorOfStringsFromBase64List(
+    const std::string& input, std::vector<std::string>& output, std::stringstream* commentsOnFailure
+) {
     std::string decoded = DecodeBase64(input);
     splitString(decoded, ", ", output);
     return true;
@@ -71,7 +76,6 @@ bool getVectorOfStrings(const UniValue& input, std::vector<std::string>& output,
         return true;
     std::vector<std::string> candidateOutputNoBase64;
     std::vector<std::string> candidateOutputBase64;
-    std::stringstream commentsBase64, commentsRegular;
     bool goodBase64 = getVectorOfStringsFromBase64List(inputString, candidateOutputBase64, commentsOnFailure);
     splitString(inputString, ", ", candidateOutputNoBase64);
     if (!goodBase64) {
@@ -87,8 +91,41 @@ bool getVectorOfStrings(const UniValue& input, std::vector<std::string>& output,
     return true;
 }
 
-void appendSignerStateToUniValue(UniValue& output)
-{
+//Expected input: comma/space separated list of hex. To do: auto recognize & decode other encodings.
+bool getVectorsUnsigned(
+    const UniValue& input,
+    std::vector<std::vector<unsigned char> >& output,
+    std::stringstream* commentsOnFailure
+) {
+    output.clear();
+    if (!input.isStr()) {
+        if (commentsOnFailure != 0) {
+            *commentsOnFailure
+            << "Failed to extract base64 encoded vectors: input univalue is not a string. Input: "
+            << input.write() << ". ";
+        }
+        return false;
+    }
+    std::string inputString = input.get_str();
+    if (inputString == "") {
+        return true;
+    }
+    std::vector<std::string> outputStrings;
+    splitString(inputString, ", ", outputStrings);
+    output.resize(outputStrings.size());
+    for (unsigned i = 0; i < outputStrings.size(); i ++) {
+        if (!Encodings::fromHex(outputStrings[i], output[i], commentsOnFailure)) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Failed to extract vector of unsigned chars from index " << i << ".\n";
+            }
+            return false;
+        }
+    }
+    return true;
+}
+
+
+void appendSignerStateToUniValue(UniValue& output) {
     UniValue signerKeyPairs;
     signerKeyPairs.setArray();
 
@@ -162,6 +199,7 @@ bool getVectorOfSecp256k1Scalars(const UniValue& input, std::vector<PrivateKeyKa
     if (!getVectorOfStrings(input, inputVector, commentsOnFailure)) {
         return false;
     }
+    //std::cout << "DEBUG: HIGHLIGHT: got to here in gettting secp256k1 vectors. " << std::endl;
     output.resize(inputVector.size());
     for (unsigned i = 0; i < inputVector.size(); i ++) {
         if (!output[i].MakeFromBase58DetectCheck(inputVector[i], commentsOnFailure)) {
@@ -191,8 +229,9 @@ UniValue testaggregatesignaturegeneratepublic(UniValue& result, std::vector<Priv
         currentSigners[i].ResetNoPrivateKeyGeneration(false, true);
         currentSigners[i].myPrivateKey__KEEP_SECRET = desiredPrivateKeys[i];
         if (!currentSigners[i].myPrivateKey__KEEP_SECRET.ComputePublicKey(currentSigners[i].myPublicKey, &errorStream)) {
-            errorStream << "Faled to generate public key index " << i << " (" << i + 1 << " out of " << currentSigners.size()
-                        << "). The private key seed was: " << currentSigners[i].myPrivateKey__KEEP_SECRET.ToHex();
+            errorStream
+            << "Faled to generate public key index " << i << " (" << i + 1 << " out of " << currentSigners.size()
+            << "). The private key seed was: " << currentSigners[i].myPrivateKey__KEEP_SECRET.ToHexNonConst();
             result.pushKV("error", errorStream.str());
             return result;
         }
@@ -233,6 +272,7 @@ UniValue testaggregatesignatureinitialize(const JSONRPCRequest& request)
     UniValue result;
     result.setObject();
     result.pushKV("input", request.params[0]);
+    //std::cout << "DEBUG: GOT to here. First parameter: " << request.params[0].write() << std::endl;
     if (!getVectorOfSecp256k1Scalars(request.params[0], desiredPublicKeys, &errorStream)) {
         errorStream << "Failed to read the desired private keys from: " << request.params[0].write();
         result.pushKV("error", errorStream.str());
@@ -243,12 +283,13 @@ UniValue testaggregatesignatureinitialize(const JSONRPCRequest& request)
 
 UniValue testaggregatesignaturegenerateprivatekeys(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1)
+    if (request.fHelp || request.params.size() != 1) {
         throw std::runtime_error(
             "testaggregatesignaturegenerateprivatekeys (numberOfSigners)\n"
             "\nTests schnorr aggregate signature initialization."
             "\nTo be documented further.\n"
         );
+    }
     UniValue result;
     result.setObject();
     result.pushKV("input", request.params);
@@ -265,7 +306,9 @@ UniValue testaggregatesignaturegenerateprivatekeys(const JSONRPCRequest& request
         return result;
     }
     if (numPrivateKeys < 1 || numPrivateKeys > 256) {
-        errorStream << "The number of private keys is expected to be a number between 1 and 256. Your input was: " << numPrivateKeys << ".";
+        errorStream
+        << "The number of private keys is expected to be a number between 1 and 256. "
+        << "Your input was: " << numPrivateKeys << ".";
         result.pushKV("error", errorStream.str());
         return result;
     }
@@ -273,19 +316,24 @@ UniValue testaggregatesignaturegenerateprivatekeys(const JSONRPCRequest& request
     desiredPrivateKeys.resize(numPrivateKeys);
     for (unsigned i = 0; i < desiredPrivateKeys.size(); i ++) {
         if (!desiredPrivateKeys[i].GenerateRandomSecurely()) {
-            errorStream << "Failed to generate public key index " << i << " (" << i + 1 << " out of " << numPrivateKeys << "). "
-                        << "This means the random generator is not working: perhaps something is wrong with the crypto library? ";
+            errorStream
+            << "Failed to generate public key index " << i << " (" << i + 1 << " out of " << numPrivateKeys << "). "
+            << "This means the random generator is not working: perhaps something is wrong with the crypto library? ";
             result.pushKV("error", errorStream.str());
             return result;
         }
     }
     if (numPrivateKeys < 15) {
-        std::sort(desiredPrivateKeys.begin(), desiredPrivateKeys.end(), PrivateKeyKanban::leftSmallerThanRightByPublicKeyCompressed);
+        std::sort(
+            desiredPrivateKeys.begin(),
+            desiredPrivateKeys.end(),
+            PrivateKeyKanban::leftSmallerThanRightByPublicKeyCompressed
+        );
     }
     UniValue privateKeyArray;
     privateKeyArray.setArray();
     for (unsigned i = 0; i < desiredPrivateKeys.size(); i ++) {
-        privateKeyArray.push_back(desiredPrivateKeys[i].ToBase58());
+        privateKeyArray.push_back(desiredPrivateKeys[i].ToBase58NonConstFABMainnetPrefix());
     }
     result.pushKV("privateKeys", privateKeyArray);
     return result;
@@ -322,7 +370,7 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
         return result;
     }
     std::string decodedMessage((const char*)decodedMessageVector.data(), decodedMessageVector.size());
-    std::string decodedCompleteSignature;
+    std::vector<unsigned char> decodedCompleteSignature;
     if (!Encodings::fromHex(request.params[0].get_str(), decodedCompleteSignature, &errorStream)) {
         errorStream << "Failed to hex-decode your input: " << request.params[0].write();
         result.pushKV("error", errorStream.str());
@@ -342,48 +390,58 @@ UniValue testaggregateverificationcomplete(const JSONRPCRequest& request)
     return result;
 }
 
-UniValue testaggregatesignatureverification(const JSONRPCRequest& request)
-{
-    if (request.fHelp || request.params.size() != 4)
+UniValue testaggregatesignatureverification(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() != 3) {
         throw std::runtime_error(
             "testaggregatesignatureaggregation ( ...)\n"
             "\nTests schnorr aggregate signature aggregation. Available in -testkanban mode only."
             "\nTo be documented further.\n"
         );
+    }
     std::lock_guard<std::mutex> guard1(aggregateSignatureLock);
     UniValue result;
     result.setObject();
     result.pushKV("input", request.params);
     std::stringstream errorStream;
+    if (!request.params[0].isStr()) {
+        result.pushKV("error", "The first parameter expected to be a string (hex-encoded message). ");
+        return result;
+    }
+    if (!request.params[1].isStr()) {
+        result.pushKV("error", "The second parameter expected to be a string (hex-encoded signature bytes).");
+        return result;
+    }
+    if (!request.params[2].isStr()) {
+        result.pushKV("error", "The fourth parameter expected to be a string (hex-encoded then comma-separated public keys).");
+        return result;
+    }
+    std::string messageHex = request.params[0].get_str();
+    std::vector<unsigned char> messageBytes;
+    std::string signatureHex = request.params[1].get_str();
+
+    std::vector<unsigned char> signatureBytes;
+    std::vector<std::vector<unsigned char> > publicKeyBytes;
+    if (!Encodings::fromHex(messageHex, messageBytes, &errorStream)) {
+        errorStream << "Failed to hex-decode your message: " << messageHex;
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!Encodings::fromHex(signatureHex, signatureBytes, &errorStream)) {
+        errorStream << "Failed to hex-decode your signature bytes: " << signatureHex;
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!getVectorsUnsigned(request.params[2], publicKeyBytes, &errorStream) ) {
+        errorStream << "Failed to read signature serialization. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
     SignatureAggregate theVerifier;
     theVerifier.flagIsAggregator = true;
     theVerifier.currentState = theVerifier.stateVerifyingAggregateSignatures;
-    if (!theVerifier.serializerSignature.MakeFromUniValueRecognizeFormat(request.params[0], &errorStream)) {
-        errorStream << "Failed to read signature serialization. ";
-        result.pushKV("error", errorStream.str());
-        return result;
-    }
-    if (!getBitmap(request.params[1], theVerifier.committedSigners, &errorStream)) {
-        errorStream << "Failed to read signature serialization. ";
-        result.pushKV("error", errorStream.str());
-        return result;
-    }
-    if (!getVectorOfEllipticCurveElements(request.params[2], theVerifier.allPublicKeys, &errorStream)) {
-        errorStream << "Failed to read public keys. ";
-        result.pushKV("error", errorStream.str());
-        return result;
-    }
-    if (!request.params[3].isStr()) {
-        result.pushKV("error", "The fourth parameter expected to be a hex-encoded string.");
-        return result;
-    }
-    std::string messageHex = request.params[3].get_str();
-    if (!Encodings::fromHex(messageHex, theVerifier.messageImplied, &errorStream)) {
-        errorStream << "Failed to hex-decode your input: " << messageHex;
-        result.pushKV("error", errorStream.str());
-        return result;
-    }
-    bool resultBool = theVerifier.Verify(&errorStream, true);
+    bool resultBool = theVerifier.VerifyMessageSignatureUncompressedPublicKeysDeserialized(
+        messageBytes, signatureBytes, publicKeyBytes, &errorStream, true
+    );
     result.pushKV("result", resultBool);
     if (resultBool) {
         result.pushKV("resultHTML", "<b style='color:green'>Verified</b>");
@@ -541,14 +599,14 @@ UniValue testaggregatesignaturechallenge(const JSONRPCRequest& request)
     return result;
 }
 
-UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
-{
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+UniValue testaggregatesignaturecommit(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2) {
         throw std::runtime_error(
-            "testaggregatesignaturecommit ( messageHex, desiredNoncesCommaSeparatedBase64)\n"
+            "testaggregatesignaturecommit(messageHex, desiredNoncesCommaSeparatedBase64)\n"
             "\nTests schnorr aggregate signature commitment. Available in -testkanban mode only."
             "\nTo be documented further.\n"
         );
+    }
     std::lock_guard<std::mutex> guard1(aggregateSignatureLock);
     UniValue result;
     result.setObject();
@@ -560,12 +618,11 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
     std::string messageHex = request.params[0].get_str();
     std::string theMessage;
     std::stringstream errorStream;
-    if (! Encodings::fromHex(messageHex, theMessage, &errorStream)) {
+    if (!Encodings::fromHex(messageHex, theMessage, &errorStream)) {
         errorStream << "Failed to hex-decode your message: " << messageHex << ". ";
         result.pushKV("error", errorStream.str());
         return result;
     }
-    result.pushKV("messageDecoded", theMessage);
     std::vector<std::string> inputNonces;
     if (request.params.size() == 2) {
         if (!getVectorOfStrings(request.params[1], inputNonces, &errorStream)) {
@@ -605,14 +662,13 @@ UniValue testaggregatesignaturecommit(const JSONRPCRequest& request)
     return result;
 }
 
-UniValue testschnorrsignature(const JSONRPCRequest& request)
-{
-    if (request.fHelp)
-        throw std::runtime_error(
-            "testschnorrsignature ( message )\n"
-            "\nTests schnorr signature. Available in -testkanban mode only."
-            "\nTo be documented further.\n"
-        );
+enum signatureType {
+    signatureEcdsaDoubleSha256,
+    signatureSchnorrSha3,
+};
+
+UniValue testsignature(const JSONRPCRequest& request, signatureType theSignatureType) {
+
     UniValue result(UniValue::VOBJ);
     result.pushKV("input", request.params);
     std::stringstream errorStream;
@@ -632,7 +688,12 @@ UniValue testschnorrsignature(const JSONRPCRequest& request)
         result.pushKV("error", errorStream.str());
         return result;
     }
-    std::string message = DecodeBase64(request.params[1].get_str());
+    std::string message;
+    if (!Encodings::fromHex(request.params[1].get_str(), message, &errorStream)) {
+        errorStream << "Failed to hex-decode the message: " << request.params[2].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
     PrivateKeyKanban nonce;
     bool hasNonce = (request.params.size() == 3);
     if (hasNonce)
@@ -645,18 +706,32 @@ UniValue testschnorrsignature(const JSONRPCRequest& request)
             return result;
         }
     }
-    SchnorrKanban crypto;
-    SignatureSchnorr output;
-    if (hasNonce) {
-        crypto.Sign(thePrivateKey, message, output, &nonce, &result);
-    } else {
-        crypto.Sign(thePrivateKey, message, output, nullptr, &result);
+    if (theSignatureType == signatureSchnorrSha3) {
+        result.pushKV("signatureType", "SchnorrSha3");
+        SignatureSchnorr output;
+        if (hasNonce) {
+            output.Sign(thePrivateKey, message, &nonce, &result);
+        } else {
+            output.Sign(thePrivateKey, message, nullptr, &result);
+        }
+        result.pushKV("challengeHex", output.challenge.ToHexCompressed());
+        result.pushKV("solutionBase58Check", output.solution.ToBase58CheckNonConst());
+        result.pushKV("signatureBase58", output.ToBase58());
+        result.pushKV("signatureBase58Check", output.ToBase58Check());
     }
-    result.pushKV("challengeHex", output.challenge.ToHexCompressed());
-    result.pushKV("solutionBase58Check", output.solution.ToBase58Check());
-    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58Check());
-    result.pushKV("signatureSchnorrBase58", output.ToBase58());
-    result.pushKV("signatureSchnorrBase58Check", output.ToBase58Check());
+    if (theSignatureType == signatureEcdsaDoubleSha256) {
+        result.pushKV("signatureType", "ECDSADoubleSha256");
+        SignatureECDSA output;
+        output.messageImplied = std::vector<unsigned char> (message.begin(), message.end());
+        std::stringstream commentsSensitive;
+        output.SignSha256Squared(thePrivateKey, &commentsSensitive);
+
+        result.pushKV("challengeHex", output.challengeR.ToHexNonConst());
+        result.pushKV("solutionBase58Check", output.solutionsS.ToBase58CheckNonConst());
+        result.pushKV("signature", HexStr(output.signatureBytes));
+    }
+
+    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58CheckNonConst());
     return result;
 }
 
@@ -679,7 +754,7 @@ UniValue testschnorrverification(const JSONRPCRequest& request)
         return result;
     }
     if (!theSignature.publicKeyImplied.MakeFromUniValueRecognizeFormat(request.params[1], &errorStream)) {
-        errorStream << "Failed to read public key from: " << request.params[1].write();
+        errorStream << "Failed to read public key from: " << request.params[1].write() << ". ";
         result.pushKV("error", errorStream.str());
         return result;
 
@@ -689,12 +764,15 @@ UniValue testschnorrverification(const JSONRPCRequest& request)
         result.pushKV("error", errorStream.str());
         return result;
     }
-    theSignature.messageImplied = DecodeBase64(request.params[2].get_str());
+    if (!Encodings::fromHex(request.params[2].get_str(), theSignature.messageImplied, &errorStream)) {
+        errorStream << "Failed to hex-decode the message: " << request.params[2].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
     result.pushKV("challengeHex", theSignature.challenge.ToHexCompressed());
-    result.pushKV("solutionBase58Check", theSignature.solution.ToBase58Check());
+    result.pushKV("solutionBase58Check", theSignature.solution.ToBase58CheckNonConst());
     result.pushKV("publicKeyHex", theSignature.publicKeyImplied.ToHexCompressed());
-    SchnorrKanban crypto;
-    bool verificationResult = crypto.Verify(theSignature, &errorStream);
+    bool verificationResult = theSignature.Verify(&errorStream);
     result.pushKV("result", verificationResult);
     if (verificationResult) {
         result.pushKV("resultHTML", "<b style = 'color:green'>Verified</b>");
@@ -702,6 +780,81 @@ UniValue testschnorrverification(const JSONRPCRequest& request)
         result.pushKV("resultHTML", "<b style = 'color:red'>Failed</b>");
     }
     return result;
+}
+
+UniValue testecdsaverification(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 3)
+        throw std::runtime_error(
+            "testecdsaverification ( message )\n"
+            "\nTests ecdsa signature verification. Available in -testkanban mode only."
+            "\nTo be documented further.\n"
+        );
+    UniValue result;
+    result.setObject();
+    result.pushKV("input", request.params);
+    SignatureECDSA theSignature;
+    std::stringstream errorStream;
+    if (!request.params[0].isStr()) {
+        errorStream << "First argument is expected to be a string, instead it is: " << request.params[0].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    std::string signatureBytes = request.params[0].get_str();
+    if (!theSignature.MakeFromBytes(std::vector<unsigned char>(signatureBytes.begin(), signatureBytes.end()) , &errorStream)) {
+        errorStream << "Failed to read signature from: " << request.params[0].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!theSignature.publicKeyImplied.MakeFromUniValueRecognizeFormat(request.params[1], &errorStream)) {
+        errorStream << "Failed to read public key from: " << request.params[1].write() << ". ";
+        result.pushKV("error", errorStream.str());
+        return result;
+
+    }
+    if (!request.params[2].isStr()) {
+        errorStream << "Expected string for the third argument (the message), instead I got: " << request.params[2].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!Encodings::fromHex(request.params[2].get_str(), theSignature.messageImplied, &errorStream)) {
+        errorStream << "Failed to hex-decode the message: " << request.params[2].write();
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    result.pushKV("challengeHex", theSignature.challengeR.ToHexNonConst());
+    result.pushKV("solutionBase58Check", theSignature.solutionsS.ToBase58CheckNonConst());
+    result.pushKV("publicKeyHex", theSignature.publicKeyImplied.ToHexCompressed());
+    bool verificationResult = theSignature.Verify(&errorStream);
+    result.pushKV("result", verificationResult);
+    if (verificationResult) {
+        result.pushKV("resultHTML", "<b style = 'color:green'>Verified</b>");
+    } else  {
+        result.pushKV("resultHTML", "<b style = 'color:red'>Failed</b>");
+    }
+    return result;
+}
+
+UniValue testschnorrsignature(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            "testschnorrsignature ( message )\n"
+            "\nTests schnorr signature. Available in -testkanban mode only."
+            "\nTo be documented further.\n"
+        );
+    return testsignature(request, signatureSchnorrSha3);
+}
+
+UniValue testecdsasignature(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            "testschnorrsignature ( message )\n"
+            "\nTests schnorr signature. Available in -testkanban mode only."
+            "\nTo be documented further.\n"
+        );
+    return testsignature(request, signatureEcdsaDoubleSha256);
 }
 
 UniValue testshathree(const JSONRPCRequest& request)
@@ -732,9 +885,9 @@ UniValue testprivatekeygeneration(const JSONRPCRequest& request) {
     PrivateKeyKanban thePrivateKey;
     thePrivateKey.GenerateRandomSecurely();
     UniValue result(UniValue::VOBJ);
-    result.pushKV("privateKeyHex", thePrivateKey.ToHex());
-    result.pushKV("privateKeyBase58WithoutCheck", thePrivateKey.ToBase58());
-    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58Check());
+    result.pushKV("privateKeyHex", thePrivateKey.ToHexNonConst());
+    result.pushKV("privateKeyBase58WithoutCheck", thePrivateKey.ToBase58NonConst());
+    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58CheckNonConst());
     return result;
 }
 
@@ -762,8 +915,8 @@ UniValue testpublickeyfromprivate(const JSONRPCRequest& request)
         return result;
     }
     //std::cout << "DEBUG: Public key computed:  " << thePublicKey.ToHexCompressedWithLength() << std::endl;
-    result.pushKV("secretHex",  thePrivateKey.ToHex());
-    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58Check());
+    result.pushKV("secretHex",  thePrivateKey.ToHexNonConst());
+    result.pushKV("privateKeyBase58Check", thePrivateKey.ToBase58CheckNonConst());
     result.pushKV("publicKeyHexCompressed",  thePublicKey.ToHexCompressed());
 
     result.pushKV("input", request.params);
@@ -807,7 +960,7 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
     }
     result.pushKV("inputRawTransaction", inputRawTransaction);
     result.pushKV("inputTransactionDecodedAndRecoded", EncodeHexTx(transactionWithoutSignatures));
-    PrecomputedTransactionData dataBeforeSignature(transactionWithoutSignatures);
+    PrecomputedTransactionDatA dataBeforeSignature(transactionWithoutSignatures);
 
 
     std::stringstream commentsStream;
@@ -815,18 +968,14 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
     CCoinsView viewDummy;
     CCoinsViewCache view(&viewDummy);
     {
-        //commentsStream << " Locking mempool ... <br>";
         LOCK(mempool.cs);
         CCoinsViewCache &viewChain = *pcoinsTip;
         CCoinsViewMemPool viewMempool(&viewChain, mempool);
         view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
-        //commentsStream << "Transaction vin size: " << transactionWithoutSignatures.vin.size() << "<br>";
 
         for (const CTxIn& txin : transactionWithoutSignatures.vin) {
-            //commentsStream << "Accessing: " << txin.prevout.ToString() << "<br>";
             view.AccessCoin(txin.prevout); // Load entries from viewChain into view; can fail.
         }
-        //commentsStream << view.ToString();
         view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
     }
     for (unsigned int i = 0; i < transactionWithoutSignatures.vin.size(); i++) {
@@ -834,10 +983,6 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
         const Coin& coin = view.AccessCoin(currentInput.prevout);
         if (coin.IsSpent()) {
             errorStream << "Input " << currentInput.ToString() << " not found or already spent. <br>";
-            //errorStream << "Coin: " << coin.out.ToString() << "<br>";
-            //errorStream << "Coin is spent: " << coin.IsSpent() << "<br>";
-            //errorStream << "Out is empty: " << coin.out.IsEmpty() << "<br>";
-            //errorStream << "Out is null: " << coin.out.IsNull() << "<br>";
             result.pushKV("comments", commentsStream.str());
             result.pushKV("error", errorStream.str());
             return result;
@@ -852,7 +997,7 @@ UniValue insertaggregatesignature(const JSONRPCRequest& request)
         commentsStream << "Found unspent aggregate UTXO: " << currentInput.ToString();
         currentInput.scriptSig << aggregateSignatureBytes;
     }
-    PrecomputedTransactionData dataAfterSignature(transactionWithoutSignatures);
+    PrecomputedTransactionDatA dataAfterSignature(transactionWithoutSignatures);
 
     result.pushKV("precomputedTransactionDataBeforeSignature", dataBeforeSignature.ToString());
     result.pushKV("precomputedTransactionDataAfterSignature", dataAfterSignature.ToString());
@@ -869,6 +1014,8 @@ static const CRPCCommand testCommands[] =
   { "test",     "testshathree",                               &testshathree,                              true,    {"message"} },
   { "test",     "testschnorrsignature",                       &testschnorrsignature,                      true,    {"secret", "message", "nonce"} },
   { "test",     "testschnorrverification",                    &testschnorrverification,                   true,    {"publickey", "message", "signature"} },
+  { "test",     "testecdsasignature",                         &testecdsasignature,                        true,    {"secret", "message", "nonce"} },
+  { "test",     "testecdsaverification",                      &testecdsaverification,                     true,    {"publickey", "message", "signature"} },
   { "test",     "testaggregatesignaturegenerateprivatekeys",  &testaggregatesignaturegenerateprivatekeys, true,    {"numberOfSigners"} },
   { "test",     "testaggregatesignatureinitialize",           &testaggregatesignatureinitialize,          true,    {"publicKeys"} },
   { "test",     "testaggregatesignaturecommit",               &testaggregatesignaturecommit,              true,    {"message", "desiredNoncesCommaSeparatedBase64"} },

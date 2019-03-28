@@ -50,18 +50,26 @@ void TransactionReceipt::streamRLP(RLPStream& _s) const
 		l.streamRLP(_s);
 }
 
+std::string TransactionReceipt::ToStringLogs()const
+{
+    std::stringstream out;
+    for (LogEntry const& i: this->log())
+    {
+        out << "Address " << i.address << ". Topics:" << std::endl;
+        for (auto const& j: i.topics)
+            out << "  " << j << std::endl;
+        out << "  Data: " << toHex(i.data) << std::endl;
+    }
+    return out.str();
+
+}
+
 std::ostream& dev::eth::operator<<(std::ostream& _out, TransactionReceipt const& _r)
 {
 	_out << "Root: " << _r.stateRoot() << std::endl;
 	_out << "Gas used: " << _r.gasUsed() << std::endl;
 	_out << "Logs: " << _r.log().size() << " entries:" << std::endl;
-	for (LogEntry const& i: _r.log())
-	{
-		_out << "Address " << i.address << ". Topics:" << std::endl;
-		for (auto const& j: i.topics)
-			_out << "  " << j << std::endl;
-		_out << "  Data: " << toHex(i.data) << std::endl;
-	}
+    _out << _r.ToStringLogs();
 	_out << "Bloom: " << _r.bloom() << std::endl;
 	return _out;
 }

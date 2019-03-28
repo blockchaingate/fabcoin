@@ -400,13 +400,16 @@ int LogPrintStr(const std::string &str, bool useVMLog)
     static std::atomic_bool fStartedNewLine(true);
 
     std::string strTimestamped = LogTimestampStr(str, &fStartedNewLine);
-    LogSession::debugLog() << strTimestamped << LogSession::endL;
 
     if (fPrintToConsole)
     {
-        // print to console
-        ret = fwrite(strTimestamped.data(), 1, strTimestamped.size(), stdout);
-        fflush(stdout);
+        if (LogSession::flagLogsTurnedOn) {
+            LogSession::debugLog() << strTimestamped << LogSession::endL;
+        } else {
+            // print to console
+            ret = fwrite(strTimestamped.data(), 1, strTimestamped.size(), stdout);
+            fflush(stdout);
+        }
     }
     else if (fPrintToDebugLog)
     {

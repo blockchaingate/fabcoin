@@ -31,6 +31,10 @@ class CBlockIndex;
 static int64_t nLastHeaderTipUpdateNotification = 0;
 static int64_t nLastBlockTipUpdateNotification = 0;
 
+void avoidCompilerWarningsDefinedButNotUsedClientModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 ClientModel::ClientModel(OptionsModel *_optionsModel, QObject *parent) :
     QObject(parent),
     optionsModel(_optionsModel),

@@ -86,15 +86,15 @@ struct modifiedentry_iter {
 struct CompareModifiedEntry {
     bool operator()(const CTxMemPoolModifiedEntry &a, const CTxMemPoolModifiedEntry &b) const
     {
-        bool fAHasCreateOrCall = a.iter->GetTx().HasCreateOrCall();
-        bool fBHasCreateOrCall = b.iter->GetTx().HasCreateOrCall();
+        bool fAHasCreateOrCallInOutputs = a.iter->GetTx().HasNonFeeCallOrCreateInOutputs();
+        bool fBHasCreateOrCallInOutputs = b.iter->GetTx().HasNonFeeCallOrCreateInOutputs();
 
         // If either of the two entries that we are comparing has a contract scriptPubKey, the comparison here takes precedence
-        if(fAHasCreateOrCall || fBHasCreateOrCall) {
+        if(fAHasCreateOrCallInOutputs || fBHasCreateOrCallInOutputs) {
 
             // Prioritze non-contract txs
-            if(fAHasCreateOrCall != fBHasCreateOrCall) {
-                return fAHasCreateOrCall ? false : true;
+            if(fAHasCreateOrCallInOutputs != fBHasCreateOrCallInOutputs) {
+                return fAHasCreateOrCallInOutputs ? false : true;
             }
 
             // Prioritize the contract txs that have the least number of ancestors
@@ -237,8 +237,14 @@ public:
     int32_t nTimeLimit;
 
     /** Construct a new block template with coinbase to scriptPubKeyIn */
-    std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx=true, int64_t* pTotalFees = 0, int32_t nTime=0, int32_t nTimeLimit=0);
-
+    std::unique_ptr<CBlockTemplate> CreateNewBlock(
+        const CScript& scriptPubKeyIn,
+        std::stringstream*& commentsOnFailure,
+        bool fMineWitnessTx = true,
+        int64_t* pTotalFees = 0,
+        int32_t nTime = 0,
+        int32_t nTimeLimit = 0
+    );
 private:
     // utility functions
     /** Clear the block's state and prepare for assembling a new block */
@@ -246,13 +252,13 @@ private:
     /** Add a tx to the block */
     void AddToBlock(CTxMemPool::txiter iter);
 
-    bool AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64_t minGasPrice);
+    bool AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64_t minGasPrice, std::stringstream* comments);
 
     // Methods for how to add transactions to a block.
     /** Add transactions based on feerate including unconfirmed ancestors
       * Increments nPackagesSelected / nDescendantsUpdated with corresponding
       * statistics from the package selection (for logging statistics). */
-    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice);
+    void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice, std::stringstream*& comments);
 
     /** Rebuild the coinbase/coinstake transaction to account for new gas refunds **/
     void RebuildRefundTransaction();

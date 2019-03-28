@@ -7,6 +7,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedMerkleTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(merkle_tests, TestingSetup)
 
 // Older version of the merkle root computation code, for comparison.

@@ -14,6 +14,10 @@
 #include <QSizePolicy>
 #include <QMenu>
 
+void avoidCompilerWarningsDefinedButNotUsedQRCToken() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 #define TOKEN_SIZE 54
 #define SYMBOL_WIDTH 60
 #define MARGIN 5

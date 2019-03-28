@@ -7,6 +7,10 @@
 #include <policy/policy.h>
 #include <wallet/wallet.h>
 
+void avoidCompilerWarningsDefinedButNotUsedWalletModelTransaction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 WalletModelTransaction::WalletModelTransaction(const QList<SendCoinsRecipient> &_recipients) :
     recipients(_recipients),
     walletTransaction(0),

@@ -23,6 +23,10 @@
 #include <QScrollBar>
 #include <QTextDocument>
 
+void avoidCompilerWarningsDefinedButNotUsedReceiveCoinsDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ReceiveCoinsDialog),

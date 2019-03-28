@@ -10,6 +10,10 @@
 #include <limits.h>
 #include <stdint.h>
 
+void avoidCompilerWarningsDefinedButNotUsedScriptNumTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(scriptnum_tests, BasicTestingSetup)
 
 /** A selection of numbers that do not trigger int64_t overflow

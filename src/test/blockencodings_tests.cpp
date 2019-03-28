@@ -11,6 +11,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedBlockEncodingsTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 std::vector<std::pair<uint256, CTransactionRef>> extra_txn;
 
 struct RegtestingSetup : public TestingSetup {

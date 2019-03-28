@@ -11,6 +11,10 @@
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedSchedulerTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_AUTO_TEST_SUITE(scheduler_tests)
 
 static void microTask(CScheduler& s, boost::mutex& mutex, int& counter, int delta, boost::chrono::system_clock::time_point rescheduleTime)

@@ -10,6 +10,12 @@
 #include <QObject>
 #include <QTest>
 
+class notUsed {
+    void avoidCompilerWarningsDefinedButNotUsed() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
+};
+
 class PaymentServerTests : public QObject
 {
     Q_OBJECT

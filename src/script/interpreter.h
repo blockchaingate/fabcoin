@@ -114,17 +114,17 @@ enum
 
 bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
 
-struct PrecomputedTransactionData
-{
+struct PrecomputedTransactionDatA {
     uint256 hashPrevouts, hashSequence, hashOutputs;
+    std::vector<unsigned char> bytesToSignForTransactionWithoutAncestor;
 
-    PrecomputedTransactionData();
+    PrecomputedTransactionDatA();
     void initFromPrecomputedTransactionData(const CTransaction& tx);
-    PrecomputedTransactionData(const CTransaction& tx);
-    PrecomputedTransactionData(const PrecomputedTransactionData& other);
+    PrecomputedTransactionDatA(const CTransaction& tx);
+    PrecomputedTransactionDatA(const PrecomputedTransactionDatA& other);
     std::string ToString() const;
     void GetSerialization(std::vector<unsigned char>& output)const;
-    void operator=(const PrecomputedTransactionData& other);
+    void operator=(const PrecomputedTransactionDatA& other);
 };
 
 enum SigVersion
@@ -133,15 +133,25 @@ enum SigVersion
     SIGVERSION_WITNESS_V0 = 1,
 };
 
-uint256 SignatureHash(const CScript &scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache = nullptr);
+uint256 SignatureHash(
+    const CScript &scriptCode,
+    const CTransaction& txTo,
+    unsigned int nIn,
+    int nHashType,
+    const CAmount& amount,
+    SigVersion sigversion,
+    const PrecomputedTransactionDatA* cache = nullptr,
+    std::stringstream *commentsNonSensitive = nullptr
+);
 
 class BaseSignatureChecker
 {
 public:
-    virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const;
+    std::vector<std::vector<unsigned char> > bytesToSignPerVin;
+    virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion, std::stringstream* commentsOnFailure) const;
     virtual bool CheckLockTime(const CScriptNum& nLockTime) const;
     virtual bool CheckSequence(const CScriptNum& nSequence) const;
-    virtual void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const;
+    virtual void GetPrecomputedTransactionData(PrecomputedTransactionDatA& output) const;
     virtual ~BaseSignatureChecker(){}
 };
 
@@ -153,16 +163,16 @@ private:
     const CAmount amount;
 
 protected:
-    const PrecomputedTransactionData* txdata;
+    const PrecomputedTransactionDatA* txdata;
     virtual bool VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
 
 public:
     TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn);
-    TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionData& txdataIn);
-    bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override;
+    TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, const PrecomputedTransactionDatA& txdataIn);
+    bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion, std::stringstream *commentsOnFailure) const override;
     bool CheckLockTime(const CScriptNum& nLockTime) const override;
     bool CheckSequence(const CScriptNum& nSequence) const override;
-    void GetPrecomputedTransactionData(PrecomputedTransactionData& output) const override;
+    void GetPrecomputedTransactionData(PrecomputedTransactionDatA& output) const override;
     ~TransactionSignatureChecker(){}
 };
 
@@ -175,6 +185,15 @@ public:
     MutableTransactionSignatureChecker(const CMutableTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : TransactionSignatureChecker(&txTo, nInIn, amountIn), txTo(*txToIn) {}
     ~MutableTransactionSignatureChecker(){}
 };
+
+class UniValue;
+static bool (*FetchSCARShardPublicKeysInternalPointer) (
+    const std::vector<unsigned char>& contractAddressBytes,
+    const std::vector<unsigned char>& shardId,
+    std::vector<std::vector<unsigned char> >& outputPublicKeysSerialized,
+    std::stringstream* commentsOnErrorNullForNone,
+    UniValue* comments
+);
 
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* error = nullptr, std::stringstream *commentsOnFailure = nullptr);
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror = nullptr, std::stringstream* comments = nullptr);

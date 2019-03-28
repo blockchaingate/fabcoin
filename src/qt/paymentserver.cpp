@@ -46,6 +46,10 @@
 #include <QUrlQuery>
 #endif
 
+void avoidCompilerWarningsDefinedButNotUsedPaymentServer() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 const int FABCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
 const QString FABCOIN_IPC_PREFIX("fabcoin:");
 // BIP70 payment protocol messages

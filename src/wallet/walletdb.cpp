@@ -24,6 +24,10 @@
 // CWalletDB
 //
 
+void avoidCompilerWarningsDefinedButNotUsedWalletDB() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 bool CWalletDB::WriteName(const std::string& strAddress, const std::string& strName)
 {
     return WriteIC(std::make_pair(std::string("name"), strAddress), strName);

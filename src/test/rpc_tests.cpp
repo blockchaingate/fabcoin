@@ -16,6 +16,10 @@
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedMinerRPCTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 UniValue CallRPC(std::string args)
 {
     std::vector<std::string> vArgs;

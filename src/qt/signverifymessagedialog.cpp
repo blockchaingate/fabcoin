@@ -21,6 +21,10 @@
 
 #include <QClipboard>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionVerifyMessageDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SignVerifyMessageDialog),

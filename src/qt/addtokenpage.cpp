@@ -15,6 +15,10 @@
 #include <QRegularExpressionValidator>
 #include <QMessageBox>
 
+void avoidCompilerWarningsDefinedButNotUsedAddtokenPage() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 AddTokenPage::AddTokenPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::AddTokenPage),

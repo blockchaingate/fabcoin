@@ -30,6 +30,10 @@
 #include <QStringList>
 #include <utilmoneystr.h>
 
+void avoidCompilerWarningsDefinedButNotUsedOptionsModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 OptionsModel::OptionsModel(QObject *parent, bool resetSettings) :
     QAbstractListModel(parent)
 {

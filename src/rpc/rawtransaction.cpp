@@ -36,6 +36,9 @@
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedRawTransaction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
 {
@@ -402,7 +405,8 @@ bool GetPublicKeysHexFromString(const UniValue& input, std::vector<std::string>&
     std::vector<unsigned char> firstTwoBytes;
     if (!Encodings::fromHex(firstFour, firstTwoBytes, reasonForFailure)) {
         if (reasonForFailure != 0) {
-            *reasonForFailure << "Failed to extract 2 bytes from the first 4 hex characters of your input: " << firstFour;
+            *reasonForFailure << "Failed to extract 2 bytes from the first 4 hex characters of your input: "
+            << firstFour;
         }
         return false;
     }
@@ -431,8 +435,9 @@ bool GetPublicKeysHexFromString(const UniValue& input, std::vector<std::string>&
     return true;
 }
 
-bool GetPublicKeysFromAggregateSignature(const UniValue& input, std::vector<unsigned char>& outputPublicKeysSerialized, std::stringstream* reasonForFailure)
-{
+bool GetPublicKeysFromAggregateSignature(
+    const UniValue& input, std::vector<unsigned char>& outputPublicKeysSerialized, std::stringstream* reasonForFailure
+) {
     unsigned maxNumberOfPublicKeys = 2048;
     unsigned lengthPublicKeyCompressed = PublicKeyKanban::lengthPublicKeySerializationCompressed; //=33
     std::vector<std::string> publicKeysHex;
@@ -460,8 +465,9 @@ bool GetPublicKeysFromAggregateSignature(const UniValue& input, std::vector<unsi
     for (unsigned i = 0; i < numKeys; i ++) {
         if (!thePublicKeys[i].MakeFromStringRecognizeFormat(publicKeysHex[i], reasonForFailure)) {
             if (reasonForFailure != 0) {
-                *reasonForFailure << "Failed to extract public key index "
-                                  << i << " (" << i + 1 << " out of " << numKeys << "). ";
+                *reasonForFailure
+                << "Failed to extract public key index "
+                << i << " (" << i + 1 << " out of " << numKeys << "). ";
             }
             return false;
         }
@@ -483,8 +489,7 @@ bool GetPublicKeysFromAggregateSignature(const UniValue& input, std::vector<unsi
     return true;
 }
 
-UniValue createrawtransaction(const JSONRPCRequest& request)
-{
+UniValue createrawtransaction(const JSONRPCRequest& request) {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
         throw std::runtime_error(
             "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"aggregation\": {...(see below)}, \"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
@@ -518,7 +523,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "         \"data\":\"hex\",                (string, required) Hex data to add in the call output\n"
             "         \"amount\":x.xxx,                (numeric, optional) Value in fasc to send with the call, should be a valid amount, default 0\n"
             "         \"gasLimit\":x,                  (numeric, optional) The gas limit for the transaction\n"
-            "         \"gasPrice\":x.xxx               (numeric, optional) The gas price for the transaction\n"
+            "         \"gasPrice\":x.xxxxxxxx          (numeric, optional) The gas price for the transaction\n"
             "       } \n"
             "      ,...\n"
             "    }\n"
@@ -650,7 +655,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             }
 
             // Get gas limit
-            uint64_t nGasLimit=DEFAULT_GAS_LIMIT_OP_SEND;
+            uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
             if (Contract.exists("gasLimit")){
                 nGasLimit = Contract["gasLimit"].get_int64();
                 if (nGasLimit > blockGasLimit)
@@ -1228,6 +1233,18 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     // Use CTransaction for the constant parts of the
     // transaction to avoid rehashing.
     const CTransaction txConst(mtx);
+    //Comments is a pointer to a stream that will contain technical but non-sensitive details on the signature,
+    //including the actual bytes being signed by the ECDSA algorithm.
+    //Once again, no sensitive information is written in the comments.
+    //Without having timed it, I expect that the comments have a neglible effect on penalty,
+    //so passing on the comments stream on mainnet should pose no risks.
+    //The comments are turned on only when the fIncludeTestCommands flag is set, i.e., on regtest and
+    //regtestwithnet.
+    std::stringstream bufferStream;
+    std::stringstream* commentsNonSensitive = nullptr;
+    if (Params().IncludeTestCommands()) {
+        commentsNonSensitive = &bufferStream;
+    }
     // Sign what we can:
     for (unsigned int i = 0; i < mtx.vin.size(); i++) {
         CTxIn& txin = mtx.vin[i];
@@ -1242,7 +1259,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
         SignatureData sigdata;
         // Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mtx.vout.size()))
-            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, i, amount, nHashType), prevPubKey, sigdata);
+            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, i, amount, nHashType), prevPubKey, sigdata, commentsNonSensitive);
         sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, i, amount), sigdata, DataFromTransaction(mtx, i));
 
         UpdateTransaction(mtx, i, sigdata);
@@ -1262,7 +1279,9 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     if (!vErrors.empty()) {
         result.push_back(Pair("errors", vErrors));
     }
-
+    if (commentsNonSensitive != nullptr) {
+        result.pushKV("comments", commentsNonSensitive->str());
+    }
     return result;
 }
 
@@ -1310,21 +1329,22 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
         fHaveChain = !existingCoin.IsSpent();
     }
     bool fHaveMempool = mempool.exists(hashTx);
+    std::stringstream comments;
     if (!fHaveMempool && !fHaveChain) {
         // push to local node and sync with wallets
         CValidationState state;
         bool fMissingInputs;
         bool fLimitFree = true;
-        std::stringstream commentsOnFailure;
-        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true, &commentsOnFailure)) {
+        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true, &comments)) {
+            comments << state.GetRejectCode() << ": " << state.GetRejectReason();
             if (state.IsInvalid()) {
-                commentsOnFailure << state.GetRejectCode() << ": " << state.GetRejectReason();
-                throw JSONRPCError(RPC_TRANSACTION_REJECTED, commentsOnFailure.str());
+                throw JSONRPCError(RPC_TRANSACTION_REJECTED, comments.str());
             } else {
                 if (fMissingInputs) {
-                    throw JSONRPCError(RPC_TRANSACTION_ERROR, "Missing inputs");
+                    comments << "Missing inputs.\n";
+                    throw JSONRPCError(RPC_TRANSACTION_ERROR, comments.str());
                 }
-                throw JSONRPCError(RPC_TRANSACTION_ERROR, state.GetRejectReason());
+                throw JSONRPCError(RPC_TRANSACTION_ERROR, comments.str());
             }
         }
     } else if (fHaveChain) {
@@ -1338,7 +1358,11 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
     {
         pnode->PushInventory(inv);
     });
-    return hashTx.GetHex();
+    UniValue result;
+    result.setObject();
+    result.pushKV("txid", hashTx.GetHex());
+    result.pushKV("comments", comments.str());
+    return result;
 }
 
 static const CRPCCommand commands[] =

@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionTransactionRecord() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 /*
  * Decompose CWallet transaction to model transaction records.
  */

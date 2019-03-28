@@ -9,6 +9,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedDBWrapperTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 // Test if a string consists entirely of null characters
 bool is_null_key(const std::vector<unsigned char>& key) {
     bool isnull = true;

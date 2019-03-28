@@ -82,6 +82,10 @@ const std::string FabcoinGUI::DEFAULT_UIPLATFORM =
 #endif
         ;
 
+void avoidCompilerWarningsDefinedButNotUsedFabcoinGui() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 /** Display name for default wallet name. Uses tilde to avoid name
  * collisions in the future with additional wallets */
 const QString FabcoinGUI::DEFAULT_WALLET = "~Default";

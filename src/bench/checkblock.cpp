@@ -9,6 +9,10 @@
 #include <streams.h>
 #include <consensus/validation.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCheckBlock() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace block_bench {
 #include <bench/data/block413567.raw.h>
 } // namespace block_bench
@@ -17,7 +21,7 @@ namespace block_bench {
 // a block off the wire, but before we can relay the block on to peers using
 // compact block relay.
 
-static void DeserializeBlockTest(benchmark::State& state)
+void DeserializeBlockTest(benchmark::State& state)
 {
     CDataStream stream((const char*)block_bench::block413567,
             (const char*)&block_bench::block413567[sizeof(block_bench::block413567)],
@@ -32,7 +36,7 @@ static void DeserializeBlockTest(benchmark::State& state)
     }
 }
 
-static void DeserializeAndCheckBlockTest(benchmark::State& state)
+void DeserializeAndCheckBlockTest(benchmark::State& state)
 {
     CDataStream stream((const char*)block_bench::block413567,
             (const char*)&block_bench::block413567[sizeof(block_bench::block413567)],

@@ -9,6 +9,10 @@
 
 #include <vector>
 
+void avoidCompilerWarningsDefinedButNotUsedCCoinsCaching() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 // FIXME: Dedup with SetupDummyInputs in test/transaction_tests.cpp.
 //
 // Helper: create two dummy transactions, each with

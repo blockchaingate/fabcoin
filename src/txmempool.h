@@ -20,6 +20,7 @@
 #include <primitives/transaction.h>
 #include <sync.h>
 #include <random.h>
+#include <univalue.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -98,6 +99,8 @@ public:
                     int64_t nSigOpsCost, LockPoints lp, CAmount _nMinGasPrice = 0);
 
     CTxMemPoolEntry(const CTxMemPoolEntry& other);
+
+    void ToJSON(UniValue& output) const;
 
     const CTransaction& GetTx() const { return *this->tx; }
     CTransactionRef GetSharedTx() const { return this->tx; }
@@ -295,14 +298,14 @@ class CompareTxMemPoolEntryByAncestorFeeOrGasPrice
 public:
     bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b) const
     {
-        bool fAHasCreateOrCall = a.GetTx().HasCreateOrCall();
-        bool fBHasCreateOrCall = b.GetTx().HasCreateOrCall();
+        bool fAHasCreateOrCallInOutputs = a.GetTx().HasNonFeeCallOrCreateInOutputs();
+        bool fBHasCreateOrCallInOutputs = b.GetTx().HasNonFeeCallOrCreateInOutputs();
 
         // If either of the two entries that we are comparing has a contract scriptPubKey, the comparison here takes precedence
-        if(fAHasCreateOrCall || fBHasCreateOrCall) {
+        if(fAHasCreateOrCallInOutputs || fBHasCreateOrCallInOutputs) {
             // Prioritze non-contract txs
-            if(fAHasCreateOrCall != fBHasCreateOrCall) {
-                return fAHasCreateOrCall ? false : true;
+            if(fAHasCreateOrCallInOutputs != fBHasCreateOrCallInOutputs) {
+                return fAHasCreateOrCallInOutputs ? false : true;
             }
 
             // Prioritize the contract txs that have the least number of ancestors
@@ -573,7 +576,7 @@ public:
     // addUnchecked can be used to have it call CalculateMemPoolAncestors(), and
     // then invoke the second version.
     bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, bool validFeeEstimate = true);
-    bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate = true);
+    bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate = true, std::stringstream *comments = nullptr);
 
     void removeRecursive(const CTransaction &tx, MemPoolRemovalReason reason = MemPoolRemovalReason::UNKNOWN);
     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
@@ -583,7 +586,7 @@ public:
     void clear();
     void _clear(); //lock free
     bool CompareDepthAndScore(const uint256& hasha, const uint256& hashb);
-    void queryHashes(std::vector<uint256>& vtxid);
+    void queryHashes(std::vector<uint256>& vtxid) const;
     bool isSpent(const COutPoint& outpoint);
     unsigned int GetTransactionsUpdated() const;
     void AddTransactionsUpdated(unsigned int n);
@@ -686,6 +689,7 @@ public:
     std::vector<TxMempoolInfo> infoAll() const;
 
     size_t DynamicMemoryUsage() const;
+    UniValue ToJSON(bool fVerbose) const;
 
     boost::signals2::signal<void (CTransactionRef)> NotifyEntryAdded;
     boost::signals2::signal<void (CTransactionRef, MemPoolRemovalReason)> NotifyEntryRemoved;

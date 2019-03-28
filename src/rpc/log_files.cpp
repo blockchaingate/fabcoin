@@ -18,6 +18,9 @@
 #include <iostream>
 #include <mutex>
 
+void avoidCompilerWarningsDefinedButNotUsedLogFiles() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 UniValue getlogfile(const JSONRPCRequest& request) {
     if (request.fHelp || request.params.size() != 1)

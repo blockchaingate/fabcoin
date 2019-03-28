@@ -1,6 +1,10 @@
 #include <boost/test/unit_test.hpp>
 #include <fasctests/test_utils.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCondensingTransactionTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 std::vector<valtype> code = {
     /*
         contract Sender1 {

@@ -26,7 +26,16 @@ public:
   std::string computeSha3_256(const std::string& input);
   std::string computeKeccak3_256(const std::string& input);
   std::string computeKeccakOrSha3(const std::string& input);
+  static void computeSha3_256_static(const std::string& input, std::vector<unsigned char>& output) {
+      Sha3 theHasher;
+      return theHasher.computeSha3_256(input, output);
+  }
+  static void computeSha3_256_static(const std::vector<unsigned char>& input, std::vector<unsigned char>& output){
+      Sha3 theHasher;
+      return theHasher.computeSha3_256(input, output);
+  }
   void computeSha3_256(const std::string& input, std::vector<unsigned char>& output);
+  void computeSha3_256(const std::vector<unsigned char>& input, std::vector<unsigned char>& output);
   void computeKeccak3_256(const std::string& input, std::vector<unsigned char>& output);
 
   void getResultVector(std::vector<unsigned char>& output);

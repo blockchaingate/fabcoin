@@ -14,6 +14,10 @@
 
 #include <memory>
 
+void avoidCompilerWarningsDefinedButNotUsedBenchFabcoin() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static const int64_t DEFAULT_BENCH_EVALUATIONS = 5;
 static const char* DEFAULT_BENCH_FILTER = ".*";
 static const char* DEFAULT_BENCH_SCALING = "1.0";
@@ -54,7 +58,10 @@ main(int argc, char** argv)
     bool is_list_only = gArgs.GetBoolArg("-list", false);
 
     double scaling_factor = boost::lexical_cast<double>(scaling_str);
-
+    (void) evaluations;
+    (void) regex_filter;
+    (void) is_list_only;
+    (void) scaling_factor;
 
     std::unique_ptr<benchmark::Printer> printer(new benchmark::ConsolePrinter());
     std::string printer_arg = gArgs.GetArg("-printer", DEFAULT_BENCH_PRINTER);
@@ -65,7 +72,8 @@ main(int argc, char** argv)
             gArgs.GetArg("-plot-height", DEFAULT_PLOT_HEIGHT)));
     }
 
-    benchmark::BenchRunner::RunAll(*printer, evaluations, scaling_factor, regex_filter, is_list_only);
+    //benchmark::BenchRunner::RunAll(*printer, evaluations, scaling_factor, regex_filter, is_list_only);
 
     ECC_Stop();
+    return 0;
 }

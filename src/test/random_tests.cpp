@@ -8,6 +8,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedRandomTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(random_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(osrandom_tests)

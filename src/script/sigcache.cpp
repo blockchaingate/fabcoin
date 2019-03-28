@@ -14,6 +14,10 @@
 #include "cuckoocache.h"
 #include <boost/thread.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedSigCache() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace {
 /**
  * Valid signature cache, to avoid doing expensive ECDSA signature checking
@@ -80,7 +84,7 @@ void InitSignatureCache()
             (nElems*sizeof(uint256)) >>20, (nMaxCacheSize*2)>>20, nElems);
 }
 
-void CachingTransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionData& output) const
+void CachingTransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionDatA &output) const
 {
     if (this->txdata == nullptr) {
         output.hashOutputs.SetNull();

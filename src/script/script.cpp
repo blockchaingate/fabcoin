@@ -7,7 +7,13 @@
 
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "standard.h"
 //#include "core_io.h"
+#include "log_session.h"
+
+void avoidCompilerWarningsDefinedButNotUsedScriptCPP() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 const char* GetOpName(opcodetype opcode)
 {
@@ -147,6 +153,8 @@ const char* GetOpName(opcodetype opcode)
 
     //aggregate signature
     case OP_AGGREGATEVERIFY        : return "OP_AGGREGATEVERIFY";
+    case OP_SCARSIGNATURE          : return "OP_SCARSIGNATURE";
+    case OP_CONTRACTCOVERSFEES     : return "OP_CONTRACTCOVERSFEES";
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
@@ -158,6 +166,79 @@ const char* GetOpName(opcodetype opcode)
     default:
         return "OP_UNKNOWN";
     }
+}
+
+void CScriptTemplate::reset()
+{
+    this->thePatterns.clear();
+}
+
+bool CScript::FitsOpCodePattern(
+    const CScriptTemplate& pattern,
+    std::vector<std::vector<unsigned char> >* outputData,
+    std::stringstream *commentsOnFailure
+) const {
+    CScript::const_iterator iterator = this->begin();
+    opcodetype lastOpcode = OP_INVALIDOPCODE;
+    std::vector<unsigned char> currentData;
+    if (outputData != nullptr) {
+        outputData->clear();
+    }
+    for (unsigned i = 0; i < pattern.thePatterns.size(); i ++) {
+        if (!this->GetOp2(iterator, lastOpcode, &currentData)) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Failed to get opcode at index: " << i << ".\n";
+            }
+            return false;
+        }
+        const OpcodePattern& currentPattern = pattern.thePatterns[i];
+        if (lastOpcode <= OP_PUSHDATA4) {
+            if (currentPattern.opCode != OP_DATA) {
+                if (commentsOnFailure != nullptr) {
+                    *commentsOnFailure << "Opcode " << (int) lastOpcode
+                    << "at position " << i << " indicates data is expected, but the template expects opcode: "
+                    << currentPattern.opCode << ". ";
+                }
+                return false;
+            }
+            if (currentPattern.minDataLength >= 0) {
+                if (currentData.size() < (unsigned) currentPattern.minDataLength) {
+                    return false;
+                }
+            }
+            if (currentPattern.maxDataLength >= 0) {
+                if (currentData.size() > (unsigned) currentPattern.maxDataLength) {
+                    return false;
+                }
+            }
+            if (currentPattern.exactDataContent.size() > 0) {
+                if (currentPattern.exactDataContent != currentData) {
+                    if (commentsOnFailure != nullptr) {
+                        *commentsOnFailure << "Data: " << HexStr(currentData) << " is not equal to the required value: "
+                                           << HexStr(currentPattern.exactDataContent) << ". ";
+                    }
+                    return false;
+                }
+            }
+            if (outputData != nullptr) {
+                outputData->push_back(currentData);
+            }
+            continue;
+        }
+        //For non-data patterns
+        if ((unsigned int) lastOpcode != currentPattern.opCode) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Opcode " << (int) lastOpcode
+                << " at position " << i << " does not equal the expected value: "
+                << currentPattern.opCode << ". ";
+            }
+            return false;
+        }
+    }
+    if (this->GetOp(iterator, lastOpcode)) {
+        return false;
+    }
+    return true;
 }
 
 unsigned int CScript::GetSigOpCount(bool fAccurate) const

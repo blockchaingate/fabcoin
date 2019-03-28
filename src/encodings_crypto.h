@@ -11,8 +11,7 @@ class Encodings
 public:
     static bool Base58ToBytes(const std::string& inputBigEndian, std::vector<unsigned char>& outputBigEndian, std::stringstream *commentsOnFailure);
     template <typename anyType>
-    static anyType toLowerLatinAlphabet(const anyType& input)
-    {
+    static anyType toLowerLatinAlphabet(const anyType& input) {
         anyType result;
         result.resize(input.size());
         for (unsigned i = 0; i < input.size(); i ++) {
@@ -41,8 +40,7 @@ public:
 
     static bool char2int(char input, int& output, std::stringstream* commentsOnFailure);
     template<typename inputType, typename outputType>
-    static bool fromHex(const inputType& input, outputType& result, std::stringstream* commentsOnFailure)
-    {
+    static bool fromHex(const inputType& input, outputType& result, std::stringstream* commentsOnFailure) {
         result.clear();
         int currentHigh, currentLow;
         for (unsigned i = 0; i + 1 < input.size(); i += 2) {

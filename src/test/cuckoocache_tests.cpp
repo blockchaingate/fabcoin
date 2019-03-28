@@ -21,6 +21,11 @@
  *  using BOOST_CHECK_CLOSE to fail.
  *
  */
+
+void avoidCompilerWarningsDefinedButNotUsedCuckooCache() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 FastRandomContext local_rand_ctx(true);
 
 BOOST_AUTO_TEST_SUITE(cuckoocache_tests);

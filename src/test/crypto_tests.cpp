@@ -20,6 +20,10 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCryptoTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(crypto_tests, BasicTestingSetup)
 
 template<typename Hasher, typename In, typename Out>

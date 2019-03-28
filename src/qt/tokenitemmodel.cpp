@@ -11,6 +11,10 @@
 #include <QDebug>
 #include <QThread>
 
+void avoidCompilerWarningsDefinedButNotUsedTokenItemModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 class TokenItemEntry
 {
 public:

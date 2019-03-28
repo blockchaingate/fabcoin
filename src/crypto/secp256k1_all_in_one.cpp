@@ -1446,6 +1446,7 @@ SECP256K1_INLINE int secp256k1_scalar_reduce(secp256k1_scalar *r, unsigned int o
     return overflow;
 }
 
+//safe when input and output are the same
 int secp256k1_scalar_add(secp256k1_scalar *r, const secp256k1_scalar *a, const secp256k1_scalar *b) {
     int overflow;
     uint128_t t = (uint128_t)a->d[0] + b->d[0];
@@ -5777,19 +5778,25 @@ static int secp256k1_der_parse_integer(secp256k1_scalar *r, const unsigned char 
     return 1;
 }
 
+#include <sstream>
+#include <iostream>
 int secp256k1_ecdsa_sig_parse(secp256k1_scalar *rr, secp256k1_scalar *rs, const unsigned char *sig, size_t size) {
     const unsigned char *sigend = sig + size;
     int rlen;
+    std::cout << "DEBUG: inside parsing of signatures" << std::endl;
     if (sig == sigend || *(sig++) != 0x30) {
+        std::cout << "DEBUG: Bad signature start" << std::endl;
         /* The encoding doesn't start with a constructed sequence (X.690-0207 8.9.1). */
         return 0;
     }
     rlen = secp256k1_der_read_len(&sig, sigend);
     if (rlen < 0 || sig + rlen > sigend) {
+        std::cout << "DEBUG: Bad signature start" << std::endl;
         /* Tuple exceeds bounds */
         return 0;
     }
     if (sig + rlen != sigend) {
+        std::cout << "DEBUG: Garbage after tuple. rlen: " << rlen << ", sigend: " << sigend << " sig + rlen: " << (sig + rlen) << std::endl;
         /* Garbage after tuple. */
         return 0;
     }
@@ -5802,9 +5809,11 @@ int secp256k1_ecdsa_sig_parse(secp256k1_scalar *rr, secp256k1_scalar *rs, const 
     }
 
     if (sig != sigend) {
+        std::cout << "DEBUG: Garbage inside tuple" << std::endl;
         /* Trailing garbage inside tuple. */
         return 0;
     }
+    std::cout << "DEBUG: success output" << std::endl;
 
     return 1;
 }

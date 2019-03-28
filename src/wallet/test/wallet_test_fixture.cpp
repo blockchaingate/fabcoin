@@ -8,6 +8,10 @@
 #include <wallet/db.h>
 #include <wallet/wallet.h>
 
+void avoidCompilerWarningsDefinedButNotUsedWalletTestFixture() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 CWallet *pwalletMain;
 
 WalletTestingSetup::WalletTestingSetup(const std::string& chainName):

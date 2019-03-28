@@ -33,10 +33,15 @@
 
 #include <boost/assign/list_of.hpp>
 #include <boost/optional.hpp>
+#include <aggregate_schnorr_signature.h>
 
 using namespace std;
 
 static const std::string WALLET_ENDPOINT_BASE = "/wallet/";
+
+void avoidCompilerWarningsDefinedButNotUsedRPCWallet() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 CWallet* GetWalletForJSONRPCRequest(const JSONRPCRequest& request)
 {
@@ -171,7 +176,6 @@ UniValue getnewaddress(const JSONRPCRequest& request)
     return CFabcoinAddress(keyID).ToString();
 }
 
-
 CFabcoinAddress GetAccountAddress(CWallet* const pwallet, std::string strAccount, bool bForceNew = false)
 {
     CPubKey pubKey;
@@ -211,7 +215,6 @@ UniValue getaccountaddress(const JSONRPCRequest& request)
     return ret;
 }
 
-
 UniValue getrawchangeaddress(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
@@ -246,7 +249,6 @@ UniValue getrawchangeaddress(const JSONRPCRequest& request)
 
     return CFabcoinAddress(keyID).ToString();
 }
-
 
 UniValue setaccount(const JSONRPCRequest& request)
 {
@@ -291,7 +293,6 @@ UniValue setaccount(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
-
 UniValue getaccount(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
@@ -323,7 +324,6 @@ UniValue getaccount(const JSONRPCRequest& request)
     }
     return strAccount;
 }
-
 
 UniValue getaddressesbyaccount(const JSONRPCRequest& request)
 {
@@ -529,7 +529,6 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
 
     return wtx.GetHash().GetHex();
 }
-
 
 // ========= Smart Contracct ======================
 
@@ -819,6 +818,7 @@ UniValue createcontract(const JSONRPCRequest& request)
     }
     return result;
 }
+
 UniValue sendtocontract(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
@@ -1034,6 +1034,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
 
     return result;
 }
+
 UniValue listaddressgroupings(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);

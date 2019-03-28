@@ -22,6 +22,10 @@
 #include <assert.h>
 #include <chainparamsseeds.h>
 
+void avoidCompilerWarningsDefinedButNotUsedChainParams() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, const uint256& nNonce, const std::vector<unsigned char>& nSolution, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
     CMutableTransaction txNew;

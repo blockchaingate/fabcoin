@@ -13,6 +13,10 @@
 #include <chainparams.h>
 #include <util.h>
 
+void avoidCompilerWarningsDefinedButNotUsedNetTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 class CAddrManSerializationMock : public CAddrMan
 {
 public:

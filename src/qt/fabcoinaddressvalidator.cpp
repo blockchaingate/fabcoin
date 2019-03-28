@@ -6,6 +6,10 @@
 
 #include <base58.h>
 
+void avoidCompilerWarningsDefinedButNotUsedFabcoinAddressValidator() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 /* Base58 characters are:
      "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 

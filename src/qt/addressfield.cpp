@@ -11,6 +11,10 @@
 #include <QLineEdit>
 #include <QCompleter>
 
+void avoidCompilerWarningsDefinedButNotUsedAddressField() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 using namespace std;
 
 AddressField::AddressField(QWidget *parent) :

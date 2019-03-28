@@ -11,6 +11,9 @@
 #include <clientversion.h>
 #include <streams.h>
 
+void avoidCompilerWarningsDefinedButNotUsedRecentRequestTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 RecentRequestsTableModel::RecentRequestsTableModel(CWallet *wallet, WalletModel *parent) :
     QAbstractTableModel(parent), walletModel(parent)

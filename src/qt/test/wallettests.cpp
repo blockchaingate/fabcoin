@@ -22,6 +22,10 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionWalletTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace
 {
 //! Press "Ok" button in message box dialog.

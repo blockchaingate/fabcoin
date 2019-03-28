@@ -13,6 +13,10 @@
 
 #include <array>
 
+void avoidCompilerWarningsDefinedButNotUsedVerifyScript() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 // FIXME: Dedup with BuildCreditingTransaction in test/script_tests.cpp.
 static CMutableTransaction BuildCreditingTransaction(const CScript& scriptPubKey)
 {

@@ -11,6 +11,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedSerializeTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(serialize_tests, BasicTestingSetup)
 
 class CSerializeMethodsTestSingle

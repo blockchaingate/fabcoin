@@ -25,6 +25,10 @@
 #include <memory> // for unique_ptr
 #include <unordered_map>
 
+void avoidCompilerWarningsDefinedButNotUsedServer() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static bool fRPCRunning = false;
 static bool fRPCInWarmup = true;
 static std::string rpcWarmupStatus("RPC server started");

@@ -9,6 +9,44 @@
 #include <tinyformat.h>
 #include <utilstrencodings.h>
 #include <consensus/consensus.h>
+#include <script/interpreter.h>
+#include "script/standard.h"
+
+// The following two functions were moved from standard.cpp into this file in
+// order to fix a broken build in clang. Should you decide to modify any of this,
+// please make sure that your build works both on gcc and on clang.
+const char* GetTxnOutputType(txnouttype t)
+{
+    switch (t)
+    {
+    case TX_NONSTANDARD: return "nonstandard";
+    case TX_AGGREGATE_SIGNATURE: return "aggregate_signature";
+    case TX_CONTRACT_COVERS_FEES: return "contract_covers_fees";
+    case TX_PUBLIC_KEY_NO_ANCESTOR: return "public_key_no_ancestor";
+    case TX_PUBKEY: return "pubkey";
+    case TX_PUBKEYHASH: return "pubkeyhash";
+    case TX_SCRIPTHASH: return "scripthash";
+    case TX_MULTISIG: return "multisig";
+    case TX_NULL_DATA: return "nulldata";
+    case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
+    case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
+    case TX_CREATE: return "create";
+    case TX_CALL: return "call";
+    case TX_SCAR_SIGNATURE: return "scar_signature";
+    }
+    return nullptr;
+}
+
+void CScriptTemplate::MakeSCARSignatureTemplate() {
+    this->reset();
+    this->tx_templateType = TX_AGGREGATE_SIGNATURE;
+    this->name = GetTxnOutputType((txnouttype) this->tx_templateType);
+    *this << OpcodePattern(OP_DATA, 20, 20) << OpcodePattern(OP_DATA, 20, 20) << OP_DATA << OP_SCARSIGNATURE;
+}
+
+void avoidCompilerWarningsDefinedButNotUsedTransaction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 std::string COutPoint::ToString() const
 {
@@ -68,8 +106,79 @@ uint256 CTransaction::ComputeHash() const
     return SerializeHash(*this, SER_GETHASH, SERIALIZE_TRANSACTION_NO_WITNESS);
 }
 
-uint256 CTransaction::GetWitnessHash() const
-{
+bool CTxIn::ToBytesForSignatureWithoutAncestor(std::stringstream& output, std::stringstream* commentsOnFailure) const {
+    if (!this->prevout.IsWithoutAncestor()) {
+        if (commentsOnFailure != nullptr) {
+            *commentsOnFailure
+                    << "At the time of writing, ToBytesForSignatureWithoutAncestor requires that the transaction "
+                    << "be coin-base like (txin = fff...). This may be changed in the future, but for now "
+                    << "an error is returned. ";
+        }
+        return false;
+    }
+    ::Serialize(output, this->prevout);
+    bool serializeAsEmpty = true;
+    if (this->scriptSig.size() > 2) {
+        CScriptTemplate scarSignature;
+        scarSignature.MakeSCARSignatureTemplateStatic(scarSignature);
+        std::vector<std::vector<unsigned char> > scarAddressAndshardId;
+        if (this->scriptSig.FitsOpCodePattern(
+            scarSignature,
+            &scarAddressAndshardId,
+            nullptr
+        )) {
+            CScript lockScript = CScript() << scarAddressAndshardId[0] << scarAddressAndshardId[1];
+            ::Serialize(output, lockScript);
+            serializeAsEmpty = false;
+        }
+    }
+    if (serializeAsEmpty) {
+        ::Serialize(output, CScript());
+    }
+    ::Serialize(output, this->nSequence);
+    return true;
+}
+
+bool CTransaction::ToBytesForSignatureWithoutAncestor(std::vector<unsigned char>& output, std::stringstream* commentsOnFailure) const {
+    std::stringstream outputStream;
+    if (!this->ToBytesForSignatureWithoutAncestor(outputStream, commentsOnFailure)) {
+        return false;
+    }
+    std::string outputString = outputStream.str();
+    output = std::vector<unsigned char>(outputString.begin(), outputString.end());
+    return true;
+}
+
+bool CTransaction::ToBytesForSignatureWithoutAncestor(std::stringstream& output, std::stringstream* commentsOnFailure) const {
+    // write version:
+    ::Serialize(output, this->nVersion);
+    unsigned int nInputs = this->vin.size();
+    if (nInputs != 1) {
+        if (commentsOnFailure != nullptr) {
+            *commentsOnFailure
+            << "At the moment, ToBytesForSignatureWithoutAncestor is supported "
+            << "for transactions with single input only. ";
+        }
+        return false;
+    }
+    ::WriteCompactSize(output, nInputs);
+    for (unsigned int nInput = 0; nInput < nInputs; nInput ++) {
+        if (!this->vin[nInput].ToBytesForSignatureWithoutAncestor(output, commentsOnFailure)) {
+            return false;
+        }
+    }
+    // Serialize vout
+    unsigned int nOutputs = this->vout.size();
+    ::WriteCompactSize(output, nOutputs);
+    for (unsigned int nOutput = 0; nOutput < nOutputs; nOutput ++) {
+        ::Serialize(output, this->vout[nOutput]);
+    }
+    ::Serialize(output, (uint32_t) 0); //<-time lock
+    ::Serialize(output, (uint32_t) SIGHASH_ALL);
+    return true;
+}
+
+uint256 CTransaction::GetWitnessHash() const {
     if (!HasWitness()) {
         return GetHash();
     }
@@ -119,17 +228,34 @@ int64_t GetTransactionWeight(const CTransaction& tx)
     return ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR -1) + ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
 }
 ///////////////////////////////////////////////////////////// fabcoin
-bool CTransaction::HasCreateOrCall() const{
-    for(const CTxOut& v : vout){
-        if(v.scriptPubKey.HasOpCreate() || v.scriptPubKey.HasOpCall()){
+
+bool CTransaction::HasCreateOrCallInOutputs() const
+{
+    for (const CTxOut& v : vout) {
+        if (v.scriptPubKey.HasOpCreate() || v.scriptPubKey.HasOpCall()) {
             return true;
         }
     }
     return false;
 }
-bool CTransaction::HasOpSpend() const{
-    for(const CTxIn& i : vin){
-        if(i.scriptSig.HasOpSpend()){
+
+bool CTransaction::HasNonFeeCallOrCreateInOutputs() const
+{
+    for (const CTxOut& v : vout) {
+        if (v.scriptPubKey.HasOpCreate() || v.scriptPubKey.HasOpCall()) {
+            if (v.scriptPubKey.HasOpContractCoversFees()) {
+                continue;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool CTransaction::HasOpSpend() const
+{
+    for (const CTxIn& i : vin) {
+        if (i.scriptSig.HasOpSpend()) {
             return true;
         }
     }

@@ -20,6 +20,10 @@
 #include <QFileOpenEvent>
 #include <QTemporaryFile>
 
+void avoidCompilerWarningsDefinedButNotUsedPaymentServerTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 X509 *parse_b64der_cert(const char* cert_data)
 {
     std::vector<unsigned char> data = DecodeBase64(cert_data);

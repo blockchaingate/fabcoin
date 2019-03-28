@@ -17,7 +17,9 @@ class RPCNestedTests : public QObject
 
     private Q_SLOTS:
     void rpcNestedTests();
-
+    void avoidCompilerWarningsDefinedButNotUsedRPCNestedTests() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 private:
     CCoinsViewDB *pcoinsdbview;
 };

@@ -11,6 +11,10 @@
 
 #include <QUrl>
 
+void avoidCompilerWarningsDefinedButNotUsedOpenURIDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 OpenURIDialog::OpenURIDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::OpenURIDialog)

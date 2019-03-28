@@ -1,5 +1,9 @@
 #include <fasctests/test_utils.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTestUtils() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 void initState(){
     boost::filesystem::path pathTemp;		
     pathTemp = fs::temp_directory_path() / strprintf("test_fasc_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));

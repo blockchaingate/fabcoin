@@ -115,8 +115,9 @@ bool AppInit(int argc, char* argv[])
             fprintf(stderr, "Error: %s\n", e.what());
             return false;
         }
-        if (Params().NetworkIDString() == CBaseChainParams::REGTEST) {
-            LogSession::currentNetName = CBaseChainParams::REGTEST;
+        LogSession::currentNetworkName = Params().NetworkIDString();
+        if (LogSession::currentNetworkName == CBaseChainParams::REGTEST || LogSession::currentNetworkName == CBaseChainParams::REGTESTWITHNET) {
+            LogSession::flagLogsTurnedOn = true;
         }
         // Error out when loose non-argument tokens are encountered on command line
         for (int i = 1; i < argc; i++) {

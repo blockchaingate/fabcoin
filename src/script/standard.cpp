@@ -14,31 +14,42 @@
 #include <fasc/fascstate.h>
 #include <fasc/fasctransaction.h>
 #include <validation.h>
+#include <log_session.h>
 
 typedef std::vector<unsigned char> valtype;
+
+void avoidCompilerWarningsDefinedButNotUsedChainStandard() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 bool fAcceptDatacarrier = DEFAULT_ACCEPT_DATACARRIER;
 unsigned nMaxDatacarrierBytes = MAX_OP_RETURN_RELAY;
 
 CScriptID::CScriptID(const CScript& in) : uint160(Hash160(in.begin(), in.end())) {}
 
-const char* GetTxnOutputType(txnouttype t)
+void CScriptTemplate::MakeAggregateSignatureTemplate() {
+    this->reset();
+    this->tx_templateType = TX_SCAR_SIGNATURE;
+    this->name = GetTxnOutputType((txnouttype) this->tx_templateType);
+    *this << OP_DATA << OP_SCARSIGNATURE;
+}
+
+void CScriptTemplate::MakeContractCoversFeesTemplate() {
+    this->reset();
+    this->tx_templateType = TX_CONTRACT_COVERS_FEES;
+    this->name = GetTxnOutputType((txnouttype) this->tx_templateType);
+    *this << OP_CONTRACTCOVERSFEES << OP_DATA << OpcodePattern(OP_DATA, 4, - 1) << OpcodePattern(OP_DATA, 20, 20) << OP_CALL;
+}
+
+void CScriptTemplate::MakeInputPublicKeyNoAncestor()
 {
-    switch (t)
-    {
-    case TX_NONSTANDARD: return "nonstandard";
-    case TX_AGRREGATE_SIGNATURE: return "aggregate_signature";
-    case TX_PUBKEY: return "pubkey";
-    case TX_PUBKEYHASH: return "pubkeyhash";
-    case TX_SCRIPTHASH: return "scripthash";
-    case TX_MULTISIG: return "multisig";
-    case TX_NULL_DATA: return "nulldata";
-    case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
-    case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
-    case TX_CREATE: return "create";
-    case TX_CALL: return "call";
-    }
-    return nullptr;
+    this->reset();
+    this->tx_templateType = TX_PUBLIC_KEY_NO_ANCESTOR;
+    this->name = GetTxnOutputType((txnouttype) this->tx_templateType);
+    *this << OpcodePattern(OP_DATA, 40, -1) //<- signature data, at least 40 bytes (signatures have variable-length encoding, max 73 bytes,
+                                             //min length depends on number of leading zeroes in signature, theoretically can be very small.
+          << OpcodePattern(OP_DATA, 33, -1) //<- compressed public key
+          << OP_CHECKSIG;
 }
 
 /**
@@ -49,9 +60,10 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
     //contractConsesus is true when evaluating if a contract tx is "standard" for consensus purposes
     //It is false in all other cases, so to prevent a particular contract tx from being broadcast on mempool, but allowed in blocks,
     //one should ensure that contractConsensus is false
-
+    //LogSession::debugLog() << "DEBUG: Got to here!!!" << LogSession::endL;
     // Templates
     static std::multimap<txnouttype, CScript> mTemplates;
+    static std::multimap<txnouttype, CScriptTemplate> kanbanTemplates;
     if (mTemplates.empty())
     {
         // Standard tx, sender provides pubkey, receiver adds signature
@@ -68,8 +80,14 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         // Call contract tx
         mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
 
+        CScriptTemplate kanbanTemplate;
+        // Contract covers fees
+        kanbanTemplate.MakeContractCoversFeesTemplate();
+        kanbanTemplates.insert(std::make_pair(TX_CONTRACT_COVERS_FEES, kanbanTemplate));
+
         // Aggregate signature
-        mTemplates.insert(std::make_pair(TX_AGRREGATE_SIGNATURE, CScript() << OP_DATA << OP_AGGREGATEVERIFY));
+        kanbanTemplate.MakeAggregateSignatureTemplate();
+        kanbanTemplates.insert(std::make_pair(TX_AGGREGATE_SIGNATURE, kanbanTemplate));
     }
 
     vSolutionsRet.clear();
@@ -81,10 +99,6 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         typeRet = TX_SCRIPTHASH;
         std::vector<unsigned char> hashBytes(scriptPubKey.begin()+2, scriptPubKey.begin()+22);
         vSolutionsRet.push_back(hashBytes);
-        return true;
-    }
-    if (scriptPubKey.IsPayToAggregateSignature()) {
-        typeRet = TX_AGRREGATE_SIGNATURE;
         return true;
     }
 
@@ -116,6 +130,14 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
     // Scan templates
     const CScript& script1 = scriptPubKey;
+    vSolutionsRet.clear();
+    for (const std::pair<txnouttype, CScriptTemplate>& currentTemplate : kanbanTemplates) {
+        if (scriptPubKey.FitsOpCodePattern(currentTemplate.second, nullptr, nullptr)) {
+            typeRet = currentTemplate.first;
+            return true;
+        }
+    }
+
     for (const std::pair<txnouttype, CScript>& tplate : mTemplates)
     {
         const CScript& script2 = tplate.second;
@@ -124,7 +146,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         opcodetype opcode1, opcode2;
         std::vector<unsigned char> vch1, vch2;
         VersionVM version;
-        version.rootVM=20; //set to some invalid value
+        version.rootVM = 20; //set to some invalid value
 
         // Compare
         CScript::const_iterator pc1 = script1.begin();

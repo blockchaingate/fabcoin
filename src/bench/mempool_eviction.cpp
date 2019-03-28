@@ -9,6 +9,10 @@
 #include <list>
 #include <vector>
 
+void avoidCompilerWarningsDefinedButNotUsedMempoolEviction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static void AddTx(const CTransaction& tx, const CAmount& nFee, CTxMemPool& pool)
 {
     int64_t nTime = 0;

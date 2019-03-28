@@ -14,6 +14,10 @@
 #include <string>
 #include <vector>
 
+void avoidCompilerWarningsDefinedButNotUsedBIP32Tests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 struct TestDerivation {
     std::string pub;
     std::string prv;
