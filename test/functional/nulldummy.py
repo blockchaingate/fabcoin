@@ -6,11 +6,11 @@
 
 Connect to a single node.
 Generate 2 blocks (save the coinbases for later).
-Generate 2527 more blocks.
-[Policy/Consensus] Check that NULLDUMMY compliant transactions are accepted in the 2530th block.
+Generate 427 more blocks.
+[Policy/Consensus] Check that NULLDUMMY compliant transactions are accepted in the 430th block.
 [Policy] Check that non-NULLDUMMY transactions are rejected before activation.
-[Consensus] Check that the new NULLDUMMY rules are not enforced on the 2531st block.
-[Policy/Consensus] Check that the new NULLDUMMY rules are enforced on the 2532nd block.
+[Consensus] Check that the new NULLDUMMY rules are not enforced on the 431st block.
+[Policy/Consensus] Check that the new NULLDUMMY rules are enforced on the 432nd block.
 """
 
 from test_framework.test_framework import FabcoinTestFramework
@@ -18,6 +18,7 @@ from test_framework.util import *
 from test_framework.mininode import CTransaction, NetworkThread
 from test_framework.blocktools import create_coinbase, create_block, add_witness_commitment
 from test_framework.script import CScript
+from test_framework.fabcoinconfig import COINBASE_MATURITY, INITIAL_BLOCK_REWARD
 from io import BytesIO
 import time
 
@@ -53,44 +54,55 @@ class NULLDUMMYTest(FabcoinTestFramework):
         coinbase_txid = []
         for i in self.coinbase_blocks:
             coinbase_txid.append(self.nodes[0].getblock(i)['tx'][0])
-        self.nodes[0].generate(2527) # Block 2529
+
+        for i in range(COINBASE_MATURITY):
+            block = create_block(int(self.nodes[0].getbestblockhash(), 16), create_coinbase(self.nodes[0].getblockcount()+1), self.nodes[0].getblockcount()+1, int(time.time())+2+i)
+            block.nVersion = 4
+            block.hashMerkleRoot = block.calc_merkle_root()
+            block.rehash()
+            block.solve()
+            self.nodes[0].submitblock(bytes_to_hex_str(block.serialize()))
+
+        # Generate the number blocks signalling  that the continuation of the test case expects
+        # for 800  maturity  144*8=1152 144*6=864 144*3=432
+        self.nodes[0].generate((1152-1)-COINBASE_MATURITY-2-2)
         self.lastblockhash = self.nodes[0].getbestblockhash()
         self.tip = int("0x" + self.lastblockhash, 0)
-        self.lastblockheight = 2529
-        self.lastblocktime = int(time.time()) + 2529
+        self.lastblockheight = self.nodes[0].getblockcount()
+        self.lastblocktime = int(time.time()) + self.lastblockheight + 1
 
-        self.log.info("Test 1: NULLDUMMY compliant base transactions should be accepted to mempool and mined before activation [2530]")
-        test1txs = [self.create_transaction(self.nodes[0], coinbase_txid[0], self.ms_address, 24.9)]
+        self.log.info("Test 1: NULLDUMMY compliant base transactions should be accepted to mempool and mined before activation [430]")
+        test1txs = [self.create_transaction(self.nodes[0], coinbase_txid[0], self.ms_address, INITIAL_BLOCK_REWARD-1)]
         txid1 = self.nodes[0].sendrawtransaction(bytes_to_hex_str(test1txs[0].serialize_with_witness()), True)
-        test1txs.append(self.create_transaction(self.nodes[0], txid1, self.ms_address, 24.8))
+        test1txs.append(self.create_transaction(self.nodes[0], txid1, self.ms_address, INITIAL_BLOCK_REWARD-2))
         txid2 = self.nodes[0].sendrawtransaction(bytes_to_hex_str(test1txs[1].serialize_with_witness()), True)
-        test1txs.append(self.create_transaction(self.nodes[0], coinbase_txid[1], self.wit_ms_address, 24.9))
+        test1txs.append(self.create_transaction(self.nodes[0], coinbase_txid[1], self.wit_ms_address, INITIAL_BLOCK_REWARD-1))
         txid3 = self.nodes[0].sendrawtransaction(bytes_to_hex_str(test1txs[2].serialize_with_witness()), True)
         self.block_submit(self.nodes[0], test1txs, False, True)
 
         self.log.info("Test 2: Non-NULLDUMMY base multisig transaction should not be accepted to mempool before activation")
-        test2tx = self.create_transaction(self.nodes[0], txid2, self.ms_address, 24.7)
+        test2tx = self.create_transaction(self.nodes[0], txid2, self.ms_address, INITIAL_BLOCK_REWARD-3)
         trueDummy(test2tx)
         assert_raises_rpc_error(-26, NULLDUMMY_ERROR, self.nodes[0].sendrawtransaction, bytes_to_hex_str(test2tx.serialize_with_witness()), True)
 
-        self.log.info("Test 3: Non-NULLDUMMY base transactions should be accepted in a block before activation [2531]")
+        self.log.info("Test 3: Non-NULLDUMMY base transactions should be accepted in a block before activation [431]")
         self.block_submit(self.nodes[0], [test2tx], False, True)
 
         self.log.info("Test 4: Non-NULLDUMMY base multisig transaction is invalid after activation")
-        test4tx = self.create_transaction(self.nodes[0], test2tx.hash, self.address, 24.6)
+        test4tx = self.create_transaction(self.nodes[0], test2tx.hash, self.address, INITIAL_BLOCK_REWARD-4)
         test6txs=[CTransaction(test4tx)]
         trueDummy(test4tx)
         assert_raises_rpc_error(-26, NULLDUMMY_ERROR, self.nodes[0].sendrawtransaction, bytes_to_hex_str(test4tx.serialize_with_witness()), True)
         self.block_submit(self.nodes[0], [test4tx])
 
         self.log.info("Test 5: Non-NULLDUMMY P2WSH multisig transaction invalid after activation")
-        test5tx = self.create_transaction(self.nodes[0], txid3, self.wit_address, 24.8)
+        test5tx = self.create_transaction(self.nodes[0], txid3, self.wit_address, INITIAL_BLOCK_REWARD-2)
         test6txs.append(CTransaction(test5tx))
         test5tx.wit.vtxinwit[0].scriptWitness.stack[0] = b'\x01'
         assert_raises_rpc_error(-26, NULLDUMMY_ERROR, self.nodes[0].sendrawtransaction, bytes_to_hex_str(test5tx.serialize_with_witness()), True)
         self.block_submit(self.nodes[0], [test5tx], True)
 
-        self.log.info("Test 6: NULLDUMMY compliant base/witness transactions should be accepted to mempool and in block after activation [2532]")
+        self.log.info("Test 6: NULLDUMMY compliant base/witness transactions should be accepted to mempool and in block after activation [432]")
         for i in test6txs:
             self.nodes[0].sendrawtransaction(bytes_to_hex_str(i.serialize_with_witness()), True)
         self.block_submit(self.nodes[0], test6txs, True, True)
@@ -108,7 +120,7 @@ class NULLDUMMYTest(FabcoinTestFramework):
 
 
     def block_submit(self, node, txs, witness = False, accept = False):
-        block = create_block(self.tip, create_coinbase(self.lastblockheight + 1), self.lastblocktime + 1)
+        block = create_block(self.tip, create_coinbase(self.lastblockheight + 1), self.lastblockheight + 1, self.lastblocktime + 1)
         block.nVersion = 4
         for tx in txs:
             tx.rehash()
@@ -117,7 +129,7 @@ class NULLDUMMYTest(FabcoinTestFramework):
         witness and add_witness_commitment(block)
         block.rehash()
         block.solve()
-        node.submitblock(bytes_to_hex_str(block.serialize(True)),"", True)
+        node.submitblock(bytes_to_hex_str(block.serialize(True)))
         if (accept):
             assert_equal(node.getbestblockhash(), block.hash)
             self.tip = block.sha256

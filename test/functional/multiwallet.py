@@ -11,6 +11,7 @@ import shutil
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error
+from test_framework.fabcoinconfig import *
 
 class MultiWalletTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -46,7 +47,7 @@ class MultiWalletTest(FabcoinTestFramework):
         w3 = self.nodes[0].get_wallet_rpc("w3")
         wallet_bad = self.nodes[0].get_wallet_rpc("bad")
 
-        w1.generate(2)
+        w1.generate(1)
 
         # accessing invalid wallet fails
         assert_raises_rpc_error(-18, "Requested wallet does not exist or is not loaded", wallet_bad.getwalletinfo)
@@ -56,7 +57,7 @@ class MultiWalletTest(FabcoinTestFramework):
 
         # check w1 wallet balance
         w1_info = w1.getwalletinfo()
-        assert_equal(w1_info['immature_balance'], 50)
+        assert_equal(w1_info['immature_balance'], INITIAL_BLOCK_REWARD)
         w1_name = w1_info['walletname']
         assert_equal(w1_name, "w1")
 
@@ -71,8 +72,8 @@ class MultiWalletTest(FabcoinTestFramework):
 
         assert_equal({"w1", "w2", "w3"}, {w1_name, w2_name, w3_name})
 
-        w1.generate(802)
-        assert_equal(w1.getbalance(), 100)
+        w1.generate(COINBASE_MATURITY+1)
+        assert_equal(w1.getbalance(), 2*INITIAL_BLOCK_REWARD)
         assert_equal(w2.getbalance(), 0)
         assert_equal(w3.getbalance(), 0)
 

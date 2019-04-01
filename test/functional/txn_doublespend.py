@@ -6,6 +6,7 @@
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
+from test_framework.fabcoinconfig import *
 
 class TxnMallTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -18,64 +19,56 @@ class TxnMallTest(FabcoinTestFramework):
     def setup_network(self):
         # Start with split network:
         super().setup_network()
-
-
-
-    def run_test(self):
-        # All nodes should start with 1,250 FAB:
-        #mine 25 each node, so total 200 block  200*25= 5000 FAB, make sure each node have 1250 FAB.
-        for peer in range(4):
-            for j in range(25):
-                self.nodes[peer].generate(1)
-            # Must sync before next peer starts generating blocks
-            sync_blocks(self.nodes)
-
         disconnect_nodes(self.nodes[1], 2)
         disconnect_nodes(self.nodes[2], 1)
 
-
-
-        starting_balance = 1250
+    def run_test(self):
+        # All nodes should start with 1,250 FAB:
+        starting_balance = 25*INITIAL_BLOCK_REWARD
         for i in range(4):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
             self.nodes[i].getnewaddress("")  # bug workaround, coins generated assigned to first getnewaddress!
         
+        spend_from_foo = starting_balance - INITIAL_BLOCK_REWARD*5
+        spend_from_bar = INITIAL_BLOCK_REWARD*5 - 100
+        spend_from_doublespend = spend_from_foo + spend_from_bar - 8
+
         # Assign coins to foo and bar accounts:
         node0_address_foo = self.nodes[0].getnewaddress("foo")
-        fund_foo_txid = self.nodes[0].sendfrom("", node0_address_foo, 1229)
+        fund_foo_txid = self.nodes[0].sendfrom("", node0_address_foo, spend_from_foo)
         fund_foo_tx = self.nodes[0].gettransaction(fund_foo_txid)
 
         node0_address_bar = self.nodes[0].getnewaddress("bar")
-        fund_bar_txid = self.nodes[0].sendfrom("", node0_address_bar, 19)
+        fund_bar_txid = self.nodes[0].sendfrom("", node0_address_bar, spend_from_bar)
         fund_bar_tx = self.nodes[0].gettransaction(fund_bar_txid)
 
         assert_equal(self.nodes[0].getbalance(""),
-                     starting_balance - 1229 - 19 + fund_foo_tx["fee"] + fund_bar_tx["fee"])
+                     starting_balance - spend_from_foo - spend_from_bar + fund_foo_tx["fee"] + fund_bar_tx["fee"])
 
         # Coins are sent to node1_address
         node1_address = self.nodes[1].getnewaddress("from0")
 
         # First: use raw transaction API to send 1240 FAB to node1_address,
-        # but dont broadcast:
+        # but don't broadcast:
         doublespend_fee = Decimal('-.02')
         rawtx_input_0 = {}
         rawtx_input_0["txid"] = fund_foo_txid
-        rawtx_input_0["vout"] = find_output(self.nodes[0], fund_foo_txid, 1229)
+        rawtx_input_0["vout"] = find_output(self.nodes[0], fund_foo_txid, spend_from_foo)
         rawtx_input_1 = {}
         rawtx_input_1["txid"] = fund_bar_txid
-        rawtx_input_1["vout"] = find_output(self.nodes[0], fund_bar_txid, 19)
+        rawtx_input_1["vout"] = find_output(self.nodes[0], fund_bar_txid, spend_from_bar)
         inputs = [rawtx_input_0, rawtx_input_1]
         change_address = self.nodes[0].getnewaddress()
         outputs = {}
-        outputs[node1_address] = 1240
-        outputs[change_address] = 1248 - 1240 + doublespend_fee
+        outputs[node1_address] = spend_from_doublespend
+        outputs[change_address] = spend_from_foo + spend_from_bar - spend_from_doublespend + doublespend_fee
         rawtx = self.nodes[0].createrawtransaction(inputs, outputs)
         doublespend = self.nodes[0].signrawtransaction(rawtx)
         assert_equal(doublespend["complete"], True)
 
-        # Create two spends using 1 25 FAB coin each
-        txid1 = self.nodes[0].sendfrom("foo", node1_address, 20, 0)
-        txid2 = self.nodes[0].sendfrom("bar", node1_address, 10, 0)
+        # Create two spends using 1 50 FAB coin each
+        txid1 = self.nodes[0].sendfrom("foo", node1_address, (INITIAL_BLOCK_REWARD/5) * 4, 0)
+        txid2 = self.nodes[0].sendfrom("bar", node1_address, (INITIAL_BLOCK_REWARD/5) * 2, 0)
         
         # Have node0 mine a block:
         if (self.options.mine_block):
@@ -85,22 +78,22 @@ class TxnMallTest(FabcoinTestFramework):
         tx1 = self.nodes[0].gettransaction(txid1)
         tx2 = self.nodes[0].gettransaction(txid2)
 
-        # Node0s balance should be starting balance, plus 25FAB for another
-        # matured block, minus 20, minus 10, and minus transaction fees:
+        # Node0's balance should be starting balance, plus 50FAB for another
+        # matured block, minus 40, minus 20, and minus transaction fees:
         expected = starting_balance + fund_foo_tx["fee"] + fund_bar_tx["fee"]
-        if self.options.mine_block: expected += 25
+        if self.options.mine_block: expected += INITIAL_BLOCK_REWARD
         expected += tx1["amount"] + tx1["fee"]
         expected += tx2["amount"] + tx2["fee"]
         assert_equal(self.nodes[0].getbalance(), expected)
 
         # foo and bar accounts should be debited:
-        assert_equal(self.nodes[0].getbalance("foo", 0), 1229+tx1["amount"]+tx1["fee"])
-        assert_equal(self.nodes[0].getbalance("bar", 0), 19+tx2["amount"]+tx2["fee"])
+        assert_equal(self.nodes[0].getbalance("foo", 0), spend_from_foo+tx1["amount"]+tx1["fee"])
+        assert_equal(self.nodes[0].getbalance("bar", 0), spend_from_bar+tx2["amount"]+tx2["fee"])
 
         if self.options.mine_block:
             assert_equal(tx1["confirmations"], 1)
             assert_equal(tx2["confirmations"], 1)
-            # Node1s "from0" balance should be both transaction amounts:
+            # Node1's "from0" balance should be both transaction amounts:
             assert_equal(self.nodes[1].getbalance("from0"), -(tx1["amount"]+tx2["amount"]))
         else:
             assert_equal(tx1["confirmations"], 0)
@@ -127,28 +120,28 @@ class TxnMallTest(FabcoinTestFramework):
         assert_equal(tx1["confirmations"], -2)
         assert_equal(tx2["confirmations"], -2)
 
-        # Node0s total balance should be starting balance, plus 50FAB for 
+        # Node0's total balance should be starting balance, plus 100FAB for 
         # two more matured blocks, minus 1240 for the double-spend, plus fees (which are
         # negative):
-        expected = starting_balance + 50 - 1240 + fund_foo_tx["fee"] + fund_bar_tx["fee"] + doublespend_fee
+        expected = starting_balance + 2*INITIAL_BLOCK_REWARD - spend_from_doublespend + fund_foo_tx["fee"] + fund_bar_tx["fee"] + doublespend_fee
         assert_equal(self.nodes[0].getbalance(), expected)
         assert_equal(self.nodes[0].getbalance("*"), expected)
 
         # Final "" balance is starting_balance - amount moved to accounts - doublespend + subsidies +
         # fees (which are negative)
-        assert_equal(self.nodes[0].getbalance("foo"), 1229)
-        assert_equal(self.nodes[0].getbalance("bar"), 19)
+        assert_equal(self.nodes[0].getbalance("foo"), spend_from_foo)
+        assert_equal(self.nodes[0].getbalance("bar"), spend_from_bar)
         assert_equal(self.nodes[0].getbalance(""), starting_balance
-                                                              -1229
-                                                              -  19
-                                                              -1240
-                                                              + 50
+                                                              -spend_from_foo
+                                                              -  spend_from_bar
+                                                              -spend_from_doublespend
+                                                              + 2*INITIAL_BLOCK_REWARD
                                                               + fund_foo_tx["fee"]
                                                               + fund_bar_tx["fee"]
                                                               + doublespend_fee)
 
-        # Node1s "from0" account balance should be just the doublespend:
-        assert_equal(self.nodes[1].getbalance("from0"), 1240)
+        # Node1's "from0" account balance should be just the doublespend:
+        assert_equal(self.nodes[1].getbalance("from0"), spend_from_doublespend)
 
 if __name__ == '__main__':
     TxnMallTest().main()

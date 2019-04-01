@@ -1,20 +1,20 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifdef HAVE_CONFIG_H
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "netbase.h"
+#include <netbase.h>
 
-#include "hash.h"
-#include "sync.h"
-#include "uint256.h"
-#include "random.h"
-#include "util.h"
-#include "utilstrencodings.h"
+#include <hash.h>
+#include <sync.h>
+#include <uint256.h>
+#include <random.h>
+#include <util.h>
+#include <utilstrencodings.h>
 
 #include <atomic>
 
@@ -484,6 +484,11 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
 
     if (connect(hSocket, (struct sockaddr*)&sockaddr, len) == SOCKET_ERROR)
     {
+        if (!IsSelectableSocket(hSocket)) {
+            LogPrintf("Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)\n");
+            CloseSocket(hSocket);
+            return false;
+        }
         int nErr = WSAGetLastError();
         // WSAEINVAL is here because some legacy version of winsock uses it
         if (nErr == WSAEINPROGRESS || nErr == WSAEWOULDBLOCK || nErr == WSAEINVAL)

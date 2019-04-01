@@ -1,26 +1,26 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "test_fabcoin.h"
+#include <test/test_fabcoin.h>
 
-#include "chainparams.h"
-#include "consensus/consensus.h"
-#include "consensus/validation.h"
-#include "crypto/sha256.h"
-#include "fs.h"
-#include "key.h"
-#include "validation.h"
-#include "miner.h"
-#include "net_processing.h"
-#include "pubkey.h"
-#include "random.h"
-#include "txdb.h"
-#include "txmempool.h"
-#include "ui_interface.h"
-#include "rpc/server.h"
-#include "rpc/register.h"
-#include "script/sigcache.h"
+#include <chainparams.h>
+#include <consensus/consensus.h>
+#include <consensus/validation.h>
+#include <crypto/sha256.h>
+#include <fs.h>
+#include <key.h>
+#include <validation.h>
+#include <miner.h>
+#include <net_processing.h>
+#include <pubkey.h>
+#include <random.h>
+#include <txdb.h>
+#include <txmempool.h>
+#include <ui_interface.h>
+#include <rpc/server.h>
+#include <rpc/register.h>
+#include <script/sigcache.h>
 
 #include <memory>
 
@@ -83,6 +83,22 @@ TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(cha
         pblocktree = new CBlockTreeDB(1 << 20, true);
         pcoinsdbview = new CCoinsViewDB(1 << 23, true);
         pcoinsTip = new CCoinsViewCache(pcoinsdbview);
+
+////////////////////////////////////////////////////////////// fasc
+        dev::eth::Ethash::init();
+        boost::filesystem::path pathTemp = fs::temp_directory_path() / strprintf("test_fabcoin_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
+        boost::filesystem::create_directories(pathTemp);
+        const dev::h256 hashDB(dev::sha3(dev::rlp("")));
+        globalState = std::unique_ptr<FascState>(new FascState(dev::u256(0), FascState::openDB(pathTemp.string(), hashDB, dev::WithExisting::Trust), pathTemp.string(), dev::eth::BaseState::Empty));
+        dev::eth::ChainParams cp((dev::eth::genesisInfo(dev::eth::Network::fascTestNetwork)));
+        globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
+        globalState->populateFrom(cp.genesisState);
+        globalState->setRootUTXO(uintToh256(chainparams.GenesisBlock().hashUTXORoot));
+        globalState->db().commit();
+        globalState->dbUtxo().commit();
+        pstorageresult = new StorageResults(pathTemp.string());
+//////////////////////////////////////////////////////////////
+
         if (!LoadGenesisBlock(chainparams)) {
             throw std::runtime_error("LoadGenesisBlock failed.");
         }
@@ -112,10 +128,15 @@ TestingSetup::~TestingSetup()
         delete pcoinsTip;
         delete pcoinsdbview;
         delete pblocktree;
+ /////////////////////////////////////////////// // fasc
+        delete globalState.release();
+        globalSealEngine.reset();
+///////////////////////////////////////////////
+
         fs::remove_all(pathTemp);
 }
 
-TestChain800Setup::TestChain800Setup() : TestingSetup(CBaseChainParams::REGTEST)
+TestChain800Setup::TestChain800Setup() : TestingSetup(CBaseChainParams::UNITTEST)
 {
     // Generate a 800-block chain:
     coinbaseKey.MakeNewKey(true);
@@ -163,7 +184,7 @@ TestChain800Setup::~TestChain800Setup()
 
 //####################################
 //TestChain100 
-TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::REGTEST)
+TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::UNITTEST)
 {
     // Generate a 100-block chain:
     coinbaseKey.MakeNewKey(true);

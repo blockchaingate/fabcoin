@@ -6,8 +6,8 @@
 #ifndef FABCOIN_POLICY_FEERATE_H
 #define FABCOIN_POLICY_FEERATE_H
 
-#include "amount.h"
-#include "serialize.h"
+#include <amount.h>
+#include <serialize.h>
 
 #include <string>
 
@@ -16,6 +16,7 @@ extern const std::string CURRENCY_UNIT;
 /**
  * Fee rate in liu per kilobyte: CAmount / kB
  */
+
 class CFeeRate
 {
 private:

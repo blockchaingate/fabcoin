@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_OPTIONSMODEL_H
 #define FABCOIN_QT_OPTIONSMODEL_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QAbstractListModel>
 
@@ -44,8 +44,13 @@ public:
         CoinControlFeatures,    // bool
         ThreadsScriptVerif,     // int
         DatabaseCache,          // int
+        LogEvents,              // bool
         SpendZeroConfChange,    // bool
+        ZeroBalanceAddressToken,// bool
         Listen,                 // bool
+        NotUseChangeAddress,    // bool
+        CheckForUpdates,        // bool
+        ReserveBalance,         // CAmount
         OptionIDRowCount,
     };
 
@@ -93,6 +98,8 @@ Q_SIGNALS:
     void displayUnitChanged(int unit);
     void coinControlFeaturesChanged(bool);
     void hideTrayIconChanged(bool);
+    void reserveBalanceChanged(CAmount);
+    void zeroBalanceAddressTokenChanged(bool);
 };
 
 #endif // FABCOIN_QT_OPTIONSMODEL_H

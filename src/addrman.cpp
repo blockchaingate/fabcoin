@@ -1,13 +1,13 @@
 // Copyright (c) 2012 Pieter Wuille
-// Copyright (c) 2012-2016 The Bitcoin Core developers
+// Copyright (c) 2012-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "addrman.h"
+#include <addrman.h>
 
-#include "hash.h"
-#include "serialize.h"
-#include "streams.h"
+#include <hash.h>
+#include <serialize.h>
+#include <streams.h>
 
 int CAddrInfo::GetTriedBucket(const uint256& nKey) const
 {

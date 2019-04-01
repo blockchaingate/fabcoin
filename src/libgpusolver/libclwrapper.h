@@ -3,8 +3,20 @@
 #define __CL_ENABLE_EXCEPTIONS
 #define CL_USE_DEPRECATED_OPENCL_2_0_APIS
 
-// Just for Hello World Kernel
-//#define DATA_SIZE 100
+// Length of 1 element (slot) in bytes
+#define SLOT_LEN                        32
+#define FABCOIN_NONCE_LEN			    32
+// Maximum number of solutions reported by kernel to host
+#define MAX_SOLS						10
+#define BLAKE_WPS               		10
+
+typedef struct	sols_s
+{
+    uint	nr;
+    uint	likely_invalids;
+    uint8_t valid[MAX_SOLS];
+    uint	values[MAX_SOLS][512];
+}sols_t;
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -28,23 +40,11 @@ typedef uint8_t		uchar;
 typedef uint32_t	uint;
 typedef uint64_t	ulong;
 
-#include "param.h"
 #include "blake.h"
 #include <cassert>
 #include "uint256.h"
 
-#define EQUIHASH_N 200
-#define EQUIHASH_K 9
-
-#define NUM_COLLISION_BITS (EQUIHASH_N / (EQUIHASH_K + 1))
-#define NUM_INDICES (1 << EQUIHASH_K)
-
-#define NUM_VALUES (1 << (NUM_COLLISION_BITS+1))
-#define NUM_BUCKETS (1 << NUM_COLLISION_BITS)
-#define DIGEST_SIZE 25
-
 typedef struct element element_t;
-typedef uint64_t digest_t[(DIGEST_SIZE + sizeof(uint64_t) - 1) / sizeof(uint64_t)];
 
 struct element {
     uint32_t digest_index;
@@ -70,7 +70,7 @@ class cl_gpuminer
 
 public:
 
-	cl_gpuminer();
+	cl_gpuminer(unsigned int n, unsigned int k);
 	~cl_gpuminer();
 
 	static bool searchForAllDevices(unsigned _platformId, std::function<bool(cl::Device const&)> _callback);
@@ -97,7 +97,7 @@ public:
 		std::vector<std::string> _kernels
 	);
 
-	void run(uint8_t *header, size_t header_len, uint256 nonce, sols_t * indices, uint32_t * n_sol, uint256 * ptr);
+	void run(uint8_t *header, size_t header_len, uint256 nonce, sols_t *indices, uint32_t * n_sol, uint256 * ptr);
 
 	void finish();
 
@@ -128,8 +128,8 @@ private:
 		return 0;
 	}
 	void normalize_indices(uint32_t* indices) {
-		for(size_t step_index = 0; step_index < EQUIHASH_K; ++step_index) {
-		    for(size_t i = 0; i < NUM_INDICES; i += (1 << (step_index+1))) {
+		for(size_t step_index = 0; step_index < PARAM_K; ++step_index) {
+		    for(size_t i = 0; i < (unsigned int)1<<PARAM_K; i += (1 << (step_index+1))) {
 		        if(compare_indices32(indices+i, indices+i+(1 << step_index), (1 << step_index)) > 0) {
 		            uint32_t tmp_indices[(1 << step_index)];
 		            memcpy(tmp_indices, indices+i, (1 << step_index)*sizeof(uint32_t));
@@ -159,7 +159,7 @@ private:
 		// Make the work group size a multiple of the nr of wavefronts, while
 		// dividing the number of inputs. This results in the worksize being a
 		// power of 2.
-		while (NR_INPUTS % work_size)
+		while (NR_INPUTS() % work_size)
 		    work_size += 64;
 		//debug("Blake: work size %zd\n", work_size);
 		return work_size;
@@ -182,31 +182,31 @@ private:
 
 	uint32_t verify_sol(sols_t *sols, unsigned sol_i) {
 		uint32_t	*inputs = sols->values[sol_i];
-		uint32_t	seen_len = (1 << (PREFIX + 1)) / 8;
-		uint8_t	seen[seen_len];
+		uint32_t	seen_len = (1 << (PREFIX() + 1)) / 8;
+		uint8_t	    seen[seen_len];
 		uint32_t	i;
 		uint8_t	tmp;
 		// look for duplicate inputs
 		memset(seen, 0, seen_len);
-		for (i = 0; i < (1 << PARAM_K); i++)
-		  {
-		tmp = seen[inputs[i] / 8];
-		seen[inputs[i] / 8] |= 1 << (inputs[i] & 7);
-		if (tmp == seen[inputs[i] / 8])
-		  {
-			// at least one input value is a duplicate
-			sols->valid[sol_i] = 0;
-			return 0;
-		  }
-		  }
+		for (i = 0; i < ((unsigned int)1 << PARAM_K); i++)
+        {
+            tmp = seen[inputs[i] / 8];
+            seen[inputs[i] / 8] |= 1 << (inputs[i] & 7);
+            if (tmp == seen[inputs[i] / 8])
+            {
+                // at least one input value is a duplicate
+                sols->valid[sol_i] = 0;
+                return 0;
+            }
+        }
 		// the valid flag is already set by the GPU, but set it again because
 		// I plan to change the GPU code to not set it
 		sols->valid[sol_i] = 1;
 		// sort the pairs in place
 		for (uint32_t level = 0; level < PARAM_K; level++)
-		for (i = 0; i < (1 << PARAM_K); i += (2 << level))
-			sort_pair(&inputs[i], 1 << level);
-		return 1;
+            for (i = 0; i < ((unsigned int)1 << PARAM_K); i += (2 << level))
+                sort_pair(&inputs[i], 1 << level);
+        return 1;
 	}
 	cl::Context m_context;
 	cl::CommandQueue m_queue;
@@ -216,7 +216,7 @@ private:
 	cl::Buffer buf_dbg;
     cl::Buffer rowCounters[2];
 
-	uint64_t		nonce;
+    uint64_t		nonce;
     uint64_t		total;
 	size_t dbg_size = 1 * sizeof (debug_t);
 
@@ -244,6 +244,76 @@ private:
 	/// GPU memory required for other things, like window rendering e.t.c.
 	/// User can set it via the --cl-extragpu-mem argument.
 	static unsigned s_extraRequiredGPUMem;
+
+public:
+    unsigned int PARAM_N;
+    unsigned int PARAM_K;
+    unsigned int NR_ROWS_LOG;
+
+    unsigned int PREFIX()
+    {
+        return (PARAM_N / (PARAM_K + 1));
+    }
+
+    unsigned int NR_INPUTS()
+    {
+        return 1 << PREFIX();
+    }
+
+    unsigned int APX_NR_ELMS_LOG()
+    {
+        return PREFIX() + 1;
+    }
+
+    unsigned int COLL_DATA_SIZE_PER_TH()
+    {
+        return NR_SLOTS() * 5;
+    }
+
+    unsigned int OVERHEAD()
+    {
+        if( NR_ROWS_LOG == 16 )
+            //error "NR_ROWS_LOG = 16 is currently broken - do not use"
+            return 3;
+        if( NR_ROWS_LOG == 18 )
+            return 3;
+        if( NR_ROWS_LOG == 19 )
+            return 5;
+        if( NR_ROWS_LOG == 20 )
+            return 9;
+        if( NR_ROWS_LOG == 21 )
+            return 3;
+    }
+
+    unsigned long NR_ROWS()
+    {
+        return 1 << NR_ROWS_LOG;
+    }
+
+    unsigned long NR_SLOTS()
+    {
+        return ((1 << (APX_NR_ELMS_LOG() - NR_ROWS_LOG)) * OVERHEAD());
+    }
+
+    unsigned long HT_SIZE()
+    {
+        uint64_t htsize = NR_ROWS() * NR_SLOTS();
+        htsize *= SLOT_LEN;
+        return htsize;
+    }
+
+    unsigned int FABCOIN_HASH_LEN()
+    {
+        return 512/PARAM_N*((PARAM_N+7)/8);
+    }
+
+    unsigned int ROWS_PER_UINT()
+    {
+        if (NR_SLOTS() < 16)
+            return 8;
+        else
+            return 4;
+    }
 
   const char *get_error_string(cl_int error)
   {

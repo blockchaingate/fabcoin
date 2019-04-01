@@ -1,0 +1,1 @@
+FAB_ROOT/src/fabcoin-cli -regtest -rpcuser=fabcoinrpc -rpcpassword=P0 -rpcconnect=localhost:PORT_RPC CLIENTCOMMAND PARAMLIST 

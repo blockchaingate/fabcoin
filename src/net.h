@@ -1,26 +1,26 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_NET_H
 #define FABCOIN_NET_H
 
-#include "addrdb.h"
-#include "addrman.h"
-#include "amount.h"
-#include "bloom.h"
-#include "compat.h"
-#include "hash.h"
-#include "limitedmap.h"
-#include "netaddress.h"
-#include "policy/feerate.h"
-#include "protocol.h"
-#include "random.h"
-#include "streams.h"
-#include "sync.h"
-#include "uint256.h"
-#include "threadinterrupt.h"
+#include <addrdb.h>
+#include <addrman.h>
+#include <amount.h>
+#include <bloom.h>
+#include <compat.h>
+#include <hash.h>
+#include <limitedmap.h>
+#include <netaddress.h>
+#include <policy/feerate.h>
+#include <protocol.h>
+#include <random.h>
+#include <streams.h>
+#include <sync.h>
+#include <uint256.h>
+#include <threadinterrupt.h>
 
 #include <atomic>
 #include <deque>
@@ -51,8 +51,9 @@ static const int FEELER_INTERVAL = 120;
 static const unsigned int MAX_INV_SZ = 50000;
 /** The maximum number of new addresses to accumulate before announcing. */
 static const unsigned int MAX_ADDR_TO_SEND = 1000;
-/** Maximum length of incoming protocol messages (no message over 4 MB is currently acceptable). */
-static const unsigned int MAX_PROTOCOL_MESSAGE_LENGTH = 4 * 1000 * 1000;
+/** Maximum length of incoming protocol messages (no message over 8 MB is currently acceptable). */
+//static const unsigned int MAX_PROTOCOL_MESSAGE_LENGTH = 4 * 1000 * 1000;
+static const unsigned int MAX_PROTOCOL_MESSAGE_LENGTH = 8 * 1000 * 1000;
 /** Maximum length of strSubVer in `version` message */
 static const unsigned int MAX_SUBVERSION_LENGTH = 256;
 /** Maximum number of automatic outgoing nodes */
@@ -851,7 +852,6 @@ public:
     //! Sets the addrName only if it was not previously set
     void MaybeSetAddrName(const std::string& addrNameIn);
 
-    bool IsLegacyBlockHeader(int version) { return version < FAB_HARD_FORK_VERSION; };
 };
 
 

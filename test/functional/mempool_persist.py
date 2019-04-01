@@ -33,6 +33,7 @@ Test is as follows:
 import time
 
 from test_framework.test_framework import FabcoinTestFramework
+from test_framework.fabcoinconfig import INITIAL_BLOCK_REWARD, COINBASE_MATURITY
 from test_framework.util import *
 
 class MempoolPersistTest(FabcoinTestFramework):
@@ -42,7 +43,7 @@ class MempoolPersistTest(FabcoinTestFramework):
 
     def run_test(self):
         chain_height = self.nodes[0].getblockcount()
-        assert_equal(chain_height, 900)
+        assert_equal(chain_height, COINBASE_MATURITY + 100 ) 
 
         self.log.debug("Mine a single block to get out of IBD")
         self.nodes[0].generate(1)

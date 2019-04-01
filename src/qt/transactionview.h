@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_TRANSACTIONVIEW_H
 #define FABCOIN_QT_TRANSACTIONVIEW_H
 
-#include "guiutil.h"
+#include <guiutil.h>
 
 #include <QWidget>
 #include <QKeyEvent>
@@ -52,9 +52,9 @@ public:
     enum ColumnWidths {
         STATUS_COLUMN_WIDTH = 30,
         WATCHONLY_COLUMN_WIDTH = 23,
-        DATE_COLUMN_WIDTH = 120,
-        TYPE_COLUMN_WIDTH = 113,
-        AMOUNT_MINIMUM_COLUMN_WIDTH = 120,
+        DATE_COLUMN_WIDTH = 130,
+        TYPE_COLUMN_WIDTH = 170,
+        AMOUNT_MINIMUM_COLUMN_WIDTH = 170,
         MINIMUM_COLUMN_WIDTH = 23
     };
 

@@ -12,6 +12,7 @@
 """
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
+from test_framework.fabcoinconfig import COINBASE_MATURITY
 
 class AbandonConflictTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -19,7 +20,7 @@ class AbandonConflictTest(FabcoinTestFramework):
         self.extra_args = [["-minrelaytxfee=0.00001"], []]
 
     def run_test(self):
-        self.nodes[1].generate(800)
+        self.nodes[1].generate(COINBASE_MATURITY)
         sync_blocks(self.nodes)
         balance = self.nodes[0].getbalance()
         txA = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), Decimal("10"))

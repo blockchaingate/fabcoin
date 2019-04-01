@@ -2,9 +2,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "fabcoinaddressvalidator.h"
+#include <fabcoinaddressvalidator.h>
 
-#include "base58.h"
+#include <base58.h>
 
 /* Base58 characters are:
      "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -80,8 +80,9 @@ QValidator::State FabcoinAddressEntryValidator::validate(QString &input, int &po
     return state;
 }
 
-FabcoinAddressCheckValidator::FabcoinAddressCheckValidator(QObject *parent) :
-    QValidator(parent)
+FabcoinAddressCheckValidator::FabcoinAddressCheckValidator(QObject *parent, bool allowScript) :
+    QValidator(parent),
+    bAllowScript(allowScript)
 {
 }
 
@@ -91,7 +92,12 @@ QValidator::State FabcoinAddressCheckValidator::validate(QString &input, int &po
     // Validate the passed Fabcoin address
     CFabcoinAddress addr(input.toStdString());
     if (addr.IsValid())
-        return QValidator::Acceptable;
+    {
+        if(bAllowScript)
+            return QValidator::Acceptable;
+        else if(!addr.IsScript())
+            return QValidator::Acceptable;
+    }
 
     return QValidator::Invalid;
 }

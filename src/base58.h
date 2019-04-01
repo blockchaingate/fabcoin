@@ -14,12 +14,12 @@
 #ifndef FABCOIN_BASE58_H
 #define FABCOIN_BASE58_H
 
-#include "chainparams.h"
-#include "key.h"
-#include "pubkey.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "support/allocators/zeroafterfree.h"
+#include <chainparams.h>
+#include <key.h>
+#include <pubkey.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <support/allocators/zeroafterfree.h>
 
 #include <string>
 #include <vector>
@@ -117,6 +117,7 @@ public:
     CTxDestination Get() const;
     bool GetKeyID(CKeyID &keyID) const;
     bool IsScript() const;
+    bool IsPubKeyHash() const;
 };
 
 /**

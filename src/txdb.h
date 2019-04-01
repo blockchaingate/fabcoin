@@ -1,26 +1,33 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_TXDB_H
 #define FABCOIN_TXDB_H
 
-#include "coins.h"
-#include "dbwrapper.h"
-#include "chain.h"
+#include <coins.h>
+#include <dbwrapper.h>
+#include <chain.h>
 
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <boost/function.hpp>
+#include <validation.h> // temp
 class CBlockIndex;
 class CCoinsViewDBCursor;
 class uint256;
 
+//! Compensate for extra memory peak (x1.5-x1.9) at flush time.
+static constexpr int DB_PEAK_USAGE_FACTOR = 1;
+
+
 //! No need to periodic flush if at least this much space still available.
-static constexpr int MAX_BLOCK_COINSDB_USAGE = 10;
+static constexpr int MAX_BLOCK_COINSDB_USAGE = 10 * DB_PEAK_USAGE_FACTOR;
+//?????? static constexpr int MAX_BLOCK_COINSDB_USAGE = 10;
 //! -dbcache default (MiB)
 static const int64_t nDefaultDbCache = 450;
 //! -dbbatchsize default (bytes)
@@ -124,6 +131,28 @@ public:
     bool WriteFlag(const std::string &name, bool fValue);
     bool ReadFlag(const std::string &name, bool &fValue);
     bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex);
+
+////////////////////////////////////////////////////////////////////////////// // fasc
+    bool WriteHeightIndex(const CHeightTxIndexKey &heightIndex, const std::vector<uint256>& hash);
+
+    /**
+     * Iterates through blocks by height, starting from low.
+     *
+     * @param low start iterating from this block height
+     * @param high end iterating at this block height (ignored if <= 0)
+     * @param minconf stop iterating of the block height does not have enough confirmations (ignored if <= 0)
+     * @param blocksOfHashes transaction hashes in blocks iterated are collected into this vector.
+     * @param addresses filter out a block unless it matches one of the addresses in this set.
+     *
+     * @return the height of the latest block iterated. 0 if no block is iterated.
+     */
+    int ReadHeightIndex(int low, int high, int minconf,
+            std::vector<std::vector<uint256>> &blocksOfHashes,
+            std::set<dev::h160> const &addresses);
+    bool EraseHeightIndex(const unsigned int &height);
+    bool WipeHeightIndex();
+
 };
 
+    //////////////////////////////////////////////////////////////////////////////
 #endif // FABCOIN_TXDB_H

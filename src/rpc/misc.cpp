@@ -1,28 +1,28 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
-#include "chain.h"
-#include "clientversion.h"
-#include "core_io.h"
-#include "init.h"
-#include "validation.h"
-#include "httpserver.h"
-#include "net.h"
-#include "netbase.h"
-#include "rpc/blockchain.h"
-#include "rpc/server.h"
-#include "timedata.h"
-#include "util.h"
-#include "utilstrencodings.h"
+#include <base58.h>
+#include <chain.h>
+#include <clientversion.h>
+#include <core_io.h>
+#include <init.h>
+#include <validation.h>
+#include <httpserver.h>
+#include <net.h>
+#include <netbase.h>
+#include <rpc/blockchain.h>
+#include <rpc/server.h>
+#include <timedata.h>
+#include <util.h>
+#include <utilstrencodings.h>
 #ifdef ENABLE_WALLET
-#include "wallet/rpcwallet.h"
-#include "wallet/wallet.h"
-#include "wallet/walletdb.h"
+#include <wallet/rpcwallet.h>
+#include <wallet/wallet.h>
+#include <wallet/walletdb.h>
 #endif
-#include "warnings.h"
+#include <warnings.h>
 
 #include <stdint.h>
 #ifdef HAVE_MALLOC_INFO
@@ -89,6 +89,7 @@ UniValue getinfo(const JSONRPCRequest& request)
     UniValue obj(UniValue::VOBJ);
     obj.push_back(Pair("deprecation-warning", "WARNING: getinfo is deprecated and will be fully removed in 0.16."
         " Projects should transition to using getblockchaininfo, getnetworkinfo, and getwalletinfo before upgrading to 0.16"));
+    UniValue diff(UniValue::VOBJ);
     obj.push_back(Pair("version", CLIENT_VERSION));
     obj.push_back(Pair("protocolversion", PROTOCOL_VERSION));
 #ifdef ENABLE_WALLET

@@ -1,14 +1,16 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_FABCOINUNITS_H
 #define FABCOIN_QT_FABCOINUNITS_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QAbstractListModel>
 #include <QString>
+#include <boost/multiprecision/cpp_int.hpp>
+using namespace boost::multiprecision;
 
 // U+2009 THIN SPACE = UTF-8 E2 80 89
 #define REAL_THIN_SP_CP 0x2009
@@ -82,6 +84,8 @@ public:
     static QString description(int unit);
     //! Number of Satoshis (1e-8) per unit
     static qint64 factor(int unit);
+    //! Token factor from decimals
+    static int256_t tokenFactor(int unit);
     //! Number of decimals left
     static int decimals(int unit);
     //! Format as string
@@ -94,6 +98,12 @@ public:
     static bool parse(int unit, const QString &value, CAmount *val_out);
     //! Gets title for amount column including current display unit if optionsModel reference available */
     static QString getAmountColumnTitle(int unit);
+    //! Parse string to token amount
+    static bool parseToken(int decimal_units, const QString &value, int256_t *val_out);
+    //! Format token as string
+    static QString formatToken(int decimal_units, const int256_t& amount, bool plussign=false, SeparatorStyle separators=separatorStandard); //! Format token as string
+    //! Format token as string (with unit)
+    static QString formatTokenWithUnit(const QString unit, int decimals, const int256_t& amount, bool plussign=false, SeparatorStyle separators=separatorStandard);
     ///@}
 
     //! @name AbstractListModel implementation

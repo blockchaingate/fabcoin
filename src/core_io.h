@@ -1,11 +1,11 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_CORE_IO_H
 #define FABCOIN_CORE_IO_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <string>
 #include <vector>
@@ -21,7 +21,7 @@ class UniValue;
 CScript ParseScript(const std::string& s);
 std::string ScriptToAsmStr(const CScript& script, const bool fAttemptSighashDecode = false);
 bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx, bool fTryNoWitness = false);
-bool DecodeHexBlk(CBlock&, const std::string& strHexBlk, bool fLegacyFormat=false);
+bool DecodeHexBlk(CBlock&, const std::string& strHexBlk);
 uint256 ParseHashUV(const UniValue& v, const std::string& strName);
 uint256 ParseHashStr(const std::string&, const std::string& strName);
 std::vector<unsigned char> ParseHexUV(const UniValue& v, const std::string& strName);

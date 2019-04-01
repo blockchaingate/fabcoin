@@ -1,15 +1,15 @@
-// Copyright (c) 2014-2016 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "coins.h"
-#include "script/standard.h"
-#include "uint256.h"
-#include "undo.h"
-#include "utilstrencodings.h"
-#include "test/test_fabcoin.h"
-#include "validation.h"
-#include "consensus/validation.h"
+#include <coins.h>
+#include <script/standard.h>
+#include <uint256.h>
+#include <undo.h>
+#include <utilstrencodings.h>
+#include <test/test_fabcoin.h>
+#include <validation.h>
+#include <consensus/validation.h>
 
 #include <vector>
 #include <map>

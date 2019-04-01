@@ -1,15 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_CHAINPARAMS_H
 #define FABCOIN_CHAINPARAMS_H
 
-#include "chainparamsbase.h"
-#include "consensus/params.h"
-#include "primitives/block.h"
-#include "protocol.h"
+#include <chainparamsbase.h>
+#include <consensus/params.h>
+#include <primitives/block.h>
+#include <protocol.h>
 
 #include <memory>
 #include <vector>
@@ -69,8 +69,9 @@ public:
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
-    unsigned int EquihashN() const { return nEquihashN; }
-    unsigned int EquihashK() const { return nEquihashK; }
+    unsigned int EquihashN(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) /*|| (strNetworkID != CBaseChainParams::MAIN)*/ ? nEquihashN : 184; }
+    unsigned int EquihashK(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) /*|| (strNetworkID != CBaseChainParams::MAIN)*/ ? nEquihashK : 7; }
+    int64_t GetnPowTargetSpacing( uint32_t nHeight = 0 ) const { return (nHeight < consensus.EquihashFABHeight) ? consensus.nPowTargetSpacing : 2* consensus.nPowTargetSpacing; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
     /** Return the BIP70 network string (main, test or regtest) */

@@ -14,8 +14,8 @@ from test_framework.util import *
 import re
 from test_framework.blocktools import create_block, create_coinbase
 
-VB_PERIOD = 844 # versionbits period length for regtest
-VB_THRESHOLD = 633 # versionbits activation threshold for regtest
+VB_PERIOD = 144 # versionbits period length for regtest
+VB_THRESHOLD = 108 # versionbits activation threshold for regtest
 VB_TOP_BITS = 0x20000000
 VB_UNKNOWN_BIT = 27 # Choose a bit unassigned to any deployment
 
@@ -48,7 +48,7 @@ class VersionBitsWarningTest(FabcoinTestFramework):
         tip = int(tip, 16)
 
         for _ in range(numblocks):
-            block = create_block(tip, create_coinbase(height+1), block_time)
+            block = create_block(tip, create_coinbase(height+1), height+1, block_time)
             block.nVersion = nVersionToUse
             block.solve()
             peer.send_message(msg_block(block))

@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2016 The Bitcoin Core developers
+// Copyright (c) 2012-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,7 +9,10 @@
  * network protocol versioning
  */
 
-static const int PROTOCOL_VERSION = 70016;
+static const int PROTOCOL_VERSION = 70017;
+
+static const int FAB_CONTRACT_VERSION = 70017;
+
 static const int FAB_HARD_FORK_VERSION = 70016;
 
 //! initial proto version, to be increased after version/verack negotiation

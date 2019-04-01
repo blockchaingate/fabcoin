@@ -1,14 +1,14 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 0)
-define(_CLIENT_VERSION_MINOR, 15)
+define(_CLIENT_VERSION_MINOR, 16)
 define(_CLIENT_VERSION_REVISION, 2)
-define(_CLIENT_VERSION_BUILD, 1)
+define(_CLIENT_VERSION_BUILD, 3)
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2018)
 define(_COPYRIGHT_HOLDERS,[The %s developers])
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION,[[Fabcoin Core]])
-AC_INIT([Fabcoin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/blockchaingate/fabcoin/issues],[fabcoin],[https://fabcoincore.org/])
+AC_INIT([Fabcoin Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/blockchaingate/fabcoin/issues],[fabcoin],[http://fabcoin.pro/])
 AC_CONFIG_SRCDIR([src/validation.cpp])
 AC_CONFIG_HEADERS([src/config/fabcoin-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
@@ -55,9 +55,12 @@ AC_PROG_CXX
 dnl By default, libtool for mingw refuses to link static libs into a dll for
 dnl fear of mixing pic/non-pic objects, and import/export complications. Since
 dnl we have those under control, re-enable that functionality.
+dnl Compiler with posix support is needed for cross compile some of c++ 11 features for mingw like threads and mutexes.
 case $host in
   *mingw*)
      lt_cv_deplibs_check_method="pass_all"
+     CC="$CC-posix"
+     CXX="$CXX-posix"
   ;;
 esac
 dnl Require C++11 compiler (no GNU extensions)
@@ -109,6 +112,13 @@ AC_ARG_ENABLE([gpu],
   [enable gpu (disabled by default)])],
   [enable_gpu=$enableval],
   [enable_gpu=no])
+
+# Use cuda
+AC_ARG_WITH([cudalib],
+  [AS_HELP_STRING([--with-cudalib],
+  [use cuda (disabled by default)])],
+  [use_cuda=$enableval],
+  [use_cuda=no])
 
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
@@ -169,9 +179,9 @@ AC_ARG_ENABLE([ccache],
 AC_ARG_ENABLE([lcov],
   [AS_HELP_STRING([--enable-lcov],
   [enable lcov testing (default is no)])],
-  [use_lcov=yes],
+  [use_lcov=$enableval],
   [use_lcov=no])
-  
+
 AC_ARG_ENABLE([lcov-branch-coverage],
   [AS_HELP_STRING([--enable-lcov-branch-coverage],
   [enable lcov testing branch coverage (default is no)])],
@@ -184,14 +194,14 @@ AC_ARG_ENABLE([glibc-back-compat],
   [use_glibc_compat=$enableval],
   [use_glibc_compat=no])
 
-AC_ARG_ENABLE([experimental-asm],
-  [AS_HELP_STRING([--enable-experimental-asm],
-  [Enable experimental assembly routines (default is no)])],
-  [experimental_asm=$enableval],
-  [experimental_asm=no])
+AC_ARG_ENABLE([asm],
+  [AS_HELP_STRING([--enable-asm],
+  [Enable assembly routines (default is yes)])],
+  [use_asm=$enableval],
+  [use_asm=yes])
 
-if test "x$experimental_asm" = xyes; then
-  AC_DEFINE(EXPERIMENTAL_ASM, 1, [Define this symbol to build in experimental assembly routines])
+if test "x$use_asm" = xyes; then
+  AC_DEFINE(USE_ASM, 1, [Define this symbol to build in assembly routines])
 fi
 
 AC_ARG_WITH([system-univalue],
@@ -242,12 +252,15 @@ if test "x$enable_debug" = xyes; then
     fi
 fi
 
+CPPFLAGS="$CPPFLAGS -DFASC_BUILD"
+
 ERROR_CXXFLAGS=
 if test "x$enable_werror" = "xyes"; then
   if test "x$CXXFLAG_WERROR" = "x"; then
     AC_MSG_ERROR("enable-werror set but -Werror is not usable")
   fi
   AX_CHECK_COMPILE_FLAG([-Werror=vla],[ERROR_CXXFLAGS="$ERROR_CXXFLAGS -Werror=vla"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-Werror=thread-safety-analysis],[ERROR_CXXFLAGS="$ERROR_CXXFLAGS -Werror=thread-safety-analysis"],,[[$CXXFLAG_WERROR]])
 fi
 
 if test "x$CXXFLAGS_overridden" = "xno"; then
@@ -256,6 +269,7 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wformat],[CXXFLAGS="$CXXFLAGS -Wformat"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wvla],[CXXFLAGS="$CXXFLAGS -Wvla"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wformat-security],[CXXFLAGS="$CXXFLAGS -Wformat-security"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-Wthread-safety-analysis],[CXXFLAGS="$CXXFLAGS -Wthread-safety-analysis"],,[[$CXXFLAG_WERROR]])
 
   ## Some compilers (gcc) ignore unknown -Wno-* options, but warn about all
   ## unknown options if any other warning is produced. Test the -Wfoo case, and
@@ -265,6 +279,7 @@ if test "x$CXXFLAGS_overridden" = "xno"; then
   AX_CHECK_COMPILE_FLAG([-Wunused-local-typedef],[CXXFLAGS="$CXXFLAGS -Wno-unused-local-typedef"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wdeprecated-register],[CXXFLAGS="$CXXFLAGS -Wno-deprecated-register"],,[[$CXXFLAG_WERROR]])
   AX_CHECK_COMPILE_FLAG([-Wimplicit-fallthrough],[CXXFLAGS="$CXXFLAGS -Wno-implicit-fallthrough"],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-Wno-unknown-pragmas],[CXXFLAGS="$CXXFLAGS -Wno-unknown-pragmas"],,[[$CXXFLAG_WERROR]])
 fi
 
 # Check for optional instruction set support. Enabling these does _not_ imply that all code will
@@ -454,12 +469,17 @@ case $host in
    *openbsd*)
      LEVELDB_TARGET_FLAGS="-DOS_OPENBSD"
      ;;
+   *netbsd*)
+     LEVELDB_TARGET_FLAGS="-DOS_NETBSD"
+     ;;
    *)
      OTHER_OS=`echo ${host_os} | awk '{print toupper($0)}'`
      AC_MSG_WARN([Guessing LevelDB OS as OS_${OTHER_OS}, please check whether this is correct, if not add an entry to configure.ac.])
      LEVELDB_TARGET_FLAGS="-DOS_${OTHER_OS}"
      ;;
 esac
+
+CRYPTOPP_TARGET_FLAGS=""
 
 if test x$use_pkgconfig = xyes; then
   m4_ifndef([PKG_PROG_PKG_CONFIG], [AC_MSG_ERROR(PKG_PROG_PKG_CONFIG macro not found. Please install pkg-config and re-run autogen.sh.)])
@@ -664,6 +684,28 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([
   ]
 )
 
+TEMP_LDFLAGS="$LDFLAGS"
+LDFLAGS="$TEMP_LDFLAGS $PTHREAD_CFLAGS"
+AC_MSG_CHECKING([for thread_local support])
+AC_LINK_IFELSE([AC_LANG_SOURCE([
+  #include <thread>
+  static thread_local int foo = 0;
+  static void run_thread() { foo++;}
+  int main(){
+  for(int i = 0; i < 10; i++) { std::thread(run_thread).detach();}
+  return foo;
+  }
+  ])],
+  [
+    AC_DEFINE(HAVE_THREAD_LOCAL,1,[Define if thread_local is supported.])
+    AC_MSG_RESULT(yes)
+  ],
+  [
+    AC_MSG_RESULT(no)
+  ]
+)
+LDFLAGS="$TEMP_LDFLAGS"
+
 # Check for different ways of gathering OS randomness
 AC_MSG_CHECKING(for Linux getrandom syscall)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>
@@ -712,6 +754,12 @@ AC_SUBST(LEVELDB_CPPFLAGS)
 AC_SUBST(LIBLEVELDB)
 AC_SUBST(LIBMEMENV)
 
+CRYPTOPP_CPPFLAGS=
+LIBCRYPTOPP=
+AM_CONDITIONAL([EMBEDDED_CRYPTOPP],[true])
+AC_SUBST(CRYPTOPP_CPPFLAGS)
+AC_SUBST(LIBCRYPTOPP)
+
 if test x$enable_wallet != xno; then
     dnl Check for libdb_cxx only if wallet enabled
     FABCOIN_FIND_BDB48
@@ -745,14 +793,18 @@ fi
 if test x$use_boost = xyes; then
 
 dnl Minimum required Boost version
-define(MINIMUM_REQUIRED_BOOST, 1.47.0)
+define(MINIMUM_REQUIRED_BOOST, 1.58.0)
 
 dnl Check for boost libs
 AX_BOOST_BASE([MINIMUM_REQUIRED_BOOST])
+if test x$want_boost = xno; then
+    AC_MSG_ERROR([[only libfabcoinconsensus can be built without boost]])
+fi
 AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
 AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_THREAD
+AX_BOOST_RANDOM
 AX_BOOST_CHRONO
 
 dnl Boost 1.56 through 1.62 allow using std::atomic instead of its own atomic
@@ -820,7 +872,7 @@ fi
 
 if test x$use_boost = xyes; then
 
-BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_PROGRAM_OPTIONS_LIB $BOOST_THREAD_LIB $BOOST_CHRONO_LIB"
+BOOST_LIBS="$BOOST_LDFLAGS $BOOST_SYSTEM_LIB $BOOST_FILESYSTEM_LIB $BOOST_PROGRAM_OPTIONS_LIB $BOOST_THREAD_LIB $BOOST_CHRONO_LIB $BOOST_RANDOM_LIB"
 
 
 dnl If boost (prior to 1.57) was built without c++11, it emulated scoped enums
@@ -839,14 +891,14 @@ TEMP_CPPFLAGS="$CPPFLAGS"
 CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
 AC_MSG_CHECKING([for mismatched boost c++11 scoped enums])
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-  #include "boost/config.hpp"
-  #include "boost/version.hpp"
+  #include <boost/config.hpp>
+  #include <boost/version.hpp>
   #if !defined(BOOST_NO_SCOPED_ENUMS) && !defined(BOOST_NO_CXX11_SCOPED_ENUMS) && BOOST_VERSION < 105700
   #define BOOST_NO_SCOPED_ENUMS
   #define BOOST_NO_CXX11_SCOPED_ENUMS
   #define CHECK
   #endif
-  #include "boost/filesystem.hpp"
+  #include <boost/filesystem.hpp>
   ]],[[
   #if defined(CHECK)
     boost::filesystem::copy_file("foo", "bar");
@@ -1099,6 +1151,50 @@ else
   AC_MSG_RESULT(no)
 fi
 
+dnl use cuda
+AC_MSG_CHECKING([if cuda should be enabled])
+if test x$use_cuda != xno; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE_UNQUOTED([USE_CUDA],[1],[Define to 1 to use cuda])
+
+else
+  AC_MSG_RESULT(no)
+fi
+
+dnl find out what version we are running
+ARCH=`uname -m`
+if [[ $ARCH == "x86_64" ]];
+then
+  SUFFIX="64"
+else
+  SUFFIX=""
+fi
+
+if test x$have_osx = xtrue
+then
+  SUFFIX=""
+fi
+
+dnl Setup CUDA paths
+AC_ARG_WITH([cuda],
+   [  --with-cuda=PATH    prefix where cuda is installed [default=/usr/local/cuda]])
+
+NVCC="nvcc"
+if test -n "$with_cuda" ; then
+  CUDA_INCLUDES="-I$with_cuda/include"
+  CUDA_CFLAGS="-Xcompiler -fPIC"
+  CUDA_LIBS="-lcuda -lcudart"
+  CUDA_LDFLAGS="-L$with_cuda/lib$SUFFIX"
+  if test -x "$with_cuda/bin/nvcc" ; then
+    NVCC="$with_cuda/bin/nvcc"
+  fi
+else
+  CUDA_INCLUDES="-I/usr/local/cuda/include"
+  CUDA_CFLAGS="-Xcompiler -fPIC"
+  CUDA_LIBS="-lcuda -lcudart -static-libstdc++"
+  CUDA_LDFLAGS="-L/usr/local/cuda/lib$SUFFIX"
+fi
+
 dnl enable upnp support
 AC_MSG_CHECKING([whether to build with support for UPnP])
 if test x$have_miniupnpc = xno; then
@@ -1192,11 +1288,16 @@ if test x$enable_gpu != xno; then
     LIBGPUSOLVER_LIBS="-lOpenCL"
 fi
 
+if test x$use_cuda != xno; then
+    LIBGPUSOLVER_LIBS="$LIBGPUSOLVER_LIBS $CUDA_LDFLAGS $CUDA_LIBS"
+fi
+
 AM_CONDITIONAL([TARGET_DARWIN], [test x$TARGET_OS = xdarwin])
 AM_CONDITIONAL([BUILD_DARWIN], [test x$BUILD_OS = xdarwin])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x$TARGET_OS = xwindows])
 AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
 AM_CONDITIONAL([ENABLE_GPU],[test x$enable_gpu = xyes])
+AM_CONDITIONAL([USE_CUDA],[test x$use_cuda = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
 AM_CONDITIONAL([ENABLE_QT],[test x$fabcoin_enable_qt = xyes])
 AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
@@ -1206,7 +1307,7 @@ AM_CONDITIONAL([USE_LCOV],[test x$use_lcov = xyes])
 AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
 AM_CONDITIONAL([HARDEN],[test x$use_hardening = xyes])
 AM_CONDITIONAL([ENABLE_HWCRC32],[test x$enable_hwcrc32 = xyes])
-AM_CONDITIONAL([EXPERIMENTAL_ASM],[test x$experimental_asm = xyes])
+AM_CONDITIONAL([USE_ASM],[test x$use_asm = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])
@@ -1246,6 +1347,7 @@ AC_SUBST(USE_QRCODE)
 AC_SUBST(BOOST_LIBS)
 AC_SUBST(TESTDEFS)
 AC_SUBST(LEVELDB_TARGET_FLAGS)
+AC_SUBST(CRYPTOPP_TARGET_FLAGS)
 AC_SUBST(MINIUPNPC_CPPFLAGS)
 AC_SUBST(MINIUPNPC_LIBS)
 AC_SUBST(CRYPTO_LIBS)
@@ -1256,6 +1358,12 @@ AC_SUBST(ZMQ_LIBS)
 AC_SUBST(PROTOBUF_LIBS)
 AC_SUBST(QR_LIBS)
 AC_SUBST(LIBGPUSOLVER_LIBS)
+
+AC_SUBST(CUDA_CFLAGS)
+AC_SUBST(CUDA_INCLUDES)
+AC_SUBST(CUDA_LIBS)
+AC_SUBST(CUDA_LDFLAGS)
+AC_SUBST(NVCC)
 
 AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist test/config.ini])
 AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/split-debug.sh])
@@ -1291,7 +1399,7 @@ if test x$need_bundled_univalue = xyes; then
   AC_CONFIG_SUBDIRS([src/univalue])
 fi
 
-ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-bignum=no --enable-module-recovery --disable-jni"
+ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-bignum=no --enable-module-recovery --disable-jni --enable-module-ecdh --enable-experimental"
 AC_CONFIG_SUBDIRS([src/secp256k1])
 
 AC_OUTPUT
@@ -1315,10 +1423,11 @@ case ${OS} in
    ;;
 esac
 
-echo 
+echo
 echo "Options used to compile and link:"
 echo "  with wallet   = $enable_wallet"
 echo "  with gpuminer   = $enable_gpu"
+echo "  with cudalib    = $use_cuda"
 echo "  with gui / qt = $fabcoin_enable_qt"
 if test x$fabcoin_enable_qt != xno; then
     echo "    qt version  = $fabcoin_qt_got_major_vers"
@@ -1328,9 +1437,10 @@ echo "  with zmq      = $use_zmq"
 echo "  with test     = $use_tests"
 echo "  with bench    = $use_bench"
 echo "  with upnp     = $use_upnp"
+echo "  use asm       = $use_asm"
 echo "  debug enabled = $enable_debug"
 echo "  werror        = $enable_werror"
-echo 
+echo
 echo "  target os     = $TARGET_OS"
 echo "  build os      = $BUILD_OS"
 echo
@@ -1341,4 +1451,4 @@ echo "  CXX           = $CXX"
 echo "  CXXFLAGS      = $CXXFLAGS"
 echo "  LDFLAGS       = $LDFLAGS"
 echo "  ARFLAGS       = $ARFLAGS"
-echo 
+echo

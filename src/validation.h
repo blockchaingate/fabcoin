@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,17 +7,17 @@
 #define FABCOIN_VALIDATION_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "amount.h"
-#include "coins.h"
-#include "fs.h"
-#include "protocol.h" // For CMessageHeader::MessageStartChars
-#include "policy/feerate.h"
-#include "script/script_error.h"
-#include "sync.h"
-#include "versionbits.h"
+#include <amount.h>
+#include <coins.h>
+#include <fs.h>
+#include <protocol.h> // For CMessageHeader::MessageStartChars
+#include <policy/feerate.h>
+#include <script/script_error.h>
+#include <sync.h>
+#include <versionbits.h>
 
 #include <algorithm>
 #include <exception>
@@ -30,8 +30,27 @@
 
 #include <atomic>
 
+#include <boost/unordered_map.hpp>
+#include <boost/filesystem/path.hpp>
+#include <consensus/consensus.h>
+#include <fasc/fascstate.h>
+#include <fasc/fascDGP.h>
+#include <libethereum/ChainParams.h>
+#include <libethashseal/Ethash.h>
+#include <libethashseal/GenesisInfo.h>
+#include <script/standard.h>
+#include <fasc/storageresults.h>
+extern std::unique_ptr<FascState> globalState;
+extern std::shared_ptr<dev::eth::SealEngineFace> globalSealEngine;
+extern bool fRecordLogOpcodes;
+extern bool fIsVMlogFile;
+extern bool fGettingValuesDGP;
+struct EthTransactionParams;
+using valtype = std::vector<unsigned char>;
+using ExtractFascTX = std::pair<std::vector<FascTransaction>, std::vector<EthTransactionParams>>;
 class CBlockIndex;
 class CBlockTreeDB;
+class CBloomFilter;
 class CChainParams;
 class CCoinsViewDB;
 class CInv;
@@ -39,22 +58,33 @@ class CConnman;
 class CScriptCheck;
 class CBlockPolicyEstimator;
 class CTxMemPool;
+class CValidationInterface;
 class CValidationState;
+class CWallet;
+struct CDiskTxPos;
 struct ChainTxData;
 
 struct PrecomputedTransactionData;
 struct LockPoints;
 
+/** Minimum gas limit that is allowed in a transaction within a block - prevent various types of tx and mempool spam **/
+static const uint64_t MINIMUM_GAS_LIMIT = 10000;
+static const uint64_t MEMPOOL_MIN_GAS_LIMIT = 22000;
 /** Default for DEFAULT_WHITELISTRELAY. */
 static const bool DEFAULT_WHITELISTRELAY = true;
 /** Default for DEFAULT_WHITELISTFORCERELAY. */
 static const bool DEFAULT_WHITELISTFORCERELAY = true;
 /** Default for -minrelaytxfee, minimum relay fee for transactions */
 static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 1000;
+//!!! static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 40000;
+
+
 //! -maxtxfee default
-static const CAmount DEFAULT_TRANSACTION_MAXFEE = 0.1 * COIN;
+static const CAmount DEFAULT_TRANSACTION_MAXFEE = 1 * COIN;
+//?????? static const CAmount DEFAULT_TRANSACTION_MAXFEE = 0.1 * COIN;
 //! Discourage users to set fees higher than this amount (in lius) per kB
-static const CAmount HIGH_TX_FEE_PER_KB = 0.01 * COIN;
+static const CAmount HIGH_TX_FEE_PER_KB = 1 * COIN;
+//??????? static const CAmount HIGH_TX_FEE_PER_KB = 0.01 * COIN;
 //! -maxtxfee will warn if called with a higher fee than this amount (in lius)
 static const CAmount HIGH_MAX_TX_FEE = 100 * HIGH_TX_FEE_PER_KB;
 /** Default for -limitancestorcount, max number of in-mempool ancestors */
@@ -122,6 +152,7 @@ static const int64_t BLOCK_DOWNLOAD_TIMEOUT_BASE = 1000000;
 /** Additional block download timeout per parallel downloading peer (i.e. 5 min) */
 static const int64_t BLOCK_DOWNLOAD_TIMEOUT_PER_PEER = 500000;
 
+//static const int64_t DEFAULT_MAX_TIP_AGE = 30 * 24 * 60 * 60; //fabcoin 30 days in case something causes the chain to get stuck in testnet
 static const int64_t DEFAULT_MAX_TIP_AGE = 24 * 60 * 60;
 /** Maximum age of our tip in seconds for us to be considered current for fee estimation */
 static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
@@ -130,6 +161,7 @@ static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
 static const bool DEFAULT_PERMIT_BAREMULTISIG = true;
 static const bool DEFAULT_CHECKPOINTS_ENABLED = true;
 static const bool DEFAULT_TXINDEX = false;
+static const bool DEFAULT_LOGEVENTS = false;
 static const unsigned int DEFAULT_BANSCORE_THRESHOLD = 100;
 /** Default for -persistmempool */
 static const bool DEFAULT_PERSIST_MEMPOOL = true;
@@ -148,6 +180,11 @@ static const bool DEFAULT_PEERBLOOMFILTERS = true;
 
 /** Default for -stopatheight */
 static const int DEFAULT_STOPATHEIGHT = 0;
+static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=2500000;
+static const uint64_t DEFAULT_GAS_LIMIT_OP_SEND=250000;
+static const CAmount DEFAULT_GAS_PRICE=0.00000040*COIN;
+static const CAmount MAX_RPC_GAS_PRICE=0.00000100*COIN;
+static const size_t MAX_CONTRACT_VOUTS = 1000; // fasc
 
 struct BlockHasher
 {
@@ -167,6 +204,7 @@ extern CWaitableCriticalSection csBestBlock;
 extern CConditionVariable cvBlockChange;
 extern std::atomic_bool fImporting;
 extern bool fReindex;
+extern bool fLogEvents;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
 extern bool fIsBareMultisigStd;
@@ -176,7 +214,7 @@ extern bool fCheckpointsEnabled;
 extern size_t nCoinCacheUsage;
 /** A fee rate smaller than this is considered zero fee (for relaying, mining and transaction creation) */
 extern CFeeRate minRelayTxFee;
-/** Absolute maximum transaction fee (in lius) used by wallet and mempool (rejects high fee in sendrawtransaction) */
+/** Absolute maximum transaction fee (in liu) used by wallet and mempool (rejects high fee in sendrawtransaction) */
 extern CAmount maxTxFee;
 /** If the tip is older than this (in seconds), the node is considered to be in initial block download. */
 extern int64_t nMaxTipAge;
@@ -217,6 +255,7 @@ static const unsigned int DEFAULT_CHECKLEVEL = 3;
 // Setting the target to > than 550MB will make it likely we can respect the target.
 static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 550 * 1024 * 1024;
 
+inline int64_t FutureDrift(uint32_t nTime) { return nTime + 15; }
 /** 
  * Process an incoming block. This only returns after the best known valid
  * block is made active. Note that it does not, however, guarantee that the
@@ -259,6 +298,8 @@ FILE* OpenBlockFile(const CDiskBlockPos &pos, bool fReadOnly = false);
 fs::path GetBlockPosFilename(const CDiskBlockPos &pos, const char *prefix);
 /** Import blocks from an external file */
 bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskBlockPos *dbp = nullptr);
+/** Initialize a new block tree database + block data on disk */
+bool InitBlockIndex(const CChainParams& chainparams);
 /** Ensures we have a genesis block in the block tree, possibly writing one to disk. */
 bool LoadGenesisBlock(const CChainParams& chainparams);
 /** Load the block tree and coins database from disk,
@@ -272,6 +313,14 @@ void UnloadBlockIndex();
 void ThreadScriptCheck();
 /** Check whether we are doing an initial block download (synchronizing from disk or network) */
 bool IsInitialBlockDownload();
+/** Format a string that describes several potential problems detected by the core.
+ * strFor can have three values:
+ * - "rpc": get critical warnings, which should put the client in safe mode if non-empty
+ * - "statusbar": get all warnings
+ * - "gui": get all warnings, translated (where possible) for GUI
+ * This function only returns the highest priority warning of the set selected by strFor.
+ */
+std::string GetWarnings(const std::string& strFor);
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
 bool GetTransaction(const uint256 &hash, CTransactionRef &tx, const Consensus::Params& params, uint256 &hashBlock, bool fAllowSlow = false);
 /** Find the best known block, and make it the tip of the block chain */
@@ -294,17 +343,24 @@ void UnlinkPrunedFiles(const std::set<int>& setFilesToPrune);
 /** Create a new block index entry for a given block hash */
 CBlockIndex * InsertBlockIndex(uint256 hash);
 /** Flush all state, indexes and buffers to disk. */
-void FlushStateToDisk();
+bool FlushStateToDisk();
 /** Prune block files and flush state to disk. */
 void PruneAndFlush();
 /** Prune block files up to a given height */
 void PruneBlockFilesManual(int nManualPruneHeight);
+/** Check if the transaction is confirmed in N previous blocks */
+bool IsConfirmedInNPrevBlocks(const CDiskTxPos& txindex, const CBlockIndex* pindexFrom, int nMaxDepth, int& nActualDepth);
 
 /** (try to) add transaction to memory pool
  * plTxnReplaced will be appended to with all transactions replaced from mempool **/
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
-                        bool* pfMissingInputs, std::list<CTransactionRef>* plTxnReplaced = nullptr,
-                        bool fOverrideMempoolLimit=false, const CAmount nAbsurdFee=0);
+                        bool* pfMissingInputs, std::list<CTransactionRef>* plTxnReplaced = nullptr, 
+                        bool fOverrideMempoolLimit = false, const CAmount nAbsurdFee = 0, bool rawTx = false);
+
+/** (try to) add transaction to memory pool with a specified acceptance time **/
+bool AcceptToMemoryPoolWithTime(CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
+                        bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced = NULL,
+                        bool fOverrideMempoolLimit = false, const CAmount nAbsurdFee = 0, bool rawTx = false);
 
 /** Convert CValidationState to a human-readable message for logging */
 std::string FormatStateMessage(const CValidationState &state);
@@ -322,8 +378,136 @@ int VersionBitsTipStateSinceHeight(const Consensus::Params& params, Consensus::D
 /** Apply the effects of this transaction on the UTXO set represented by view */
 void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
 
+//////////////////////////////////////////////////////////// // fasc
+struct CHeightTxIndexIteratorKey {
+    unsigned int height;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 4;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata32be(s, height);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        height = ser_readdata32be(s);
+    }
+
+    CHeightTxIndexIteratorKey(unsigned int _height) {
+        height = _height;
+    }
+
+    CHeightTxIndexIteratorKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        height = 0;
+    }
+};
+
+struct CHeightTxIndexKey {
+    unsigned int height;
+    dev::h160 address;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 24;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata32be(s, height);
+        s << address.asBytes();
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        height = ser_readdata32be(s);
+        valtype tmp;
+        s >> tmp;
+        address = dev::h160(tmp);
+    }
+
+    CHeightTxIndexKey(unsigned int _height, dev::h160 _address) {
+        height = _height;
+        address = _address;
+    }
+
+    CHeightTxIndexKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        height = 0;
+        address.clear();
+    }
+};
+
+////////////////////////////////////////////////////////////
+
+/** Get the block height at which the BIP9 deployment switched into the state for the block building on the current tip. */
+int VersionBitsTipStateSinceHeight(const Consensus::Params& params, Consensus::DeploymentPos pos);
+
+/** 
+ * Count ECDSA signature operations the old-fashioned (pre-0.6) way
+ * @return number of sigops this transaction's outputs will produce when spent
+ * @see CTransaction::FetchInputs
+ */
+unsigned int GetLegacySigOpCount(const CTransaction& tx);
+/**
+ * Count ECDSA signature operations in pay-to-script-hash inputs.
+ * 
+ * @param[in] mapInputs Map of previous transactions that have outputs we're spending
+ * @return maximum number of sigops required to validate this transaction's inputs
+ * @see CTransaction::FetchInputs
+ */
+unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& mapInputs);
+
+/**
+ * Compute total signature operation cost of a transaction.
+ * @param[in] tx     Transaction for which we are computing the cost
+ * @param[in] inputs Map of previous transactions that have outputs we're spending
+ * @param[out] flags Script verification flags
+ * @return Total signature operation cost of tx
+ */
+int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& inputs, int flags);
+
+/**
+ * Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
+ * This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
+ * instead of being performed inline.
+ */
+bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &view, bool fScriptChecks,
+                 unsigned int flags, bool cacheStore, PrecomputedTransactionData& txdata, std::vector<CScriptCheck> *pvChecks = NULL);
+
+/** Apply the effects of this transaction on the UTXO set represented by view */
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
+
 /** Transaction validation functions */
 
+/** Context-independent validity checks */
+bool CheckTransaction(const CTransaction& tx, CValidationState& state, bool fCheckDuplicateInputs);
+
+namespace Consensus {
+
+/**
+ * Check whether all inputs of this transaction are valid (no double spends and amounts)
+ * This does not modify the UTXO set. This does not check scripts and sigs.
+ * Preconditions: tx.IsCoinBase() is false.
+ */
+bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight);
+
+} // namespace Consensus
+
+/**
+ * Check if coinstake transaction timestamp is bigger than the previous
+ */
+bool CheckTransactionTimestamp(const CTransaction& tx, const uint32_t& nTimeBlock, CBlockTreeDB& txdb);
+
+/**
+ * Check if transaction is final and can be included in a block with the
+ * specified height and time. Consensus critical.
+ */
+bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime);
 /**
  * Check if transaction will be final in the next block to be created.
  *
@@ -337,6 +521,7 @@ bool CheckFinalTx(const CTransaction &tx, int flags = -1);
  * Test whether the LockPoints height and time are still valid on the current chain
  */
 bool TestLockPointValidity(const LockPoints* lp);
+bool SequenceLocks(const CTransaction &tx, int flags, std::vector<int>* prevHeights, const CBlockIndex& block);
 
 /**
  * Check if transaction will be BIP 68 final in the next block to be created.
@@ -394,13 +579,26 @@ void InitScriptExecutionCache();
 
 
 /** Functions for disk access for blocks */
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
+//Template function that read the whole block or the header only depending on the type (CBlock or CBlockHeader)
+template <typename Block>
+bool ReadBlockFromDisk(Block& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams);
+bool ReadFromDisk(CBlockHeader& block, unsigned int nFile, unsigned int nBlockPos);
+bool ReadFromDisk(CMutableTransaction& tx, CDiskTxPos& txindex, CBlockTreeDB& txdb, COutPoint prevout);
 
 /** Functions for validating blocks and updating the block tree */
 
 /** Context-independent validity checks */
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+bool GetBlockPublicKey(const CBlock& block, std::vector<unsigned char>& vchPubKey);
+bool SignBlock(std::shared_ptr<CBlock> pblock, CWallet& wallet, const CAmount& nTotalFees, uint32_t nTime);
+bool CheckCanonicalBlockSignature(const std::shared_ptr<const CBlock> pblock);
+bool CheckIndexProof(const CBlockIndex& block, const Consensus::Params& consensusParams);
+/** Context-dependent validity checks.
+ *  By "context", we mean only the previous block headers, but not the UTXO
+ *  set; UTXO-related validity checks are done in ConnectBlock(). */
+bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev, int64_t nAdjustedTime);
+
 
 /** Check a block is completely valid from start to finish (only works on top of our current best block, with cs_main held) */
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
@@ -452,6 +650,7 @@ extern CCoinsViewCache *pcoinsTip;
 /** Global variable that points to the active block tree (protected by cs_main) */
 extern CBlockTreeDB *pblocktree;
 
+extern StorageResults *pstorageresult;
 /**
  * Return the spend height, which is one more than the inputs.GetBestBlock().
  * While checking, GetBestBlock() refers to the parent block. (protected by cs_main)
@@ -473,6 +672,10 @@ int32_t ComputeBlockVersion(const CBlockIndex* pindexPrev, const Consensus::Para
 static const unsigned int REJECT_INTERNAL = 0x100;
 /** Too high fee. Can not be triggered by P2P transactions */
 static const unsigned int REJECT_HIGHFEE = 0x100;
+/** Transaction is already known (either in mempool or blockchain) */
+static const unsigned int REJECT_ALREADY_KNOWN = 0x101;
+/** Transaction conflicts with a transaction already known */
+static const unsigned int REJECT_CONFLICT = 0x102;
 
 /** Get block file info entry for one block file */
 CBlockFileInfo* GetBlockFileInfo(size_t n);
@@ -483,4 +686,95 @@ void DumpMempool();
 /** Load the mempool from disk. */
 bool LoadMempool();
 
+bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, CAmount gasRefunds, const std::vector<CTxOut>& vouts);
+
+//////////////////////////////////////////////////////// fasc
+std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::vector<unsigned char> opcode, const dev::Address& sender = dev::Address(), uint64_t gasLimit=0);
+
+bool CheckSenderScript(const CCoinsViewCache& view, const CTransaction& tx);
+
+bool CheckMinGasPrice(std::vector<EthTransactionParams>& etps, const uint64_t& minGasPrice);
+
+struct ByteCodeExecResult;
+
+void EnforceContractVoutLimit(ByteCodeExecResult& bcer, ByteCodeExecResult& bcerOut, const dev::h256& oldHashFascRoot,
+    const dev::h256& oldHashStateRoot, const std::vector<FascTransaction>& transactions);
+
+void writeVMlog(const std::vector<ResultExecute>& res, const CTransaction& tx = CTransaction(), const CBlock& block = CBlock());
+
+struct EthTransactionParams{
+    VersionVM version;
+    dev::u256 gasLimit;
+    dev::u256 gasPrice;
+    valtype code;
+    dev::Address receiveAddress;
+
+    bool operator!=(EthTransactionParams etp){
+        if(this->version.toRaw() != etp.version.toRaw() || this->gasLimit != etp.gasLimit ||
+        this->gasPrice != etp.gasPrice || this->code != etp.code ||
+        this->receiveAddress != etp.receiveAddress)
+            return true;
+        return false;
+    }
+};
+
+struct ByteCodeExecResult{
+    uint64_t usedGas = 0;
+    CAmount refundSender = 0;
+    std::vector<CTxOut> refundOutputs;
+    std::vector<CTransaction> valueTransfers;
+};
+
+class FascTxConverter{
+
+public:
+
+    FascTxConverter(CTransaction tx, CCoinsViewCache* v = NULL, const std::vector<CTransactionRef>* blockTxs = NULL) : txBit(tx), view(v), blockTransactions(blockTxs){}
+
+    bool extractionFascTransactions(ExtractFascTX& fascTx);
+
+private:
+
+    bool receiveStack(const CScript& scriptPubKey);
+
+    bool parseEthTXParams(EthTransactionParams& params);
+
+    FascTransaction createEthTX(const EthTransactionParams& etp, const uint32_t nOut);
+
+    const CTransaction txBit;
+    const CCoinsViewCache* view;
+    std::vector<valtype> stack;
+    opcodetype opcode;
+    const std::vector<CTransactionRef> *blockTransactions;
+
+};
+
+class ByteCodeExec {
+
+public:
+
+    ByteCodeExec(const CBlock& _block, std::vector<FascTransaction> _txs, const uint64_t _blockGasLimit) : txs(_txs), block(_block), blockGasLimit(_blockGasLimit) {}
+
+    bool performByteCode(dev::eth::Permanence type = dev::eth::Permanence::Committed);
+
+    bool processingResults(ByteCodeExecResult& result);
+
+    std::vector<ResultExecute>& getResult(){ return result; }
+
+private:
+
+    dev::eth::EnvInfo BuildEVMEnvironment();
+
+    dev::Address EthAddrFromScript(const CScript& scriptIn);
+
+    std::vector<FascTransaction> txs;
+
+    std::vector<ResultExecute> result;
+
+    const CBlock& block;
+
+    const uint64_t blockGasLimit;
+
+};
+////////////////////////////////////////////////////////
 #endif // FABCOIN_VALIDATION_H

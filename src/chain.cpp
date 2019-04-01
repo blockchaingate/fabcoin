@@ -1,9 +1,11 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chain.h"
+#include <chain.h>
+#include <util.h>
+#include <chainparams.h>
 
 /**
  * CChain implementation
@@ -117,6 +119,37 @@ void CBlockIndex::BuildSkip()
         pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
 
+
+/*
+   regtest support Contract. 
+   mainnet and test : only when nHeight larger than ContractHeight,  support Contract 
+*/
+bool CBlockIndex::IsSupportContract() const
+{
+    //genesis block
+    if ( nHeight == 0 ) {
+       if ( nVersion == 5 )
+           return true;
+       else
+           return false;
+    }
+
+    bool fRegTest =  (Params().NetworkIDString() == CBaseChainParams::REGTEST ) ||  (Params().NetworkIDString() == CBaseChainParams::REGTEST );
+    if ( fRegTest )
+       return true;
+
+    // when nHeight larger than consensus.ContractHeight ,  support Contract 
+    return ((uint32_t) nHeight >= (uint32_t)Params().GetConsensus().ContractHeight );
+}
+
+bool CBlockIndex::IsLegacyFormat() const
+{
+    if ( nHeight == 0 ) 
+       return false;
+
+    return (Params().NetworkIDString() == CBaseChainParams::REGTEST ) || (Params().NetworkIDString() == CBaseChainParams::UNITTEST );
+}
+
 arith_uint256 GetBlockProof(const CBlockIndex& block)
 {
     arith_uint256 bnTarget;
@@ -142,7 +175,8 @@ int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& fr
         r = from.nChainWork - to.nChainWork;
         sign = -1;
     }
-    r = r * arith_uint256(params.nPowTargetSpacing) / GetBlockProof(tip);
+    //r = r * arith_uint256(params.nPowTargetSpacing) / GetBlockProof(tip);
+    r = r * arith_uint256(Params().GetnPowTargetSpacing( tip.nHeight)) / GetBlockProof(tip);
     if (r.bits() > 63) {
         return sign * std::numeric_limits<int64_t>::max();
     }
@@ -167,3 +201,5 @@ const CBlockIndex* LastCommonAncestor(const CBlockIndex* pa, const CBlockIndex* 
     assert(pa == pb);
     return pa;
 }
+
+

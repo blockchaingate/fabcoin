@@ -43,6 +43,7 @@ DIST_CONTRIB = $(top_srcdir)/contrib/fabcoin-cli.bash-completion \
 	       $(top_srcdir)/contrib/fabcoin-tx.bash-completion \
 	       $(top_srcdir)/contrib/fabcoind.bash-completion \
 	       $(top_srcdir)/contrib/init \
+	       $(top_srcdir)/contrib/install_db4.sh \
 	       $(top_srcdir)/contrib/rpm
 DIST_SHARE = \
   $(top_srcdir)/share/genbuild.sh \
@@ -78,6 +79,8 @@ $(FABCOIN_WIN_INSTALLER): all-recursive
 	@test -f $(MAKENSIS) && $(MAKENSIS) -V2 $(top_builddir)/share/setup.nsi || \
 	  echo error: could not build $@
 	@echo built $@
+$(if $(findstring src/,$(MAKECMDGOALS)),$(MAKECMDGOALS), none): FORCE
+	$(MAKE) -C src $(patsubst src/%,%,$@)
 
 $(OSX_APP)/Contents/PkgInfo:
 	$(MKDIR_P) $(@D)
@@ -279,4 +282,4 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-man
 
 clean-local:
 	rm -rf coverage_percent.txt test_fabcoin.coverage/ total.coverage/ test/tmp/ cache/ $(OSX_APP)
-	rm -rf test/functional/__pycache__
+	rm -rf test/functional/__pycache__ test/functional/test_framework/__pycache__ test/cache

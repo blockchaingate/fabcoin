@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,10 +7,10 @@
 #define FABCOIN_PRIMITIVES_TRANSACTION_H
 
 #include <stdint.h>
-#include "amount.h"
-#include "script/script.h"
-#include "serialize.h"
-#include "uint256.h"
+#include <amount.h>
+#include <script/script.h>
+#include <serialize.h>
+#include <uint256.h>
 
 static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
@@ -160,6 +160,17 @@ public:
         return (nValue == -1);
     }
 
+    void SetEmpty()
+    {
+        nValue = 0;
+        scriptPubKey.clear();
+    }
+
+    bool IsEmpty() const
+    {
+        return (nValue == 0 && scriptPubKey.empty());
+    }
+
     friend bool operator==(const CTxOut& a, const CTxOut& b)
     {
         return (a.nValue       == b.nValue &&
@@ -278,9 +289,9 @@ public:
     // actually immutable; deserialization and assignment are implemented,
     // and bypass the constness. This is safe, as they update the entire
     // structure, including the hash.
-    const int32_t nVersion;
     const std::vector<CTxIn> vin;
     const std::vector<CTxOut> vout;
+    const int32_t nVersion;
     const uint32_t nLockTime;
 
 private:
@@ -330,9 +341,26 @@ public:
      */
     unsigned int GetTotalSize() const;
 
+//////////////////////////////////////// // fabcoin
+    bool HasCreateOrCall() const;
+    bool HasOpSpend() const;
+////////////////////////////////////////
+
     bool IsCoinBase() const
     {
-        return (vin.size() == 1 && vin[0].prevout.IsNull());
+        return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
+    }
+
+    bool IsCoinStake() const
+    {
+        // ppcoin: the coin stake transaction is marked with the first output empty
+        return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
+    }
+
+    bool IsNormalTx() const
+    {
+        // not coin base or coin stake transaction
+        return !IsCoinBase() && !IsCoinStake();
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)
@@ -361,9 +389,9 @@ public:
 /** A mutable version of CTransaction. */
 struct CMutableTransaction
 {
-    int32_t nVersion;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
+    int32_t nVersion;
     uint32_t nLockTime;
 
     CMutableTransaction();
@@ -410,4 +438,5 @@ typedef std::shared_ptr<const CTransaction> CTransactionRef;
 static inline CTransactionRef MakeTransactionRef() { return std::make_shared<const CTransaction>(); }
 template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) { return std::make_shared<const CTransaction>(std::forward<Tx>(txIn)); }
 
+int64_t GetTransactionWeight(const CTransaction &tx);
 #endif // FABCOIN_PRIMITIVES_TRANSACTION_H

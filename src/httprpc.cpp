@@ -1,21 +1,22 @@
-// Copyright (c) 2015-2016 The Bitcoin Core developers
+// Copyright (c) 2015-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "httprpc.h"
+#include <httprpc.h>
 
-#include "base58.h"
-#include "chainparams.h"
-#include "httpserver.h"
-#include "rpc/protocol.h"
-#include "rpc/server.h"
-#include "random.h"
-#include "sync.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "ui_interface.h"
-#include "crypto/hmac_sha256.h"
+#include <base58.h>
+#include <chainparams.h>
+#include <httpserver.h>
+#include <rpc/protocol.h>
+#include <rpc/server.h>
+#include <random.h>
+#include <sync.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <ui_interface.h>
+#include <crypto/hmac_sha256.h>
 #include <stdio.h>
+
 
 #include <boost/algorithm/string.hpp> // boost::trim
 
@@ -29,7 +30,7 @@ class HTTPRPCTimer : public RPCTimerBase
 {
 public:
     HTTPRPCTimer(struct event_base* eventBase, std::function<void(void)>& func, int64_t millis) :
-        ev(eventBase, false, func)
+        ev(eventBase, false, NULL, func)
     {
         struct timeval tv;
         tv.tv_sec = millis/1000;
@@ -77,8 +78,14 @@ static void JSONErrorReply(HTTPRequest* req, const UniValue& objError, const Uni
 
     std::string strReply = JSONRPCReply(NullUniValue, objError, id);
 
-    req->WriteHeader("Content-Type", "application/json");
-    req->WriteReply(nStatus, strReply);
+    if (req->isChunkMode()) {
+        // in chunk mode, we assume that the handler had already set the response content-type
+        req->Chunk(strReply);
+        req->ChunkEnd();
+    } else {
+        req->WriteHeader("Content-Type", "application/json");
+        req->WriteReply(nStatus, strReply);
+    }
 }
 
 //This function checks username and password against -rpcauth
@@ -157,7 +164,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         return false;
     }
 
-    JSONRPCRequest jreq;
+    JSONRPCRequest jreq(req);
     if (!RPCAuthorized(authHeader.second, jreq.authUser)) {
         LogPrintf("ThreadRPCServer incorrect password attempt from %s\n", req->GetPeer().ToString());
 
@@ -186,6 +193,11 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
             jreq.parse(valRequest);
 
             UniValue result = tableRPC.execute(jreq);
+
+            if (jreq.isLongPolling) {
+                jreq.PollReply(result);
+                return true;
+            }
 
             // Send reply
             strReply = JSONRPCReply(result, NullUniValue, jreq.id);

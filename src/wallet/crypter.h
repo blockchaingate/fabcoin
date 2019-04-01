@@ -1,13 +1,13 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_WALLET_CRYPTER_H
 #define FABCOIN_WALLET_CRYPTER_H
 
-#include "keystore.h"
-#include "serialize.h"
-#include "support/allocators/secure.h"
+#include <keystore.h>
+#include <serialize.h>
+#include <support/allocators/secure.h>
 
 const unsigned int WALLET_CRYPTO_KEY_SIZE = 32;
 const unsigned int WALLET_CRYPTO_SALT_SIZE = 8;

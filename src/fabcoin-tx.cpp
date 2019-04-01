@@ -1,26 +1,26 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "base58.h"
-#include "clientversion.h"
-#include "coins.h"
-#include "consensus/consensus.h"
-#include "core_io.h"
-#include "keystore.h"
-#include "policy/policy.h"
-#include "policy/rbf.h"
-#include "primitives/transaction.h"
-#include "script/script.h"
-#include "script/sign.h"
+#include <base58.h>
+#include <clientversion.h>
+#include <coins.h>
+#include <consensus/consensus.h>
+#include <core_io.h>
+#include <keystore.h>
+#include <policy/policy.h>
+#include <policy/rbf.h>
+#include <primitives/transaction.h>
+#include <script/script.h>
+#include <script/sign.h>
 #include <univalue.h>
-#include "util.h"
-#include "utilmoneystr.h"
-#include "utilstrencodings.h"
+#include <util.h>
+#include <utilmoneystr.h>
+#include <utilstrencodings.h>
 
 #include <stdio.h>
 
@@ -389,6 +389,10 @@ static void MutateTxAddOutMultiSig(CMutableTransaction& tx, const std::string& s
         scriptPubKey = GetScriptForWitness(scriptPubKey);
     }
     if (bScriptHash) {
+        if (scriptPubKey.size() > MAX_SCRIPT_ELEMENT_SIZE) {
+            throw std::runtime_error(strprintf(
+                        "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
+        }
         // Get the address for the redeem script, then call
         // GetScriptForDestination() to construct a P2SH scriptPubKey.
         CFabcoinAddress addr(scriptPubKey);
@@ -451,10 +455,19 @@ static void MutateTxAddOutScript(CMutableTransaction& tx, const std::string& str
         bScriptHash = (flags.find("S") != std::string::npos);
     }
 
+    if (scriptPubKey.size() > MAX_SCRIPT_SIZE) {
+        throw std::runtime_error(strprintf(
+                    "script exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_SIZE));
+    }
+
     if (bSegWit) {
       scriptPubKey = GetScriptForWitness(scriptPubKey);
     }
     if (bScriptHash) {
+        if (scriptPubKey.size() > MAX_SCRIPT_ELEMENT_SIZE) {
+            throw std::runtime_error(strprintf(
+                        "redeemScript exceeds size limit: %d > %d", scriptPubKey.size(), MAX_SCRIPT_ELEMENT_SIZE));
+        }
       CFabcoinAddress addr(scriptPubKey);
       scriptPubKey = GetScriptForDestination(addr.Get());
     }

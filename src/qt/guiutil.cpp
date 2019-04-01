@@ -1,22 +1,22 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "guiutil.h"
+#include <guiutil.h>
 
-#include "fabcoinaddressvalidator.h"
-#include "fabcoinunits.h"
-#include "qvalidatedlineedit.h"
-#include "walletmodel.h"
+#include <fabcoinaddressvalidator.h>
+#include <fabcoinunits.h>
+#include <qvalidatedlineedit.h>
+#include <walletmodel.h>
 
-#include "fs.h"
-#include "primitives/transaction.h"
-#include "init.h"
-#include "policy/policy.h"
-#include "protocol.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "util.h"
+#include <fs.h>
+#include <primitives/transaction.h>
+#include <init.h>
+#include <policy/policy.h>
+#include <protocol.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <util.h>
 
 #ifdef WIN32
 #ifdef _WIN32_WINNT
@@ -31,9 +31,9 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include "shellapi.h"
-#include "shlobj.h"
-#include "shlwapi.h"
+#include <shellapi.h>
+#include <shlobj.h>
+#include <shlwapi.h>
 #endif
 
 #include <boost/scoped_array.hpp>
@@ -146,6 +146,7 @@ void setupAmountWidget(QLineEdit *widget, QWidget *parent)
 bool parseFabcoinURI(const QUrl &uri, SendCoinsRecipient *out)
 {
     // return if URI is not valid or is no fabcoin: URI
+    //if(!uri.isValid() || uri.scheme() != QString("fabcoin"))
     if(!uri.isValid() || uri.scheme() != QString("fabcoin"))
         return false;
 
@@ -286,6 +287,18 @@ void copyEntryData(QAbstractItemView *view, int column, int role)
     }
 }
 
+void copyEntryDataFromList(QAbstractItemView *view, int role)
+{
+    if(!view || !view->selectionModel())
+        return;
+    QModelIndexList selection = view->selectionModel()->selectedIndexes();
+
+    if(!selection.isEmpty())
+    {
+        // Copy first item
+        setClipboard(selection.at(0).data(role).toString());
+    }
+}
 QList<QModelIndex> getEntryData(QAbstractItemView *view, int column)
 {
     if(!view || !view->selectionModel())
@@ -596,7 +609,7 @@ void TableViewLastColumnResizingFixer::on_geometriesChanged()
  * Initializes all internal variables and prepares the
  * the resize modes of the last 2 columns of the table and
  */
-TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView* table, int lastColMinimumWidth, int allColsMinimumWidth, QObject *parent) :
+TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView* table, int lastColMinimumWidth, int allColsMinimumWidth, QObject *parent, int columnStretch) :
     QObject(parent),
     tableView(table),
     lastColumnMinimumWidth(lastColMinimumWidth),
@@ -604,7 +617,7 @@ TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView* t
 {
     columnCount = tableView->horizontalHeader()->count();
     lastColumnIndex = columnCount - 1;
-    secondToLastColumnIndex = columnCount - 2;
+    secondToLastColumnIndex = columnCount - columnStretch;
     tableView->horizontalHeader()->setMinimumSectionSize(allColumnsMinimumWidth);
     setViewHeaderResizeMode(secondToLastColumnIndex, QHeaderView::Interactive);
     setViewHeaderResizeMode(lastColumnIndex, QHeaderView::Interactive);
@@ -971,6 +984,19 @@ void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
 void ClickableProgressBar::mouseReleaseEvent(QMouseEvent *event)
 {
     Q_EMIT clicked(event->pos());
+}
+
+void formatToolButtons(QToolButton *btn1, QToolButton *btn2, QToolButton *btn3)
+{
+    QList<QToolButton *> btnList;
+    if(btn1) btnList.append(btn1);
+    if(btn2) btnList.append(btn2);
+    if(btn3) btnList.append(btn3);
+    for(int i = 0; i < btnList.count(); i++)
+    {
+        QToolButton* btn = btnList[i];
+        btn->setIconSize(QSize(16, 16));
+    }
 }
 
 } // namespace GUIUtil

@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "transactionfilterproxy.h"
+#include <transactionfilterproxy.h>
 
-#include "transactiontablemodel.h"
-#include "transactionrecord.h"
+#include <transactiontablemodel.h>
+#include <transactionrecord.h>
 
 #include <cstdlib>
 

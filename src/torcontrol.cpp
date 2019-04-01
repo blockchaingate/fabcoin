@@ -1,14 +1,14 @@
-// Copyright (c) 2015-2016 The Bitcoin Core developers
+// Copyright (c) 2015-2017 The Bitcoin Core developers
 // Copyright (c) 2017 The Zcash developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "torcontrol.h"
-#include "utilstrencodings.h"
-#include "netbase.h"
-#include "net.h"
-#include "util.h"
-#include "crypto/hmac_sha256.h"
+#include <torcontrol.h>
+#include <utilstrencodings.h>
+#include <netbase.h>
+#include <net.h>
+#include <util.h>
+#include <crypto/hmac_sha256.h>
 
 #include <vector>
 #include <deque>

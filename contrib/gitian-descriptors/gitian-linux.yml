@@ -27,6 +27,11 @@ packages:
 - "bsdmainutils"
 - "ca-certificates"
 - "python"
+- "cmake"
+- "libcurl4-openssl-dev"
+- "libgmp-dev"
+- "libmicrohttpd-dev"
+- "libminiupnpc-dev"
 remotes:
 - "url": "https://github.com/blockchaingate/fabcoin.git"
   "dir": "fabcoin"
@@ -114,6 +119,7 @@ script: |
   done
 
   cd fabcoin
+
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do

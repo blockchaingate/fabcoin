@@ -3,17 +3,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chainparamsbase.h"
+#include <chainparamsbase.h>
 
-#include "tinyformat.h"
-#include "util.h"
+#include <tinyformat.h>
+#include <util.h>
 
 #include <assert.h>
 
 const std::string CBaseChainParams::MAIN = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::REGTEST = "regtest";
-const std::string CBaseChainParams::BITMAIN = "bitmain";
+const std::string CBaseChainParams::UNITTEST = "unittest";
 
 void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
 {
@@ -34,19 +34,6 @@ public:
     CBaseMainParams()
     {
         nRPCPort = 8667;
-    }
-};
-
-
-/**
- * BitMain network
- */
-class CBaseBitMainParams : public CBaseChainParams
-{
-public:
-    CBaseBitMainParams()
-    {
-        nRPCPort = 8333;
     }
 };
 
@@ -71,7 +58,7 @@ class CBaseRegTestParams : public CBaseChainParams
 public:
     CBaseRegTestParams()
     {
-        nRPCPort = 18667;
+        nRPCPort = 38667;
         strDataDir = "regtest";
     }
 };
@@ -92,8 +79,8 @@ std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain
         return std::unique_ptr<CBaseChainParams>(new CBaseTestNetParams());
     else if (chain == CBaseChainParams::REGTEST)
         return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
-    else if (chain == CBaseChainParams::BITMAIN)
-        return std::unique_ptr<CBaseChainParams>(new CBaseBitMainParams());
+    else if (chain == CBaseChainParams::UNITTEST)
+        return std::unique_ptr<CBaseChainParams>(new CBaseRegTestParams());
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }

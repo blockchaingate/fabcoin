@@ -6,7 +6,7 @@
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
-
+from test_framework.fabcoinconfig import COINBASE_MATURITY, INITIAL_BLOCK_REWARD
 
 def get_unspent(listunspent, amount):
     for utx in listunspent:
@@ -44,17 +44,17 @@ class RawTransactionsTest(FabcoinTestFramework):
 
         self.nodes[2].generate(1)
         self.sync_all()
-        self.nodes[0].generate(821)
+        self.nodes[0].generate(COINBASE_MATURITY + 21)
         self.sync_all()
 
         # ensure that setting changePosition in fundraw with an exact match is handled properly
-        rawmatch = self.nodes[2].createrawtransaction([], {self.nodes[2].getnewaddress():25})
+        rawmatch = self.nodes[2].createrawtransaction([], {self.nodes[2].getnewaddress():INITIAL_BLOCK_REWARD})
         rawmatch = self.nodes[2].fundrawtransaction(rawmatch, {"changePosition":1, "subtractFeeFromOutputs":[0]})
         assert_equal(rawmatch["changepos"], -1)
 
         watchonly_address = self.nodes[0].getnewaddress()
         watchonly_pubkey = self.nodes[0].validateaddress(watchonly_address)["pubkey"]
-        watchonly_amount = Decimal(100)
+        watchonly_amount = Decimal(4*INITIAL_BLOCK_REWARD)
         self.nodes[3].importpubkey(watchonly_pubkey, "", True)
         watchonly_txid = self.nodes[0].sendtoaddress(watchonly_address, watchonly_amount)
         self.nodes[0].sendtoaddress(self.nodes[3].getnewaddress(), watchonly_amount / 10)
@@ -487,14 +487,14 @@ class RawTransactionsTest(FabcoinTestFramework):
         fundedTx = self.nodes[1].fundrawtransaction(rawtx)
 
         #now we need to unlock
-        self.nodes[1].walletpassphrase("test", 600)
+        self.nodes[1].walletpassphrase("test", 600 )
         signedTx = self.nodes[1].signrawtransaction(fundedTx['hex'])
         txId = self.nodes[1].sendrawtransaction(signedTx['hex'])
         self.nodes[1].generate(1)
         self.sync_all()
 
         # make sure funds are received at node1
-        assert_equal(oldBalance+Decimal('26.10000000'), self.nodes[0].getbalance())
+        assert_equal(oldBalance+INITIAL_BLOCK_REWARD+Decimal('1.10000000'), self.nodes[0].getbalance())
 
 
         ###############################################
@@ -554,7 +554,7 @@ class RawTransactionsTest(FabcoinTestFramework):
         self.sync_all()
         self.nodes[0].generate(1)
         self.sync_all()
-        assert_equal(oldBalance+Decimal('25.19000000'), self.nodes[0].getbalance()) #0.19+block reward
+        assert_equal(oldBalance+INITIAL_BLOCK_REWARD+Decimal('0.19000000'), self.nodes[0].getbalance()) #0.19+block reward
 
         #####################################################
         # test fundrawtransaction with OP_RETURN and no vin #

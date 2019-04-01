@@ -5,7 +5,7 @@ Setup
 ---------------------
 Fabcoin Core is the original Fabcoin client and it builds the backbone of the network. It downloads and, by default, stores the entire history of Fabcoin transactions (which is currently just started and will grow as time being); depending on the speed of your computer and network connection, the synchronization process will depends on the volume of the blocks generated.
 
-To download Fabcoin Core, please visit [fabexplorer.info](HTTPS://Fabexplorer.info/EN/RELEASES/).
+To download Fabcoin Core, please visit [fabcoin.pro](HTTP://fabcoin.pro/runtime.html).
 
 Running
 ---------------------

@@ -302,7 +302,7 @@ class BIP68Test(FabcoinTestFramework):
         tip = int(self.nodes[0].getblockhash(self.nodes[0].getblockcount()-1), 16)
         height = self.nodes[0].getblockcount()
         for i in range(2):
-            block = create_block(tip, create_coinbase(height), cur_time)
+            block = create_block(tip, create_coinbase(height), height, cur_time)
             block.nVersion = 3
             block.rehash()
             block.solve()
@@ -357,7 +357,7 @@ class BIP68Test(FabcoinTestFramework):
 
         # make a block that violates bip68; ensure that the tip updates
         tip = int(self.nodes[0].getbestblockhash(), 16)
-        block = create_block(tip, create_coinbase(self.nodes[0].getblockcount()+1))
+        block = create_block(tip, create_coinbase(self.nodes[0].getblockcount()+1), self.nodes[0].getblockcount()+1)
         block.nVersion = 3
         block.vtx.extend([tx1, tx2, tx3])
         block.hashMerkleRoot = block.calc_merkle_root()

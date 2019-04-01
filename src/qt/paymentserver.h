@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -32,8 +32,8 @@
 // sends them to the server.
 //
 
-#include "paymentrequestplus.h"
-#include "walletmodel.h"
+#include <paymentrequestplus.h>
+#include <walletmodel.h>
 
 #include <QObject>
 #include <QString>

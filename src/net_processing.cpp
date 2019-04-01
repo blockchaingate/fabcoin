@@ -1,36 +1,36 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "net_processing.h"
+#include <net_processing.h>
 
-#include "addrman.h"
-#include "arith_uint256.h"
-#include "blockencodings.h"
-#include "chainparams.h"
-#include "consensus/validation.h"
-#include "hash.h"
-#include "init.h"
-#include "validation.h"
-#include "merkleblock.h"
-#include "net.h"
-#include "netmessagemaker.h"
-#include "netbase.h"
-#include "policy/fees.h"
-#include "policy/policy.h"
-#include "primitives/block.h"
-#include "primitives/transaction.h"
-#include "random.h"
-#include "reverse_iterator.h"
-#include "scheduler.h"
-#include "tinyformat.h"
-#include "txmempool.h"
-#include "ui_interface.h"
-#include "util.h"
-#include "utilmoneystr.h"
-#include "utilstrencodings.h"
-#include "validationinterface.h"
+#include <addrman.h>
+#include <arith_uint256.h>
+#include <blockencodings.h>
+#include <chainparams.h>
+#include <consensus/validation.h>
+#include <hash.h>
+#include <init.h>
+#include <validation.h>
+#include <merkleblock.h>
+#include <net.h>
+#include <netmessagemaker.h>
+#include <netbase.h>
+#include <policy/fees.h>
+#include <policy/policy.h>
+#include <primitives/block.h>
+#include <primitives/transaction.h>
+#include <random.h>
+#include <reverse_iterator.h>
+#include <scheduler.h>
+#include <tinyformat.h>
+#include <txmempool.h>
+#include <ui_interface.h>
+#include <util.h>
+#include <utilmoneystr.h>
+#include <utilstrencodings.h>
+#include <validationinterface.h>
 
 #if defined(NDEBUG)
 # error "Fabcoin cannot be compiled without assertions."
@@ -434,13 +434,13 @@ bool TipMayBeStale(const Consensus::Params &consensusParams)
     if (g_last_tip_update == 0) {
         g_last_tip_update = GetTime();
     }
-    return g_last_tip_update < GetTime() - consensusParams.nPowTargetSpacing * 3 && mapBlocksInFlight.empty();
+    return g_last_tip_update < GetTime() - Params().GetnPowTargetSpacing(chainActive.Height())* 3 && mapBlocksInFlight.empty();
 }
 
 // Requires cs_main
 bool CanDirectFetch(const Consensus::Params &consensusParams)
 {
-    return chainActive.Tip()->GetBlockTime() > GetAdjustedTime() - consensusParams.nPowTargetSpacing * 20;
+    return chainActive.Tip()->GetBlockTime() > GetAdjustedTime() - Params().GetnPowTargetSpacing (chainActive.Height()) * 20;
 }
 
 // Requires cs_main
@@ -1096,13 +1096,12 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                             assert(!"cannot load block from disk");
                         pblock = pblockRead;
                     }
-                    int legacy_block_flag = (pfrom->IsLegacyBlockHeader(pfrom->GetSendVersion())
-                                                 ? SERIALIZE_BLOCK_LEGACY : 0);
+
                     if (inv.type == MSG_BLOCK)
-                        connman->PushMessage(pfrom, msgMaker.Make(legacy_block_flag | SERIALIZE_TRANSACTION_NO_WITNESS,
+                        connman->PushMessage(pfrom, msgMaker.Make( SERIALIZE_TRANSACTION_NO_WITNESS,
                                                                  NetMsgType::BLOCK, *pblock));
                     else if (inv.type == MSG_WITNESS_BLOCK)
-                        connman->PushMessage(pfrom, msgMaker.Make(legacy_block_flag, NetMsgType::BLOCK, *pblock));
+                        connman->PushMessage(pfrom, msgMaker.Make( NetMsgType::BLOCK, *pblock));
                     else if (inv.type == MSG_FILTERED_BLOCK)
                     {
                         bool sendMerkleBlock = false;
@@ -1115,7 +1114,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                             }
                         }
                         if (sendMerkleBlock) {
-                            connman->PushMessage(pfrom, msgMaker.Make(legacy_block_flag, NetMsgType::MERKLEBLOCK, merkleBlock));
+                            connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::MERKLEBLOCK, merkleBlock));
                             // CMerkleBlock just contains hashes, so also push any transactions in the block the client did not see
                             // This avoids hurting performance by pointlessly requiring a round-trip
                             // Note that there is currently no way for a node to request any single transactions we didn't send here -
@@ -1125,7 +1124,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                             typedef std::pair<unsigned int, uint256> PairType;
                             for (PairType& pair : merkleBlock.vMatchedTxn)
                                 connman->PushMessage(
-                                    pfrom, msgMaker.Make(legacy_block_flag | SERIALIZE_TRANSACTION_NO_WITNESS,
+                                    pfrom, msgMaker.Make( SERIALIZE_TRANSACTION_NO_WITNESS,
                                                          NetMsgType::TX, *pblock->vtx[pair.first]));
                         }
                         // else
@@ -1138,7 +1137,7 @@ void static ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParam
                         // and we don't feel like constructing the object for them, so
                         // instead we respond with the full, non-compact block.
                         bool fPeerWantsWitness = State(pfrom->GetId())->fWantsCmpctWitness;
-                        int nSendFlags = legacy_block_flag | (fPeerWantsWitness ? 0 : SERIALIZE_TRANSACTION_NO_WITNESS);
+                        int nSendFlags =  (fPeerWantsWitness ? 0 : SERIALIZE_TRANSACTION_NO_WITNESS);
                         if (CanDirectFetch(consensusParams) && mi->second->nHeight >= chainActive.Height() - MAX_CMPCTBLOCK_DEPTH) {
                             if ((fPeerWantsWitness || !fWitnessesPresentInARecentCompactBlock) && a_recent_compact_block && a_recent_compact_block->header.GetHash() == mi->second->GetBlockHash()) {
                                 connman->PushMessage(pfrom, msgMaker.Make(nSendFlags, NetMsgType::CMPCTBLOCK, *a_recent_compact_block));
@@ -1278,12 +1277,15 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
         }
 
         uint256 hashLastBlock;
+        int ii = 0; 
         for (const CBlockHeader& header : headers) {
             if (!hashLastBlock.IsNull() && header.hashPrevBlock != hashLastBlock) {
+                LogPrintf("height %d : header size %d :  hash %s vs %s header index %d\n", header.nHeight, headers.size(), header.hashPrevBlock.ToString(),  hashLastBlock.ToString(), ii);
                 Misbehaving(pfrom->GetId(), 20);
                 return error("non-continuous headers sequence");
             }
             hashLastBlock = header.GetHash();
+            ii++;
         }
 
         // If we don't have the last header, then they'll have given us
@@ -1295,6 +1297,7 @@ bool static ProcessHeadersMessage(CNode *pfrom, CConnman *connman, const std::ve
 
     CValidationState state;
     CBlockHeader first_invalid_header;
+    //LogPrint(BCLog::NET, "Debug ProcessNewBlockHeaders %d peer=%d\n", headers.size() ,pfrom->GetId());
     if (!ProcessNewBlockHeaders(headers, state, chainparams, &pindexLast, &first_invalid_header)) {
         int nDoS;
         if (state.IsInvalid(nDoS)) {
@@ -1934,7 +1937,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             }
             // If pruning, don't inv blocks unless we have on disk and are likely to still have
             // for some reasonable time window (1 hour) that block relay might require.
-            const int nPrunedBlocksLikelyToHave = MIN_BLOCKS_TO_KEEP - 3600 / chainparams.GetConsensus().nPowTargetSpacing;
+            const int nPrunedBlocksLikelyToHave = MIN_BLOCKS_TO_KEEP - 3600 / chainparams.GetnPowTargetSpacing(chainActive.Height()) ;
             if (fPruneMode && (!(pindex->nStatus & BLOCK_HAVE_DATA) || pindex->nHeight <= chainActive.Tip()->nHeight - nPrunedBlocksLikelyToHave))
             {
                 LogPrint(BCLog::NET, " getblocks stopping, pruned or too old block at %d %s\n", pindex->nHeight, pindex->GetBlockHash().ToString());
@@ -2056,8 +2059,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         // will re-announce the new block via headers (or compact blocks again)
         // in the SendMessages logic.
         nodestate->pindexBestHeaderSent = pindex ? pindex : chainActive.Tip();
-        int legacy_block_flag = pfrom->IsLegacyBlockHeader(pfrom->GetSendVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
-        connman->PushMessage(pfrom, msgMaker.Make(legacy_block_flag, NetMsgType::HEADERS, vHeaders));
+        connman->PushMessage(pfrom, msgMaker.Make( NetMsgType::HEADERS, vHeaders));
     }
 
 
@@ -2547,10 +2549,9 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     else if (strCommand == NetMsgType::HEADERS && !fImporting && !fReindex) // Ignore headers received while importing
     {
         // Deserialize in legacy format.
-        int legacy_block_flag = pfrom->IsLegacyBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
         int original_version = vRecv.GetVersion();
-        vRecv.SetVersion(original_version | legacy_block_flag);
-
+        vRecv.SetVersion(original_version );
+        
         std::vector<CBlockHeader> headers;
 
         // Bypass the normal CBlock deserialization, as we don't want to risk deserializing 2000 full blocks.
@@ -2562,10 +2563,13 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         headers.resize(nCount);
         for (unsigned int n = 0; n < nCount; n++) {
+            headers[n].hashStateRoot = uint256S("9514771014c9ae803d8cea2731b2063e83de44802b40dce2d06acd02d0ff65e9");
+            headers[n].hashUTXORoot = uint256S("21b463e3b52f6201c0ad6c991be0485b6ef8c092e64583ffa655cc1b171fe856");
             vRecv >> headers[n];
             ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
         }
 
+        vRecv.SetVersion(original_version);
         // Headers received via a HEADERS message should be valid, and reflect
         // the chain the peer is on. If we receive a known-invalid header,
         // disconnect the peer if it is using one of our outbound connection
@@ -2577,9 +2581,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     else if (strCommand == NetMsgType::BLOCK && !fImporting && !fReindex) // Ignore blocks received while importing
     {
         // Deserialize in legacy format.
-        int legacy_block_flag = pfrom->IsLegacyBlockHeader(pfrom->GetRecvVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
         int original_version = vRecv.GetVersion();
-        vRecv.SetVersion(original_version | legacy_block_flag);
+        vRecv.SetVersion(original_version );
 
         std::shared_ptr<CBlock> pblock = std::make_shared<CBlock>();
         vRecv >> *pblock;
@@ -2599,7 +2602,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             mapBlockSource.emplace(hash, std::make_pair(pfrom->GetId(), true));
         }
         bool fNewBlock = false;
-        ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock);
+
+        //LogPrint(BCLog::NET, "Debug ProcessNewBlock %s peer=%d\n", pblock->GetHash().ToString(), pfrom->GetId());
+        ProcessNewBlock(chainparams, pblock, forceProcessing, &fNewBlock)  ;
+
         if (fNewBlock) {
             pfrom->nLastBlockTime = GetTime();
         } else {
@@ -3209,7 +3215,7 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
             // Only actively request headers from a single peer, unless we're close to today.
             if ((nSyncStarted == 0 && fFetch) || pindexBestHeader->GetBlockTime() > GetAdjustedTime() - 24 * 60 * 60) {
                 state.fSyncStarted = true;
-                state.nHeadersSyncTimeout = GetTimeMicros() + HEADERS_DOWNLOAD_TIMEOUT_BASE + HEADERS_DOWNLOAD_TIMEOUT_PER_HEADER * (GetAdjustedTime() - pindexBestHeader->GetBlockTime())/(consensusParams.nPowTargetSpacing);
+                state.nHeadersSyncTimeout = GetTimeMicros() + HEADERS_DOWNLOAD_TIMEOUT_BASE + HEADERS_DOWNLOAD_TIMEOUT_PER_HEADER * (GetAdjustedTime() - pindexBestHeader->GetBlockTime())/(Params().GetnPowTargetSpacing(pindexBestHeader->nHeight ));
                 nSyncStarted++;
                 const CBlockIndex *pindexStart = pindexBestHeader;
                 /* If possible, start at the block preceding the currently
@@ -3341,8 +3347,7 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                         LogPrint(BCLog::NET, "%s: sending header %s to peer=%d\n", __func__,
                                 vHeaders.front().GetHash().ToString(), pto->GetId());
                     }
-                    int legacy_block_flag = pto->IsLegacyBlockHeader(pto->GetSendVersion()) ? SERIALIZE_BLOCK_LEGACY : 0;
-                    connman->PushMessage(pto, msgMaker.Make(legacy_block_flag, NetMsgType::HEADERS, vHeaders));
+                    connman->PushMessage(pto, msgMaker.Make( NetMsgType::HEADERS, vHeaders));
                     state.pindexBestHeaderSent = pBestIndex;
                 } else
                     fRevertToInv = true;
@@ -3528,7 +3533,7 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
         if (state.vBlocksInFlight.size() > 0) {
             QueuedBlock &queuedBlock = state.vBlocksInFlight.front();
             int nOtherPeersWithValidatedDownloads = nPeersWithValidatedDownloads - (state.nBlocksInFlightValidHeaders > 0);
-            if (nNow > state.nDownloadingSince + consensusParams.nPowTargetSpacing * (BLOCK_DOWNLOAD_TIMEOUT_BASE + BLOCK_DOWNLOAD_TIMEOUT_PER_PEER * nOtherPeersWithValidatedDownloads)) {
+            if (nNow > state.nDownloadingSince + Params().GetnPowTargetSpacing(chainActive.Height()) * (BLOCK_DOWNLOAD_TIMEOUT_BASE + BLOCK_DOWNLOAD_TIMEOUT_PER_PEER * nOtherPeersWithValidatedDownloads)) {
                 LogPrintf("Timeout downloading block %s from peer=%d, disconnecting\n", queuedBlock.hash.ToString(), pto->GetId());
                 pto->fDisconnect = true;
                 return true;

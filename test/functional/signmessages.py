@@ -6,6 +6,7 @@
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import assert_equal
+from test_framework.fabcoin import convert_btc_address_to_fabcoin
 
 class SignMessagesTest(FabcoinTestFramework):
     def set_test_params(self):

@@ -18,6 +18,7 @@ from test_framework.util import (
     connect_nodes_bi,
     sync_blocks,
 )
+from test_framework.fabcoinconfig import COINBASE_MATURITY
 
 class KeypoolRestoreTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -27,7 +28,7 @@ class KeypoolRestoreTest(FabcoinTestFramework):
 
     def run_test(self):
         self.tmpdir = self.options.tmpdir
-        self.nodes[0].generate(801)
+        self.nodes[0].generate(COINBASE_MATURITY+1)
 
         self.log.info("Make backup of wallet")
 

@@ -1,18 +1,18 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 // NOTE: This file is intended to be customised by the end user, and includes only local node policy logic
 
-#include "policy/policy.h"
+#include <policy/policy.h>
 
-#include "consensus/validation.h"
-#include "validation.h"
-#include "coins.h"
-#include "tinyformat.h"
-#include "util.h"
-#include "utilstrencodings.h"
+#include <consensus/validation.h>
+#include <validation.h>
+#include <coins.h>
+#include <tinyformat.h>
+#include <util.h>
+#include <utilstrencodings.h>
 
 
 CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
@@ -51,7 +51,8 @@ CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 
 bool IsDust(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 {
-    return (txout.nValue < GetDustThreshold(txout, dustRelayFeeIn));
+    return (txout.nValue < GetDustThreshold(txout, dustRelayFeeIn) && 
+            !txout.scriptPubKey.HasOpCreate() && !txout.scriptPubKey.HasOpCall());
 }
 
     /**
