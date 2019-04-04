@@ -1956,13 +1956,23 @@ bool SignatureAggregate::deserializeSignersBitmapFromBigEndianBits(
     if (this->committedSigners.size() != numberOfSigners) {
         this->committedSigners.resize(numberOfSigners);
     }
-    for (unsigned i = 0; i < numberOfSigners; i ++) {
+    for (unsigned i = 0; i < 256; i ++) {
         unsigned byteIndex = i / 8;
         unsigned bitOffset = i % 8;
         unsigned char currentByte = inputRaw[byteIndex];
         unsigned char shiftedLeft = currentByte << bitOffset;
         unsigned char bitOfInterestInLastPosition = shiftedLeft >> 7;
-        this->committedSigners[i] = (bitOfInterestInLastPosition == 1);
+        if (i < numberOfSigners) {
+            this->committedSigners[i] = (bitOfInterestInLastPosition == 1);
+        } else {
+            if (bitOfInterestInLastPosition != 0) {
+                if (reasonForFailure != 0) {
+                    *reasonForFailure << "Signers bitmap has non-zero bit in the non-significant positions "
+                    << "of the committed signers bitmap";
+                }
+                return false;
+            }
+        }
     }
     return true;
 }

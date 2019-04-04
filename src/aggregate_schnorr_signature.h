@@ -573,50 +573,9 @@ public:
     //   thus hold a risk of the decode-recode-in-different-format-replay attack.
     //
     //   To reduce that risk, we ensure that our transactions use only the uncompressed signature encoding.
-    //
-    //1. Compressed signature. The compressed signature does not store any information
-    //   about the signing public keys. If all signers among the implied
-    //   registered public keys
-    //   participated, the compressed signature does not include the signers bitmap
-    //   (hence the "compression").
-    //
-    //    Total size: 66 or 98 bytes.
-    //  - First byte equals 0x18 (== 24).
-    //  - Next 33 + 32 = 65 bytes give a no-prefix schnorr signature seriazation.
-    //    We recall here that the first 33 bytes are a
-    //    compressed elliptic curve point, i.e., same format as a public key.
-    //    We also recall that the next 32 bytes are an exponent of a point on the elliptic curve,
-    //    i.e., same format as a 32-byte private key (no prefixes or suffixes).
-    //  - Next 32 bytes are omitted if all implied registered public keys participated in the
-    //    aggregate signature. If not all implied registered public keys participated,
-    //    then a 256-bit (=32 bytes) follows. The first bit (big-endian) of the bitmap
-    //    indicates whether the first registered node participated, the second bit
-    //    indicates the participation of the second node, and so on.
-    //    If the number of signing nodes is smaller than 256, then the extra bits must be included
-    //    and must be set to 0.
-    //    Rationale for including all bits:
-    //    1. Pros.
-    //          - Easy to implement.
-    //          - Easier to ensure unique signature encoding.
-    //    2. Cons.
-    //          - Takes more space when not all singers participated. Since this is expected to not happen
-    //            too often, the current serialization specification should be good enough.
-    //2. Uncompressed signature. This is the same as the compressed signature, except that the
-    //   signers bitmap is always included. Signature size is always 98 bytes.
-    //3. Complete signature. This signature includes a serialization of the public keys.
-    //   - The first 98 bytes are the uncompressed signature.
-    //   - The next two bytes give the number of public keys. The number is serialized big-endian.
-    //     For example, the number 259 will be serialized as: first byte: 0x01, second byte: 0x03.
-    //     Right now, there are only 256 nodes allowed per signature, which means the leading byte
-    //     is going to be non-zero only when there are exactly 256 singers. However, we keep two bytes
-    //     to reserve room for expansion of the protocol.
-    //   - The next N x 33 bytes are the compressed public keys of all signers,
-    //     where N is the number of public keys serialized in the preceding point.
-    //     The public keys must be listed in lexicographic ascending order. An example of
-    //     properly sorted public keys follows.
-    //     0201..., 021a..., 02fb..., 0300..., 030e..., 0310..., 03fa...
-    //     Here, we recall that public keys are serialized either with
-    //     prefix 02 or 03 based on the odd-ness of the y coordinate of the elliptic curve point.
+    //   For more details, see the aggregate signature documentation in file
+    //   secp256k1_kanban_schnorr_signature.md
+    //   in the kanbanGo repository.
 
     bool VerifyFromSignatureComplete(
         const std::vector<unsigned char>& signatureComplete,
