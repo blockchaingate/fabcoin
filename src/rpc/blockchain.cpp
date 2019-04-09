@@ -1801,10 +1801,12 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
 
 UniValue gettxoutset(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 0)
+    if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
         "gettxoutset\n"
         "\nReturns the unspent transaction output set.\n"
+        "\nArguments:\n"
+        "1. \"address\"             (string, optional) The address to get utxo from\n"
         "Note this call may take some time.\n"
         "\nResult:\n"
         "{\n"
@@ -1816,6 +1818,10 @@ UniValue gettxoutset(const JSONRPCRequest& request)
         );
 
     UniValue ret(UniValue::VARR);
+
+    std::string address = "";
+    if( request.params.size() > 0 )
+        address = request.params[0].get_str();
 
     CCoinsStats stats;
     FlushStateToDisk();
@@ -1844,16 +1850,20 @@ UniValue gettxoutset(const JSONRPCRequest& request)
             {
                 for( const CTxDestination addr: addresses )
                 {
-                    //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
-
-                    strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
-                    ret.push_back(strUtxo.str());
+                    if( address.length() > 0 && address == CFabcoinAddress(addr).ToString() )
+                    {
+                        strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+                        ret.push_back(strUtxo.str());
+                    }
                 }
             }
             else
             {
-                strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << "noaddress" << ", " << coin.out.nValue ;
-                ret.push_back(strUtxo.str());
+                if( address.length() ==  0 )
+                {
+                    strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << "noaddress" << ", " << coin.out.nValue ;
+                    ret.push_back(strUtxo.str());
+                }
             }
             outputs[key.n] = std::move(coin);
         }
