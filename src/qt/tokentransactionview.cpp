@@ -27,13 +27,6 @@
 
 #define paternTokenAmount "^[0-9]{1,59}\\.{1,1}[0-9]{0,18}"
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTransactionTokenTransactionView() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 TokenTransactionView::TokenTransactionView(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent),
     model(0),

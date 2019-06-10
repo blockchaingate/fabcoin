@@ -16,13 +16,6 @@
 #include <uint256.h>
 #include <styleSheet.h>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTransactionSendTokenPage() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 static const CAmount SINGLE_STEP = 0.00000001*COIN;
 
 struct SelectedToken{

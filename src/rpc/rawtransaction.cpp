@@ -25,11 +25,6 @@
 #include <uint256.h>
 #include <utilstrencodings.h>
 #include <utilmoneystr.h>
-<<<<<<< HEAD
-=======
-#include "aggregate_schnorr_signature.h"
-#include <encodings_crypto.h>
->>>>>>> origin/aggregate-signature
 #ifdef ENABLE_WALLET
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
@@ -526,11 +521,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             "         \"data\":\"hex\",                (string, required) Hex data to add in the call output\n"
             "         \"amount\":x.xxx,                (numeric, optional) Value in fasc to send with the call, should be a valid amount, default 0\n"
             "         \"gasLimit\":x,                  (numeric, optional) The gas limit for the transaction\n"
-<<<<<<< HEAD
             "         \"gasPrice\":x.xxx               (numeric, optional) The gas price for the transaction\n"
-=======
-            "         \"gasPrice\":x.xxxxxxxx          (numeric, optional) The gas price for the transaction\n"
->>>>>>> origin/aggregate-signature
             "       } \n"
             "      ,...\n"
             "    }\n"
@@ -662,11 +653,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             }
 
             // Get gas limit
-<<<<<<< HEAD
             uint64_t nGasLimit=DEFAULT_GAS_LIMIT_OP_SEND;
-=======
-            uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
->>>>>>> origin/aggregate-signature
             if (Contract.exists("gasLimit")){
                 nGasLimit = Contract["gasLimit"].get_int64();
                 if (nGasLimit > blockGasLimit)
@@ -697,33 +684,6 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             CScript scriptPubKey = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex(datahex) << ParseHex(contractaddress) << OP_CALL;
             CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
-<<<<<<< HEAD
-=======
-        } else if (name_ == "aggregateSignature" ) {
-            std::stringstream errorStream;
-            if ((uint32_t) chainActive.Height() <  (uint32_t) Params().GetConsensus().AggregateSignatureHeight) {
-                errorStream << "This method can only be used after aggregate signature fork, block "
-                            << Params().GetConsensus().AggregateSignatureHeight << ". ";
-                throw JSONRPCError(RPC_METHOD_NOT_FOUND, errorStream.str());
-            }
-            UniValue aggregation = sendTo[name_];
-            std::vector<unsigned char> publicKeysSerialized;
-            if (!GetPublicKeysFromAggregateSignature(aggregation, publicKeysSerialized, &errorStream)) {
-                errorStream << "Error processing aggregation input: " << aggregation.write();
-                throw JSONRPCError(RPC_INVALID_PARAMETER, errorStream.str());
-            }
-            // Get amount
-            CAmount nAmount = 0;
-            if (aggregation.exists("amount")){
-                nAmount = AmountFromValue(aggregation["amount"]);
-                errorStream << "Error: the amount I got: " << nAmount << " appears to be negative. ";
-                if (nAmount < 0)
-                    throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
-            }
-            CScript scriptPubKey = CScript() << publicKeysSerialized << OP_AGGREGATEVERIFY;
-            CTxOut out(nAmount, scriptPubKey);
-            rawTx.vout.push_back(out);
->>>>>>> origin/aggregate-signature
         } else {
             CFabcoinAddress address(name_);
             if (!address.IsValid())
@@ -1349,12 +1309,7 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
         CValidationState state;
         bool fMissingInputs;
         bool fLimitFree = true;
-<<<<<<< HEAD
         if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true)) {
-=======
-        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true, &comments)) {
-            comments << state.GetRejectCode() << ": " << state.GetRejectReason();
->>>>>>> origin/aggregate-signature
             if (state.IsInvalid()) {
                 throw JSONRPCError(RPC_TRANSACTION_REJECTED, comments.str());
             } else {
@@ -1384,7 +1339,6 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand commands[] =
-<<<<<<< HEAD
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
     { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      true,  {"txid","verbose"} },
@@ -1400,23 +1354,6 @@ static const CRPCCommand commands[] =
 
     { "blockchain",         "gettxoutproof",          &gettxoutproof,          true,  {"txids", "blockhash"} },
     { "blockchain",         "verifytxoutproof",       &verifytxoutproof,       true,  {"proof"} },
-=======
-{ //  category                       name                         actor (function)             okSafeMode
-  //  ----------------------------  ---------------------------  ----------------------------  ----------
-    { "rawtransactions",             "getrawtransaction",         &getrawtransaction,           true,     {"txid","verbose"} },
-    { "rawtransactions",             "createrawtransaction",      &createrawtransaction,        true,     {"inputs","outputs","locktime","replaceable"} },
-    { "rawtransactions",             "decoderawtransaction",      &decoderawtransaction,        true,     {"hexstring"} },
-    { "rawtransactions",             "getcontractaddress",        &getcontractaddress,          true,     {"hexstring"} },
-    { "rawtransactions",             "decodescript",              &decodescript,                true,     {"hexstring"} },
-    { "rawtransactions",             "sendrawtransaction",        &sendrawtransaction,          false,    {"hexstring","allowhighfees"} },
-    { "rawtransactions",             "combinerawtransaction",     &combinerawtransaction,       true,     {"txs"} },
-    { "rawtransactions",             "signrawtransaction",        &signrawtransaction,          false,    {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
-    { "rawtransactions",             "gethexaddress",             &gethexaddress,               true,     {"address",} },
-    { "rawtransactions",             "fromhexaddress",            &fromhexaddress,              true,     {"hexaddress",} },
-
-    { "blockchain",                  "gettxoutproof",             &gettxoutproof,               true,     {"txids", "blockhash"} },
-    { "blockchain",                  "verifytxoutproof",          &verifytxoutproof,            true,     {"proof"} },
->>>>>>> origin/aggregate-signature
 };
 
 void RegisterRawTransactionRPCCommands(CRPCTable &t)

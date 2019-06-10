@@ -139,25 +139,14 @@ public:
 	void finalize();
 	/// Begins execution of a transaction. You must call finalize() following this.
 	/// @returns true if the transaction is done, false if go() must be called.
-<<<<<<< HEAD
 	bool execute();
-=======
-    bool execute(std::stringstream* commentsNullForNone);
->>>>>>> origin/aggregate-signature
 	/// @returns the transaction from initialize().
 	/// @warning Only valid after initialize().
 	Transaction const& t() const { return m_t; }
 	/// @returns the log entries created by this operation.
 	/// @warning Only valid after finalise().
-<<<<<<< HEAD
 	LogEntries const& logs() const { return m_logs; }
 	/// @returns total gas used in the transaction/operation.
-=======
-    LogEntries const& logs() const { return m_logs; }
-    static std::string ToStringLogs(const LogEntries& input);
-    void GetAggregationData(std::vector<std::vector<unsigned char> >& outputData, dev::h160& outputContractAddress, std::stringstream* comments) const;
-    /// @returns total gas used in the transaction/operation.
->>>>>>> origin/aggregate-signature
 	/// @warning Only valid after finalise().
 	u256 gasUsed() const;
 
@@ -168,23 +157,14 @@ public:
 	bool create(Address _txSender, u256 _endowment, u256 _gasPrice, u256 _gas, bytesConstRef _code, Address _originAddress);
 	/// Set up the executive for evaluating a bare CALL (message call) operation.
 	/// @returns false iff go() must be called (and thus a VM execution in required).
-<<<<<<< HEAD
 	bool call(Address _receiveAddress, Address _txSender, u256 _txValue, u256 _gasPrice, bytesConstRef _txData, u256 _gas);
 	bool call(CallParameters const& _cp, u256 const& _gasPrice, Address const& _origin);
-=======
-    bool call(Address _receiveAddress, Address _txSender, u256 _txValue, u256 _gasPrice, bytesConstRef _txData, u256 _gas, std::stringstream *comments);
-    bool call(CallParameters const& _cp, u256 const& _gasPrice, Address const& _origin, std::stringstream *comments);
->>>>>>> origin/aggregate-signature
 	/// Finalise an operation through accruing the substate into the parent context.
 	void accrueSubState(SubState& _parentContext);
 
 	/// Executes (or continues execution of) the VM.
 	/// @returns false iff go() must be called again to finish the transaction.
-<<<<<<< HEAD
 	bool go(OnOpFunc const& _onOp = OnOpFunc());
-=======
-    bool go(OnOpFunc const& _onOp = OnOpFunc(), std::stringstream* commentsNullForNone = nullptr);
->>>>>>> origin/aggregate-signature
 
 	/// Operation function for providing a simple trace of the VM execution.
 	static OnOpFunc simpleTrace();
@@ -205,12 +185,6 @@ public:
 
 	/// Revert all changes made to the state by this execution.
 	void revert();
-<<<<<<< HEAD
-=======
-    std::shared_ptr<ExtVM> getExternalVMFace() {
-        return this->m_ext;
-    }
->>>>>>> origin/aggregate-signature
 
 private:
 	State& m_s;							///< The state to which this operation/transaction is applied.
@@ -228,10 +202,6 @@ private:
 
 	Transaction m_t;					///< The original transaction. Set by setup().
 	LogEntries m_logs;					///< The log entries created by this transaction. Set by finalize().
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/aggregate-signature
 	u256 m_gasCost;
 	SealEngineFace const& m_sealEngine;
 

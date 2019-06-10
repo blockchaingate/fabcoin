@@ -1,12 +1,5 @@
 #include <fasctests/test_utils.h>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTestUtils() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 void initState(){
     boost::filesystem::path pathTemp;		
     pathTemp = fs::temp_directory_path() / strprintf("test_fasc_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));

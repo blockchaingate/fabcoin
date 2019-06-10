@@ -17,24 +17,11 @@ struct VersionVM {
     // CONSENSUS CRITICAL!
     // Do not add any other fields to this struct
 
-<<<<<<< HEAD
     uint32_t toRaw() {
         return *(uint32_t*)this;
     }
     static VersionVM fromRaw(uint32_t val) {
         VersionVM x = *(VersionVM*)&val;
-=======
-    uint32_t toRaw() const {
-        return *(uint32_t*)this;
-    }
-    static VersionVM fromRaw(uint32_t val) {
-        //Please note: shorter cast sequences may raise compiler warnings
-        //in gcc. Please avoid such warnings.
-        uint32_t* valPointer = &val;
-        void* valVoid = (void*) valPointer;
-        VersionVM* versionPointer = (VersionVM*) valVoid;
-        VersionVM x = *versionPointer;
->>>>>>> origin/aggregate-signature
         return x;
     }
     static VersionVM GetNoExec() {
@@ -53,21 +40,6 @@ struct VersionVM {
         x.vmVersion=0;
         return x;
     }
-<<<<<<< HEAD
-=======
-    static VersionVM fromVector(const std::vector<unsigned char>& input) {
-        unsigned numEntries = input.size();
-        uint32_t versionUint32 = 0;
-        if (numEntries > 4) {
-            numEntries = 4;
-        }
-        for (unsigned i = 0; i < numEntries; i ++) {
-            versionUint32 *= 256;
-            versionUint32 += (unsigned) input[i];
-        }
-        return fromRaw(versionUint32);
-    }
->>>>>>> origin/aggregate-signature
 } __attribute__((__packed__));
 
 class FascTransaction : public dev::eth::Transaction {
@@ -79,19 +51,8 @@ public:
     FascTransaction(dev::u256 const& _value, dev::u256 const& _gasPrice, dev::u256 const& _gas, dev::bytes const& _data, dev::u256 const& _nonce = dev::Invalid256):
         dev::eth::Transaction(_value, _gasPrice, _gas, _data, _nonce) {}
 
-<<<<<<< HEAD
     FascTransaction(dev::u256 const& _value, dev::u256 const& _gasPrice, dev::u256 const& _gas, dev::Address const& _dest, dev::bytes const& _data, dev::u256 const& _nonce = dev::Invalid256):
         dev::eth::Transaction(_value, _gasPrice, _gas, _dest, _data, _nonce) {}
-=======
-    FascTransaction(dev::u256 const& _value,
-                    dev::u256 const& _gasPrice,
-                    dev::u256 const& _gas,
-                    dev::Address const& _dest, //<- Also called: contract address, to address.
-                    dev::bytes const& _data,
-                    dev::u256 const& _nonce = dev::Invalid256):
-        dev::eth::Transaction(_value, _gasPrice, _gas, _dest, _data, _nonce) {
-    }
->>>>>>> origin/aggregate-signature
 
     void setHashWith(const dev::h256 hash) {
         m_hashWith = hash;

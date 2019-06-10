@@ -20,10 +20,6 @@
 #include <primitives/transaction.h>
 #include <sync.h>
 #include <random.h>
-<<<<<<< HEAD
-=======
-#include <univalue.h>
->>>>>>> origin/aggregate-signature
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -301,7 +297,6 @@ class CompareTxMemPoolEntryByAncestorFeeOrGasPrice
 public:
     bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b) const
     {
-<<<<<<< HEAD
         bool fAHasCreateOrCall = a.GetTx().HasCreateOrCall();
         bool fBHasCreateOrCall = b.GetTx().HasCreateOrCall();
 
@@ -310,16 +305,6 @@ public:
             // Prioritze non-contract txs
             if(fAHasCreateOrCall != fBHasCreateOrCall) {
                 return fAHasCreateOrCall ? false : true;
-=======
-        bool fAHasCreateOrCallInOutputs = a.GetTx().HasNonFeeCallOrCreateInOutputs();
-        bool fBHasCreateOrCallInOutputs = b.GetTx().HasNonFeeCallOrCreateInOutputs();
-
-        // If either of the two entries that we are comparing has a contract scriptPubKey, the comparison here takes precedence
-        if(fAHasCreateOrCallInOutputs || fBHasCreateOrCallInOutputs) {
-            // Prioritze non-contract txs
-            if(fAHasCreateOrCallInOutputs != fBHasCreateOrCallInOutputs) {
-                return fAHasCreateOrCallInOutputs ? false : true;
->>>>>>> origin/aggregate-signature
             }
 
             // Prioritize the contract txs that have the least number of ancestors

@@ -17,13 +17,6 @@
 #include <util.h>
 #include <utilmoneystr.h>
 #include <utiltime.h>
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedTXMempool() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                                  int64_t _nTime, unsigned int _entryHeight,

@@ -44,14 +44,6 @@
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple.hpp>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedMiner() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
-
->>>>>>> origin/aggregate-signature
 std::mutex g_cs;
 bool g_cancelSolver = false;
 int g_nSols[128] = {0};
@@ -87,12 +79,8 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
 
 bool IsBlockTooLate(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
-<<<<<<< HEAD
     if( GetAdjustedTime() > std::max(pblock->GetBlockTime(), pindexPrev->GetBlockTime()) + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
     {
-=======
-    if (GetAdjustedTime() > std::max(pblock->GetBlockTime(), pindexPrev->GetBlockTime()) + Params().GetnPowTargetSpacing(pindexPrev->nHeight + 1) * consensusParams.MaxBlockInterval) {
->>>>>>> origin/aggregate-signature
         return true;
     }
     return false;
@@ -146,7 +134,6 @@ void BlockAssembler::resetBlock()
     nFees = 0;
 }
 
-<<<<<<< HEAD
 void BlockAssembler::RebuildRefundTransaction(){
     int refundtx=0; //0 for coinbase in PoW
    
@@ -164,9 +151,6 @@ void BlockAssembler::RebuildRefundTransaction(){
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx, int64_t* pTotalFees, int32_t txProofTime, int32_t nTimeLimit)
-=======
-void BlockAssembler::RebuildRefundTransaction()
->>>>>>> origin/aggregate-signature
 {
     int refundtx = 0; //0 for coinbase in PoW
    
@@ -238,7 +222,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
 
-<<<<<<< HEAD
     if ( txProofTime == 0 ) {
        txProofTime = GetAdjustedTime();
     }
@@ -246,8 +229,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     UpdateTime(pblock, chainparams.GetConsensus(), pindexPrev);
     pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
 
-=======
->>>>>>> origin/aggregate-signature
     const int64_t nMedianTimePast = pindexPrev->GetMedianTimePast();
 
     nLockTimeCutoff = (STANDARD_LOCKTIME_VERIFY_FLAGS & LOCKTIME_MEDIAN_TIME_PAST)
@@ -278,26 +259,17 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     originalRewardTx = coinbaseTx;
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
-<<<<<<< HEAD
 
 
 
-=======
->>>>>>> origin/aggregate-signature
     //////////////////////////////////////////////////////// fasc
     FascDGP fascDGP(globalState.get(), fGettingValuesDGP);
     globalSealEngine->setFascSchedule(fascDGP.getGasSchedule(nHeight));
     uint32_t blockSizeDGP = fascDGP.getBlockSize(nHeight);
     minGasPrice = fascDGP.getMinGasPrice(nHeight);
-<<<<<<< HEAD
     if(gArgs.IsArgSet("-staker-min-tx-gas-price")) {
         CAmount stakerMinGasPrice;
         if(ParseMoney(gArgs.GetArg("-staker-min-tx-gas-price", ""), stakerMinGasPrice)) {
-=======
-    if (gArgs.IsArgSet("-staker-min-tx-gas-price")) {
-        CAmount stakerMinGasPrice;
-        if (ParseMoney(gArgs.GetArg("-staker-min-tx-gas-price", ""), stakerMinGasPrice)) {
->>>>>>> origin/aggregate-signature
             minGasPrice = std::max(minGasPrice, (uint64_t)stakerMinGasPrice);
         }
     }
@@ -312,13 +284,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
     int nPackagesSelected = 0;
     int nDescendantsUpdated = 0;
-<<<<<<< HEAD
     addPackageTxs(nPackagesSelected, nDescendantsUpdated, minGasPrice);
-=======
-    addPackageTxs(nPackagesSelected, nDescendantsUpdated, minGasPrice, commentsOnFailure);
-    commentsOnFailure = restrictCommentsSize(commentsOnFailure);
-
->>>>>>> origin/aggregate-signature
     pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
     pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
     globalState->setRoot(oldHashStateRoot);
@@ -337,14 +303,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     LogPrintf("CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", 
            nHeight, nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
 
-<<<<<<< HEAD
     //!!! LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
     uint64_t nSerializeSize = GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION );
     LogPrintf("CreateNewBlock(): nHeight=%d total size: %u block weight: %u txs: %u fees: %ld sigops %d\n", 
            nHeight, nSerializeSize, GetBlockWeight(*pblock, chainparams.GetConsensus()), nBlockTx, nFees, nBlockSigOpsCost);
 
-=======
->>>>>>> origin/aggregate-signature
     // The total fee is the Fees minus the Refund
     if (pTotalFees)
         *pTotalFees = nFees - bceResult.refundSender;
@@ -356,11 +319,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
 
     arith_uint256 nonce;
-<<<<<<< HEAD
     if ((uint32_t)nHeight >= (uint32_t)chainparams.GetConsensus().FABHeight) {
-=======
-    if ((uint32_t) nHeight >= (uint32_t)chainparams.GetConsensus().FABHeight) {
->>>>>>> origin/aggregate-signature
         // Randomise nonce for new block foramt.
         nonce = UintToArith256(GetRandHash());
         // Clear the top and bottom 16 bits (for local use as thread flags and counters)
@@ -373,18 +332,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
 
     CValidationState state;
-<<<<<<< HEAD
     if ( !TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false)) {
         throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
-=======
-    std::stringstream bufferStream;
-    if (commentsOnFailure == nullptr) {
-        commentsOnFailure = &bufferStream;
-    }
-    if (!TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false, commentsOnFailure)) {
-        *commentsOnFailure << FormatStateMessage(state);
-        throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, commentsOnFailure->str()));
->>>>>>> origin/aggregate-signature
     }
     int64_t nTime2 = GetTimeMicros();
 
@@ -433,7 +382,6 @@ bool BlockAssembler::TestPackageTransactions(const CTxMemPool::setEntries& packa
     return true;
 }
 
-<<<<<<< HEAD
 bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64_t minGasPrice) {
     if (nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit - BYTECODE_TIME_BUFFER) {
         return false;
@@ -443,16 +391,6 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
         return false;
     }
     
-=======
-bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64_t minGasPrice, std::stringstream* comments)
-{
-    if (nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit - BYTECODE_TIME_BUFFER) {
-        return false;
-    }
-    if (gArgs.GetBoolArg("-disablecontractstaking", false)) {
-        return false;
-    }  
->>>>>>> origin/aggregate-signature
     dev::h256 oldHashStateRoot(globalState->rootHash());
     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
     // operate on local vars first, then later apply to `this`
@@ -462,81 +400,46 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     FascTxConverter convert(iter->GetTx(), NULL, &pblock->vtx);
 
     ExtractFascTX resultConverter;
-<<<<<<< HEAD
     if(!convert.extractionFascTransactions(resultConverter)){
-=======
-    dev::u256 gasLoanNotUsed;
-    if (!convert.extractionFascTransactions(resultConverter, gasLoanNotUsed, comments)) {
->>>>>>> origin/aggregate-signature
         //this check already happens when accepting txs into mempool
         //therefore, this can only be triggered by using raw transactions on the staker itself
         return false;
     }
     std::vector<FascTransaction> fascTransactions = resultConverter.first;
     dev::u256 txGas = 0;
-<<<<<<< HEAD
     for(FascTransaction fascTransaction : fascTransactions){
         txGas += fascTransaction.gas();
         if(txGas > txGasLimit) {
-=======
-    for (FascTransaction fascTransaction : fascTransactions) {
-        txGas += fascTransaction.gas();
-        if (txGas > txGasLimit) {
->>>>>>> origin/aggregate-signature
             // Limit the tx gas limit by the soft limit if such a limit has been specified.
             return false;
         }
 
-<<<<<<< HEAD
         if(bceResult.usedGas + fascTransaction.gas() > softBlockGasLimit){
             //if this transaction's gasLimit could cause block gas limit to be exceeded, then don't add it
             return false;
         }
         if(fascTransaction.gasPrice() < minGasPrice){
-=======
-        if (bceResult.usedGas + fascTransaction.gas() > softBlockGasLimit) {
-            //if this transaction's gasLimit could cause block gas limit to be exceeded, then don't add it
-            return false;
-        }
-        if (fascTransaction.gasPrice() < minGasPrice) {
->>>>>>> origin/aggregate-signature
             //if this transaction's gasPrice is less than the current DGP minGasPrice don't add it
             return false;
         }
     }
-<<<<<<< HEAD
     // We need to pass the DGP's block gas limit (not the soft limit) since it is consensus critical.
     ByteCodeExec exec(*pblock, fascTransactions, hardBlockGasLimit);
     if(!exec.performByteCode()){
-=======
-
-    // We need to pass the DGP's block gas limit (not the soft limit) since it is consensus critical.
-    ByteCodeExec exec(*pblock, fascTransactions, hardBlockGasLimit);
-    if (!exec.performByteCode(dev::eth::Permanence::Committed, comments)) {
->>>>>>> origin/aggregate-signature
         //error, don't add contract
         globalState->setRoot(oldHashStateRoot);
         globalState->setRootUTXO(oldHashUTXORoot);
         return false;
     }
-<<<<<<< HEAD
 
     ByteCodeExecResult testExecResult;
     if(!exec.processingResults(testExecResult)){
-=======
-    ByteCodeExecResult testExecResult;
-    if (!exec.processingResults(testExecResult, comments)) {
->>>>>>> origin/aggregate-signature
         globalState->setRoot(oldHashStateRoot);
         globalState->setRootUTXO(oldHashUTXORoot);
         return false;
     }
 
-<<<<<<< HEAD
     if(bceResult.usedGas + testExecResult.usedGas > softBlockGasLimit){
-=======
-    if (bceResult.usedGas + testExecResult.usedGas > softBlockGasLimit) {
->>>>>>> origin/aggregate-signature
         //if this transaction could cause block gas limit to be exceeded, then don't add it
         globalState->setRoot(oldHashStateRoot);
         globalState->setRootUTXO(oldHashUTXORoot);
@@ -562,28 +465,17 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     // manually rebuild refundtx
     CMutableTransaction contrTx(*pblock->vtx[proofTx]);
     //note, this will need changed for MPoS
-<<<<<<< HEAD
     int i=contrTx.vout.size();
     contrTx.vout.resize(contrTx.vout.size()+testExecResult.refundOutputs.size());
     for(CTxOut& vout : testExecResult.refundOutputs){
         contrTx.vout[i]=vout;
-=======
-    int i = contrTx.vout.size();
-    contrTx.vout.resize(contrTx.vout.size() + testExecResult.refundOutputs.size());
-    for (CTxOut& vout : testExecResult.refundOutputs) {
-        contrTx.vout[i] = vout;
->>>>>>> origin/aggregate-signature
         i++;
     }
     nBlockSigOpsCost += GetLegacySigOpCount(contrTx);
     //all contract costs now applied to local state
 
     //Check if block will be too big or too expensive with this contract execution
-<<<<<<< HEAD
     if (nBlockSigOpsCost * WITNESS_SCALE_FACTOR > (uint64_t)dgpMaxBlockSigOps ||
-=======
-    if (nBlockSigOpsCost * WITNESS_SCALE_FACTOR > (uint64_t) dgpMaxBlockSigOps ||
->>>>>>> origin/aggregate-signature
             nBlockWeight > dgpMaxBlockWeight) {
         //contract will not be added to block, so revert state to before we tried
         globalState->setRoot(oldHashStateRoot);
@@ -603,11 +495,7 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     pblocktemplate->vTxFees.push_back(iter->GetFee());
     pblocktemplate->vTxSigOpsCost.push_back(iter->GetSigOpCost());
     this->nBlockWeight += iter->GetTxWeight();
-<<<<<<< HEAD
     ++nBlockTx;
-=======
-    ++ nBlockTx;
->>>>>>> origin/aggregate-signature
     this->nBlockSigOpsCost += iter->GetSigOpCost();
     nFees += iter->GetFee();
     inBlock.insert(iter);
@@ -616,11 +504,7 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
         pblock->vtx.emplace_back(MakeTransactionRef(std::move(t)));
         this->nBlockWeight += GetTransactionWeight(t);
         this->nBlockSigOpsCost += GetLegacySigOpCount(t);
-<<<<<<< HEAD
         ++nBlockTx;
-=======
-        ++ nBlockTx;
->>>>>>> origin/aggregate-signature
     }
     //calculate sigops from new refund/proof tx
     this->nBlockSigOpsCost -= GetLegacySigOpCount(*pblock->vtx[proofTx]);
@@ -632,10 +516,6 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     return true;
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/aggregate-signature
 void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
 {
     pblock->vtx.emplace_back(iter->GetSharedTx());
@@ -718,11 +598,7 @@ void BlockAssembler::SortForBlock(const CTxMemPool::setEntries& package, CTxMemP
 // Each time through the loop, we compare the best transaction in
 // mapModifiedTxs with the next transaction in the mempool to decide what
 // transaction package to work on next.
-<<<<<<< HEAD
 void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice)
-=======
-void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated, uint64_t minGasPrice, std::stringstream*& comments)
->>>>>>> origin/aggregate-signature
 {
     // mapModifiedTx will store sorted packages after they are modified
     // because some of their txs are already in the block
@@ -742,16 +618,10 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
     // mempool has a lot of entries.
     const int64_t MAX_CONSECUTIVE_FAILURES = 1000;
     int64_t nConsecutiveFailed = 0;
-<<<<<<< HEAD
 
     while (mi != mempool.mapTx.get<ancestor_score_or_gas_price>().end() || !mapModifiedTx.empty())
     {
         if(nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit){
-=======
-    while (mi != mempool.mapTx.get<ancestor_score_or_gas_price>().end() || !mapModifiedTx.empty()) {
-        comments = restrictCommentsSize(comments);
-        if (nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit) {
->>>>>>> origin/aggregate-signature
             //no more time to add transactions, just exit
             return;
         }
@@ -848,7 +718,6 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
         std::vector<CTxMemPool::txiter> sortedEntries;
         SortForBlock(ancestors, iter, sortedEntries);
 
-<<<<<<< HEAD
         bool wasAdded=true; // FABCOIN_INSERT_LINE
         for (size_t i=0; i<sortedEntries.size(); ++i) {
             if(!wasAdded || (nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit))
@@ -864,23 +733,6 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
                     wasAdded = AttemptToAddContractToBlock(sortedEntries[i], minGasPrice);
                     if(!wasAdded){
                         if(fUsingModified) {
-=======
-        bool wasAdded = true; // FABCOIN_INSERT_LINE
-        for (size_t i = 0; i < sortedEntries.size(); ++ i) {
-            if (!wasAdded || (nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit))
-            {
-                //if out of time, or earlier ancestor failed, then skip the rest of the transactions
-                mapModifiedTx.erase(sortedEntries[i]);
-                wasAdded = false;
-                continue;
-            }
-            const CTransaction& tx = sortedEntries[i]->GetTx();
-            if (wasAdded) {
-                if (tx.HasCreateOrCallInOutputs()) {
-                    wasAdded = AttemptToAddContractToBlock(sortedEntries[i], minGasPrice, comments);
-                    if (!wasAdded) {
-                        if (fUsingModified) {
->>>>>>> origin/aggregate-signature
                             //this only needs to be done once to mark the whole package (everything in sortedEntries) as failed
                             mapModifiedTx.get<ancestor_score_or_gas_price>().erase(modit);
                             failedTx.insert(iter);
@@ -967,10 +819,6 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
     static const unsigned int nInnerLoopCount = 0x0FFFFFFF;
     int nCounter = 0;
     int headerlen = 0;
-<<<<<<< HEAD
-=======
-    (void) headerlen; // <- to avoid gcc unused variable warning.
->>>>>>> origin/aggregate-signature
 
     if(conf.useGPU)
         LogPrintf("FabcoinMiner thread(%d@%u-%u) started on GPU device. \n", thr_id, conf.currentPlatform, conf.currentDevice);
@@ -1046,17 +894,10 @@ void static FabcoinMiner(const CChainParams& chainparams, GPUConfig conf, int th
 
             n = chainparams.EquihashN(pblock->nHeight);
             k = chainparams.EquihashK(pblock->nHeight);
-<<<<<<< HEAD
 
             LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  n=%d, k=%d\n", pblock->vtx.size(),
                 ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU?"GPU":"CPU", n, k );
 
-=======
-
-            LogPrintf("FabcoinMiner mining   with %u transactions in block (%u bytes) @(%s)  n=%d, k=%d\n", pblock->vtx.size(),
-                ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION), conf.useGPU ? "GPU":"CPU", n, k );
-
->>>>>>> origin/aggregate-signature
             headerlen = (pblock->nHeight < (uint32_t)chainparams.GetConsensus().ContractHeight) ? CBlockHeader::HEADER_SIZE : CBlockHeader::HEADER_NEWSIZE;
             //
             // Search
@@ -1577,14 +1418,8 @@ void GenerateFabcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
         return;
 
     minerThreads = new boost::thread_group();
-<<<<<<< HEAD
     int  thread_sequence = 0;
 
-=======
-#ifdef ENABLE_GPU
-    int  thread_sequence = 0;
-#endif
->>>>>>> origin/aggregate-signature
     // If using GPU
     if(conf.useGPU) {
 #ifdef ENABLE_GPU

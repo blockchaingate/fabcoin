@@ -60,11 +60,7 @@ struct InstructionMetric
 class VM: public VMFace
 {
 public:
-<<<<<<< HEAD
 	virtual owning_bytes_ref exec(u256& io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp) override final;
-=======
-    virtual owning_bytes_ref exec(u256& io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp, std::stringstream* comments = nullptr) override final;
->>>>>>> origin/aggregate-signature
 
 #if EVM_JUMPS_AND_SUBS
 	// invalid code will throw an exeption
@@ -82,11 +78,6 @@ private:
 	ExtVMFace* m_ext = 0;
 	OnOpFunc m_onOp;
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> origin/aggregate-signature
 	static std::array<InstructionMetric, 256> c_metrics;
 	static void initMetrics();
 	static u256 exp256(u256 _base, u256 _exponent);
@@ -94,14 +85,8 @@ private:
 	const void* const* c_jumpTable = 0;
 	bool m_caseInit = false;
 	
-<<<<<<< HEAD
 	typedef void (VM::*MemFnPtr)();
 	MemFnPtr m_bounce = 0;
-=======
-    typedef void (VM::*MemFnPtr)();
-    typedef void (VM::*MemFnPtrWithComments)(std::stringstream* comments);
-    MemFnPtrWithComments m_bounce = 0;
->>>>>>> origin/aggregate-signature
 	MemFnPtr m_onFail = 0;
 	uint64_t m_nSteps = 0;
 	EVMSchedule const* m_schedule = nullptr;
@@ -147,7 +132,6 @@ private:
 	uint64_t m_copyMemSize = 0;
 
 	// initialize interpreter
-<<<<<<< HEAD
 	void initEntry();
 	void optimize();
 
@@ -158,18 +142,6 @@ private:
 	void caseCreate();
 	bool caseCallSetup(CallParameters*, bytesRef& o_output);
 	void caseCall();
-=======
-    void initEntry(std::stringstream* commentsOnFailure);
-	void optimize();
-
-	// interpreter loop & switch
-    void interpretCases(std::stringstream* commentsOnFailure);
-
-	// interpreter cases that call out
-    void caseCreate(std::stringstream* commentsOnFailure);
-	bool caseCallSetup(CallParameters*, bytesRef& o_output);
-    void caseCall(std::stringstream *comments);
->>>>>>> origin/aggregate-signature
 
 	void copyDataToMemory(bytesConstRef _data, u256*& m_SP);
 	uint64_t memNeed(u256 _offset, u256 _size);

@@ -21,13 +21,6 @@
 
 #include <assert.h>
 #include <chainparamsseeds.h>
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedChainParams() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, const uint256& nNonce, const std::vector<unsigned char>& nSolution, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -142,10 +135,6 @@ public:
         consensus.ContractHeight = 235000;
         consensus.EquihashFABHeight = 235000;
         consensus.LWMAHeight = 235000;
-<<<<<<< HEAD
-=======
-        consensus.AggregateSignatureHeight = 2000000000; // 2 billion
->>>>>>> origin/aggregate-signature
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -273,10 +262,6 @@ public:
         consensus.FABHeight = 0;
         consensus.ContractHeight = 192430 ;
         consensus.EquihashFABHeight = 221370;
-<<<<<<< HEAD
-=======
-        consensus.AggregateSignatureHeight = 2000000000; // 2 billion
->>>>>>> origin/aggregate-signature
         consensus.LWMAHeight = 221370;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
@@ -393,17 +378,10 @@ public:
  */
 class CRegTestWithNetParams : public CChainParams {
 public:
-<<<<<<< HEAD
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-=======
-    CRegTestWithNetParams() {
-        strNetworkID = CBaseChainParams::REGTESTWITHNET;
-        consensus.strNetworkID = "regtestwithnet";
-        consensus.nSubsidyHalvingInterval = 3360000;
->>>>>>> origin/aggregate-signature
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
 
@@ -416,10 +394,6 @@ public:
         consensus.FABHeight = 1000000;
         consensus.ContractHeight = 100;
         consensus.EquihashFABHeight = 100;
-<<<<<<< HEAD
-=======
-        consensus.AggregateSignatureHeight = 100;
->>>>>>> origin/aggregate-signature
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
@@ -462,11 +436,7 @@ public:
         pchMessageStart[1] = 0xbf;
         pchMessageStart[2] = 0xb5;
         pchMessageStart[3] = 0xda;
-<<<<<<< HEAD
         nDefaultPort = 38665;
-=======
-        this->nDefaultPort = 40665;
->>>>>>> origin/aggregate-signature
         nPruneAfterHeight = 1000;
 
         const size_t N = 48, K = 5;
@@ -478,11 +448,7 @@ public:
 for (int i=0;i<20;i++) {
         genesis = CreateGenesisBlock_legacy(1296688602, i, 0x207fffff, 5, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
-<<<<<<< HEAD
         std::cout << consensus.hashGenesisBlock.GetHex() << std::endl; 
-=======
-        std::cout << consensus.hashGenesisBlock.GetHex() << std::endl;
->>>>>>> origin/aggregate-signature
 }
 */
 
@@ -490,27 +456,6 @@ for (int i=0;i<20;i++) {
         consensus.hashGenesisBlock = genesis.GetHash(consensus);
         assert(consensus.hashGenesisBlock == uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3"));
         assert(genesis.hashMerkleRoot == uint256S("0x487e51f691fd29b1ee5c7fc3341eb4f91b86f4a8eace12d259f89f70af558ee1"));
-<<<<<<< HEAD
-=======
-
-        vFixedSeeds.clear();
-        vSeeds.clear();      //!< Regtestwithnet mode doesn't have any DNS seeds.
-        SeedSpec6 seedRegtestWithNet[] = {
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x12,0x82,0x58,0x7e}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x0d,0xe8,0x14,0x0b}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa9,0x2d,0x2a,0x64}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa9,0x36,0xa4,0x85}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa9,0x32,0x85,0x18}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x9e,0xb0,0x69,0x6c}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa9,0x30,0x0c,0x7c}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa9,0x3c,0x71,0xc3}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x95,0x51,0x42,0xc5}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa5,0xc0,0x46,0x18}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xa9,0x26,0x5d,0x93}, this->nDefaultPort},
-            {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x77,0x51,0x77,0xa4}, this->nDefaultPort},
-        };
-        this->vFixedSeeds = std::vector<SeedSpec6>(seedRegtestWithNet, seedRegtestWithNet + ARRAYLEN(seedRegtestWithNet));
->>>>>>> origin/aggregate-signature
 
 
 
@@ -547,147 +492,6 @@ for (int i=0;i<20;i++) {
 
     }
 };
-<<<<<<< HEAD
-
-/**
- * Regression network parameters overwrites for unit testing
- */
-class CUnitTestParams : public CRegTestParams
-{
-public:
-    CUnitTestParams()
-    {
-        strNetworkID = "unittest";
-        consensus.strNetworkID = "unittest";
-=======
-
-/**
- * Regression test
- */
-class CRegTestParams : public CChainParams {
-public:
-    CRegTestParams() {
-        strNetworkID = "regtest";
-        consensus.strNetworkID = "regtest";
-        consensus.nSubsidyHalvingInterval = 150;
-        consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
-
-        consensus.BIP34Height = 0; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests) // activate for fabcoin
-        consensus.BIP34Hash = uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3");
-        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 0; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-
-        consensus.FABHeight = 1000000;
-        consensus.ContractHeight = 100;
-        consensus.EquihashFABHeight = 100;
-        consensus.AggregateSignatureHeight = 100;
-        consensus.LWMAHeight = 100;
-        consensus.CoinbaseLock = 0;
-        consensus.ForceSegwit = false;
-
-        //Digishield parameters
-        consensus.nDigishieldPowAveragingWindow = 17;
-        consensus.nDigishieldPowMaxAdjustDown = 32;
-        consensus.nDigishieldPowMaxAdjustUp = 16;
-
-        //LWMA parameters
-        consensus.nZawyLwmaAveragingWindow = 45;
-        consensus.bZawyLwmaSolvetimeLimitation = true;
-        consensus.MaxFutureBlockTime = 20 * 60; // 20 mins
-        consensus.MaxBlockInterval = 10; // 10 T
-
-        consensus.nPowTargetTimespan = 1.75 * 24 * 60 * 60; // 1.75 days
-        consensus.nPowTargetSpacing = 1.25 * 60; // 75 seconds
-        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.powLimitLegacy = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.fPowAllowMinDifficultyBlocks = true;
-        consensus.fPowNoRetargeting = true;
-
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 999999999999ULL;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 999999999999ULL;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 999999999999ULL;
-
-        // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00");
-
-        // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3");
-
-        pchMessageStart[0] = 0xfa;
-        pchMessageStart[1] = 0xbf;
-        pchMessageStart[2] = 0xb5;
-        pchMessageStart[3] = 0xda;
-        nDefaultPort = 38665;
-        nPruneAfterHeight = 1000;
-      
-        const size_t N = 48, K = 5;
-        BOOST_STATIC_ASSERT(equihash_parameters_acceptable(N, K));
-        nEquihashN = N;
-        nEquihashK = K;
-
-/*
-for (int i=0;i<20;i++) {
-        genesis = CreateGenesisBlock_legacy(1296688602, i, 0x207fffff, 5, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash(consensus);
-        std::cout << consensus.hashGenesisBlock.GetHex() << std::endl; 
-}
-*/
-
-        genesis = CreateGenesisBlock_legacy(1296688602, 12, 0x207fffff, 5, 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash(consensus);
-        assert(consensus.hashGenesisBlock == uint256S("0x0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3"));
-        assert(genesis.hashMerkleRoot == uint256S("0x487e51f691fd29b1ee5c7fc3341eb4f91b86f4a8eace12d259f89f70af558ee1"));
-
-        vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
-        vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
-
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
-        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
-
-        fMiningRequiresPeers = false;
-        fDefaultConsistencyChecks = true;
-        fRequireStandard = false;
-        fMineBlocksOnDemand = true;
-        this->fIncludeTestCommands = true;
-
-        checkpointData = (CCheckpointData) {
-            {
-                {0, uint256S("0e28ba5df35c1ac0893b7d37db241a6f4afac5498da89369067427dc369f9df3")},
-
-            }
-        };
->>>>>>> origin/aggregate-signature
-
-        // Activate the the BIPs for regtest as in Fabcoin
-        consensus.nSubsidyHalvingInterval = 850;
-        consensus.nRuleChangeActivationThreshold = 633; //  258 75% for testchains
-        consensus.nMinerConfirmationWindow = 844; // Faster than normal for regtest (144 instead of 2016)
-
-<<<<<<< HEAD
-        consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
-        consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
-        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
-        consensus.FABHeight = 24000;
-        consensus.CoinbaseLock = 0;
-        consensus.ForceSegwit = false;
-    }
-};
-
-=======
-    }
-};
 
 /**
  * Regression network parameters overwrites for unit testing
@@ -712,11 +516,9 @@ public:
         consensus.FABHeight = 24000;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
-        this->fIncludeTestCommands = false;
     }
 };
 
->>>>>>> origin/aggregate-signature
 
 static std::unique_ptr<CChainParams> globalChainParams;
 

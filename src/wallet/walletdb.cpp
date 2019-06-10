@@ -935,8 +935,4 @@ bool CWalletDB::WriteContractData(const std::string &address, const std::string 
 bool CWalletDB::EraseContractData(const std::string &address, const std::string &key)
 {
     return EraseIC(std::make_pair(std::string("contractdata"), std::make_pair(address, key)));
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/aggregate-signature

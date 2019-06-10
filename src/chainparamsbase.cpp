@@ -13,14 +13,7 @@
 const std::string CBaseChainParams::MAIN = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::REGTEST = "regtest";
-<<<<<<< HEAD
 const std::string CBaseChainParams::UNITTEST = "unittest";
-=======
-const std::string CBaseChainParams::REGTESTWITHNET = "regtestwithnet";
-const std::string CBaseChainParams::UNITTEST = "unittest";
-std::string CBaseChainParams::kanbanId = "";
-std::vector<unsigned char> CBaseChainParams::kanbanIdBytes;
->>>>>>> origin/aggregate-signature
 
 void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
 {
@@ -46,22 +39,6 @@ public:
 
 /**
  * Testnet (v3)
-<<<<<<< HEAD
-=======
- */
-class CBaseTestNetParams : public CBaseChainParams
-{
-public:
-    CBaseTestNetParams()
-    {
-        nRPCPort = 18667;
-        strDataDir = "testnet3";
-    }
-};
-
-/*
- * Regression test
->>>>>>> origin/aggregate-signature
  */
 class CBaseRegTestWithNetParams : public CBaseChainParams
 {

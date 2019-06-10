@@ -2,13 +2,6 @@
 #include <test/test_fabcoin.h>
 #include <fasctests/test_utils.h>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedByteCodeExecTests() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 dev::u256 GASLIMIT = dev::u256(500000);
 dev::Address SENDERADDRESS = dev::Address("0101010101010101010101010101010101010101");
 dev::h256 HASHTX = dev::h256(ParseHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));

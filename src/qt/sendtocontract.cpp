@@ -22,13 +22,6 @@
 #include <sendcoinsdialog.h>
 #include <QClipboard>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTransactionSendToContract() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 namespace SendToContract_NS
 {
 // Contract data names

@@ -64,16 +64,8 @@ public:
 
     FascState(dev::u256 const& _accountStartNonce, dev::OverlayDB const& _db, const std::string& _path, dev::eth::BaseState _bs = dev::eth::BaseState::PreExisting);
 
-<<<<<<< HEAD
     ResultExecute execute(dev::eth::EnvInfo const& _envInfo, dev::eth::SealEngineFace const& _sealEngine, FascTransaction const& _t, dev::eth::Permanence _p = dev::eth::Permanence::Committed, dev::eth::OnOpFunc const& _onOp = OnOpFunc());
 
-=======
-    ResultExecute execute(dev::eth::EnvInfo const& _envInfo, dev::eth::SealEngineFace const& _sealEngine,
-                          FascTransaction const& _t, dev::eth::Permanence _p = dev::eth::Permanence::Committed,
-                          dev::eth::OnOpFunc const& _onOp = OnOpFunc(), std::stringstream *commentsNullForNone = nullptr);
-
-    static dev::u256 GetFeesPromisedByLogs(const std::vector<dev::eth::LogEntry>& logs);
->>>>>>> origin/aggregate-signature
     void setRootUTXO(dev::h256 const& _r) {
         cacheUTXO.clear();
         stateUTXO.setRoot(_r);
@@ -86,14 +78,6 @@ public:
     dev::h256 rootHashUTXO() const {
         return stateUTXO.root();
     }
-<<<<<<< HEAD
-=======
-    bool accountFeesCoveredByContract(
-            const dev::Address& contractAddress,
-            const dev::u256& feesCovered,
-            std::stringstream* commentsOnFailure
-    );
->>>>>>> origin/aggregate-signature
 
     std::unordered_map<dev::Address, Vin> vins() const; // temp
 
@@ -129,11 +113,7 @@ private:
 
     void updateUTXO(const std::unordered_map<dev::Address, Vin>& vins);
 
-<<<<<<< HEAD
     void printfErrorLog(const dev::eth::TransactionException er);
-=======
-    void printfErrorLog(const dev::eth::TransactionException er, const std::string &errorMessage = "");
->>>>>>> origin/aggregate-signature
 
     dev::Address newAddress;
 
@@ -182,14 +162,7 @@ public:
 
     CondensingTX(FascState* _state, const std::vector<TransferInfo>& _transfers, const FascTransaction& _transaction, std::set<dev::Address> _deleteAddresses = std::set<dev::Address>()) : transfers(_transfers), deleteAddresses(_deleteAddresses), transaction(_transaction), state(_state) {}
 
-<<<<<<< HEAD
     CTransaction createCondensingTX();
-=======
-    CTransaction createCondensingTX(const dev::u256 &feesPromisedByContract,
-                                    //const std::vector<std::vector<uint8_t> >* aggregationData,
-                                    const dev::h160 &contractAddress,
-                                    std::stringstream *commentsNullForNone);
->>>>>>> origin/aggregate-signature
 
     std::unordered_map<dev::Address, Vin> createVin(const CTransaction& tx);
 
@@ -199,7 +172,6 @@ public:
 
 private:
 
-<<<<<<< HEAD
     void selectionVin();
 
     void calculatePlusAndMinus();
@@ -209,21 +181,6 @@ private:
     std::vector<CTxIn> createVins();
 
     std::vector<CTxOut> createVout();
-=======
-    void selectionVin(const dev::u256 &feesPromisedByContract, const dev::h160 &contractAddress, std::stringstream* comments);
-
-    void calculatePlusAndMinus(const dev::u256 &feesPromisedByContract, const dev::Address& contractAddress);
-    void calculatePlusAndMinusOneTransfer(const TransferInfo& ti);
-
-    bool createNewBalances(std::stringstream *commentsOnFailure);
-
-    std::vector<CTxIn> createVins(std::stringstream* comments);
-
-    std::vector<CTxOut> createVout(std::stringstream* comments);
-    void createAggregationVouts(const std::vector<std::vector<uint8_t> >& aggregationData,
-                                CMutableTransaction& outputTransaction,
-                                std::stringstream* comments);
->>>>>>> origin/aggregate-signature
 
     bool checkDeleteAddress(dev::Address addr);
 

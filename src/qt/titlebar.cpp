@@ -7,13 +7,6 @@
 #include <QPixmap>
 #include <platformstyle.h>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTitleBar() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 namespace TitleBar_NS {
 const int titleHeight = 35;
 }

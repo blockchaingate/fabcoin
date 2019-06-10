@@ -7,13 +7,6 @@
 #include <wallet/wallet.h>
 #include <timedata.h>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTransactionTokenTransactionDesc() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 QString TokenTransactionDesc::FormatTxStatus(CWallet *wallet, const CTokenTx& wtx)
 {
     AssertLockHeld(cs_main);

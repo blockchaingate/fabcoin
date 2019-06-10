@@ -12,13 +12,6 @@
 #include <netbase.h>
 #include <chainparams.h>
 #include <util.h>
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedNetTests() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 class CAddrManSerializationMock : public CAddrMan
 {

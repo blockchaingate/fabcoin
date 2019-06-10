@@ -33,22 +33,11 @@
 
 #include <boost/assign/list_of.hpp>
 #include <boost/optional.hpp>
-<<<<<<< HEAD
-=======
-#include <aggregate_schnorr_signature.h>
->>>>>>> origin/aggregate-signature
 
 using namespace std;
 
 static const std::string WALLET_ENDPOINT_BASE = "/wallet/";
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedRPCWallet() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 CWallet* GetWalletForJSONRPCRequest(const JSONRPCRequest& request)
 {
     if (request.URI.substr(0, WALLET_ENDPOINT_BASE.size()) == WALLET_ENDPOINT_BASE) {
@@ -182,10 +171,6 @@ UniValue getnewaddress(const JSONRPCRequest& request)
     return CFabcoinAddress(keyID).ToString();
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/aggregate-signature
 CFabcoinAddress GetAccountAddress(CWallet* const pwallet, std::string strAccount, bool bForceNew = false)
 {
     CPubKey pubKey;
@@ -540,10 +525,6 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
     return wtx.GetHash().GetHex();
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/aggregate-signature
 // ========= Smart Contracct ======================
 
 bool base58toVMAddress(std::string& strAddr, std::vector<unsigned char>& contractAddress)
@@ -661,11 +642,7 @@ UniValue createcontract(const JSONRPCRequest& request)
         bytecode = bytecode.substr(10);
     }
     */
-<<<<<<< HEAD
     if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
-=======
-    if ((uint32_t) chainActive.Height() <  Params().GetConsensus().ContractHeight  )
->>>>>>> origin/aggregate-signature
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     if(bytecode.size() % 2 != 0 || !CheckHex(bytecode))
@@ -836,10 +813,6 @@ UniValue createcontract(const JSONRPCRequest& request)
     }
     return result;
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/aggregate-signature
 UniValue sendtocontract(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
@@ -882,11 +855,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
                             "\nExamples:\n" +
             HelpExampleCli("sendtocontract", "\"c6ca2697719d00446d4ea51f6fac8fd1e9310214\" \"54f6127f\"") + HelpExampleCli("sendtocontract", "\"c6ca2697719d00446d4ea51f6fac8fd1e9310214\" \"54f6127f\" 12.0015 6000000 " + FormatMoney(minGasPrice) + " \"QM72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\""));
 
-<<<<<<< HEAD
     if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
-=======
-    if ((uint32_t) chainActive.Height() <  Params().GetConsensus().ContractHeight  )
->>>>>>> origin/aggregate-signature
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     std::string contractaddress = request.params[0].get_str();
@@ -1059,10 +1028,6 @@ UniValue sendtocontract(const JSONRPCRequest& request)
 
     return result;
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/aggregate-signature
 UniValue listaddressgroupings(const JSONRPCRequest& request)
 {
     CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
@@ -3370,15 +3335,9 @@ UniValue fundrawtransaction(const JSONRPCRequest& request)
             coinControl.fAllowWatchOnly = request.params[1].get_bool();
         } else {
             RPCTypeCheck(request.params, {UniValue::VSTR, UniValue::VOBJ});
-<<<<<<< HEAD
 
             UniValue options = request.params[1];
 
-=======
-
-            UniValue options = request.params[1];
-
->>>>>>> origin/aggregate-signature
             RPCTypeCheckObj(options,
                 {
                     {"changeAddress", UniValueType(UniValue::VSTR)},

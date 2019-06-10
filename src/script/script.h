@@ -186,14 +186,11 @@ enum opcodetype
     OP_CALL = 0xc2,
     OP_SPEND = 0xc3,
 
-<<<<<<< HEAD
-=======
     //Aggregate signature
     OP_AGGREGATEVERIFY = 0xd1,
     OP_CONTRACTCOVERSFEES = 0xd2,
     OP_SCARSIGNATURE = 0xd3, //=211
 
->>>>>>> origin/aggregate-signature
     // template matching params
     OP_GAS_PRICE = 0xf5,
     OP_VERSION = 0xf6,
@@ -717,11 +714,6 @@ public:
     ///////////////////////////////////////////////// // fasc
     bool IsPayToPubkey() const;
     bool IsPayToPubkeyHash() const;
-<<<<<<< HEAD
-=======
-    bool IsPayToPubkeyWithSignature() const;
-    bool IsPayToPubkeyHashWithSignature() const;
->>>>>>> origin/aggregate-signature
     /////////////////////////////////////////////////
     bool IsPayToWitnessScriptHash() const;
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
@@ -754,13 +746,6 @@ public:
     {
         return Find(OP_CALL) == 1;
     }
-<<<<<<< HEAD
-=======
-    bool HasOpContractCoversFees() const
-    {
-        return Find(OP_CONTRACTCOVERSFEES) == 1;
-    }
->>>>>>> origin/aggregate-signature
     bool HasOpSpend() const
     {
         return size()==1 && *begin() == OP_SPEND;

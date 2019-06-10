@@ -10,10 +10,6 @@
 #include <script/standard.h>
 #include <consensus/validation.h>
 #include <chainparams.h>
-<<<<<<< HEAD
-=======
-#include <log_session.h>
->>>>>>> origin/aggregate-signature
 
 // TODO remove the following dependencies
 #include <chain.h>
@@ -177,7 +173,6 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 
 bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
 {
-<<<<<<< HEAD
     // Basic checks that don't depend on any context
     if (tx.vin.empty())
         return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
@@ -193,14 +188,6 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
     CAmount nValueOut = 0;
     for (const auto& txout : tx.vout)
     {
-=======
-
-    // Check for negative or overflow output values
-    CAmount nValueOut = 0;
-    int outIndex = - 1;
-    for (const auto& txout : tx.vout) {
-        outIndex ++;
->>>>>>> origin/aggregate-signature
         if (txout.IsEmpty() && !tx.IsCoinBase() )
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-vout-empty");
         if (txout.nValue < 0)
@@ -216,63 +203,10 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
             std::vector<valtype> vSolutions;
             txnouttype whichType;
             if (!Solver(txout.scriptPubKey, whichType, vSolutions, true)) {
-<<<<<<< HEAD
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-contract-nonstandard");
             }
         }
         ///////////////////////////////////////////////////////////
-=======
-                std::stringstream out;
-                out << "Output index " << outIndex
-                << " (" << outIndex + 1 << " out of " << tx.vout.size() << ") has non-standard contract. ";
-                return state.DoS(100, false, REJECT_INVALID, out.str());
-            }
-        }
-        ///////////////////////////////////////////////////////////
-    }
-    return true;
-}
-
-//bool HasInputsOfAccountTransactionCandidate(const CTransaction& tx, CValidationState& state)
-//{
-//    //A transaction is considered "account transaction input candidate" when the following hold.
-//    //1. The transaction has a single input.
-//    //2. The input has transaction id of 20 zero bytes.
-//    //3. The signature script ("unlock script") of the first input starts with
-//    //   20 bytes of data (that are supposed to be a transaction id of another transaction. To be verified later).
-//
-//    if (tx.vin.size() == 1)
-//        if (tx.vin[0].prevout.IsNull()) {
-//            const CScript& signature = tx.vin[0].scriptSig;
-//            std::vector<unsigned char> data;
-//            opcodetype type;
-//            auto begin = signature.begin();
-//            if (!signature.GetOp2(begin, type, &data)) {
-//                return false;
-//            }
-//            if (type == OP_DATA && data.size() == 20) {
-//                return true;
-//            }
-//        }
-//    return false;
-//}
-
-bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fCheckDuplicateInputs)
-{
-
-    // Basic checks that don't depend on any context
-    if (tx.vin.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
-    if (tx.vout.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");
-    // Size limits (this doesn't take the witness into account, as that hasn't been checked for malleability)
-    //!!!? if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT)
-    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > MAX_TRANSACTION_BASE_SIZE || 
-        ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > dgpMaxBlockWeight)
-        return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
-    if (! CheckVoutsOK(tx, state)) {
-        return false;
->>>>>>> origin/aggregate-signature
     }
 
     // Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock

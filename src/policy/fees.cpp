@@ -13,18 +13,9 @@
 #include <streams.h>
 #include <txmempool.h>
 #include <util.h>
-<<<<<<< HEAD
 
 //??? static constexpr double INF_FEERATE = 1e99;
 
-=======
-
-//??? static constexpr double INF_FEERATE = 1e99;
-
-void avoidCompilerWarningsDefinedButNotUsedFees() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 std::string StringForFeeEstimateHorizon(FeeEstimateHorizon horizon) {
     static const std::map<FeeEstimateHorizon, std::string> horizon_strings = {
@@ -574,10 +565,6 @@ CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee)
     shortStats = new TxConfirmStats(buckets, bucketMap, SHORT_BLOCK_PERIODS, SHORT_DECAY, SHORT_SCALE);
     longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/aggregate-signature
 CBlockPolicyEstimator::~CBlockPolicyEstimator()
 {
     delete feeStats;
@@ -778,50 +765,12 @@ CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoun
     return CFeeRate(median);
 }
 
-<<<<<<< HEAD
 double CBlockPolicyEstimator::estimatePriority(int confTarget)
 {
     return -1;
 }
 unsigned int CBlockPolicyEstimator::HighestTargetTracked(FeeEstimateHorizon horizon) const
 {
-=======
-CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool) {
-    if (answerFoundAtTarget)
-        *answerFoundAtTarget = confTarget;
-    // Return failure if trying to analyze a target we're not tracking
-    if (confTarget <= 0 || (unsigned int)confTarget > feeStats->GetMaxConfirms())
-        return CFeeRate(0);
-
-    // It's not possible to get reasonable estimates for confTarget of 1
-    if (confTarget == 1)
-        confTarget = 2;
-
-    double median = -1;
-    while (median < 0 && (unsigned int)confTarget <= feeStats->GetMaxConfirms()) {
-        median = feeStats->EstimateMedianVal(confTarget++, SUFFICIENT_FEETXS, MIN_SUCCESS_PCT, true, nBestSeenHeight);
-    }
-
-    if (answerFoundAtTarget)
-        *answerFoundAtTarget = confTarget - 1;
-
-    // If mempool is limiting txs , return at least the min feerate from the mempool
-    CAmount minPoolFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFeePerK();
-    if (minPoolFee > 0 && minPoolFee > median)
-        return CFeeRate(minPoolFee);
-
-    if (median < 0)
-        return CFeeRate(0);
-
-    return CFeeRate(median);
-}
-
-double CBlockPolicyEstimator::estimatePriority(int confTarget) {
-    return -1;
-}
-
-unsigned int CBlockPolicyEstimator::HighestTargetTracked(FeeEstimateHorizon horizon) const {
->>>>>>> origin/aggregate-signature
     switch (horizon) {
     case FeeEstimateHorizon::SHORT_HALFLIFE: {
         return shortStats->GetMaxConfirms();

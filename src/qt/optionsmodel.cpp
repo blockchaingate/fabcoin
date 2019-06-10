@@ -29,13 +29,6 @@
 #include <QSettings>
 #include <QStringList>
 #include <utilmoneystr.h>
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedOptionsModel() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 OptionsModel::OptionsModel(QObject *parent, bool resetSettings) :
     QAbstractListModel(parent)

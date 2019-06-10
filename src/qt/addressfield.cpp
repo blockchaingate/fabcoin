@@ -11,13 +11,6 @@
 #include <QLineEdit>
 #include <QCompleter>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedAddressField() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 using namespace std;
 
 AddressField::AddressField(QWidget *parent) :

@@ -22,18 +22,10 @@
 #include <libethereum/ExtVM.h>
 #include "VMConfig.h"
 #include "VM.h"
-<<<<<<< HEAD
-=======
-#include "log_session.h"
->>>>>>> origin/aggregate-signature
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/aggregate-signature
 uint64_t VM::memNeed(u256 _offset, u256 _size)
 {
 	return toInt63(_size ? u512(_offset) + _size : u512(0));
@@ -111,10 +103,6 @@ uint64_t VM::gasForMem(u512 _size)
 
 void VM::updateIOGas()
 {
-<<<<<<< HEAD
-=======
-    //LogSession::evmLog() << "DEBUG: updateIOGas, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
->>>>>>> origin/aggregate-signature
 	if (m_io_gas < m_runGas)
 		throwOutOfGas();
 	m_io_gas -= m_runGas;
@@ -125,10 +113,6 @@ void VM::updateGas()
 	if (m_newMemSize > m_mem.size())
 		m_runGas += toInt63(gasForMem(m_newMemSize) - gasForMem(m_mem.size()));
 	m_runGas += (m_schedule->copyGas * ((m_copyMemSize + 31) / 32));
-<<<<<<< HEAD
-=======
-    //LogSession::evmLog() << "DEBUG: updateGAS, IO gas " << m_io_gas << ", Run gas " << m_runGas << LogSession::endL;
->>>>>>> origin/aggregate-signature
 	if (m_io_gas < m_runGas)
 		throwOutOfGas();
 }
@@ -175,7 +159,6 @@ void VM::fetchInstruction()
 //
 // interpreter entry point
 
-<<<<<<< HEAD
 owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
 {
 	io_gas = &_io_gas;
@@ -184,45 +167,18 @@ owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
 	m_schedule = &m_ext->evmSchedule();
 	m_onOp = _onOp;
 	m_onFail = &VM::onOperation;
-=======
-owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp, std::stringstream* comments)
-{
-	io_gas = &_io_gas;
-	m_io_gas = uint64_t(_io_gas);
-    this->m_ext = &_ext;
-    this->m_schedule = &m_ext->evmSchedule();
-	m_onOp = _onOp;
-	m_onFail = &VM::onOperation;
-    //if (comments != nullptr) {
-    //    *comments << "DEBUG: about to execute VM...\n";
-    //}
->>>>>>> origin/aggregate-signature
 	
 	try
 	{
 		// trampoline to minimize depth of call stack when calling out
-<<<<<<< HEAD
 		m_bounce = &VM::initEntry;
 		do
 			(this->*m_bounce)();
 		while (m_bounce);
-=======
-        this->m_bounce = &VM::initEntry;
-		do
-            (this->*m_bounce)(comments);
-        while (this->m_bounce != nullptr);
->>>>>>> origin/aggregate-signature
 		
 	}
 	catch (...)
 	{
-<<<<<<< HEAD
-=======
-        //if (comments != nullptr) {
-        //    *comments << "DEBUG: exception was raised during evm execution.\n";
-        //}
-
->>>>>>> origin/aggregate-signature
 		*io_gas = m_io_gas;
 		throw;
 	}
@@ -234,19 +190,9 @@ owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp,
 //
 // main interpreter loop and switch
 //
-<<<<<<< HEAD
 void VM::interpretCases()
 {
 	INIT_CASES
-=======
-void VM::interpretCases(std::stringstream* commentsOnFailure)
-{
-    //LogSession::evmLog() << "DEBUG: running instruction: " << int(m_OP) << ", remaining gas: " << m_io_gas << LogSession::endL;
-    //if (commentsOnFailure != nullptr) {
-    //    *commentsOnFailure << "DEBUG: about to interpret: " << (int) this->m_OP << ".\n";
-    //}
-    INIT_CASES
->>>>>>> origin/aggregate-signature
 	DO_CASES
 	{	
 		//
@@ -255,37 +201,20 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 		
 		CASE(CREATE)
 		{
-<<<<<<< HEAD
 			m_bounce = &VM::caseCreate;
-=======
-            this->m_bounce = &VM::caseCreate;
->>>>>>> origin/aggregate-signature
 		}
 		BREAK;
 
 		CASE(DELEGATECALL)
 
 			// Pre-homestead
-<<<<<<< HEAD
 			if (!m_schedule->haveDelegateCall)
 				throwBadInstruction();
-=======
-        if (!m_schedule->haveDelegateCall) {
-            if (commentsOnFailure != nullptr) {
-                *commentsOnFailure << "DEBUG: about to throw exception due to delegate call.\n";
-            }
-            throwBadInstruction();
-        }
->>>>>>> origin/aggregate-signature
 
 		CASE(CALL)
 		CASE(CALLCODE)
 		{
-<<<<<<< HEAD
 			m_bounce = &VM::caseCall;
-=======
-            this->m_bounce = &VM::caseCall;
->>>>>>> origin/aggregate-signature
 		}
 		BREAK
 
@@ -386,24 +315,10 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 
 		CASE(LOG0)
 		{
-<<<<<<< HEAD
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: Log0 executed.\n";
-            //}
->>>>>>> origin/aggregate-signature
 			logGasMem();
 			ON_OP();
 			updateIOGas();
 
-<<<<<<< HEAD
-=======
-            LogEntry theEntry = LogEntry(
-                this->m_ext->myAddress,
-                {},
-                (bytesConstRef(m_mem.data() + (uint64_t) *m_SP, (uint64_t) *(m_SP - 1))).toBytes()
-            );
->>>>>>> origin/aggregate-signature
 			m_ext->log({}, bytesConstRef(m_mem.data() + (uint64_t)*m_SP, (uint64_t)*(m_SP - 1)));
 			m_SP -= 2;
 		}
@@ -411,14 +326,7 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 
 		CASE(LOG1)
 		{
-<<<<<<< HEAD
 			logGasMem();
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: Log1 executed.\n";
-            //}
-            logGasMem();
->>>>>>> origin/aggregate-signature
 			ON_OP();
 			updateIOGas();
 
@@ -429,14 +337,7 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 
 		CASE(LOG2)
 		{
-<<<<<<< HEAD
 			logGasMem();
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: Log2 executed.\n";
-            //}
-            logGasMem();
->>>>>>> origin/aggregate-signature
 			ON_OP();
 			updateIOGas();
 
@@ -447,14 +348,7 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 
 		CASE(LOG3)
 		{
-<<<<<<< HEAD
 			logGasMem();
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: Log3 executed.\n";
-            //}
-            logGasMem();
->>>>>>> origin/aggregate-signature
 			ON_OP();
 			updateIOGas();
 
@@ -465,14 +359,7 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 
 		CASE(LOG4)
 		{
-<<<<<<< HEAD
 			logGasMem();
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: Log4 executed.\n";
-            //}
-            logGasMem();
->>>>>>> origin/aggregate-signature
 			ON_OP();
 			updateIOGas();
 
@@ -939,12 +826,6 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 			++m_PC;
 			m_PC += m_code[m_PC];
 #else
-<<<<<<< HEAD
-=======
-            if (commentsOnFailure != nullptr) {
-                *commentsOnFailure << "Bad instruction: " << (int) this->m_OP;
-            }
->>>>>>> origin/aggregate-signature
 			throwBadInstruction();
 #endif
 		}
@@ -1093,12 +974,6 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 		CASE(JUMPSUBV)
 		CASE(RETURNSUB)
 		{
-<<<<<<< HEAD
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: throwing exception at CASE(JUMPTO), CASE(JUMPIF)..." << (int) this->m_OP;
-            //}
->>>>>>> origin/aggregate-signature
 			throwBadInstruction();
 		}
 		CONTINUE
@@ -1113,13 +988,6 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 			m_PC = uint64_t(*m_SP);
 			--m_SP;
 #else
-<<<<<<< HEAD
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: throwing exception before jumpc. " << (int) this->m_OP;
-            //}
-
->>>>>>> origin/aggregate-signature
 			throwBadInstruction();
 #endif
 		}
@@ -1137,14 +1005,7 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 				++m_PC;
 			m_SP -= 2;
 #else
-<<<<<<< HEAD
 			throwBadInstruction();
-=======
-            //if (commentsOnFailure != nullptr) {
-            //    *commentsOnFailure << "DEBUG: throwing exception before JUMPCI. " << (int) this->m_OP;
-            //}
-            throwBadInstruction();
->>>>>>> origin/aggregate-signature
 #endif
 		}
 		CONTINUE
@@ -1286,16 +1147,7 @@ void VM::interpretCases(std::stringstream* commentsOnFailure)
 		CASE(BEGINDATA)
 		CASE(BAD)
 		DEFAULT
-<<<<<<< HEAD
 			throwBadInstruction();
-=======
-        //if (commentsOnFailure != nullptr) {
-        //    *commentsOnFailure
-        //            << "DEBUG: throwing exception as default/bad/begindata operation. "
-        //            << "Instruction: " << instructionInfo(this->m_OP).name << "[" << (int) this->m_OP << "]\n";
-        //}
-        throwBadInstruction();
->>>>>>> origin/aggregate-signature
 	}	
 	WHILE_CASES
 }

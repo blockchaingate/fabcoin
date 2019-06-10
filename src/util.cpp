@@ -385,10 +385,6 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
     return strStamped;
 }
 
-<<<<<<< HEAD
-=======
-#include <log_session.h>
->>>>>>> origin/aggregate-signature
 int LogPrintStr(const std::string &str, bool useVMLog)
 {
 

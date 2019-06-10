@@ -8,13 +8,6 @@
 #include <hash.h>
 #include <pubkey.h>
 #include <script/standard.h>
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedCompressor() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 bool CScriptCompressor::IsToKeyID(CKeyID &hash) const
 {

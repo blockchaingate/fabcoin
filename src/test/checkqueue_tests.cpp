@@ -19,14 +19,6 @@
 #include <unordered_set>
 #include <memory>
 #include <random.h>
-<<<<<<< HEAD
-=======
-#include <sstream>
-
-void avoidCompilerWarningsDefinedButNotUsedCheckQueueTests() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 // BasicTestingSetup not sufficient because nScriptCheckThreads is not set
 // otherwise.

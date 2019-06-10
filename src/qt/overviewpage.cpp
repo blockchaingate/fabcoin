@@ -38,13 +38,6 @@
 #define DATE_WIDTH 110
 #define TYPE_WIDTH 140
 #define AMOUNT_WIDTH 205
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedOverviewPage() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 class TxViewDelegate : public QAbstractItemDelegate
 {

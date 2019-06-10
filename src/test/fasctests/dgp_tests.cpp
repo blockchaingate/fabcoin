@@ -2,13 +2,6 @@
 #include <fasctests/test_utils.h>
 #include <script/standard.h>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedDGPTests() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 namespace dgpTest{
 
 std::vector<valtype> code = {

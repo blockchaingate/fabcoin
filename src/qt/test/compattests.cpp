@@ -7,13 +7,6 @@
 #include <qt/test/compattests.h>
 
 #include <compat/byteswap.h>
-<<<<<<< HEAD
-=======
-
-void avoidCompilerWarningsDefinedButNotUsedCompattests() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 void CompatTests::bswapTests()
 {

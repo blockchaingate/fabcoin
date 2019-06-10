@@ -14,14 +14,6 @@
 #include <utilmoneystr.h>
 #include <util.h>
 #include <net.h>
-<<<<<<< HEAD
-=======
-
-
-void avoidCompilerWarningsDefinedButNotUsedFeeBumper() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
->>>>>>> origin/aggregate-signature
 
 // Calculate the size of the transaction assuming all signatures are max size
 // Use DummySignatureCreator, which inserts 72 byte signatures everywhere.

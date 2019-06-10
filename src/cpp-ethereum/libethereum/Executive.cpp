@@ -31,11 +31,6 @@
 #include "ExtVM.h"
 #include "BlockChain.h"
 #include "Block.h"
-<<<<<<< HEAD
-=======
-#include "log_session.h"
-#include "encodings_crypto.h"
->>>>>>> origin/aggregate-signature
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
@@ -185,73 +180,6 @@ Executive::Executive(State& _s, Block const& _block, unsigned _txIndex, BlockCha
 {
 }
 
-<<<<<<< HEAD
-=======
-std::string kanbanShardCreationString = "KanbanShardRegistration";
-
-std::string LogEntry::ToString() const {
-    std::stringstream out;
-    out << "Address: " << this->address << ", data: " << Encodings::toHexString(this->data);
-    std::string dataString(this->data.begin(), this->data.end());
-    // Perhaps this->data is a human-readable english ascii string ?
-    // If so, we expect the string to contain bytes in the range [32,126].
-    // If that is the case, we append the string to the output of this function.
-    bool isGoodAsString = true;
-    for (unsigned i = 0; i < dataString.size(); i ++) {
-        if (dataString[i] < 32 || dataString[i] > 126) {
-            isGoodAsString = false;
-            break;
-        }
-    }
-    if (isGoodAsString) {
-        out << " [" << dataString << "]";
-    }
-    return out.str();
-}
-
-std::string Executive::ToStringLogs(const LogEntries& input) {
-    std::stringstream out;
-    unsigned maxEntriesToDisplay = 20;
-    unsigned entriesToDisplay = input.size();
-    if (entriesToDisplay > maxEntriesToDisplay) {
-        entriesToDisplay = maxEntriesToDisplay;
-        out << input.size() << " log entries, showing first " << entriesToDisplay << " only.\n";
-    } else {
-        out << input.size() << " log entries.\n";
-    }
-    for (unsigned i = 0; i < entriesToDisplay; i ++) {
-        const LogEntry& currentLog = input[i];
-        out << currentLog.ToString() << "\n";
-    }
-    return out.str();
-}
-
-void Executive::GetAggregationData(std::vector<std::vector<unsigned char> >& outputData, dev::h160& outputContractAddress, std::stringstream* comments) const
-{
-    outputData.resize(0);
-    std::vector<uint8_t> kanbanShardCreationToken;
-    for (int unsigned i = 0; i < kanbanShardCreationString.size(); i ++) {
-        kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
-    }
-    const std::vector<dev::eth::LogEntry>& theLogEntries = this->logs();
-    bool flagAggregationFound = false;
-    for (unsigned i = 0; i < theLogEntries.size(); i ++) {
-        const dev::eth::LogEntry& current = theLogEntries[i];
-        const std::vector<uint8_t>& data = current.data;
-        if (flagAggregationFound) {
-            outputData.push_back(data);
-        }
-        if (data == kanbanShardCreationToken) {
-            flagAggregationFound = true;
-            outputContractAddress = current.address;
-        }
-        //if (comments != nullptr) {
-        //    *comments << "DEBUG: about to process smart contract logs: " << Encodings::toHexString(data) << ".\n";
-        //}
-    }
-}
-
->>>>>>> origin/aggregate-signature
 u256 Executive::gasUsed() const
 {
 	return m_t.gas() - m_gas;
@@ -316,7 +244,6 @@ void Executive::initialize(Transaction const& _transaction)
 	m_gasCost = (u256)gasCost;  // Convert back to 256-bit, safe now.
 }
 
-<<<<<<< HEAD
 bool Executive::execute()
 {
 	// Entry point for a user-executed transaction.
@@ -341,78 +268,21 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 {
 	// If external transaction.
 	if (m_t)
-=======
-bool Executive::execute(std::stringstream* commentsNullForNone)
-{
-    (void) commentsNullForNone; // <-avoid unused variable warning
-	// Entry point for a user-executed transaction.
-    //LogSession::evmLog() << "DEBUG: here I am in execute. " << LogSession::endL;
-
-	// Pay...
-    clog(StateDetail) << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << " gas at " << formatBalance(m_t.gasPrice()) << ")";
-    //if (commentsNullForNone != nullptr) {
-    //    *commentsNullForNone << "DEBUG: paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << " gas at " << formatBalance(m_t.gasPrice()) << ")" << "\n";
-    //}
-    //LogSession::evmLog() << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << " gas at " << formatBalance(m_t.gasPrice()) << ")\n";
-	m_s.subBalance(m_t.sender(), m_gasCost);
-    //LogSession::evmLog() << "Paid " << m_gasCost << " Wei" << LogSession::endL;
-
-    if (m_t.isCreation()) {
-        return create(m_t.sender(), m_t.value(), m_t.gasPrice(), m_t.gas() - (u256) m_baseGasRequired, &m_t.data(), m_t.sender());
-    } else {
-        u256 gasAvailable = this->m_t.gas() - (u256) this->m_baseGasRequired;
-        bool result = this->call(
-            this->m_t.receiveAddress(),
-            this->m_t.sender(),
-            this->m_t.value(),
-            this->m_t.gasPrice(),
-            bytesConstRef(&m_t.data()),
-            gasAvailable,
-            commentsNullForNone
-        );
-        return result;
-    }
-}
-
-bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _value, u256 _gasPrice, bytesConstRef _data, u256 _gas, std::stringstream* comments)
-{
-	CallParameters params{_senderAddress, _receiveAddress, _receiveAddress, _value, _value, _gas, _data, {}};
-    return call(params, _gasPrice, _senderAddress, comments);
-}
-
-bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin, std::stringstream* comments)
-{
-    (void) comments;
-    //LogSession::evmLog() << "DEBUG: here I am in call. " << LogSession::endL;
-    // If external transaction.
-    if (this->m_t)
->>>>>>> origin/aggregate-signature
 	{
 		// FIXME: changelog contains unrevertable balance change that paid
 		//        for the transaction.
 		// Increment associated nonce for sender.
-<<<<<<< HEAD
 		m_s.incNonce(_p.senderAddress);
 	}
 
 	m_savepoint = m_s.savepoint();
-=======
-        this->m_s.incNonce(_p.senderAddress);
-	}
-
-    this->m_savepoint = m_s.savepoint();
->>>>>>> origin/aggregate-signature
 
 	if (m_sealEngine.isPrecompiled(_p.codeAddress, m_envInfo.number()))
 	{
 		bigint g = m_sealEngine.costOfPrecompiled(_p.codeAddress, _p.data, m_envInfo.number());
 		if (_p.gas < g)
 		{
-<<<<<<< HEAD
 			m_excepted = TransactionException::OutOfGasBase;
-=======
-            this->m_excepted = TransactionException::OutOfGasBase;
->>>>>>> origin/aggregate-signature
 			// Bail from exception.
 			
 			// Empty precompiled contracts need to be deleted even in case of OOG
@@ -423,33 +293,21 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 				m_s.addBalance(_p.codeAddress, 0);
 			
 			return true;	// true actually means "all finished - nothing more to be done regarding go().
-<<<<<<< HEAD
 		}
 		else
 		{
-=======
-        } else {
->>>>>>> origin/aggregate-signature
 			m_gas = (u256)(_p.gas - g);
 			bytes output;
 			bool success;
 			tie(success, output) = m_sealEngine.executePrecompiled(_p.codeAddress, _p.data, m_envInfo.number());
-<<<<<<< HEAD
 			if (!success)
 			{
 				m_gas = 0;
 				m_excepted = TransactionException::OutOfGas;
-=======
-            if (!success) {
-				m_gas = 0;
-				m_excepted = TransactionException::OutOfGas;
-
->>>>>>> origin/aggregate-signature
 			}
 			size_t outputSize = output.size();
 			m_output = owning_bytes_ref{std::move(output), 0, outputSize};
 		}
-<<<<<<< HEAD
 	}
 	else
 	{
@@ -459,39 +317,10 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 			bytes const& c = m_s.code(_p.codeAddress);
 			h256 codeHash = m_s.codeHash(_p.codeAddress);
 			m_ext = make_shared<ExtVM>(m_s, m_envInfo, m_sealEngine, _p.receiveAddress, _p.senderAddress, _origin, _p.apparentValue, _gasPrice, _p.data, &c, codeHash, m_depth);
-=======
-    } else {
-        //if (comments != nullptr) {
-        //    *comments << "DEBUG: about to execute evm code.\n";
-        //}
-        this->m_gas = _p.gas;
-        if (this->m_s.addressHasCode(_p.codeAddress)) {
-            bytes const& c = m_s.code(_p.codeAddress);
-			h256 codeHash = m_s.codeHash(_p.codeAddress);
-            //if (comments != nullptr) {
-            //    *comments << "DEBUG: code address " << _p.codeAddress << " found.\n"
-            //              << "Code: " << Encodings::toHexString(c) << "\n";
-            //}
-            this->m_ext = std::make_shared<ExtVM>(
-                        m_s,
-                        m_envInfo,
-                        m_sealEngine,
-                        _p.receiveAddress,
-                        _p.senderAddress,
-                        _origin,
-                        _p.apparentValue,
-                        _gasPrice,
-                        _p.data,
-                        &c,
-                        codeHash,
-                        m_depth
-            );
->>>>>>> origin/aggregate-signature
 		}
 	}
 
 	//////////////////////////////////////////////// // fasc
-<<<<<<< HEAD
 	if(!m_s.addressInUse(_p.receiveAddress))
 		m_sealEngine.deleteAddresses.insert(_p.receiveAddress);
 	////////////////////////////////////////////////
@@ -499,22 +328,6 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 	// Transfer ether.
 	m_s.transferBalance(_p.senderAddress, _p.receiveAddress, _p.valueTransfer);
 	return !m_ext;
-=======
-    if (!m_s.addressInUse(_p.receiveAddress))
-		m_sealEngine.deleteAddresses.insert(_p.receiveAddress);
-	////////////////////////////////////////////////
-    //if (comments != nullptr) {
-    //    *comments << "DEBUG: Transfer ether from: "
-    //              << _p.senderAddress << ", to: " << _p.receiveAddress
-    //              << ", value: " << _p.valueTransfer << "\n";
-    //}
-    //LogSession::debugLog() << "DEBUG: Transfer ether from: "
-    //                       << _p.senderAddress << ", to: " << _p.receiveAddress << ", value: " << _p.valueTransfer
-    //                       << LogSession::endL;
-	// Transfer ether.
-	m_s.transferBalance(_p.senderAddress, _p.receiveAddress, _p.valueTransfer);
-    return !this->m_ext;
->>>>>>> origin/aggregate-signature
 }
 
 bool Executive::create(Address _sender, u256 _endowment, u256 _gasPrice, u256 _gas, bytesConstRef _init, Address _origin)
@@ -570,7 +383,6 @@ OnOpFunc Executive::simpleTrace()
 	};
 }
 
-<<<<<<< HEAD
 bool Executive::go(OnOpFunc const& _onOp)
 {
 	if (m_ext)
@@ -648,99 +460,6 @@ bool Executive::go(OnOpFunc const& _onOp)
 		cnote << "VM took:" << t.elapsed() << "; gas used: " << (sgas - m_endGas);
 #endif
 	}
-=======
-bool Executive::go(OnOpFunc const& _onOp, stringstream* commentsNullForNone)
-{
-    if (!this->m_ext) {
-        if (commentsNullForNone != nullptr) {
-            *commentsNullForNone << "VM not initialized.";
-        }
-        return false;
-    }
-#if ETH_TIMED_EXECUTIONS
-    Timer t;
-#endif
-    //if (commentsNullForNone != nullptr) {
-    //    *commentsNullForNone << "DEBUG: running EVM ... \n";
-    //}
-    try
-    {
-        // Create VM instance. Force Interpreter if tracing requested.
-        auto vm = _onOp ? VMFactory::create(VMKind::Interpreter) : VMFactory::create();
-        if (m_isCreation)
-        {
-            auto out = vm->exec(m_gas, *this->m_ext, _onOp, commentsNullForNone);
-            if (m_res)
-            {
-                m_res->gasForDeposit = m_gas;
-                m_res->depositSize = out.size();
-            }
-            if (out.size() > m_ext->evmSchedule().maxCodeSize) {
-                //LogSession::evmLog() << "Debug: I got to this point of code in executive::go" << LogSession::endL;
-                BOOST_THROW_EXCEPTION(OutOfGas());
-            }
-            else if (out.size() * m_ext->evmSchedule().createDataGas <= m_gas)
-            {
-                if (m_res)
-                    m_res->codeDeposit = CodeDeposit::Success;
-                m_gas -= out.size() * m_ext->evmSchedule().createDataGas;
-            }
-            else
-            {
-                if (m_ext->evmSchedule().exceptionalFailedCodeDeposit){
-                    //LogSession::evmLog() << "Debug: I got to this point of code in executive::go, part 2\n" << LogSession::endL;
-                    BOOST_THROW_EXCEPTION(OutOfGas());
-
-                }
-                else
-                {
-                    if (m_res)
-                        m_res->codeDeposit = CodeDeposit::Failed;
-                    out = {};
-                }
-            }
-            if (m_res)
-                m_res->output = out.toVector(); // copy output to execution result
-            m_s.setNewCode(m_ext->myAddress, out.toVector());
-        }
-        else
-        {
-            //LogSession::evmLog() << "DEBUG: remaining gas " << m_gas << LogSession::endL;
-            this->m_output = vm->exec(m_gas, *this->m_ext, _onOp, commentsNullForNone);
-            if (this->m_res)
-                // Copy full output:
-                m_res->output = m_output.toVector();
-        }
-    }
-    catch (VMException const& _e)
-    {
-        clog(StateSafeExceptions) << "Safe VM Exception. " << diagnostic_information(_e);
-        m_gas = 0;
-        m_excepted = toTransactionException(_e);
-        LogSession::evmLog() << "Safe VM Exception.\n" << diagnostic_information(_e) << "\n";
-
-        revert();
-    }
-    catch (Exception const& _e)
-    {
-        // TODO: AUDIT: check that this can never reasonably happen. Consider what to do if it does.
-        cwarn << "Unexpected exception in VM. There may be a bug in this implementation. " << diagnostic_information(_e);
-        exit(1);
-        // Another solution would be to reject this transaction, but that also
-        // has drawbacks. Essentially, the amount of ram has to be increased here.
-    }
-    catch (std::exception const& _e)
-    {
-        // TODO: AUDIT: check that this can never reasonably happen. Consider what to do if it does.
-        cwarn << "Unexpected std::exception in VM. Not enough RAM? " << _e.what();
-        exit(1);
-        // Another solution would be to reject this transaction, but that also
-        // has drawbacks. Essentially, the amount of ram has to be increased here.
-    }
-#if ETH_TIMED_EXECUTIONS
-    cnote << "VM took:" << t.elapsed() << "; gas used: " << (sgas - m_endGas);
-#endif
->>>>>>> origin/aggregate-signature
 	return true;
 }
 
@@ -770,11 +489,7 @@ void Executive::finalize()
 
 	// Logs..
 	if (m_ext)
-<<<<<<< HEAD
 		m_logs = m_ext->sub.logs;
-=======
-        this->m_logs = m_ext->sub.logs;
->>>>>>> origin/aggregate-signature
 
 	if (m_res) // Collect results
 	{
@@ -783,11 +498,6 @@ void Executive::finalize()
 		m_res->newAddress = m_newAddress;
 		m_res->gasRefunded = m_ext ? m_ext->sub.refunds : 0;
 	}
-<<<<<<< HEAD
-=======
-    //LogSession::evmLog() << "Debug: about to finish finalization in executive::finalize." << LogSession::endL;
-
->>>>>>> origin/aggregate-signature
 }
 
 void Executive::revert()

@@ -47,11 +47,7 @@ extern bool fIsVMlogFile;
 extern bool fGettingValuesDGP;
 struct EthTransactionParams;
 using valtype = std::vector<unsigned char>;
-<<<<<<< HEAD
 using ExtractFascTX = std::pair<std::vector<FascTransaction>, std::vector<EthTransactionParams>>;
-=======
-using ExtractFascTX = std::pair<std::vector<FascTransaction>, std::vector<EthTransactionParams> >;
->>>>>>> origin/aggregate-signature
 class CBlockIndex;
 class CBlockTreeDB;
 class CBloomFilter;
@@ -184,11 +180,7 @@ static const bool DEFAULT_PEERBLOOMFILTERS = true;
 
 /** Default for -stopatheight */
 static const int DEFAULT_STOPATHEIGHT = 0;
-<<<<<<< HEAD
 static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=2500000;
-=======
-static const uint64_t DEFAULT_GAS_LIMIT_OP_CREATE=10000000;
->>>>>>> origin/aggregate-signature
 static const uint64_t DEFAULT_GAS_LIMIT_OP_SEND=250000;
 static const CAmount DEFAULT_GAS_PRICE=0.00000040*COIN;
 static const CAmount MAX_RPC_GAS_PRICE=0.00000100*COIN;
@@ -362,22 +354,13 @@ bool IsConfirmedInNPrevBlocks(const CDiskTxPos& txindex, const CBlockIndex* pind
 /** (try to) add transaction to memory pool
  * plTxnReplaced will be appended to with all transactions replaced from mempool **/
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
-<<<<<<< HEAD
                         bool* pfMissingInputs, std::list<CTransactionRef>* plTxnReplaced = nullptr, 
                         bool fOverrideMempoolLimit = false, const CAmount nAbsurdFee = 0, bool rawTx = false);
-=======
-                        bool* pfMissingInputs, std::list<CTransactionRef>* plTxnReplaced = nullptr,
-                        bool fOverrideMempoolLimit = false, const CAmount nAbsurdFee = 0, bool rawTx = false, std::stringstream* comments = nullptr);
->>>>>>> origin/aggregate-signature
 
 /** (try to) add transaction to memory pool with a specified acceptance time **/
 bool AcceptToMemoryPoolWithTime(CTxMemPool& pool, CValidationState &state, const CTransactionRef &tx, bool fLimitFree,
                         bool* pfMissingInputs, int64_t nAcceptTime, std::list<CTransactionRef>* plTxnReplaced = NULL,
-<<<<<<< HEAD
                         bool fOverrideMempoolLimit = false, const CAmount nAbsurdFee = 0, bool rawTx = false);
-=======
-                        bool fOverrideMempoolLimit = false, const CAmount nAbsurdFee = 0, bool rawTx = false, std::stringstream* comments = 0);
->>>>>>> origin/aggregate-signature
 
 /** Convert CValidationState to a human-readable message for logging */
 std::string FormatStateMessage(const CValidationState &state);
@@ -493,22 +476,8 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
  * This does not modify the UTXO set. If pvChecks is not NULL, script checks are pushed onto it
  * instead of being performed inline.
  */
-<<<<<<< HEAD
 bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &view, bool fScriptChecks,
                  unsigned int flags, bool cacheStore, PrecomputedTransactionData& txdata, std::vector<CScriptCheck> *pvChecks = NULL);
-=======
-bool CheckInputs(
-    const CTransaction& tx,
-    CValidationState &state,
-    const CCoinsViewCache &view,
-    bool fScriptChecks,
-    unsigned int flags,
-    bool cacheStore,
-    PrecomputedTransactionDatA& txdata,
-    std::vector<CScriptCheck> *pvChecks = NULL,
-    std::stringstream *comments = nullptr
-);
->>>>>>> origin/aggregate-signature
 
 /** Apply the effects of this transaction on the UTXO set represented by view */
 void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
@@ -525,11 +494,7 @@ namespace Consensus {
  * This does not modify the UTXO set. This does not check scripts and sigs.
  * Preconditions: tx.IsCoinBase() is false.
  */
-<<<<<<< HEAD
 bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight);
-=======
-bool CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, std::stringstream* comments);
->>>>>>> origin/aggregate-signature
 
 } // namespace Consensus
 
@@ -727,7 +692,6 @@ void DumpMempool();
 /** Load the mempool from disk. */
 bool LoadMempool();
 
-<<<<<<< HEAD
 bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, CAmount gasRefunds, const std::vector<CTxOut>& vouts);
 
 //////////////////////////////////////////////////////// fasc
@@ -736,28 +700,6 @@ std::vector<ResultExecute> CallContract(const dev::Address& addrContract, std::v
 bool CheckSenderScript(const CCoinsViewCache& view, const CTransaction& tx);
 
 bool CheckMinGasPrice(std::vector<EthTransactionParams>& etps, const uint64_t& minGasPrice);
-=======
-bool CheckReward(const CBlock& block, CValidationState& state, int nHeight, const Consensus::Params& consensusParams, CAmount nFees, const std::vector<CTxOut>& vouts);
-
-//////////////////////////////////////////////////////// fasc
-std::vector<ResultExecute> CallContract(const dev::Address& addrContract, const std::vector<unsigned char>& data, const dev::Address& sender = dev::Address(), dev::u256 gasLimit=0, std::stringstream *commentsNullForNone = nullptr);
-
-class UniValue;
-bool FetchSCARShardPublicKeysInternal(
-    const std::vector<unsigned char>& contractAddressBytes,
-    const std::vector<unsigned char>& shardId,
-    std::vector<std::vector<unsigned char> >& outputPublicKeysSerialized,
-    std::stringstream* commentsOnErrorNullForNone,
-    UniValue* comments
-);
-
-UniValue executionResultToJSON(const dev::eth::ExecutionResult& exRes);
-UniValue transactionReceiptToJSON(const dev::eth::TransactionReceipt& txRec);
-
-bool CheckSenderScript(const CCoinsViewCache& view, const CTransaction& tx);
-
-bool CheckMinGasPrice(std::vector<EthTransactionParams>& etps, const dev::u256 &minGasPrice);
->>>>>>> origin/aggregate-signature
 
 struct ByteCodeExecResult;
 
@@ -770,7 +712,6 @@ struct EthTransactionParams{
     VersionVM version;
     dev::u256 gasLimit;
     dev::u256 gasPrice;
-<<<<<<< HEAD
     valtype code;
     dev::Address receiveAddress;
 
@@ -781,24 +722,6 @@ struct EthTransactionParams{
             return true;
         return false;
     }
-=======
-    dev::u256 gasLoan;
-    valtype code;
-    dev::Address receiveAddress;
-    bool fIsOpCoversFees;
-    bool operator!=(const EthTransactionParams& etp) {
-        if (this->version.toRaw() != etp.version.toRaw() || this->gasLimit != etp.gasLimit ||
-            this->gasLoan != etp.gasLoan ||
-            this->gasPrice != etp.gasPrice || this->code != etp.code ||
-            this->receiveAddress != etp.receiveAddress ||
-            this->fIsOpCoversFees != etp.fIsOpCoversFees
-        ) {
-            return true;
-        }
-        return false;
-    }
-    bool constructFeeCoverage(const CScript& input, std::stringstream* commentsOnFailure);
->>>>>>> origin/aggregate-signature
 };
 
 struct ByteCodeExecResult{
@@ -814,7 +737,6 @@ public:
 
     FascTxConverter(CTransaction tx, CCoinsViewCache* v = NULL, const std::vector<CTransactionRef>* blockTxs = NULL) : txBit(tx), view(v), blockTransactions(blockTxs){}
 
-<<<<<<< HEAD
     bool extractionFascTransactions(ExtractFascTX& fascTx);
 
 private:
@@ -824,17 +746,6 @@ private:
     bool parseEthTXParams(EthTransactionParams& params);
 
     FascTransaction createEthTX(const EthTransactionParams& etp, const uint32_t nOut);
-=======
-    bool extractionFascTransactions(ExtractFascTX& fascTx, dev::u256& outputGasLoan, std::stringstream *comments);
-
-private:
-
-    bool receiveStack(const CScript& scriptPubKey, std::stringstream* comments);
-
-    bool parseEthTXParams(EthTransactionParams& params, std::stringstream* comments);
-
-    FascTransaction createEthTX(const EthTransactionParams& etp, const uint32_t nOut, std::stringstream* comments);
->>>>>>> origin/aggregate-signature
 
     const CTransaction txBit;
     const CCoinsViewCache* view;
@@ -848,20 +759,11 @@ class ByteCodeExec {
 
 public:
 
-<<<<<<< HEAD
     ByteCodeExec(const CBlock& _block, std::vector<FascTransaction> _txs, const uint64_t _blockGasLimit) : txs(_txs), block(_block), blockGasLimit(_blockGasLimit) {}
 
     bool performByteCode(dev::eth::Permanence type = dev::eth::Permanence::Committed);
 
     bool processingResults(ByteCodeExecResult& result);
-=======
-    ByteCodeExec(const CBlock& _block, std::vector<FascTransaction> _txs, const dev::u256& _blockGasLimit) : txs(_txs), block(_block), blockGasLimit(_blockGasLimit) {}
-
-    bool performByteCode(dev::eth::Permanence type = dev::eth::Permanence::Committed, std::stringstream* commentsNullForNone = nullptr);
-
-    bool processingResults(ByteCodeExecResult& result, std::stringstream* comments = nullptr);
-    bool processingOneResult(ResultExecute& oneResult, FascTransaction& oneTransaction, ByteCodeExecResult& resultBCE, std::stringstream* comments);
->>>>>>> origin/aggregate-signature
 
     std::vector<ResultExecute>& getResult(){ return result; }
 

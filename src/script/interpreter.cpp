@@ -1120,18 +1120,8 @@ bool EvalScript(
                     return true; // temp
                 }
                 break;
-<<<<<<< HEAD
                 case OP_CREATE:
                 case OP_CALL:
-=======
-                case OP_CONTRACTCOVERSFEES:
-                case OP_CREATE:
-                case OP_CALL:
-                //Qtum does not evaluate smart contracts here, but rather externally.
-                //As a future refactoring, I propose that smart contract evaluation be moved
-                //here, and removed from all other places. That appears to more naturally match
-                //the architecture of bitcoin. It will also result in a major simplification of code.
->>>>>>> origin/aggregate-signature
                 {
                     valtype scriptRest(pc - 1, pend);
                     stack.push_back(scriptRest);
@@ -1139,39 +1129,6 @@ bool EvalScript(
                 }
                 break;
                 ////////////////////////////////////////////////////////
-<<<<<<< HEAD
-=======
-                case OP_AGGREGATEVERIFY:
-                {
-                    checker.GetPrecomputedTransactionData(aggregateData);
-                    aggregateData.GetSerialization(messageForAggregateData);
-                    if (stack.size() < 2) {
-                        if (commentsOnFailure != nullptr) {
-                            *commentsOnFailure << "Opcode OP_AGGREGATEVERIFY requires at least two items on the stack,"
-                                               << " but there are only: " << stack.size() << ". ";
-                        }
-                        return false;
-                    }
-                    //if (commentsOnFailure != nullptr) {
-                    //    *commentsOnFailure << "DEBUG: got to stack evaluation. Stack size: " << stack.size() << ". ";
-                    //}
-                    if (!SignatureAggregate::VerifyMessageSignatureUncompressedPublicKeysSerializedStatic(
-                                messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1],
-                                commentsOnFailure, true
-                    )) {
-                        return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
-                    }
-                    popstack(stack);
-                    popstack(stack);
-                    stack.push_back(vchTrue);
-                }
-                break;
-                case OP_SCARSIGNATURE:
-                if (!VerifySCARSignature(stack, checker, commentsOnFailure)) {
-                    return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
-                }
-                break;
->>>>>>> origin/aggregate-signature
                 default:
                     if (commentsOnFailure != nullptr) {
                         *commentsOnFailure << "Don't know how to handle op code: "

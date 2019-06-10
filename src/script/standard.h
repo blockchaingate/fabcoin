@@ -61,13 +61,10 @@ enum txnouttype
     TX_WITNESS_V0_KEYHASH,
     TX_CREATE,
     TX_CALL,
-<<<<<<< HEAD
-=======
     TX_AGGREGATE_SIGNATURE, //<- newly added
     TX_SCAR_SIGNATURE, //<- newly added
     TX_CONTRACT_COVERS_FEES, //<- newly added
     TX_PUBLIC_KEY_NO_ANCESTOR //<- newly added
->>>>>>> origin/aggregate-signature
 };
 
 class CNoDestination {

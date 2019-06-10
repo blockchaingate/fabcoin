@@ -151,14 +151,11 @@ const char* GetOpName(opcodetype opcode)
     case OP_CALL                   : return "OP_CALL";
     case OP_SPEND                  : return "OP_SPEND";
 
-<<<<<<< HEAD
-=======
     //aggregate signature
     case OP_AGGREGATEVERIFY        : return "OP_AGGREGATEVERIFY";
     case OP_SCARSIGNATURE          : return "OP_SCARSIGNATURE";
     case OP_CONTRACTCOVERSFEES     : return "OP_CONTRACTCOVERSFEES";
 
->>>>>>> origin/aggregate-signature
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
     // Note:
@@ -301,61 +298,6 @@ bool CScript::IsPayToScriptHash() const
             (*this)[22] == OP_EQUAL);
 }
 
-<<<<<<< HEAD
-=======
-std::string CScript::ToString() const {
-    std::stringstream out;
-    opcodetype opcode;
-    std::vector<unsigned char> vch;
-    CScript::const_iterator pc = this->begin();
-    bool found = false;
-    while (pc < this->end()) {
-        if (!found) {
-            out << " ";
-        }
-        found = true;
-        if (!this->GetOp(pc, opcode, vch)) {
-            out << "[error]";
-            return out.str();
-        }
-        if (0 <= opcode && opcode <= OP_PUSHDATA4) {
-            if (vch.size() <= static_cast<std::vector<unsigned char>::size_type>(4)) {
-                out << strprintf("%d", CScriptNum(vch, false).getint());
-            } else {
-                out << HexStr(vch);
-            }
-        } else {
-            out << GetOpName(opcode);
-        }
-    }
-    return out.str();
-}
-
-bool CScript::IsPayToAggregateSignature() const
-{
-    unsigned int n = 0;
-    const_iterator pc = begin();
-    opcodetype lastOpcode = OP_INVALIDOPCODE;
-    while (pc < end())
-    {
-        opcodetype opcode;
-        if (!GetOp(pc, opcode))
-            break;
-        if (opcode == OP_CHECKSIG || opcode == OP_CHECKSIGVERIFY)
-            n++;
-        else if (opcode == OP_CHECKMULTISIG || opcode == OP_CHECKMULTISIGVERIFY)
-        {
-            if (lastOpcode >= OP_1 && lastOpcode <= OP_16)
-                n += DecodeOP_N(lastOpcode);
-            else
-                n += MAX_PUBKEYS_PER_MULTISIG;
-        }
-        lastOpcode = opcode;
-    }
-    return lastOpcode == OP_AGGREGATEVERIFY;
-}
-
->>>>>>> origin/aggregate-signature
 
 ///////////////////////////////////////////////////////// // fasc
 bool CScript::IsPayToPubkey() const

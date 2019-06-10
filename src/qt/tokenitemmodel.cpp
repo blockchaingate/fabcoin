@@ -11,13 +11,6 @@
 #include <QDebug>
 #include <QThread>
 
-<<<<<<< HEAD
-=======
-void avoidCompilerWarningsDefinedButNotUsedTokenItemModel() {
-    (void) FetchSCARShardPublicKeysInternalPointer;
-}
-
->>>>>>> origin/aggregate-signature
 class TokenItemEntry
 {
 public:

@@ -20,14 +20,7 @@ public:
     static const std::string MAIN;
     static const std::string TESTNET;
     static const std::string REGTEST;
-<<<<<<< HEAD
     static const std::string UNITTEST;
-=======
-    static const std::string REGTESTWITHNET;
-    static const std::string UNITTEST;
-    static std::string kanbanId;
-    static std::vector<unsigned char> kanbanIdBytes;
->>>>>>> origin/aggregate-signature
 
     const std::string& DataDir() const { return strDataDir; }
     int RPCPort() const { return nRPCPort; }
