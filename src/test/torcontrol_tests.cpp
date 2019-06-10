@@ -7,6 +7,9 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedTorControlTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(torcontrol_tests, BasicTestingSetup)
 

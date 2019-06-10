@@ -23,6 +23,10 @@
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedNet() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 UniValue getconnectioncount(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)

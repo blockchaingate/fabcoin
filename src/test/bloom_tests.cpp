@@ -20,6 +20,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedBloomTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(bloom_tests, BasicTestingSetup)
 
 // TODO(h4x3rotab): Adopt new block format rather than the SERIALIZE_BLOCK_LEGACY hack.

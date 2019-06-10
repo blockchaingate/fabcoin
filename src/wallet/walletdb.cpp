@@ -24,6 +24,10 @@
 // CWalletDB
 //
 
+void avoidCompilerWarningsDefinedButNotUsedWalletDB() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 bool CWalletDB::WriteName(const std::string& strAddress, const std::string& strName)
 {
     return WriteIC(std::make_pair(std::string("name"), strAddress), strName);
@@ -931,4 +935,8 @@ bool CWalletDB::WriteContractData(const std::string &address, const std::string 
 bool CWalletDB::EraseContractData(const std::string &address, const std::string &key)
 {
     return EraseIC(std::make_pair(std::string("contractdata"), std::make_pair(address, key)));
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/aggregate-signature

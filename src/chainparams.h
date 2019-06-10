@@ -68,6 +68,7 @@ public:
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
+    bool IncludeTestCommands() const {return this->fIncludeTestCommands; }
     uint64_t PruneAfterHeight() const { return nPruneAfterHeight; }
     unsigned int EquihashN(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) /*|| (strNetworkID != CBaseChainParams::MAIN)*/ ? nEquihashN : 184; }
     unsigned int EquihashK(uint32_t nHeight = 0) const { return (nHeight < consensus.EquihashFABHeight) /*|| (strNetworkID != CBaseChainParams::MAIN)*/ ? nEquihashK : 7; }
@@ -87,15 +88,17 @@ protected:
 
     Consensus::Params consensus;
     CMessageHeader::MessageStartChars pchMessageStart;
-    int nDefaultPort;
+    uint16_t nDefaultPort;
     uint64_t nPruneAfterHeight;
     unsigned int nEquihashN = 0;
     unsigned int nEquihashK = 0;
     std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     std::string strNetworkID;
+    std::string kanbanId;
     CBlock genesis;
     std::vector<SeedSpec6> vFixedSeeds;
+    bool fIncludeTestCommands;
     bool fMiningRequiresPeers;
     bool fDefaultConsistencyChecks;
     bool fRequireStandard;

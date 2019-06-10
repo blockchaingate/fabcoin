@@ -12,6 +12,13 @@
 
 #include <stdint.h>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedTransactionRecord() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 /* Convert the destination into hash160 string for contract.
  */
 std::string toStringHash160(const CTxDestination& address)
@@ -77,7 +84,11 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 if (ExtractDestination(txout.scriptPubKey, address) && IsMine(*wallet, address))
                 {
                     // Received by Fabcoin Address
+<<<<<<< HEAD
                     if(wtx.tx->HasCreateOrCall())
+=======
+                    if(wtx.tx->HasCreateOrCallInOutputs())
+>>>>>>> origin/aggregate-signature
                     {
                         sub.type = TransactionRecord::ContractRecv;
                         sub.address = toStringHash160(address);
@@ -156,7 +167,11 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     continue;
                 }
 
+<<<<<<< HEAD
                 if(wtx.tx->HasCreateOrCall())
+=======
+                if(wtx.tx->HasCreateOrCallInOutputs())
+>>>>>>> origin/aggregate-signature
                     break;
 
                 CTxDestination address;
@@ -185,7 +200,11 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 parts.append(sub);
             }
 
+<<<<<<< HEAD
             if(wtx.tx->HasCreateOrCall()){
+=======
+            if(wtx.tx->HasCreateOrCallInOutputs()){
+>>>>>>> origin/aggregate-signature
                 TransactionRecord sub(hash, nTime);
                 sub.idx = 0;
                 sub.credit = nNet;

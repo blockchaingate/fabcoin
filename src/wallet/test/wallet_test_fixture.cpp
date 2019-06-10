@@ -7,6 +7,13 @@
 #include <rpc/server.h>
 #include <wallet/db.h>
 #include <wallet/wallet.h>
+<<<<<<< HEAD
+=======
+
+void avoidCompilerWarningsDefinedButNotUsedWalletTestFixture() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 CWallet *pwalletMain;
 

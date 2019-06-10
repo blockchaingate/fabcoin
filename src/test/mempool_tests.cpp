@@ -12,6 +12,10 @@
 #include <list>
 #include <vector>
 
+void avoidCompilerWarningsDefinedButNotUsedMempoolTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(mempool_tests, TestingSetup)
 
 BOOST_AUTO_TEST_CASE(MempoolRemoveTest)

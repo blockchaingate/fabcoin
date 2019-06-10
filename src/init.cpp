@@ -17,6 +17,10 @@
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
+<<<<<<< HEAD
+=======
+#include <log_session.h>
+>>>>>>> origin/aggregate-signature
 #include <httpserver.h>
 #include <httprpc.h>
 #include <key.h>
@@ -31,6 +35,10 @@
 #include <rpc/server.h>
 #include <rpc/register.h>
 #include <rpc/blockchain.h>
+<<<<<<< HEAD
+=======
+#include <rpc/aggregate_signature_test.h>
+>>>>>>> origin/aggregate-signature
 #include <script/standard.h>
 #include <script/sigcache.h>
 #include <scheduler.h>
@@ -40,6 +48,10 @@
 #include <torcontrol.h>
 #include <ui_interface.h>
 #include <util.h>
+<<<<<<< HEAD
+=======
+#include <utilstrencodings.h>
+>>>>>>> origin/aggregate-signature
 #include <utilmoneystr.h>
 #include <validationinterface.h>
 #ifdef ENABLE_WALLET
@@ -61,6 +73,7 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
+#include <encodings_crypto.h>
 
 #if ENABLE_ZMQ
 #include <zmq/zmqnotificationinterface.h>
@@ -88,7 +101,11 @@ static CZMQNotificationInterface* pzmqNotificationInterface = nullptr;
 #define MIN_CORE_FILEDESCRIPTORS 150
 #endif
 
-static const char* FEE_ESTIMATES_FILENAME="fee_estimates.dat";
+static const char* FEE_ESTIMATES_FILENAME = "fee_estimates.dat";
+
+void avoidCompilerWarningsDefinedButNotUsedInit() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -851,6 +868,7 @@ static std::string ResolveErrMsg(const char * const optname, const std::string& 
 void InitLogging()
 {
     fPrintToConsole = gArgs.GetBoolArg("-printtoconsole", false);
+    LogSession::flagLogsForwardedToStdOut = fPrintToConsole;
     fLogTimestamps = gArgs.GetBoolArg("-logtimestamps", DEFAULT_LOGTIMESTAMPS);
     fLogTimeMicros = gArgs.GetBoolArg("-logtimemicros", DEFAULT_LOGTIMEMICROS);
     fLogIPs = gArgs.GetBoolArg("-logips", DEFAULT_LOGIPS);
@@ -928,6 +946,24 @@ bool AppInitBasicSetup()
     std::set_new_handler(new_handler_terminate);
 
     return true;
+}
+
+void ParseKanbanId()
+{
+    std::string& kanbanId = CBaseChainParams::kanbanId;
+    std::vector<unsigned char>& kanbanIdBytes = CBaseChainParams::kanbanIdBytes;
+    kanbanId = gArgs.GetArg("-kanbanSmartContractId", "");
+    std::stringstream errorStream;
+    if (!Encodings::fromHex(kanbanId, kanbanIdBytes, &errorStream)) {
+        LogSession::debugLog() << "Could not hex-decode the input kanban id: "
+                               << CBaseChainParams::kanbanId << ". " << errorStream.str() << LogSession::endL;
+        LogSession::debugLog() << "Clearing the kanban id. " << LogSession::endL;
+        kanbanId = "";
+        kanbanIdBytes.clear();
+    } else {
+        kanbanId = Encodings::toHexString(kanbanIdBytes); //<- ensure id string is encoded standardly (lower case).
+    }
+    LogSession::debugLog() << "DEBUG: got kanban id: " << CBaseChainParams::kanbanId << LogSession::endL;
 }
 
 bool AppInitParameterInteraction()
@@ -1009,7 +1045,6 @@ bool AppInitParameterInteraction()
 
     if (gArgs.IsArgSet("-blockminsize"))
         InitWarning("Unsupported argument -blockminsize ignored.");
-
     // Checkmempool and checkblockindex default to true in regtest mode
     int ratio = std::min<int>(std::max<int>(gArgs.GetArg("-checkmempool", chainparams.DefaultConsistencyChecks() ? 1 : 0), 0), 1000000);
     if (ratio != 0) {
@@ -1080,7 +1115,13 @@ bool AppInitParameterInteraction()
         fPruneMode = true;
     }
 
+    ParseKanbanId();
+
     RegisterAllCoreRPCCommands(tableRPC);
+    if (Params().IncludeTestCommands()) {
+        RegisterTestCommands(tableRPC);
+    }
+
 #ifdef ENABLE_WALLET
     RegisterWalletRPCCommands(tableRPC);
 #endif

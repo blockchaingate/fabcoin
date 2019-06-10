@@ -30,6 +30,10 @@
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 typedef std::vector<unsigned char> valtype;
 
 // In script_tests.cpp
@@ -153,7 +157,7 @@ BOOST_AUTO_TEST_CASE(tx_valid)
             BOOST_CHECK_MESSAGE(CheckTransaction(tx, state), strTest);
             BOOST_CHECK(state.IsValid());
 
-            PrecomputedTransactionData txdata(tx);
+            PrecomputedTransactionDatA txdata(tx);
             for (unsigned int i = 0; i < tx.vin.size(); i++)
             {
                 if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
@@ -239,7 +243,7 @@ BOOST_AUTO_TEST_CASE(tx_invalid)
             CValidationState state;
             fValid = CheckTransaction(tx, state) && state.IsValid();
 
-            PrecomputedTransactionData txdata(tx);
+            PrecomputedTransactionDatA txdata(tx);
             for (unsigned int i = 0; i < tx.vin.size() && fValid; i++)
             {
                 if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
@@ -460,7 +464,7 @@ BOOST_AUTO_TEST_CASE(test_big_witness_transaction) {
     CTransaction tx(deserialize, vstream);
 
     // check all inputs concurrently, with the cache
-    PrecomputedTransactionData txdata(tx);
+    PrecomputedTransactionDatA txdata(tx);
     boost::thread_group threadGroup;
     CCheckQueue<CScriptCheck> scriptcheckqueue(128);
     CCheckQueueControl<CScriptCheck> control(&scriptcheckqueue);

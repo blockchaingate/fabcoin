@@ -15,6 +15,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedPmtTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 class CPartialMerkleTreeTester : public CPartialMerkleTree
 {
 public:

@@ -21,6 +21,10 @@
 #include <stdint.h>
 #include <string>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionDesc() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 QString TransactionDesc::FormatTxStatus(const CWalletTx& wtx)
 {
     AssertLockHeld(cs_main);

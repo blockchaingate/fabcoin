@@ -14,6 +14,10 @@
 #include "cuckoocache.h"
 #include <boost/thread.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedSigCache() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace {
 /**
  * Valid signature cache, to avoid doing expensive ECDSA signature checking
@@ -78,6 +82,19 @@ void InitSignatureCache()
     size_t nElems = signatureCache.setup_bytes(nMaxCacheSize);
     LogPrintf("Using %zu MiB out of %zu/2 requested for signature cache, able to store %zu elements\n",
             (nElems*sizeof(uint256)) >>20, (nMaxCacheSize*2)>>20, nElems);
+}
+
+void CachingTransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionDatA &output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        return;
+    }
+    output.hashOutputs = this->txdata->hashOutputs;
+    output.hashPrevouts = this->txdata->hashPrevouts;
+    output.hashSequence = this->txdata->hashSequence;
 }
 
 bool CachingTransactionSignatureChecker::VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const

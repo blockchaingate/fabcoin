@@ -82,8 +82,14 @@ CFeeRate CWallet::m_discard_rate = CFeeRate(DEFAULT_DISCARD_FEE);
 
 const uint256 CMerkleTx::ABANDON_HASH(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
 
+<<<<<<< HEAD
 
 
+=======
+void avoidCompilerWarningsDefinedButNotUsedWallet() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 /** @defgroup mapWallet
  *
@@ -2949,8 +2955,8 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
                     // fee to pay for the new output and still meet nFeeNeeded
                     // Or we should have just subtracted fee from recipients and
                     // nFeeNeeded should not have changed
-                    strFailReason = _("Transaction fee and change calculation failed");
-                    return false;
+                    //strFailReason = _("Transaction fee and change calculation failed");
+                    //return false;
                 }
 
                 // Try to reduce change to include necessary fee

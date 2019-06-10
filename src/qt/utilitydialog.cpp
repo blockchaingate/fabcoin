@@ -30,6 +30,10 @@
 #include <QTextCursor>
 #include <QVBoxLayout>
 
+void avoidCompilerWarningsDefinedButNotUsedUtilityDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 /** "Help message" or "About" dialog box */
 HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
     QDialog(parent),

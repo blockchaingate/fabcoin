@@ -14,6 +14,13 @@
 #include <QSizePolicy>
 #include <QMenu>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedQRCToken() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 #define TOKEN_SIZE 54
 #define SYMBOL_WIDTH 60
 #define MARGIN 5

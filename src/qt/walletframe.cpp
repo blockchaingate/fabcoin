@@ -14,6 +14,10 @@
 #include <QHBoxLayout>
 #include <QLabel>
 
+void avoidCompilerWarningsDefinedButNotUsedWalletFrame() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 WalletFrame::WalletFrame(const PlatformStyle *_platformStyle, FabcoinGUI *_gui) :
     QFrame(_gui),
     gui(_gui),

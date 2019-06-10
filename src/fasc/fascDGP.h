@@ -20,9 +20,15 @@ static const uint64_t MIN_MIN_GAS_PRICE_DGP = 1;
 static const uint64_t MAX_MIN_GAS_PRICE_DGP = 10000;
 static const uint64_t DEFAULT_MIN_GAS_PRICE_DGP = 40;
 
+<<<<<<< HEAD
 static const uint64_t MIN_BLOCK_GAS_LIMIT_DGP = 1000000;
 static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP = 1000000000;
 static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP = 40000000;
+=======
+static const uint64_t MIN_BLOCK_GAS_LIMIT_DGP = 10000000; //10 million
+static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP = 4000000000;
+static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP = 400000000; // 400 million
+>>>>>>> origin/aggregate-signature
 
 class FascDGP {
 
@@ -80,6 +86,7 @@ private:
 
     dev::Address templateContract;
 
+<<<<<<< HEAD
     std::map<dev::h256, std::pair<dev::u256, dev::u256>> storageDGP;
 
     std::map<dev::h256, std::pair<dev::u256, dev::u256>> storageTemplate;
@@ -87,6 +94,15 @@ private:
     std::vector<unsigned char> dataTemplate;
 
     std::vector<std::pair<unsigned int, dev::Address>> paramsInstance;
+=======
+    std::map<dev::h256, std::pair<dev::u256, dev::u256> > storageDGP;
+
+    std::map<dev::h256, std::pair<dev::u256, dev::u256> > storageTemplate;
+
+    std::vector<unsigned char> dataTemplate;
+
+    std::vector<std::pair<unsigned int, dev::Address> > paramsInstance;
+>>>>>>> origin/aggregate-signature
 
     std::vector<uint32_t> dataEIP158Schedule;
 

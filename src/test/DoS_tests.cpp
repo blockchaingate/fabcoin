@@ -19,6 +19,9 @@
 #include <stdint.h>
 
 #include <boost/test/unit_test.hpp>
+void avoidCompilerWarningsDefinedButNotUsedDOSTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 // Tests these internal-to-net_processing.cpp methods:
 extern bool AddOrphanTx(const CTransactionRef& tx, NodeId peer);

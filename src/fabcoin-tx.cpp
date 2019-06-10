@@ -30,6 +30,10 @@ static bool fCreateBlank;
 static std::map<std::string,UniValue> registers;
 static const int CONTINUE_EXECUTION=-1;
 
+void avoidCompilerWarningsDefinedButNotUsedFabcoinTX() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 //
 // This function returns either one of EXIT_ codes when it's expected to stop the process or
 // CONTINUE_EXECUTION when it's expected to continue further.

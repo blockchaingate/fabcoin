@@ -19,6 +19,14 @@
 #include <unordered_set>
 #include <memory>
 #include <random.h>
+<<<<<<< HEAD
+=======
+#include <sstream>
+
+void avoidCompilerWarningsDefinedButNotUsedCheckQueueTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 // BasicTestingSetup not sufficient because nScriptCheckThreads is not set
 // otherwise.
@@ -27,7 +35,7 @@ BOOST_FIXTURE_TEST_SUITE(checkqueue_tests, TestingSetup)
 static const int QUEUE_BATCH_SIZE = 128;
 
 struct FakeCheck {
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         return true;
     }
@@ -36,7 +44,7 @@ struct FakeCheck {
 
 struct FakeCheckCheckCompletion {
     static std::atomic<size_t> n_calls;
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         ++n_calls;
         return true;
@@ -48,7 +56,7 @@ struct FailingCheck {
     bool fails;
     FailingCheck(bool _fails) : fails(_fails){};
     FailingCheck() : fails(true){};
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         return !fails;
     }
@@ -64,7 +72,7 @@ struct UniqueCheck {
     size_t check_id;
     UniqueCheck(size_t check_id_in) : check_id(check_id_in){};
     UniqueCheck() : check_id(0){};
-    bool operator()()
+    bool operator()(std::stringstream* comments)
     {
         std::lock_guard<std::mutex> l(m);
         results.insert(check_id);
@@ -77,7 +85,7 @@ struct UniqueCheck {
 struct MemoryCheck {
     static std::atomic<size_t> fake_allocated_memory;
     bool b {false};
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         return true;
     }
@@ -108,7 +116,7 @@ struct FrozenCleanupCheck {
     // Freezing can't be the default initialized behavior given how the queue
     // swaps in default initialized Checks.
     bool should_freeze {false};
-    bool operator()()
+    bool operator()(std::stringstream* comments)
     {
         return true;
     }

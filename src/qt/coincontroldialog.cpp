@@ -32,6 +32,10 @@
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
+void avoidCompilerWarningsDefinedButNotUsedCoinControlDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 QList<CAmount> CoinControlDialog::payAmounts;
 CCoinControl* CoinControlDialog::coinControl = new CCoinControl();
 bool CoinControlDialog::fSubtractFeeFromAmount = false;

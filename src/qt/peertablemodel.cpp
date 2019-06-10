@@ -15,6 +15,10 @@
 #include <QList>
 #include <QTimer>
 
+void avoidCompilerWarningsDefinedButNotUsedPeerTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 bool NodeLessThan::operator()(const CNodeCombinedStats &left, const CNodeCombinedStats &right) const
 {
     const CNodeStats *pLeft = &(left.nodeStats);

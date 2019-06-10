@@ -23,6 +23,13 @@
 #include <timedata.h>
 #include <random.h>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedTransactionWalletTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 extern CWallet* pwalletMain;
 
 extern UniValue importmulti(const JSONRPCRequest& request);

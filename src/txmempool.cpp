@@ -17,6 +17,13 @@
 #include <util.h>
 #include <utilmoneystr.h>
 #include <utiltime.h>
+<<<<<<< HEAD
+=======
+
+void avoidCompilerWarningsDefinedButNotUsedTXMempool() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                                  int64_t _nTime, unsigned int _entryHeight,
@@ -363,7 +370,60 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
     nTransactionsUpdated += n;
 }
 
-bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate)
+extern UniValue ValueFromAmount(const CAmount& amount);
+void CTxMemPoolEntry::ToJSON(UniValue& output) const
+{
+    output.setObject();
+    output.push_back(Pair("size", (int)this->GetTxSize()));
+    output.push_back(Pair("fee", ValueFromAmount(this->GetFee())));
+    output.push_back(Pair("modifiedfee", ValueFromAmount(this->GetModifiedFee())));
+    output.push_back(Pair("time", this->GetTime()));
+    output.push_back(Pair("height", (int)this->GetHeight()));
+    output.push_back(Pair("descendantcount", this->GetCountWithDescendants()));
+    output.push_back(Pair("descendantsize", this->GetSizeWithDescendants()));
+    output.push_back(Pair("descendantfees", this->GetModFeesWithDescendants()));
+    output.push_back(Pair("ancestorcount", this->GetCountWithAncestors()));
+    output.push_back(Pair("ancestorsize", this->GetSizeWithAncestors()));
+    output.push_back(Pair("ancestorfees", this->GetModFeesWithAncestors()));
+    const CTransaction& tx = this->GetTx();
+    std::set<std::string> setDepends;
+    AssertLockHeld(mempool.cs);
+    for (const CTxIn& txin : tx.vin) {
+        if (mempool.exists(txin.prevout.hash))
+            setDepends.insert(txin.prevout.hash.ToString());
+    }
+
+    UniValue depends(UniValue::VARR);
+    for (const std::string& dep : setDepends)
+    {
+        depends.push_back(dep);
+    }
+
+    output.push_back(Pair("depends", depends));
+}
+
+UniValue CTxMemPool::ToJSON(bool fVerbose) const
+{
+    if (!fVerbose) {
+        std::vector<uint256> vtxid;
+        this->queryHashes(vtxid);
+
+        UniValue a(UniValue::VARR);
+        for (const uint256& hash : vtxid)
+            a.push_back(hash.ToString());
+        return a;
+    }
+    UniValue result(UniValue::VOBJ);
+    for (const CTxMemPoolEntry& e : this->mapTx) {
+        const uint256& hash = e.GetTx().GetHash();
+        UniValue currentEntry(UniValue::VOBJ);
+        e.ToJSON(currentEntry);
+        result.push_back(Pair(hash.ToString(), currentEntry));
+    }
+    return result;
+}
+
+bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate, std::stringstream* comments)
 {
     NotifyEntryAdded(entry.GetSharedTx());
     // Add to memory pool without checking anything.
@@ -414,8 +474,9 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
 
     nTransactionsUpdated++;
     totalTxSize += entry.GetTxSize();
-    if (minerPolicyEstimator) {minerPolicyEstimator->processTransaction(entry, validFeeEstimate);}
-
+    if (minerPolicyEstimator) {
+        minerPolicyEstimator->processTransaction(entry, validFeeEstimate, comments);
+    }
     vTxHashes.emplace_back(tx.GetWitnessHash(), newit);
     newit->vTxHashesIdx = vTxHashes.size() - 1;
 
@@ -661,7 +722,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
                     parentSigOpCost += it2->GetSigOpCost();
                 }
             } else {
-                assert(pcoins->HaveCoin(txin.prevout));
+                assert(pcoins->HaveCoinOrIsWithoutAncestor(txin.prevout));
             }
             // Check whether its inputs are marked in mapNextTx.
             auto it3 = mapNextTx.find(txin.prevout);
@@ -713,7 +774,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         else {
             CValidationState state;
             bool fCheckResult = tx.IsCoinBase() ||
-                Consensus::CheckTxInputs(tx, state, mempoolDuplicate, nSpendHeight);
+                Consensus::CheckTxInputs(tx, state, mempoolDuplicate, nSpendHeight, nullptr);
             assert(fCheckResult);
             UpdateCoins(tx, mempoolDuplicate, 1000000);
         }
@@ -729,7 +790,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
             assert(stepsSinceLastRemove < waitingOnDependants.size());
         } else {
             bool fCheckResult = entry->GetTx().IsCoinBase() ||
-                Consensus::CheckTxInputs(entry->GetTx(), state, mempoolDuplicate, nSpendHeight);
+                Consensus::CheckTxInputs(entry->GetTx(), state, mempoolDuplicate, nSpendHeight, nullptr);
             assert(fCheckResult);
             UpdateCoins(entry->GetTx(), mempoolDuplicate, 1000000);
             stepsSinceLastRemove = 0;
@@ -792,7 +853,7 @@ std::vector<CTxMemPool::indexed_transaction_set::const_iterator> CTxMemPool::Get
     return iters;
 }
 
-void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
+void CTxMemPool::queryHashes(std::vector<uint256>& vtxid) const
 {
     LOCK(cs);
     auto iters = GetSortedDepthAndScore();

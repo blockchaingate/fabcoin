@@ -29,6 +29,10 @@
 #include <QMessageBox>
 #include <QTimer>
 
+void avoidCompilerWarningsDefinedButNotUsedOptionsDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
     QDialog(parent),
     ui(new Ui::OptionsDialog),

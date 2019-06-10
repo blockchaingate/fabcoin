@@ -2,6 +2,13 @@
 #include <primitives/transaction.h>
 #include <policy/policy.h>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedConsensus() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 /** The maximum allowed size for a serialized block, in bytes (only for buffer size limits) */
 unsigned int dgpMaxBlockSerSize = 8000000;
 /** The maximum allowed weight for a block, see BIP 141 (network rule) */

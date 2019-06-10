@@ -22,6 +22,13 @@
 #include <QIcon>
 #include <QList>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedTransactionTransactionTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 // Amount column is right-aligned it contains numbers
 static int column_alignments[] = {
         Qt::AlignLeft|Qt::AlignVCenter, /* status */

@@ -186,6 +186,14 @@ enum opcodetype
     OP_CALL = 0xc2,
     OP_SPEND = 0xc3,
 
+<<<<<<< HEAD
+=======
+    //Aggregate signature
+    OP_AGGREGATEVERIFY = 0xd1,
+    OP_CONTRACTCOVERSFEES = 0xd2,
+    OP_SCARSIGNATURE = 0xd3, //=211
+
+>>>>>>> origin/aggregate-signature
     // template matching params
     OP_GAS_PRICE = 0xf5,
     OP_VERSION = 0xf6,
@@ -413,6 +421,42 @@ private:
 
 typedef prevector<28, unsigned char> CScriptBase;
 
+struct OpcodePattern
+{
+    unsigned int opCode;
+    int minDataLength; // - 1 for none
+    int maxDataLength; // - 1 for none
+    std::vector<unsigned char> exactDataContent;
+    OpcodePattern(): opCode(0), minDataLength(-1), maxDataLength(-1){}
+    OpcodePattern(opcodetype inputOpCode): opCode(inputOpCode), minDataLength(-1), maxDataLength(-1){}
+    OpcodePattern(unsigned int inputOpCode, unsigned int inputMinimumDataLength, unsigned int inputMaximumDataLength):
+        opCode(inputOpCode), minDataLength(inputMinimumDataLength), maxDataLength(inputMaximumDataLength){}
+};
+
+struct CScriptTemplate
+{
+    friend CScriptTemplate& operator <<(CScriptTemplate& output, const OpcodePattern& input) {
+        output.thePatterns.push_back(input);
+        return output;
+    }
+    friend CScriptTemplate& operator <<(CScriptTemplate& output, opcodetype input) {
+        output.thePatterns.push_back(OpcodePattern(input));
+        return output;
+    }
+    unsigned int tx_templateType;
+    std::string name;
+    std::vector<OpcodePattern> thePatterns;
+    CScriptTemplate(): tx_templateType(0), name("undefined"){}
+    void MakeAggregateSignatureTemplate();
+    static void MakeSCARSignatureTemplateStatic(CScriptTemplate& output) {
+        output.MakeSCARSignatureTemplate();
+    }
+    void MakeSCARSignatureTemplate();
+    void MakeContractCoversFeesTemplate();
+    void MakeInputPublicKeyNoAncestor();
+    void reset();
+};
+
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public CScriptBase
 {
@@ -614,6 +658,7 @@ public:
             return OP_0;
         return (opcodetype)(OP_1+n-1);
     }
+    bool FitsOpCodePattern(const CScriptTemplate& pattern, std::vector<std::vector<unsigned char> >* outputData, std::stringstream* commentsOnFailure) const;
 
     int FindAndDelete(const CScript& b)
     {
@@ -667,10 +712,16 @@ public:
      */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsPayToAggregateSignature() const;
     bool IsPayToScriptHash() const;
     ///////////////////////////////////////////////// // fasc
     bool IsPayToPubkey() const;
     bool IsPayToPubkeyHash() const;
+<<<<<<< HEAD
+=======
+    bool IsPayToPubkeyWithSignature() const;
+    bool IsPayToPubkeyHashWithSignature() const;
+>>>>>>> origin/aggregate-signature
     /////////////////////////////////////////////////
     bool IsPayToWitnessScriptHash() const;
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
@@ -703,6 +754,13 @@ public:
     {
         return Find(OP_CALL) == 1;
     }
+<<<<<<< HEAD
+=======
+    bool HasOpContractCoversFees() const
+    {
+        return Find(OP_CONTRACTCOVERSFEES) == 1;
+    }
+>>>>>>> origin/aggregate-signature
     bool HasOpSpend() const
     {
         return size()==1 && *begin() == OP_SPEND;
@@ -715,6 +773,7 @@ public:
         CScriptBase::clear();
         shrink_to_fit();
     }
+    std::string ToString() const;
 };
 
 struct CScriptWitness

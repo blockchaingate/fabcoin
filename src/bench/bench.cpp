@@ -144,3 +144,5 @@ bool benchmark::State::UpdateTimer(const benchmark::time_point current_time)
     m_num_iters_left = m_num_iters - 1;
     return true;
 }
+
+

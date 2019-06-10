@@ -7,6 +7,13 @@
 
 #include "tinyformat.h"
 #include "utilstrencodings.h"
+#include "standard.h"
+//#include "core_io.h"
+#include "log_session.h"
+
+void avoidCompilerWarningsDefinedButNotUsedScriptCPP() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 const char* GetOpName(opcodetype opcode)
 {
@@ -144,6 +151,14 @@ const char* GetOpName(opcodetype opcode)
     case OP_CALL                   : return "OP_CALL";
     case OP_SPEND                  : return "OP_SPEND";
 
+<<<<<<< HEAD
+=======
+    //aggregate signature
+    case OP_AGGREGATEVERIFY        : return "OP_AGGREGATEVERIFY";
+    case OP_SCARSIGNATURE          : return "OP_SCARSIGNATURE";
+    case OP_CONTRACTCOVERSFEES     : return "OP_CONTRACTCOVERSFEES";
+
+>>>>>>> origin/aggregate-signature
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
     // Note:
@@ -154,6 +169,79 @@ const char* GetOpName(opcodetype opcode)
     default:
         return "OP_UNKNOWN";
     }
+}
+
+void CScriptTemplate::reset()
+{
+    this->thePatterns.clear();
+}
+
+bool CScript::FitsOpCodePattern(
+    const CScriptTemplate& pattern,
+    std::vector<std::vector<unsigned char> >* outputData,
+    std::stringstream *commentsOnFailure
+) const {
+    CScript::const_iterator iterator = this->begin();
+    opcodetype lastOpcode = OP_INVALIDOPCODE;
+    std::vector<unsigned char> currentData;
+    if (outputData != nullptr) {
+        outputData->clear();
+    }
+    for (unsigned i = 0; i < pattern.thePatterns.size(); i ++) {
+        if (!this->GetOp2(iterator, lastOpcode, &currentData)) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Failed to get opcode at index: " << i << ".\n";
+            }
+            return false;
+        }
+        const OpcodePattern& currentPattern = pattern.thePatterns[i];
+        if (lastOpcode <= OP_PUSHDATA4) {
+            if (currentPattern.opCode != OP_DATA) {
+                if (commentsOnFailure != nullptr) {
+                    *commentsOnFailure << "Opcode " << (int) lastOpcode
+                    << "at position " << i << " indicates data is expected, but the template expects opcode: "
+                    << currentPattern.opCode << ". ";
+                }
+                return false;
+            }
+            if (currentPattern.minDataLength >= 0) {
+                if (currentData.size() < (unsigned) currentPattern.minDataLength) {
+                    return false;
+                }
+            }
+            if (currentPattern.maxDataLength >= 0) {
+                if (currentData.size() > (unsigned) currentPattern.maxDataLength) {
+                    return false;
+                }
+            }
+            if (currentPattern.exactDataContent.size() > 0) {
+                if (currentPattern.exactDataContent != currentData) {
+                    if (commentsOnFailure != nullptr) {
+                        *commentsOnFailure << "Data: " << HexStr(currentData) << " is not equal to the required value: "
+                                           << HexStr(currentPattern.exactDataContent) << ". ";
+                    }
+                    return false;
+                }
+            }
+            if (outputData != nullptr) {
+                outputData->push_back(currentData);
+            }
+            continue;
+        }
+        //For non-data patterns
+        if ((unsigned int) lastOpcode != currentPattern.opCode) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Opcode " << (int) lastOpcode
+                << " at position " << i << " does not equal the expected value: "
+                << currentPattern.opCode << ". ";
+            }
+            return false;
+        }
+    }
+    if (this->GetOp(iterator, lastOpcode)) {
+        return false;
+    }
+    return true;
 }
 
 unsigned int CScript::GetSigOpCount(bool fAccurate) const
@@ -213,6 +301,61 @@ bool CScript::IsPayToScriptHash() const
             (*this)[22] == OP_EQUAL);
 }
 
+<<<<<<< HEAD
+=======
+std::string CScript::ToString() const {
+    std::stringstream out;
+    opcodetype opcode;
+    std::vector<unsigned char> vch;
+    CScript::const_iterator pc = this->begin();
+    bool found = false;
+    while (pc < this->end()) {
+        if (!found) {
+            out << " ";
+        }
+        found = true;
+        if (!this->GetOp(pc, opcode, vch)) {
+            out << "[error]";
+            return out.str();
+        }
+        if (0 <= opcode && opcode <= OP_PUSHDATA4) {
+            if (vch.size() <= static_cast<std::vector<unsigned char>::size_type>(4)) {
+                out << strprintf("%d", CScriptNum(vch, false).getint());
+            } else {
+                out << HexStr(vch);
+            }
+        } else {
+            out << GetOpName(opcode);
+        }
+    }
+    return out.str();
+}
+
+bool CScript::IsPayToAggregateSignature() const
+{
+    unsigned int n = 0;
+    const_iterator pc = begin();
+    opcodetype lastOpcode = OP_INVALIDOPCODE;
+    while (pc < end())
+    {
+        opcodetype opcode;
+        if (!GetOp(pc, opcode))
+            break;
+        if (opcode == OP_CHECKSIG || opcode == OP_CHECKSIGVERIFY)
+            n++;
+        else if (opcode == OP_CHECKMULTISIG || opcode == OP_CHECKMULTISIGVERIFY)
+        {
+            if (lastOpcode >= OP_1 && lastOpcode <= OP_16)
+                n += DecodeOP_N(lastOpcode);
+            else
+                n += MAX_PUBKEYS_PER_MULTISIG;
+        }
+        lastOpcode = opcode;
+    }
+    return lastOpcode == OP_AGGREGATEVERIFY;
+}
+
+>>>>>>> origin/aggregate-signature
 
 ///////////////////////////////////////////////////////// // fasc
 bool CScript::IsPayToPubkey() const

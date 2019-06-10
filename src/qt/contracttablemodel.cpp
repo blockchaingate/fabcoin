@@ -9,6 +9,13 @@
 #include <QDebug>
 #include <utility>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedContractTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 struct ContractTableEntry
 {
     QString label;

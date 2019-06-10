@@ -15,6 +15,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedSigOpCountTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 // Helpers:
 static std::vector<unsigned char>
 Serialize(const CScript& s)

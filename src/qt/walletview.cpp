@@ -36,6 +36,10 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+void avoidCompilerWarningsDefinedButNotUsedWalletView() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     QStackedWidget(parent),
     clientModel(0),

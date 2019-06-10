@@ -21,6 +21,10 @@
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedSighashTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 extern UniValue read_json(const std::string& jsondata);
 
 // Old script.cpp SignatureHash function

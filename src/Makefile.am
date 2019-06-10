@@ -134,6 +134,11 @@ FABCOIN_CORE_H = \
   rpc/protocol.h \
   rpc/server.h \
   rpc/register.h \
+  rpc/test.h \
+  encodings_crypto.h \
+  aggregate_schnorr_signature.h \
+  log_session.h \
+  crypto/secp256k1_all_in_one.h \
   scheduler.h \
   script/sigcache.h \
   script/sign.h \
@@ -155,6 +160,7 @@ FABCOIN_CORE_H = \
   ui_interface.h \
   undo.h \
   util.h \
+  log_session.h \
   utilmoneystr.h \
   utiltime.h \
   validation.h \
@@ -226,6 +232,8 @@ libfabcoin_server_a_SOURCES = \
   rpc/net.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
+  rpc/aggregate_signature_test.cpp \
+  rpc/log_files.cpp \
   script/sigcache.cpp \
   script/ismine.cpp \
   timedata.cpp \
@@ -303,6 +311,8 @@ crypto_libfabcoin_crypto_a_SOURCES = \
   crypto/sha256.h \
   crypto/sha512.cpp \
   crypto/sha512.h \
+  crypto/sha3.cpp \
+  crypto/sha3.h \
   cpp-ethereum/utils/libscrypt/b64.c \
   cpp-ethereum/utils/libscrypt/b64.h \
   cpp-ethereum/utils/libscrypt/crypto-mcf.c \
@@ -343,9 +353,6 @@ libfabcoin_consensus_a_SOURCES = \
   primitives/transaction.h \
   pubkey.cpp \
   pubkey.h \
-  script/fabcoinconsensus.cpp \
-  script/interpreter.cpp \
-  script/interpreter.h \
   script/script.cpp \
   script/script.h \
   script/script_error.cpp \
@@ -380,6 +387,14 @@ libfabcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   warnings.cpp \
+  crypto/sha3.cpp \
+  crypto/secp256k1_all_in_one.cpp \
+  encodings_crypto.cpp \
+  aggregate_schnorr_signature.cpp \
+  aggregate_schnorr_signature.h \
+  script/fabcoinconsensus.cpp \
+  script/interpreter.cpp \
+  script/interpreter.h \
   cpp-ethereum/libdevcore/Base64.cpp \
   cpp-ethereum/libdevcore/Base64.h \
   cpp-ethereum/libdevcore/Common.cpp \
@@ -581,6 +596,7 @@ libfabcoin_util_a_SOURCES = \
   sync.cpp \
   threadinterrupt.cpp \
   util.cpp \
+  log_session.cpp \
   utilmoneystr.cpp \
   utilstrencodings.cpp \
   utiltime.cpp \
@@ -612,12 +628,12 @@ endif
 
 fabcoind_LDADD = \
   $(LIBFABCOIN_SERVER) \
+  $(LIBFABCOIN_CONSENSUS) \
   $(LIBFABCOIN_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBFABCOIN_UTIL) \
   $(LIBFABCOIN_WALLET) \
   $(LIBFABCOIN_ZMQ) \
-  $(LIBFABCOIN_CONSENSUS) \
   $(LIBFABCOIN_CRYPTO) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
@@ -663,12 +679,15 @@ if TARGET_WINDOWS
 fabcoin_tx_SOURCES += fabcoin-tx-res.rc
 endif
 
+# WARNING: the build order of files matters.
+# Shuffling files in the list below may break the build (or fix it).
+# You've been warned.
 fabcoin_tx_LDADD = \
-  $(LIBUNIVALUE) \
   $(LIBFABCOIN_COMMON) \
   $(LIBFABCOIN_UTIL) \
   $(LIBFABCOIN_CONSENSUS) \
   $(LIBFABCOIN_CRYPTO) \
+  $(LIBUNIVALUE) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \

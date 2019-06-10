@@ -16,6 +16,11 @@ std::vector<uint256> CCoinsView::GetHeadBlocks() const { return std::vector<uint
 bool CCoinsView::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) { return false; }
 CCoinsViewCursor *CCoinsView::Cursor() const { return 0; }
 
+bool CCoinsView::HaveCoinOrIsWithoutAncestor(const COutPoint &outpoint) const
+{
+    return this->HaveCoin(outpoint);
+}
+
 bool CCoinsView::HaveCoin(const COutPoint &outpoint) const
 {
     Coin coin;
@@ -125,6 +130,12 @@ const Coin& CCoinsViewCache::AccessCoin(const COutPoint &outpoint) const {
     }
 }
 
+bool CCoinsViewCache::HaveCoinOrIsWithoutAncestor(const COutPoint &outpoint) const {
+    if (outpoint.IsWithoutAncestor())
+        return true;
+    return this->HaveCoin(outpoint);
+}
+
 bool CCoinsViewCache::HaveCoin(const COutPoint &outpoint) const {
     CCoinsMap::const_iterator it = FetchCoin(outpoint);
     return (it != cacheCoins.end() && !it->second.coin.IsSpent());
@@ -225,12 +236,32 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
 {
     if (tx.IsCoinBase())
         return 0;
+    if (tx.IsWithoutAncestor(nullptr))
+        return 0;
 
     CAmount nResult = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
-        nResult += AccessCoin(tx.vin[i].prevout).out.nValue;
-
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        const auto& coin = AccessCoin(tx.vin[i].prevout);
+        if (coin.out.nValue > 0) {
+            nResult += coin.out.nValue;
+        }
+    }
     return nResult;
+}
+
+std::string CCoinsViewCache::ToString() const
+{
+    std::stringstream out;
+    int counter = 0;
+    int total = this->cacheCoins.size();
+    out << "Coins view with: " << counter << " entries. ";
+    for (auto iterator = this->cacheCoins.begin(); iterator != this->cacheCoins.end(); iterator ++) {
+        const COutPoint& current = iterator->first;
+        counter ++;
+        out << "Coin " << counter  << " out of " << total  << ": " << current.ToString() << "<br>\n";
+    }
+    return out.str();
+
 }
 
 bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const

@@ -11,6 +11,9 @@
 #include "script/standard.h"
 #include "script/sign.h"
 
+void avoidCompilerWarningsDefinedButNotUsedIsMine() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 typedef std::vector<unsigned char> valtype;
 

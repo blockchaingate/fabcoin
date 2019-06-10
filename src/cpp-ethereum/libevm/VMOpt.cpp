@@ -255,10 +255,18 @@ void VM::optimize()
 //
 // Init interpreter on entry.
 //
+<<<<<<< HEAD
 void VM::initEntry()
 {
 	m_bounce = &VM::interpretCases; 	
 	interpretCases(); // first call initializes jump table
+=======
+void VM::initEntry(stringstream *commentsOnFailure)
+{
+    (void) commentsOnFailure;
+	m_bounce = &VM::interpretCases; 	
+    interpretCases(commentsOnFailure); // first call initializes jump table
+>>>>>>> origin/aggregate-signature
 	initMetrics();
 	optimize();
 }

@@ -19,12 +19,19 @@
 #include <libethereum/ExtVM.h>
 #include "VMConfig.h"
 #include "VM.h"
+<<<<<<< HEAD
+=======
+#include "log_session.h"
+>>>>>>> origin/aggregate-signature
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> origin/aggregate-signature
 void VM::copyDataToMemory(bytesConstRef _data, u256*& _sp)
 {
 	auto offset = static_cast<size_t>(*_sp--);
@@ -45,7 +52,12 @@ void VM::copyDataToMemory(bytesConstRef _data, u256*& _sp)
 
 void VM::throwOutOfGas()
 {
+<<<<<<< HEAD
 	BOOST_THROW_EXCEPTION(OutOfGas());
+=======
+    LogSession::evmLog() << "OoG!!! remaining gas: " << m_io_gas << LogSession::endL;
+    BOOST_THROW_EXCEPTION(OutOfGas());
+>>>>>>> origin/aggregate-signature
 }
 
 void VM::throwBadInstruction()
@@ -96,7 +108,11 @@ int64_t VM::verifyJumpDest(u256 const& _dest, bool _throw)
 // interpreter cases that call out
 //
 
+<<<<<<< HEAD
 void VM::caseCreate()
+=======
+void VM::caseCreate(std::stringstream* commentsOnFailure)
+>>>>>>> origin/aggregate-signature
 {
 	m_bounce = &VM::interpretCases;
 	m_newMemSize = memNeed(*(m_SP - 1), *(m_SP - 2));
@@ -127,7 +143,11 @@ void VM::caseCreate()
 	++m_PC;
 }
 
+<<<<<<< HEAD
 void VM::caseCall()
+=======
+void VM::caseCall(std::stringstream* comments)
+>>>>>>> origin/aggregate-signature
 {
 	m_bounce = &VM::interpretCases;
 	unique_ptr<CallParameters> callParams(new CallParameters());

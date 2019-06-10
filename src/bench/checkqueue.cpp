@@ -11,6 +11,9 @@
 #include <boost/thread/thread.hpp>
 #include <random.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCheckQueue() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 static const int MIN_CORES = 2;
 static const size_t BATCHES = 101;
@@ -30,7 +33,7 @@ static void CCheckQueueSpeedPrevectorJob(benchmark::State& state)
         explicit PrevectorJob(FastRandomContext& insecure_rand){
             p.resize(insecure_rand.randrange(PREVECTOR_SIZE*2));
         }
-        bool operator()()
+        bool operator()(std::stringstream* comments)
         {
             return true;
         }

@@ -18,6 +18,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedRAIIEventTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static std::map<void*, short> tags;
 static std::map<void*, uint16_t> orders;
 static uint16_t tagSequence = 0;

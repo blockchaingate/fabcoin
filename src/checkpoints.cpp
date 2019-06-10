@@ -12,6 +12,14 @@
 
 #include <stdint.h>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsed() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+
+>>>>>>> origin/aggregate-signature
 static const int nCheckpointSpan = 800;
 
 namespace Checkpoints {

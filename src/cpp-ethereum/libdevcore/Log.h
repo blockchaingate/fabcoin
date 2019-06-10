@@ -292,7 +292,11 @@ public:
 #define clog(X) DEV_STATEMENT_IF(!(X::debug)) dev::LogOutputStream<X, true>()
 #define cslog(X) DEV_STATEMENT_IF(!(X::debug)) dev::LogOutputStream<X, false>()
 #else
+<<<<<<< HEAD
 #define clog(X) dev::LogOutputStream<X, true>()
+=======
+ #define clog(X) dev::LogOutputStream<X, true>()
+>>>>>>> origin/aggregate-signature
 #define cslog(X) dev::LogOutputStream<X, false>()
 #endif
 #endif

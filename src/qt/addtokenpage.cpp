@@ -15,6 +15,13 @@
 #include <QRegularExpressionValidator>
 #include <QMessageBox>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedAddtokenPage() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 AddTokenPage::AddTokenPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::AddTokenPage),

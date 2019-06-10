@@ -14,6 +14,10 @@
 #include <QFont>
 #include <QDebug>
 
+void avoidCompilerWarningsDefinedButNotUsedAddressTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 const QString AddressTableModel::Send = "S";
 const QString AddressTableModel::Receive = "R";
 

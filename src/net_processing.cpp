@@ -38,6 +38,10 @@
 
 std::atomic<int64_t> nTimeBestReceived(0); // Used only to inform the wallet of when we last received a block
 
+void avoidCompilerWarningsDefinedButNotUsedNetProcessing() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 struct IteratorComparator
 {
     template<typename I>

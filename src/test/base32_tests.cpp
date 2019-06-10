@@ -7,6 +7,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedBase32Tests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(base32_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(base32_testvectors)

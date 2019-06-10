@@ -13,6 +13,13 @@
 #include <string>
 #include <version.h>
 #include <test/test_fabcoin.h>
+<<<<<<< HEAD
+=======
+
+void avoidCompilerWarningsDefinedButNotUsedArithTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 BOOST_FIXTURE_TEST_SUITE(arith_uint256_tests, BasicTestingSetup)
 

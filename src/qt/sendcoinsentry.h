@@ -25,6 +25,10 @@ class SendCoinsEntry : public QStackedWidget
 {
     Q_OBJECT
 
+    void avoidCompilerWarningsDefinedButNotUsedSendCoinsEntry() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
+
 public:
     explicit SendCoinsEntry(const PlatformStyle *platformStyle, QWidget *parent = 0);
     ~SendCoinsEntry();

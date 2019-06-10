@@ -11,6 +11,9 @@
 #include <vector>
 #include <string>
 
+void avoidCompilerWarningsDefinedButNotUsedBase58Bench() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 static void Base58Encode(benchmark::State& state)
 {

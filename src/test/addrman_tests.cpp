@@ -9,6 +9,13 @@
 #include <hash.h>
 #include <netbase.h>
 #include <random.h>
+<<<<<<< HEAD
+=======
+
+void avoidCompilerWarningsDefinedButNotUsedAddrmanTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 class CAddrManTest : public CAddrMan
 {

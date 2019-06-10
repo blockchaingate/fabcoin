@@ -40,7 +40,11 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlockHead
         {
             if( Params().NetworkIDString() == CBaseChainParams::MAIN )
             {
+<<<<<<< HEAD
                 LogPrintf("Use minimum difficulty for the first N blocks since forking. height=%d\n", nHeight);
+=======
+                LogPrintf("Use minimum difficulty for the first N blocks since forking. height=%d\n", nHeight);
+>>>>>>> origin/aggregate-signature
                 return UintToArith256(params.PowLimit(true)).GetCompact();
             }
             else
@@ -66,10 +70,17 @@ unsigned int LwmaGetNextWorkRequired(const CBlockIndex* pindexPrev, const CBlock
     // If the new block's timestamp is more than 10 * T minutes
     // then halve the difficulty
     int64_t diff = pblock->GetBlockTime() - pindexPrev->GetBlockTime();
+<<<<<<< HEAD
     if ( params.fPowAllowMinDifficultyBlocks && diff > ( pindexPrev->nHeight+1 < params.EquihashFABHeight ? params.nPowTargetSpacing : 2*params.nPowTargetSpacing ) * params.MaxBlockInterval ) 
     {
 #if 1
         LogPrintf("The new block(height=%d) will come too late. Use minimum difficulty.\n", pblock->nHeight);
+=======
+    if ( params.fPowAllowMinDifficultyBlocks && diff > ( ((unsigned) pindexPrev->nHeight+1) < params.EquihashFABHeight ? params.nPowTargetSpacing : 2*params.nPowTargetSpacing ) * params.MaxBlockInterval )
+    {
+#if 1
+        LogPrintf("The new block(height=%d) will come too late. Use minimum difficulty.\n", pblock->nHeight);
+>>>>>>> origin/aggregate-signature
         return UintToArith256(params.PowLimit(true)).GetCompact();
 #else
         arith_uint256 target;
@@ -102,13 +113,21 @@ unsigned int LwmaCalculateNextWorkRequired(const CBlockIndex* pindexPrev, const 
 
     const int height = pindexPrev->nHeight + 1;
     
+<<<<<<< HEAD
     const int64_t T = height<params.EquihashFABHeight ? params.nPowTargetSpacing : 2*params.nPowTargetSpacing;
+=======
+    const int64_t T = (signed) ( height < (signed) params.EquihashFABHeight ? params.nPowTargetSpacing : 2*params.nPowTargetSpacing );
+>>>>>>> origin/aggregate-signature
     const int N = params.nZawyLwmaAveragingWindow;
     const int k = (N+1)/2 * 0.998 * T;  // ( (N+1)/2 * adjust * T )
 
     assert(height > N);
 
+<<<<<<< HEAD
     arith_uint256 sum_target, sum_last10_target,sum_last5_target;;
+=======
+    arith_uint256 sum_target, sum_last10_target,sum_last5_target;
+>>>>>>> origin/aggregate-signature
     int sum_time = 0, nWeight = 0;
 
     int sum_last10_time=0;  //Solving time of the last ten block

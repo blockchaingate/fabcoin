@@ -11,6 +11,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedGetArgTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(getarg_tests, BasicTestingSetup)
 
 static void ResetArgs(const std::string& strArg)

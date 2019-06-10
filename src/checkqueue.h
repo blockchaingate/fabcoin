@@ -121,7 +121,7 @@ private:
             // execute work
             for (T& check : vChecks)
                 if (fOk)
-                    fOk = check();
+                    fOk = check(nullptr);
             vChecks.clear();
         } while (true);
     }

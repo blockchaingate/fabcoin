@@ -23,6 +23,10 @@
 
 #include <openssl/ssl.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTestMain() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
 #if QT_VERSION < 0x050000

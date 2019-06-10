@@ -21,6 +21,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedEquihashTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(equihash_tests, BasicTestingSetup)
 
 void PrintSolution(std::stringstream &strm, std::vector<uint32_t> soln) {

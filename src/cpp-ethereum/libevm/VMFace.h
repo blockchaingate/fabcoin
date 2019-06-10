@@ -45,7 +45,11 @@ public:
 	VMFace& operator=(VMFace const&) = delete;
 
 	/// VM implementation
+<<<<<<< HEAD
 	virtual owning_bytes_ref exec(u256& io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp) = 0;
+=======
+    virtual owning_bytes_ref exec(u256& io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp, std::stringstream* commentsNullForNone) = 0;
+>>>>>>> origin/aggregate-signature
 };
 
 }

@@ -95,8 +95,12 @@ void go(unsigned _depth, Executive& _e, OnOpFunc const& _onOp)
 boost::optional<owning_bytes_ref> ExtVM::call(CallParameters& _p)
 {
 	Executive e{m_s, envInfo(), m_sealEngine, depth + 1};
+<<<<<<< HEAD
 	if (!e.call(_p, gasPrice, origin))
 	{
+=======
+    if (!e.call(_p, gasPrice, origin, nullptr))	{
+>>>>>>> origin/aggregate-signature
 		go(depth, e, _p.onOp);
 		e.accrueSubState(sub);
 	}

@@ -14,6 +14,9 @@
 #include <util.h>
 #include <utilstrencodings.h>
 
+void avoidCompilerWarningsDefinedButNotUsedPolicy() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 {

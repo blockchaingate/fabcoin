@@ -8,6 +8,13 @@
 #include <key.h>
 #include <pubkey.h>
 #include <util.h>
+<<<<<<< HEAD
+=======
+
+void avoidCompilerWarningsDefinedButNotUsedKeyStore() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 bool CKeyStore::AddKey(const CKey &key) {
     return AddKeyPubKey(key, key.GetPubKey());

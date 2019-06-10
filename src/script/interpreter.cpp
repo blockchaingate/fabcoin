@@ -12,6 +12,9 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "uint256.h"
+#include "aggregate_schnorr_signature.h"
+#include "utilstrencodings.h"
+#include "util.h"
 
 typedef std::vector<unsigned char> valtype;
 
@@ -250,8 +253,88 @@ bool static CheckMinimalPush(const valtype& data, opcodetype opcode) {
     return true;
 }
 
-bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, unsigned int flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* serror)
+std::string printStackForDebug(std::vector<std::vector<unsigned char> >& stack)
 {
+    std::stringstream out;
+    for (unsigned i = 0; i < stack.size(); i ++) {
+        if (i > 0) {
+            out << " ";
+        }
+        out << HexStr(stack[i]);
+    }
+    return out.str();
+}
+
+bool VerifySCARSignature(
+    std::vector<std::vector<unsigned char> >& stack,
+    const BaseSignatureChecker& checker,
+    std::stringstream* commentsOnFailure
+) {
+    static const valtype vchTrue(1, 1);
+    static const valtype vchFalse(1, 0);
+    PrecomputedTransactionDatA aggregateData;
+    std::vector<unsigned char> messageForAggregateData;
+    checker.GetPrecomputedTransactionData(aggregateData);
+    aggregateData.GetSerialization(messageForAggregateData);
+    if (stack.size() < 3) {
+        if (commentsOnFailure != nullptr) {
+            *commentsOnFailure << "Opcode OP_SCARSIGNATURE requires at least three items on the stack "
+                               << "(scarAddress, shardId, signature) but there are only: " << stack.size() << ". ";
+        }
+        return false;
+    }
+    std::vector<unsigned char>& signatureBytes = stack[stack.size() - 1];
+    std::vector<unsigned char>& shardId = stack[stack.size() - 2];
+    std::vector<unsigned char>& scarAddress = stack[stack.size() - 3];
+    std::vector<std::vector<unsigned char> > publicKeysSerialized;
+    if (FetchSCARShardPublicKeysInternalPointer == nullptr) {
+        if (commentsOnFailure != nullptr) {
+            *commentsOnFailure << "Fatal error: script static functions not linked correctly. ";
+        }
+        return false;
+    }
+    if (!FetchSCARShardPublicKeysInternalPointer(
+        scarAddress, shardId, publicKeysSerialized, commentsOnFailure, nullptr
+    )) {
+        return false;
+    }
+    if (
+        aggregateData.bytesToSignForTransactionWithoutAncestor.size() < 1
+    ) {
+        if (commentsOnFailure != nullptr) {
+            *commentsOnFailure << "Failed to get bytes to be signed by aggregate signature. ";
+        }
+
+        return false;
+    }
+    SignatureAggregate theSignature;
+    bool result = theSignature.VerifyMessageSignatureUncompressedPublicKeysDeserialized(
+        aggregateData.bytesToSignForTransactionWithoutAncestor,
+        signatureBytes,
+        publicKeysSerialized,
+        commentsOnFailure,
+        true
+    );
+    popstack(stack);
+    popstack(stack);
+    popstack(stack);
+    if (result) {
+        stack.push_back(vchTrue);
+    } else {
+        stack.push_back(vchFalse);
+    }
+    return result;
+}
+
+bool EvalScript(
+    std::vector<std::vector<unsigned char> >& stack,
+    const CScript& script,
+    unsigned int flags,
+    const BaseSignatureChecker& checker,
+    SigVersion sigversion,
+    ScriptError* serror,
+    std::stringstream* commentsOnFailure
+) {
     static const CScriptNum bnZero(0);
     static const CScriptNum bnOne(1);
     // static const CScriptNum bnFalse(0);
@@ -272,7 +355,8 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
         return set_error(serror, SCRIPT_ERR_SCRIPT_SIZE);
     int nOpCount = 0;
     bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
-
+    PrecomputedTransactionDatA aggregateData;
+    std::vector<unsigned char> messageForAggregateData;
     try
     {
         while (pc < pend)
@@ -904,7 +988,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         //serror is set
                         return false;
                     }
-                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion);
+                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, commentsOnFailure);
 
                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
                         return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
@@ -980,7 +1064,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         }
 
                         // Check signature
-                        bool fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion);
+                        bool fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, commentsOnFailure);
 
                         if (fOk) {
                             isig++;
@@ -1036,8 +1120,18 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     return true; // temp
                 }
                 break;
+<<<<<<< HEAD
                 case OP_CREATE:
                 case OP_CALL:
+=======
+                case OP_CONTRACTCOVERSFEES:
+                case OP_CREATE:
+                case OP_CALL:
+                //Qtum does not evaluate smart contracts here, but rather externally.
+                //As a future refactoring, I propose that smart contract evaluation be moved
+                //here, and removed from all other places. That appears to more naturally match
+                //the architecture of bitcoin. It will also result in a major simplification of code.
+>>>>>>> origin/aggregate-signature
                 {
                     valtype scriptRest(pc - 1, pend);
                     stack.push_back(scriptRest);
@@ -1045,7 +1139,45 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 }
                 break;
                 ////////////////////////////////////////////////////////
+<<<<<<< HEAD
+=======
+                case OP_AGGREGATEVERIFY:
+                {
+                    checker.GetPrecomputedTransactionData(aggregateData);
+                    aggregateData.GetSerialization(messageForAggregateData);
+                    if (stack.size() < 2) {
+                        if (commentsOnFailure != nullptr) {
+                            *commentsOnFailure << "Opcode OP_AGGREGATEVERIFY requires at least two items on the stack,"
+                                               << " but there are only: " << stack.size() << ". ";
+                        }
+                        return false;
+                    }
+                    //if (commentsOnFailure != nullptr) {
+                    //    *commentsOnFailure << "DEBUG: got to stack evaluation. Stack size: " << stack.size() << ". ";
+                    //}
+                    if (!SignatureAggregate::VerifyMessageSignatureUncompressedPublicKeysSerializedStatic(
+                                messageForAggregateData, stack[stack.size() - 2], stack[stack.size() - 1],
+                                commentsOnFailure, true
+                    )) {
+                        return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
+                    }
+                    popstack(stack);
+                    popstack(stack);
+                    stack.push_back(vchTrue);
+                }
+                break;
+                case OP_SCARSIGNATURE:
+                if (!VerifySCARSignature(stack, checker, commentsOnFailure)) {
+                    return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
+                }
+                break;
+>>>>>>> origin/aggregate-signature
                 default:
+                    if (commentsOnFailure != nullptr) {
+                        *commentsOnFailure << "Don't know how to handle op code: "
+                                           << opcode <<  " ("
+                                           << GetOpName(opcode) << "). ";
+                    }
                     return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
             }
 
@@ -1059,9 +1191,9 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
         return set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
     }
 
-    if (!vfExec.empty())
+    if (!vfExec.empty()) {
         return set_error(serror, SCRIPT_ERR_UNBALANCED_CONDITIONAL);
-
+    }
     return set_success(serror);
 }
 
@@ -1188,16 +1320,82 @@ uint256 GetOutputsHash(const CTransaction& txTo) {
 
 } // namespace
 
-PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
+std::string PrecomputedTransactionDatA::ToString() const
 {
-    hashPrevouts = GetPrevoutHash(txTo);
-    hashSequence = GetSequenceHash(txTo);
-    hashOutputs = GetOutputsHash(txTo);
+    std::vector<unsigned char> serialization;
+    this->GetSerialization(serialization);
+    std::stringstream out;
+    out << "PrecomputedData{outs: " << this->hashOutputs.GetHex()
+        << ", prevouts: " << this->hashPrevouts.GetHex()
+        << ", sequence: " << this->hashSequence.GetHex()
+        << ", serialization: " << HexStr(serialization);
+    out << ", bytesToSignNoAncestor: ";
+    out << HexStr(this->bytesToSignForTransactionWithoutAncestor);
+    out << " }";
+    return out.str();
 }
 
-uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)
-{
+void PrecomputedTransactionDatA::GetSerialization(std::vector<unsigned char>& output) const {
+    output.resize(32 * 3);
+    int i = 0;
+    for (const unsigned char* iterator = this->hashOutputs.begin(); iterator != this->hashOutputs.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (const unsigned char* iterator = this->hashPrevouts.begin(); iterator != this->hashPrevouts.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (const unsigned char* iterator = this->hashSequence.begin(); iterator != this->hashSequence.end(); iterator ++) {
+        output[i] = *iterator;
+        i ++;
+    }
+    for (; i < 32 * 3; i ++) {
+        output[i] = 0;
+    }
+}
+
+void PrecomputedTransactionDatA::operator=(const PrecomputedTransactionDatA& other) {
+    this->bytesToSignForTransactionWithoutAncestor = other.bytesToSignForTransactionWithoutAncestor;
+    this->hashOutputs = other.hashOutputs;
+    this->hashSequence = other.hashSequence;
+    this->hashPrevouts = other.hashPrevouts;
+}
+
+PrecomputedTransactionDatA::PrecomputedTransactionDatA(const PrecomputedTransactionDatA& other) {
+    *this = other;
+}
+
+PrecomputedTransactionDatA::PrecomputedTransactionDatA() {
+    this->hashOutputs.SetNull();
+    this->hashSequence.SetNull();
+    this->hashPrevouts.SetNull();
+}
+
+void PrecomputedTransactionDatA::initFromPrecomputedTransactionData(const CTransaction& txTo) {
+    this->hashPrevouts = GetPrevoutHash(txTo);
+    this->hashSequence = GetSequenceHash(txTo);
+    this->hashOutputs = GetOutputsHash(txTo);
+    if (!txTo.IsWithoutAncestor(nullptr)) {
+        this->bytesToSignForTransactionWithoutAncestor.clear();
+    } else {
+        txTo.ToBytesForSignatureWithoutAncestor(this->bytesToSignForTransactionWithoutAncestor, nullptr);
+    }
+}
+
+PrecomputedTransactionDatA::PrecomputedTransactionDatA(const CTransaction& txTo) {
+    this->initFromPrecomputedTransactionData(txTo);
+}
+
+uint256 SignatureHash(
+    const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn,
+    int nHashType, const CAmount& amount, SigVersion sigversion,
+    const PrecomputedTransactionDatA *cache, std::stringstream *commentsNonSensitive
+) {
     if (sigversion == SIGVERSION_WITNESS_V0) {
+        if (commentsNonSensitive != nullptr) {
+            *commentsNonSensitive << "Computing signature hash for witnessed transaction. ";
+        }
         uint256 hashPrevouts;
         uint256 hashSequence;
         uint256 hashOutputs;
@@ -1241,6 +1439,9 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
 
         return ss.GetHash();
     }
+    if (commentsNonSensitive != nullptr) {
+        *commentsNonSensitive << "Computing signature hash for regular (non-witnessed) transaction. ";
+    }
 
     static const uint256 one(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
     if (nIn >= txTo.vin.size()) {
@@ -1262,6 +1463,12 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     // Serialize and hash
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
+    if (commentsNonSensitive != nullptr) {
+        std::stringstream serializedTransaction;
+        ::Serialize(serializedTransaction, txTmp);
+        ::Serialize(serializedTransaction, nHashType);
+        *commentsNonSensitive << "Hex of serialized transaction to be double-SHA2-ed: " << HexStr(serializedTransaction.str()) << ". ";
+    }
     return ss.GetHash();
 }
 
@@ -1270,7 +1477,33 @@ bool TransactionSignatureChecker::VerifySignature(const std::vector<unsigned cha
     return pubkey.Verify(sighash, vchSig);
 }
 
-bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
+TransactionSignatureChecker::TransactionSignatureChecker(const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn) : txTo(txToIn), nIn(nInIn), amount(amountIn), txdata(nullptr)
+{
+
+}
+
+TransactionSignatureChecker::TransactionSignatureChecker(
+    const CTransaction* txToIn,
+    unsigned int nInIn,
+    const CAmount& amountIn,
+    const PrecomputedTransactionDatA &txdataIn
+) : txTo(txToIn), nIn(nInIn), amount(amountIn) {
+    this->txdata = &txdataIn;
+}
+
+void TransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionDatA &output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        output.bytesToSignForTransactionWithoutAncestor.resize(0);
+        return;
+    }
+    output = *this->txdata;
+}
+
+bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion, std::stringstream* commentsOnFailure) const
 {
     CPubKey pubkey(vchPubKey);
     if (!pubkey.IsValid())
@@ -1284,9 +1517,12 @@ bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vch
     vchSig.pop_back();
 
     uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
-
-    if (!VerifySignature(vchSig, pubkey, sighash))
+    if (!VerifySignature(vchSig, pubkey, sighash)) {
+        if (commentsOnFailure != nullptr) {
+            *commentsOnFailure << "Failed to verify signature against message little-endian hash: " << sighash.GetReverseHex();
+        }
         return false;
+    }
 
     return true;
 }
@@ -1325,6 +1561,26 @@ bool TransactionSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) con
         return false;
 
     return true;
+}
+
+bool BaseSignatureChecker::CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion, std::stringstream *commentsOnFailure) const
+{
+    return false;
+}
+
+bool BaseSignatureChecker::CheckLockTime(const CScriptNum& nLockTime) const
+{
+     return false;
+}
+
+bool BaseSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
+{
+     return false;
+}
+
+void BaseSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionDatA& output) const {
+    PrecomputedTransactionDatA emptyResult;
+    output = emptyResult;
 }
 
 bool TransactionSignatureChecker::CheckSequence(const CScriptNum& nSequence) const
@@ -1426,7 +1682,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
     return true;
 }
 
-bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror)
+bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror, std::stringstream *comments)
 {
     static const CScriptWitness emptyWitness;
     if (witness == nullptr) {
@@ -1441,14 +1697,17 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     }
 
     std::vector<std::vector<unsigned char> > stack, stackCopy;
-    if (!EvalScript(stack, scriptSig, flags, checker, SIGVERSION_BASE, serror))
+    if (!EvalScript(stack, scriptSig, flags, checker, SIGVERSION_BASE, serror, comments)) {
         // serror is set
         return false;
-    if (flags & SCRIPT_VERIFY_P2SH)
+    }
+    if (flags & SCRIPT_VERIFY_P2SH) {
         stackCopy = stack;
-    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_BASE, serror))
+    }
+    if (!EvalScript(stack, scriptPubKey, flags, checker, SIGVERSION_BASE, serror, comments)) {
         // serror is set
         return false;
+    }
     if (stack.empty())
         return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
     if (CastToBool(stack.back()) == false)

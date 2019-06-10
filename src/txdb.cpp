@@ -19,6 +19,10 @@
 
 #include <boost/thread.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedTXDB() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
 static const char DB_BLOCK_FILES = 'f';

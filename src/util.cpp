@@ -385,6 +385,10 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
     return strStamped;
 }
 
+<<<<<<< HEAD
+=======
+#include <log_session.h>
+>>>>>>> origin/aggregate-signature
 int LogPrintStr(const std::string &str, bool useVMLog)
 {
 
@@ -402,15 +406,18 @@ int LogPrintStr(const std::string &str, bool useVMLog)
 
     if (fPrintToConsole)
     {
-        // print to console
-        ret = fwrite(strTimestamped.data(), 1, strTimestamped.size(), stdout);
-        fflush(stdout);
+        if (LogSession::flagLogsTurnedOn) {
+            LogSession::debugLog() << strTimestamped << LogSession::endL;
+        } else {
+            // print to console
+            ret = fwrite(strTimestamped.data(), 1, strTimestamped.size(), stdout);
+            fflush(stdout);
+        }
     }
     else if (fPrintToDebugLog)
     {
         boost::call_once(&DebugPrintInit, debugPrintInitFlag);
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
-
         // buffer if we haven't opened the log yet
         if (file == nullptr) {
             assert(vMsgsBeforeOpenLog);

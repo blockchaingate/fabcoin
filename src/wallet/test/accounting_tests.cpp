@@ -10,6 +10,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedAccountingTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 extern CWallet* pwalletMain;
 
 BOOST_FIXTURE_TEST_SUITE(accounting_tests, WalletTestingSetup)

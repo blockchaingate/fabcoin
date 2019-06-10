@@ -20,6 +20,13 @@
 
 #include <QRegularExpressionValidator>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedCreateContract() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 namespace CreateContract_NS
 {
 // Contract data names

@@ -30,6 +30,10 @@
 #include <qrencode.h>
 #endif
 
+void avoidCompilerWarningsDefinedButNotUsedReceiverRequestDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 QRImageWidget::QRImageWidget(QWidget *parent):
     QLabel(parent), contextMenu(0)
 {

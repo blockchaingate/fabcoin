@@ -16,6 +16,7 @@ class OptionsModel;
 
 namespace Ui {
     class ReceiveRequestDialog;
+
 }
 
 QT_BEGIN_NAMESPACE
@@ -49,6 +50,9 @@ class ReceiveRequestDialog : public QDialog
 {
     Q_OBJECT
 
+    void avoidCompilerWarningsDefinedButNotUsedReceiverRequestDialog() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 public:
     explicit ReceiveRequestDialog(QWidget *parent = 0);
     ~ReceiveRequestDialog();

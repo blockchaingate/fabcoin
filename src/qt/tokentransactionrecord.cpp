@@ -8,6 +8,13 @@
 
 #include <stdint.h>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedTransactionTransactionRecord() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 /*
  * Decompose CWallet transaction to model transaction records.
  */

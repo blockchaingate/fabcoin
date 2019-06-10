@@ -37,8 +37,17 @@
 
 #include <mutex>
 #include <condition_variable>
+#include <aggregate_schnorr_signature.h>
+#include <encodings_crypto.h>
+#include <crypto/sha3.h>
 
+<<<<<<< HEAD
 
+=======
+void avoidCompilerWarningsDefinedButNotUsedBlockChain() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+>>>>>>> origin/aggregate-signature
 
 extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry);
 void ScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& out, bool fIncludeHex);
@@ -231,6 +240,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     return result;
 }
 //////////////////////////////////////////////////////////////////////////// // fasc
+<<<<<<< HEAD
 UniValue executionResultToJSON(const dev::eth::ExecutionResult& exRes)
 {
     UniValue result(UniValue::VOBJ);
@@ -269,6 +279,9 @@ UniValue transactionReceiptToJSON(const dev::eth::TransactionReceipt& txRec)
     result.push_back(Pair("log", logEntries));
     return result;
 }
+=======
+
+>>>>>>> origin/aggregate-signature
 ////////////////////////////////////////////////////////////////////////////
 
 UniValue getblockcount(const JSONRPCRequest& request)
@@ -475,61 +488,16 @@ std::string EntryDescriptionString()
 void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
 {
     AssertLockHeld(mempool.cs);
-
-    info.push_back(Pair("size", (int)e.GetTxSize()));
-    info.push_back(Pair("fee", ValueFromAmount(e.GetFee())));
-    info.push_back(Pair("modifiedfee", ValueFromAmount(e.GetModifiedFee())));
-    info.push_back(Pair("time", e.GetTime()));
-    info.push_back(Pair("height", (int)e.GetHeight()));
-    info.push_back(Pair("descendantcount", e.GetCountWithDescendants()));
-    info.push_back(Pair("descendantsize", e.GetSizeWithDescendants()));
-    info.push_back(Pair("descendantfees", e.GetModFeesWithDescendants()));
-    info.push_back(Pair("ancestorcount", e.GetCountWithAncestors()));
-    info.push_back(Pair("ancestorsize", e.GetSizeWithAncestors()));
-    info.push_back(Pair("ancestorfees", e.GetModFeesWithAncestors()));
-    const CTransaction& tx = e.GetTx();
-    std::set<std::string> setDepends;
-    for (const CTxIn& txin : tx.vin)
-    {
-        if (mempool.exists(txin.prevout.hash))
-            setDepends.insert(txin.prevout.hash.ToString());
-    }
-
-    UniValue depends(UniValue::VARR);
-    for (const std::string& dep : setDepends)
-    {
-        depends.push_back(dep);
-    }
-
-    info.push_back(Pair("depends", depends));
+    e.ToJSON(info);
 }
 
 UniValue mempoolToJSON(bool fVerbose)
 {
-    if (fVerbose)
-    {
+    if (fVerbose) {
         LOCK(mempool.cs);
-        UniValue o(UniValue::VOBJ);
-        for (const CTxMemPoolEntry& e : mempool.mapTx)
-        {
-            const uint256& hash = e.GetTx().GetHash();
-            UniValue info(UniValue::VOBJ);
-            entryToJSON(info, e);
-            o.push_back(Pair(hash.ToString(), info));
-        }
-        return o;
-    }
-    else
-    {
-        std::vector<uint256> vtxid;
-        mempool.queryHashes(vtxid);
-
-        UniValue a(UniValue::VARR);
-        for (const uint256& hash : vtxid)
-            a.push_back(hash.ToString());
-
-        return a;
-    }
+        return mempool.ToJSON(true);
+    } else
+        return mempool.ToJSON(false);
 }
 
 UniValue getrawmempool(const JSONRPCRequest& request)
@@ -1025,6 +993,96 @@ UniValue getblock(const JSONRPCRequest& request)
     return blockToJSON(block, pblockindex, verbosity >= 2);
 }
 ////////////////////////////////////////////////////////////////////// // fasc
+<<<<<<< HEAD
+=======
+
+UniValue contractcode(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1) {
+        throw std::runtime_error(
+            "contractcode \"vmaddress\" \n"
+            "\nArgument:\n"
+            "1. \"vmaddress\"          (string, required) The address of the smart contract.\n"
+        );
+    }
+    UniValue contractAddress = request.params[0];
+    std::stringstream errorStream;
+    if (!contractAddress.isStr()) {
+        errorStream << "First parameter is required to be a string. ";
+        throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+    }
+    AddressKanban addressKanban;
+    if (!addressKanban.MakeFromBytes(contractAddress.get_str(), &errorStream)) {
+        errorStream << "Failed to extract contract address from " << contractAddress.write() << ". ";
+        throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+    }
+    dev::Address addressEVM = addressKanban.ToEthereumAddress();
+    UniValue result;
+    result.setObject();
+    LOCK(cs_main);
+    if (!globalState->addressHasCode(addressEVM)) {
+        errorStream << "Address " << addressEVM << " has no code. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    std::vector<unsigned char> code = globalState->code(addressEVM);
+    result.pushKV("smarContractId", HexStr(addressKanban.address));
+    result.pushKV("codeHex", HexStr(code));
+    result.pushKV("codeDisassembled", dev::eth::disassemble(code));
+    return result;
+}
+
+UniValue fetchscarshardpublickeys(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 2)
+        throw std::runtime_error(
+             "fetchshardpublickeys \"scarAddress\" \"shardId\" \n"
+             "\nArguments:\n"
+             "1. \"scarAddress\"      (hex string, 20 bytes, 40 hex chars, required) The account address. \n"
+             "2. \"shardId\"          (hex string, 32 bytes, 64 hex chars, required) The shard id. Ignored for the time being. \n"
+         );
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("contractId", request.params[0]);
+    result.pushKV("shardId", request.params[1]);
+    if (!request.params[0].isStr()) {
+        result.pushKV("error", "First parameter - contract id - not of type string. ");
+        return result;
+    }
+    std::stringstream errorStream;
+    std::vector<unsigned char> contractId, shardId;
+    if (!Encodings::fromHex(request.params[0].get_str(), contractId, &errorStream)) {
+        errorStream << "Failed to hex-decode contract id. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!request.params[1].isStr()) {
+        result.pushKV("error", "Second parameter - shard id - not of type string. ");
+        return result;
+    }
+    if (!Encodings::fromHex(request.params[1].get_str(), shardId, &errorStream)) {
+        errorStream << "Failed to hex-decode shard id. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    std::vector<std::vector<unsigned char> > publicKeysSerialized;
+    UniValue comments;
+    if (!FetchSCARShardPublicKeysInternal(contractId, shardId, publicKeysSerialized, &errorStream, &comments)) {
+        result.pushKV("error", errorStream.str());
+    }
+    UniValue thePublicKeys;
+    thePublicKeys.setArray();
+    for (unsigned i = 0; i < publicKeysSerialized.size(); i ++) {
+        thePublicKeys.push_back(Encodings::toHexString(publicKeysSerialized[i]));
+    }
+    result.pushKV("publicKeys", thePublicKeys);
+    if (comments.size() > 0) {
+        result.pushKV("SCARCallResult", comments);
+    }
+    return result;
+}
+
+>>>>>>> origin/aggregate-signature
 UniValue callcontract(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
@@ -1042,6 +1100,7 @@ UniValue callcontract(const JSONRPCRequest& request)
     std::string strAddr = request.params[0].get_str();
     std::string data = request.params[1].get_str();
 
+<<<<<<< HEAD
     if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
@@ -1063,14 +1122,44 @@ UniValue callcontract(const JSONRPCRequest& request)
             fascSenderAddress.GetKeyID(keyid);
             senderAddress = dev::Address(HexStr(valtype(keyid.begin(),keyid.end())));
         }else{
+=======
+    if (((unsigned) chainActive.Height()) < Params().GetConsensus().ContractHeight)
+       throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
+
+    if (data.size() % 2 != 0 || !CheckHex(data))
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
+
+    if (strAddr.size() != 40 || !CheckHex(strAddr))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect address");
+
+    dev::Address addrAccount(strAddr);
+    if (!globalState->addressInUse(addrAccount))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address does not exist");
+
+    dev::Address senderAddress;
+    if (request.params.size() >= 3) {
+        CFabcoinAddress fascSenderAddress(request.params[2].get_str());
+        if (fascSenderAddress.IsValid()) {
+            CKeyID keyid;
+            fascSenderAddress.GetKeyID(keyid);
+            senderAddress = dev::Address(HexStr(valtype(keyid.begin(),keyid.end())));
+        } else {
+>>>>>>> origin/aggregate-signature
             senderAddress = dev::Address(request.params[2].get_str());
         }
     }
     uint64_t gasLimit = request.params.size() >= 4 ? request.params[3].get_int64() : 0;
+<<<<<<< HEAD
 
     std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), senderAddress, gasLimit);
 
     if(fRecordLogOpcodes){
+=======
+    std::stringstream comments;
+    std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), senderAddress, gasLimit, &comments);
+
+    if (fRecordLogOpcodes){
+>>>>>>> origin/aggregate-signature
         writeVMlog(execResults);
     }
 
@@ -1078,6 +1167,10 @@ UniValue callcontract(const JSONRPCRequest& request)
     result.push_back(Pair("address", strAddr));
     result.push_back(Pair("executionResult", executionResultToJSON(execResults[0].execRes)));
     result.push_back(Pair("transactionReceipt", transactionReceiptToJSON(execResults[0].txRec)));
+<<<<<<< HEAD
+=======
+    result.pushKV("comments", comments.str());
+>>>>>>> origin/aggregate-signature
 
     return result;
 }
@@ -1484,7 +1577,11 @@ UniValue searchlogs(const JSONRPCRequest& request)
     if(!fLogEvents)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
+<<<<<<< HEAD
     if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+=======
+    if (chainActive.Height() <  (signed) Params().GetConsensus().ContractHeight)
+>>>>>>> origin/aggregate-signature
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     int curheight = 0;
@@ -1493,7 +1590,11 @@ UniValue searchlogs(const JSONRPCRequest& request)
 
     SearchLogsParams params(request.params);
 
+<<<<<<< HEAD
     std::vector<std::vector<uint256>> hashesToBlock;
+=======
+    std::vector<std::vector<uint256> > hashesToBlock;
+>>>>>>> origin/aggregate-signature
 
     curheight = pblocktree->ReadHeightIndex(params.fromBlock, params.toBlock, params.minconf, hashesToBlock, params.addresses);
 
@@ -1599,6 +1700,7 @@ UniValue listcontracts(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
+<<<<<<< HEAD
     if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
@@ -1611,6 +1713,20 @@ UniValue listcontracts(const JSONRPCRequest& request)
 
     int maxDisplay=20;
     if (request.params.size() > 1){
+=======
+    if (((unsigned) chainActive.Height()) < Params().GetConsensus().ContractHeight)
+       throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
+
+    int start = 1;
+    if (request.params.size() > 0) {
+        start = request.params[0].get_int();
+        if (start <= 0)
+            throw JSONRPCError(RPC_TYPE_ERROR, "Invalid start, min=1");
+    }
+
+    int maxDisplay = 20;
+    if (request.params.size() > 1) {
+>>>>>>> origin/aggregate-signature
         maxDisplay = request.params[1].get_int();
         if (maxDisplay <= 0)
             throw JSONRPCError(RPC_TYPE_ERROR, "Invalid maxDisplay");
@@ -1619,6 +1735,7 @@ UniValue listcontracts(const JSONRPCRequest& request)
     UniValue result(UniValue::VOBJ);
 
     auto map = globalState->addresses();
+<<<<<<< HEAD
     int contractsCount=(int)map.size();
 
     if (contractsCount>0 && start > contractsCount)
@@ -1631,6 +1748,21 @@ UniValue listcontracts(const JSONRPCRequest& request)
         result.push_back(Pair(it->first.hex(),ValueFromAmount(CAmount(globalState->balance(it->first)))));
         i++;
         if(i==maxDisplay)break;
+=======
+    int contractsCount = (int) map.size();
+
+    if (contractsCount > 0 && start > contractsCount)
+        throw JSONRPCError(RPC_TYPE_ERROR, "start greater than max index "+ itostr(contractsCount));
+
+    int itStartPos = std::min(start - 1, contractsCount);
+    int i = 0;
+    for (auto it = std::next(map.begin(), itStartPos); it != map.end(); it ++) {
+        result.push_back(Pair(it->first.hex(), CAmount(globalState->balance(it->first))));
+        i++;
+        if (i == maxDisplay) {
+            break;
+        }
+>>>>>>> origin/aggregate-signature
     }
 
     return result;
@@ -1801,12 +1933,19 @@ UniValue gettxoutsetinfo(const JSONRPCRequest& request)
 
 UniValue gettxoutset(const JSONRPCRequest& request)
 {
+<<<<<<< HEAD
     if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
         "gettxoutset\n"
         "\nReturns the unspent transaction output set.\n"
         "\nArguments:\n"
         "1. \"address\"             (string, optional) The address to get utxo from\n"
+=======
+    if (request.fHelp || request.params.size() != 0)
+        throw std::runtime_error(
+        "gettxoutset\n"
+        "\nReturns the unspent transaction output set.\n"
+>>>>>>> origin/aggregate-signature
         "Note this call may take some time.\n"
         "\nResult:\n"
         "{\n"
@@ -1819,10 +1958,13 @@ UniValue gettxoutset(const JSONRPCRequest& request)
 
     UniValue ret(UniValue::VARR);
 
+<<<<<<< HEAD
     std::string address = "";
     if( request.params.size() > 0 )
         address = request.params[0].get_str();
 
+=======
+>>>>>>> origin/aggregate-signature
     CCoinsStats stats;
     FlushStateToDisk();
 
@@ -1850,21 +1992,33 @@ UniValue gettxoutset(const JSONRPCRequest& request)
             {
                 for( const CTxDestination addr: addresses )
                 {
+<<<<<<< HEAD
                     if( (address.length() > 0 && address == CFabcoinAddress(addr).ToString())
                         ||  address.length() == 0 )
                     {
                         strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
                         ret.push_back(strUtxo.str());
                     }
+=======
+                    //strUtxo << coin.nHeight << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+
+                    strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+                    ret.push_back(strUtxo.str());
+>>>>>>> origin/aggregate-signature
                 }
             }
             else
             {
+<<<<<<< HEAD
                 if( address.length() ==  0 )
                 {
                     strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << "noaddress" << ", " << coin.out.nValue ;
                     ret.push_back(strUtxo.str());
                 }
+=======
+                strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << "noaddress" << ", " << coin.out.nValue ;
+                ret.push_back(strUtxo.str());
+>>>>>>> origin/aggregate-signature
             }
             outputs[key.n] = std::move(coin);
         }
@@ -2476,6 +2630,7 @@ UniValue getchaintxstats(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand commands[] =
+<<<<<<< HEAD
 { //  category              name                      actor (function)         okSafe argNames
   //  --------------------- ------------------------  -----------------------  ------ ----------
     { "blockchain",         "getblockchaininfo",      &getblockchaininfo,      true,  {} },
@@ -2513,6 +2668,47 @@ static const CRPCCommand commands[] =
     { "blockchain",         "gettransactionreceipt",  &gettransactionreceipt,  true,  {"hash"} },
     { "blockchain",         "searchlogs",             &searchlogs,             true,  {"fromBlock", "toBlock", "address", "topics"} },
     { "blockchain",         "waitforlogs",            &waitforlogs,            true,  {"fromBlock", "nblocks", "address", "topics"} },
+=======
+{ //  category              name                        actor (function)           okSafe argNames
+  //  --------------------- --------------------------  -------------------------  ------ ----------
+    { "blockchain",         "getblockchaininfo",        &getblockchaininfo,        true,  {} },
+    { "blockchain",         "getchaintxstats",          &getchaintxstats,          true,  {"nblocks", "blockhash"} },
+    { "blockchain",         "getbestblockhash",         &getbestblockhash,         true,  {} },
+    { "blockchain",         "getblockcount",            &getblockcount,            true,  {} },
+    { "blockchain",         "getblock",                 &getblock,                 true,  {"blockhash","verbosity|verbose","legacy"} },
+    { "blockchain",         "getblockhash",             &getblockhash,             true,  {"height"} },
+    { "blockchain",         "getblockheader",           &getblockheader,           true,  {"blockhash","verbose","legacy"} },
+    { "blockchain",         "getchaintips",             &getchaintips,             true,  {} },
+    { "blockchain",         "getdifficulty",            &getdifficulty,            true,  {} },
+    { "blockchain",         "getmempoolancestors",      &getmempoolancestors,      true,  {"txid","verbose"} },
+    { "blockchain",         "getmempooldescendants",    &getmempooldescendants,    true,  {"txid","verbose"} },
+    { "blockchain",         "getmempoolentry",          &getmempoolentry,          true,  {"txid"} },
+    { "blockchain",         "getmempoolinfo",           &getmempoolinfo,           true,  {} },
+    { "blockchain",         "getrawmempool",            &getrawmempool,            true,  {"verbose"} },
+    { "blockchain",         "gettxout",                 &gettxout,                 true,  {"txid","n","include_mempool"} },
+    { "blockchain",         "gettxoutsetinfo",          &gettxoutsetinfo,          true,  {} },
+    { "blockchain",         "gettxoutset",              &gettxoutset,              true,  {} },
+    { "blockchain",         "pruneblockchain",          &pruneblockchain,          true,  {"height"} },
+    { "blockchain",         "verifychain",              &verifychain,              true,  {"checklevel","nblocks"} },
+    { "blockchain",         "getaccountinfo",           &getaccountinfo,           true,  {"contract_address"} },
+    { "blockchain",         "getstorage",               &getstorage,               true,  {"address, index, blockNum"} },
+
+    { "blockchain",         "preciousblock",            &preciousblock,            true,  {"blockhash"} },
+
+    {"blockchain",          "contractcode",             &contractcode,             true,  {"address"}},
+    { "blockchain",         "callcontract",             &callcontract,             true,  {"address","data"} }, // fasc
+    { "blockchain",         "fetchscarshardpublickeys", &fetchscarshardpublickeys, true,  {"address","data"} }, // fasc
+    /* Not shown in help */
+    { "hidden",             "invalidateblock",          &invalidateblock,          true,  {"blockhash"} },
+    { "hidden",             "reconsiderblock",          &reconsiderblock,          true,  {"blockhash"} },
+    { "hidden",             "waitfornewblock",          &waitfornewblock,          true,  {"timeout"} },
+    { "hidden",             "waitforblock",             &waitforblock,             true,  {"blockhash","timeout"} },
+    { "hidden",             "waitforblockheight",       &waitforblockheight,       true,  {"height","timeout"} },
+    { "blockchain",         "listcontracts",            &listcontracts,            true,  {"start", "maxDisplay"} },
+    { "blockchain",         "gettransactionreceipt",    &gettransactionreceipt,    true,  {"hash"} },
+    { "blockchain",         "searchlogs",               &searchlogs,               true,  {"fromBlock", "toBlock", "address", "topics"} },
+    { "blockchain",         "waitforlogs",              &waitforlogs,              true,  {"fromBlock", "nblocks", "address", "topics"} },
+>>>>>>> origin/aggregate-signature
 };
 
 void RegisterBlockchainRPCCommands(CRPCTable &t)

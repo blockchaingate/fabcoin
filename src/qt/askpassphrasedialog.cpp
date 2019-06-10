@@ -20,6 +20,10 @@
 #include <QMessageBox>
 #include <QPushButton>
 
+void avoidCompilerWarningsDefinedButNotUsedAskPassPhraseDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AskPassphraseDialog),

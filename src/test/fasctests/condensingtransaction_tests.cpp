@@ -1,6 +1,13 @@
 #include <boost/test/unit_test.hpp>
 #include <fasctests/test_utils.h>
 
+<<<<<<< HEAD
+=======
+void avoidCompilerWarningsDefinedButNotUsedCondensingTransactionTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+>>>>>>> origin/aggregate-signature
 std::vector<valtype> code = {
     /*
         contract Sender1 {

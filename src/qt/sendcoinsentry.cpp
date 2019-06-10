@@ -15,6 +15,10 @@
 #include <QApplication>
 #include <QClipboard>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionSendCoinsEntry() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *parent) :
     QStackedWidget(parent),
     ui(new Ui::SendCoinsEntry),

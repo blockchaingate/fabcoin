@@ -7,6 +7,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedReverseLockTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(reverselock_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(reverselock_basics)

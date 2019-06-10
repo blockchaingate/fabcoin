@@ -11,6 +11,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedPOWTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(pow_tests, BasicTestingSetup)
 #if 0 // TODO: change interface definition of CalculateNextWorkRequired
 /* Test calculation of next difficulty target with no constraints applying */

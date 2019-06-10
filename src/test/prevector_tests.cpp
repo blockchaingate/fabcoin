@@ -13,6 +13,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedPVectorTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(PrevectorTests, TestingSetup)
 
 template<unsigned int N, typename T>

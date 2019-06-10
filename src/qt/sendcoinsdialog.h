@@ -30,6 +30,9 @@ class SendCoinsDialog : public QDialog
 {
     Q_OBJECT
 
+    void avoidCompilerWarningsDefinedButNotUsedSendCoinsDialog() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 public:
     explicit SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = 0);
     ~SendCoinsDialog();
