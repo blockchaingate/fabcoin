@@ -2,6 +2,10 @@
 #include <fasctests/test_utils.h>
 #include <script/standard.h>
 
+void avoidCompilerWarningsDefinedButNotUsedDGPTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace dgpTest{
 
 std::vector<valtype> code = {

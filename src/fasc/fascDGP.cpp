@@ -1,5 +1,10 @@
 #include <fasc/fascDGP.h>
 
+void avoidCompilerWarningsDefinedButNotUsedFascDGP() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
+
 void FascDGP::initDataEIP158() {
     std::vector<uint32_t> tempData = {dev::eth::EIP158Schedule.tierStepGas[0], dev::eth::EIP158Schedule.tierStepGas[1], dev::eth::EIP158Schedule.tierStepGas[2],
                                       dev::eth::EIP158Schedule.tierStepGas[3], dev::eth::EIP158Schedule.tierStepGas[4], dev::eth::EIP158Schedule.tierStepGas[5],

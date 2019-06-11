@@ -17,6 +17,7 @@
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
+#include <log_session.h>
 #include <httpserver.h>
 #include <httprpc.h>
 #include <key.h>
@@ -31,6 +32,7 @@
 #include <rpc/server.h>
 #include <rpc/register.h>
 #include <rpc/blockchain.h>
+#include <rpc/aggregate_signature_test.h>
 #include <script/standard.h>
 #include <script/sigcache.h>
 #include <scheduler.h>
@@ -40,6 +42,7 @@
 #include <torcontrol.h>
 #include <ui_interface.h>
 #include <util.h>
+#include <utilstrencodings.h>
 #include <utilmoneystr.h>
 #include <validationinterface.h>
 #ifdef ENABLE_WALLET

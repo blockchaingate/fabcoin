@@ -82,8 +82,9 @@ CFeeRate CWallet::m_discard_rate = CFeeRate(DEFAULT_DISCARD_FEE);
 
 const uint256 CMerkleTx::ABANDON_HASH(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
 
-
-
+void avoidCompilerWarningsDefinedButNotUsedWallet() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 /** @defgroup mapWallet
  *

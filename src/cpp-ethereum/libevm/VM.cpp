@@ -159,7 +159,7 @@ void VM::fetchInstruction()
 //
 // interpreter entry point
 
-owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
+owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp, std::stringstream* comments)
 {
 	io_gas = &_io_gas;
 	m_io_gas = uint64_t(_io_gas);
@@ -173,8 +173,8 @@ owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
 		// trampoline to minimize depth of call stack when calling out
 		m_bounce = &VM::initEntry;
 		do
-			(this->*m_bounce)();
-		while (m_bounce);
+            (this->*m_bounce)(comments);
+        while (this->m_bounce != nullptr);
 		
 	}
 	catch (...)
@@ -190,7 +190,7 @@ owning_bytes_ref VM::exec(u256& _io_gas, ExtVMFace& _ext, OnOpFunc const& _onOp)
 //
 // main interpreter loop and switch
 //
-void VM::interpretCases()
+void VM::interpretCases(std::stringstream* commentsOnFailure)
 {
 	INIT_CASES
 	DO_CASES
@@ -208,8 +208,12 @@ void VM::interpretCases()
 		CASE(DELEGATECALL)
 
 			// Pre-homestead
-			if (!m_schedule->haveDelegateCall)
-				throwBadInstruction();
+        if (!m_schedule->haveDelegateCall) {
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "DEBUG: about to throw exception due to delegate call.\n";
+            }
+            throwBadInstruction();
+        }
 
 		CASE(CALL)
 		CASE(CALLCODE)
@@ -319,6 +323,11 @@ void VM::interpretCases()
 			ON_OP();
 			updateIOGas();
 
+            LogEntry theEntry = LogEntry(
+                this->m_ext->myAddress,
+                {},
+                (bytesConstRef(m_mem.data() + (uint64_t) *m_SP, (uint64_t) *(m_SP - 1))).toBytes()
+            );
 			m_ext->log({}, bytesConstRef(m_mem.data() + (uint64_t)*m_SP, (uint64_t)*(m_SP - 1)));
 			m_SP -= 2;
 		}
@@ -826,6 +835,9 @@ void VM::interpretCases()
 			++m_PC;
 			m_PC += m_code[m_PC];
 #else
+            if (commentsOnFailure != nullptr) {
+                *commentsOnFailure << "Bad instruction: " << (int) this->m_OP;
+            }
 			throwBadInstruction();
 #endif
 		}

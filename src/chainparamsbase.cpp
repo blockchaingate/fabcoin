@@ -13,7 +13,10 @@
 const std::string CBaseChainParams::MAIN = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::REGTEST = "regtest";
+const std::string CBaseChainParams::REGTESTWITHNET = "regtestwithnet";
 const std::string CBaseChainParams::UNITTEST = "unittest";
+std::string CBaseChainParams::kanbanId = "";
+std::vector<unsigned char> CBaseChainParams::kanbanIdBytes;
 
 void AppendParamsHelpMessages(std::string& strUsage, bool debugHelp)
 {
@@ -39,6 +42,19 @@ public:
 
 /**
  * Testnet (v3)
+ */
+class CBaseTestNetParams : public CBaseChainParams
+{
+public:
+    CBaseTestNetParams()
+    {
+        nRPCPort = 18667;
+        strDataDir = "testnet3";
+    }
+};
+
+/*
+ * Regression test
  */
 class CBaseRegTestWithNetParams : public CBaseChainParams
 {

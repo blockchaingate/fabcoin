@@ -186,8 +186,9 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
-    for (const auto& txout : tx.vout)
-    {
+    int outIndex = - 1;
+    for (const auto& txout : tx.vout) {
+        outIndex ++;
         if (txout.IsEmpty() && !tx.IsCoinBase() )
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-vout-empty");
         if (txout.nValue < 0)
@@ -203,11 +204,19 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
             std::vector<valtype> vSolutions;
             txnouttype whichType;
             if (!Solver(txout.scriptPubKey, whichType, vSolutions, true)) {
-                return state.DoS(100, false, REJECT_INVALID, "bad-txns-contract-nonstandard");
+                std::stringstream out;
+                out << "Output index " << outIndex
+                << " (" << outIndex + 1 << " out of " << tx.vout.size() << ") has non-standard contract. ";
+                return state.DoS(100, false, REJECT_INVALID, out.str());
             }
         }
         ///////////////////////////////////////////////////////////
     }
+    return true;
+}
+bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fCheckDuplicateInputs)
+{
+    
 
     // Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
     if (fCheckDuplicateInputs) {

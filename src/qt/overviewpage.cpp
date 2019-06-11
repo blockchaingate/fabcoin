@@ -39,6 +39,10 @@
 #define TYPE_WIDTH 140
 #define AMOUNT_WIDTH 205
 
+void avoidCompilerWarningsDefinedButNotUsedOverviewPage() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 class TxViewDelegate : public QAbstractItemDelegate
 {
     Q_OBJECT

@@ -9,6 +9,10 @@
 #include <pubkey.h>
 #include <script/standard.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCompressor() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 bool CScriptCompressor::IsToKeyID(CKeyID &hash) const
 {
     if (script.size() == 25 && script[0] == OP_DUP && script[1] == OP_HASH160

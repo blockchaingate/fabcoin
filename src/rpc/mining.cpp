@@ -179,8 +179,6 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
     int nHeightEnd = 0;
     int nHeight = 0;
     int nCounter = 0;
-    int headerlen = 0;
-
     {   // Don't keep cs_main locked
         LOCK(cs_main);
         nHeight = chainActive.Height();
@@ -213,9 +211,18 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
 
     while (nHeight < nHeightEnd)
     {
+        std::stringstream comments;
+        std::stringstream* commentsPointer = &comments;
 
         //std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript));
-        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript, true, nullptr, 0, GetAdjustedTime()+POW_MINER_MAX_TIME));
+        std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(Params()).CreateNewBlock(
+            coinbaseScript->reserveScript,
+            commentsPointer,
+            true,
+            nullptr,
+            0,
+            GetAdjustedTime() + POW_MINER_MAX_TIME
+        ));
 
         if (!pblocktemplate.get())
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
@@ -618,7 +625,7 @@ UniValue getblocktemplate(const JSONRPCRequest& request)
             // TestBlockValidity only supports blocks built on the current Tip
             if (block.hashPrevBlock != pindexPrev->GetBlockHash())
                 return "inconclusive-not-best-prevblk";
-            if (block.nHeight != (uint32_t)pindexPrev->nHeight + 1)
+            if (block.nHeight != (uint32_t) pindexPrev->nHeight + 1)
                 return "inconclusive-bad-height";
             CValidationState state;
             TestBlockValidity(state, Params(), block, pindexPrev, false, true);

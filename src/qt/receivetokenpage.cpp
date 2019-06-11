@@ -6,6 +6,10 @@
 #include <receiverequestdialog.h>
 #include <platformstyle.h>
 
+void avoidCompilerWarningsDefinedButNotUsedReceiveTokenPage() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 ReceiveTokenPage::ReceiveTokenPage(const PlatformStyle *_platformStyle, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ReceiveTokenPage),

@@ -25,6 +25,8 @@
 #include <uint256.h>
 #include <utilstrencodings.h>
 #include <utilmoneystr.h>
+#include "aggregate_schnorr_signature.h"
+#include <encodings_crypto.h>
 #ifdef ENABLE_WALLET
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
@@ -521,7 +523,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             "         \"data\":\"hex\",                (string, required) Hex data to add in the call output\n"
             "         \"amount\":x.xxx,                (numeric, optional) Value in fasc to send with the call, should be a valid amount, default 0\n"
             "         \"gasLimit\":x,                  (numeric, optional) The gas limit for the transaction\n"
-            "         \"gasPrice\":x.xxx               (numeric, optional) The gas price for the transaction\n"
+            "         \"gasPrice\":x.xxxxxxxx          (numeric, optional) The gas price for the transaction\n"
             "       } \n"
             "      ,...\n"
             "    }\n"
@@ -653,7 +655,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             }
 
             // Get gas limit
-            uint64_t nGasLimit=DEFAULT_GAS_LIMIT_OP_SEND;
+            uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
             if (Contract.exists("gasLimit")){
                 nGasLimit = Contract["gasLimit"].get_int64();
                 if (nGasLimit > blockGasLimit)
@@ -682,6 +684,30 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
 
             // Add call contract output
             CScript scriptPubKey = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex(datahex) << ParseHex(contractaddress) << OP_CALL;
+            CTxOut out(nAmount, scriptPubKey);
+            rawTx.vout.push_back(out);
+        } else if (name_ == "aggregateSignature" ) {
+            std::stringstream errorStream;
+            if ((uint32_t) chainActive.Height() <  (uint32_t) Params().GetConsensus().AggregateSignatureHeight) {
+                errorStream << "This method can only be used after aggregate signature fork, block "
+                            << Params().GetConsensus().AggregateSignatureHeight << ". ";
+                throw JSONRPCError(RPC_METHOD_NOT_FOUND, errorStream.str());
+            }
+            UniValue aggregation = sendTo[name_];
+            std::vector<unsigned char> publicKeysSerialized;
+            if (!GetPublicKeysFromAggregateSignature(aggregation, publicKeysSerialized, &errorStream)) {
+                errorStream << "Error processing aggregation input: " << aggregation.write();
+                throw JSONRPCError(RPC_INVALID_PARAMETER, errorStream.str());
+            }
+            // Get amount
+            CAmount nAmount = 0;
+            if (aggregation.exists("amount")){
+                nAmount = AmountFromValue(aggregation["amount"]);
+                errorStream << "Error: the amount I got: " << nAmount << " appears to be negative. ";
+                if (nAmount < 0)
+                    throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+            }
+            CScript scriptPubKey = CScript() << publicKeysSerialized << OP_AGGREGATEVERIFY;
             CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         } else {
@@ -1309,7 +1335,8 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
         CValidationState state;
         bool fMissingInputs;
         bool fLimitFree = true;
-        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true)) {
+        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true, &comments)) {
+            comments << state.GetRejectCode() << ": " << state.GetRejectReason();
             if (state.IsInvalid()) {
                 throw JSONRPCError(RPC_TRANSACTION_REJECTED, comments.str());
             } else {

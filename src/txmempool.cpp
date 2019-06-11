@@ -18,6 +18,10 @@
 #include <utilmoneystr.h>
 #include <utiltime.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTXMempool() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                                  int64_t _nTime, unsigned int _entryHeight,
                                  bool _spendsCoinbase, int64_t _sigOpsCost, LockPoints lp, CAmount _nMinGasPrice):

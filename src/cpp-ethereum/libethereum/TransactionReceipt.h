@@ -43,6 +43,7 @@ public:
 	LogBloom const& bloom() const { return m_bloom; }
 	LogEntries const& log() const { return m_log; }
 
+    std::string ToStringLogs()const;
 	void streamRLP(RLPStream& _s) const;
 
 	bytes rlp() const { RLPStream s; streamRLP(s); return s.out(); }

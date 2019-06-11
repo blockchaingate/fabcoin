@@ -9,6 +9,10 @@
 #include <QDebug>
 #include <utility>
 
+void avoidCompilerWarningsDefinedButNotUsedContractTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 struct ContractTableEntry
 {
     QString label;

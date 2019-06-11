@@ -10,6 +10,10 @@
 #include <netbase.h>
 #include <random.h>
 
+void avoidCompilerWarningsDefinedButNotUsedAddrmanTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 class CAddrManTest : public CAddrMan
 {
     uint64_t state;

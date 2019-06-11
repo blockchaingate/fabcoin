@@ -365,10 +365,44 @@ public:
     unsigned int GetTotalSize() const;
 
 //////////////////////////////////////// // fabcoin
-    bool HasCreateOrCall() const;
+    bool HasCreateOrCallInOutputs() const;
+    bool HasNonFeeCallOrCreateInOutputs() const;
     bool HasOpSpend() const;
 ////////////////////////////////////////
 
+    bool IsWithoutAncestor(std::stringstream* commentsOnFalse) const
+    {
+        if (this->vin.size() != 1) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "To avoid a potential malleability attack vector, "
+                                 << "transactions without ancestors are allowed to have a single input only. ";
+            }
+            return false;
+        }
+        const CTxIn& input = this->vin[0];
+        if (!input.scriptWitness.IsNull()) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "At the moment, transaction witness is not allowed for transactions without ancestor. ";
+            }
+            return false;
+        }
+        if (input.nSequence != CTxIn::SEQUENCE_FINAL) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "Transactions without ancestor are required to have "
+                                 << CTxIn::SEQUENCE_FINAL
+                                 << " in their sequence entry, this one has: "
+                                 << input.nSequence << " instead. ";
+            }
+            return false;
+        }
+        if (this->vout.size() == 0) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "Transactions without ancestor are required to have at least one output. ";
+            }
+            return false;
+        }
+        return input.prevout.IsWithoutAncestor();
+    }
     bool IsCoinBase() const
     {
         return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);

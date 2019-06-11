@@ -19,6 +19,9 @@
 #include <unordered_set>
 #include <memory>
 #include <random.h>
+void avoidCompilerWarningsDefinedButNotUsedCheckQueueTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 // BasicTestingSetup not sufficient because nScriptCheckThreads is not set
 // otherwise.

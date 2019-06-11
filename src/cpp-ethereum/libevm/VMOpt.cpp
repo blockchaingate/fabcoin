@@ -255,10 +255,11 @@ void VM::optimize()
 //
 // Init interpreter on entry.
 //
-void VM::initEntry()
+void VM::initEntry(stringstream *commentsOnFailure)
 {
+    (void) commentsOnFailure;
 	m_bounce = &VM::interpretCases; 	
-	interpretCases(); // first call initializes jump table
+    interpretCases(commentsOnFailure); // first call initializes jump table
 	initMetrics();
 	optimize();
 }

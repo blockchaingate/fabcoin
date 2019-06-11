@@ -15,6 +15,11 @@
 #include <util.h>
 #include <net.h>
 
+
+void avoidCompilerWarningsDefinedButNotUsedFeeBumper() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 // Calculate the size of the transaction assuming all signatures are max size
 // Use DummySignatureCreator, which inserts 72 byte signatures everywhere.
 // TODO: re-use this in CWallet::CreateTransaction (right now

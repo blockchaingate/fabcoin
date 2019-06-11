@@ -17,6 +17,10 @@
 #include <guiutil.h>
 #include <QClipboard>
 
+void avoidCompilerWarningsDefinedButNotUsedCallContract() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace CallContract_NS
 {
 // Contract data names

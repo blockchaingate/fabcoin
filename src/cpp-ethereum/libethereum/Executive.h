@@ -139,14 +139,16 @@ public:
 	void finalize();
 	/// Begins execution of a transaction. You must call finalize() following this.
 	/// @returns true if the transaction is done, false if go() must be called.
-	bool execute();
+    bool execute(std::stringstream* commentsNullForNone);
 	/// @returns the transaction from initialize().
 	/// @warning Only valid after initialize().
 	Transaction const& t() const { return m_t; }
 	/// @returns the log entries created by this operation.
 	/// @warning Only valid after finalise().
-	LogEntries const& logs() const { return m_logs; }
-	/// @returns total gas used in the transaction/operation.
+    LogEntries const& logs() const { return m_logs; }
+    static std::string ToStringLogs(const LogEntries& input);
+    void GetAggregationData(std::vector<std::vector<unsigned char> >& outputData, dev::h160& outputContractAddress, std::stringstream* comments) const;
+    /// @returns total gas used in the transaction/operation.
 	/// @warning Only valid after finalise().
 	u256 gasUsed() const;
 
@@ -157,14 +159,14 @@ public:
 	bool create(Address _txSender, u256 _endowment, u256 _gasPrice, u256 _gas, bytesConstRef _code, Address _originAddress);
 	/// Set up the executive for evaluating a bare CALL (message call) operation.
 	/// @returns false iff go() must be called (and thus a VM execution in required).
-	bool call(Address _receiveAddress, Address _txSender, u256 _txValue, u256 _gasPrice, bytesConstRef _txData, u256 _gas);
-	bool call(CallParameters const& _cp, u256 const& _gasPrice, Address const& _origin);
+    bool call(Address _receiveAddress, Address _txSender, u256 _txValue, u256 _gasPrice, bytesConstRef _txData, u256 _gas, std::stringstream *comments);
+    bool call(CallParameters const& _cp, u256 const& _gasPrice, Address const& _origin, std::stringstream *comments);
 	/// Finalise an operation through accruing the substate into the parent context.
 	void accrueSubState(SubState& _parentContext);
 
 	/// Executes (or continues execution of) the VM.
 	/// @returns false iff go() must be called again to finish the transaction.
-	bool go(OnOpFunc const& _onOp = OnOpFunc());
+    bool go(OnOpFunc const& _onOp = OnOpFunc(), std::stringstream* commentsNullForNone = nullptr);
 
 	/// Operation function for providing a simple trace of the VM execution.
 	static OnOpFunc simpleTrace();
@@ -185,6 +187,9 @@ public:
 
 	/// Revert all changes made to the state by this execution.
 	void revert();
+    std::shared_ptr<ExtVM> getExternalVMFace() {
+        return this->m_ext;
+    }
 
 private:
 	State& m_s;							///< The state to which this operation/transaction is applied.

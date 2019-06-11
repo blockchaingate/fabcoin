@@ -41,6 +41,9 @@
 #include <encodings_crypto.h>
 #include <crypto/sha3.h>
 
+void avoidCompilerWarningsDefinedButNotUsedBlockChain() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 extern void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry);
 void ScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& out, bool fIncludeHex);
@@ -233,44 +236,7 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* blockindex, bool tx
     return result;
 }
 //////////////////////////////////////////////////////////////////////////// // fasc
-UniValue executionResultToJSON(const dev::eth::ExecutionResult& exRes)
-{
-    UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("gasUsed", CAmount(exRes.gasUsed)));
-    std::stringstream ss;
-    ss << exRes.excepted;
-    result.push_back(Pair("excepted", ss.str()));
-    result.push_back(Pair("newAddress", exRes.newAddress.hex()));
-    result.push_back(Pair("output", HexStr(exRes.output)));
-    result.push_back(Pair("codeDeposit", static_cast<int32_t>(exRes.codeDeposit)));
-    result.push_back(Pair("gasRefunded", CAmount(exRes.gasRefunded)));
-    result.push_back(Pair("depositSize", static_cast<int32_t>(exRes.depositSize)));
-    result.push_back(Pair("gasForDeposit", CAmount(exRes.gasForDeposit)));
-    return result;
-}
 
-UniValue transactionReceiptToJSON(const dev::eth::TransactionReceipt& txRec)
-{
-    UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("stateRoot", txRec.stateRoot().hex()));
-    result.push_back(Pair("gasUsed", CAmount(txRec.gasUsed())));
-    result.push_back(Pair("bloom", txRec.bloom().hex()));
-    UniValue logEntries(UniValue::VARR);
-    dev::eth::LogEntries logs = txRec.log();
-    for(dev::eth::LogEntry log : logs){
-        UniValue logEntrie(UniValue::VOBJ);
-        logEntrie.push_back(Pair("address", log.address.hex()));
-        UniValue topics(UniValue::VARR);
-        for(dev::h256 l : log.topics){
-            topics.push_back(l.hex());
-        }
-        logEntrie.push_back(Pair("topics", topics));
-        logEntrie.push_back(Pair("data", HexStr(log.data)));
-        logEntries.push_back(logEntrie);
-    }
-    result.push_back(Pair("log", logEntries));
-    return result;
-}
 ////////////////////////////////////////////////////////////////////////////
 
 UniValue getblockcount(const JSONRPCRequest& request)
@@ -982,6 +948,93 @@ UniValue getblock(const JSONRPCRequest& request)
     return blockToJSON(block, pblockindex, verbosity >= 2);
 }
 ////////////////////////////////////////////////////////////////////// // fasc
+
+UniValue contractcode(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1) {
+        throw std::runtime_error(
+            "contractcode \"vmaddress\" \n"
+            "\nArgument:\n"
+            "1. \"vmaddress\"          (string, required) The address of the smart contract.\n"
+        );
+    }
+    UniValue contractAddress = request.params[0];
+    std::stringstream errorStream;
+    if (!contractAddress.isStr()) {
+        errorStream << "First parameter is required to be a string. ";
+        throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+    }
+    AddressKanban addressKanban;
+    if (!addressKanban.MakeFromBytes(contractAddress.get_str(), &errorStream)) {
+        errorStream << "Failed to extract contract address from " << contractAddress.write() << ". ";
+        throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+    }
+    dev::Address addressEVM = addressKanban.ToEthereumAddress();
+    UniValue result;
+    result.setObject();
+    LOCK(cs_main);
+    if (!globalState->addressHasCode(addressEVM)) {
+        errorStream << "Address " << addressEVM << " has no code. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    std::vector<unsigned char> code = globalState->code(addressEVM);
+    result.pushKV("smarContractId", HexStr(addressKanban.address));
+    result.pushKV("codeHex", HexStr(code));
+    result.pushKV("codeDisassembled", dev::eth::disassemble(code));
+    return result;
+}
+
+UniValue fetchscarshardpublickeys(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 2)
+        throw std::runtime_error(
+             "fetchshardpublickeys \"scarAddress\" \"shardId\" \n"
+             "\nArguments:\n"
+             "1. \"scarAddress\"      (hex string, 20 bytes, 40 hex chars, required) The account address. \n"
+             "2. \"shardId\"          (hex string, 32 bytes, 64 hex chars, required) The shard id. Ignored for the time being. \n"
+         );
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("contractId", request.params[0]);
+    result.pushKV("shardId", request.params[1]);
+    if (!request.params[0].isStr()) {
+        result.pushKV("error", "First parameter - contract id - not of type string. ");
+        return result;
+    }
+    std::stringstream errorStream;
+    std::vector<unsigned char> contractId, shardId;
+    if (!Encodings::fromHex(request.params[0].get_str(), contractId, &errorStream)) {
+        errorStream << "Failed to hex-decode contract id. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    if (!request.params[1].isStr()) {
+        result.pushKV("error", "Second parameter - shard id - not of type string. ");
+        return result;
+    }
+    if (!Encodings::fromHex(request.params[1].get_str(), shardId, &errorStream)) {
+        errorStream << "Failed to hex-decode shard id. ";
+        result.pushKV("error", errorStream.str());
+        return result;
+    }
+    std::vector<std::vector<unsigned char> > publicKeysSerialized;
+    UniValue comments;
+    if (!FetchSCARShardPublicKeysInternal(contractId, shardId, publicKeysSerialized, &errorStream, &comments)) {
+        result.pushKV("error", errorStream.str());
+    }
+    UniValue thePublicKeys;
+    thePublicKeys.setArray();
+    for (unsigned i = 0; i < publicKeysSerialized.size(); i ++) {
+        thePublicKeys.push_back(Encodings::toHexString(publicKeysSerialized[i]));
+    }
+    result.pushKV("publicKeys", thePublicKeys);
+    if (comments.size() > 0) {
+        result.pushKV("SCARCallResult", comments);
+    }
+    return result;
+}
+
 UniValue callcontract(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
@@ -999,7 +1052,7 @@ UniValue callcontract(const JSONRPCRequest& request)
     std::string strAddr = request.params[0].get_str();
     std::string data = request.params[1].get_str();
 
-    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if (((unsigned) chainActive.Height()) < Params().GetConsensus().ContractHeight)
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     if(data.size() % 2 != 0 || !CheckHex(data))
@@ -1024,8 +1077,8 @@ UniValue callcontract(const JSONRPCRequest& request)
         }
     }
     uint64_t gasLimit = request.params.size() >= 4 ? request.params[3].get_int64() : 0;
-
-    std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), senderAddress, gasLimit);
+    std::stringstream comments;
+    std::vector<ResultExecute> execResults = CallContract(addrAccount, ParseHex(data), senderAddress, gasLimit, &comments);
 
     if(fRecordLogOpcodes){
         writeVMlog(execResults);
@@ -1035,6 +1088,7 @@ UniValue callcontract(const JSONRPCRequest& request)
     result.push_back(Pair("address", strAddr));
     result.push_back(Pair("executionResult", executionResultToJSON(execResults[0].execRes)));
     result.push_back(Pair("transactionReceipt", transactionReceiptToJSON(execResults[0].txRec)));
+    result.pushKV("comments", comments.str());
 
     return result;
 }
@@ -1441,7 +1495,7 @@ UniValue searchlogs(const JSONRPCRequest& request)
     if(!fLogEvents)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Events indexing disabled");
 
-    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if (chainActive.Height() <  (signed) Params().GetConsensus().ContractHeight)
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     int curheight = 0;
@@ -1556,7 +1610,7 @@ UniValue listcontracts(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
-    if ( chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if (((unsigned) chainActive.Height()) < Params().GetConsensus().ContractHeight)
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     int start=1;
@@ -1581,13 +1635,14 @@ UniValue listcontracts(const JSONRPCRequest& request)
     if (contractsCount>0 && start > contractsCount)
         throw JSONRPCError(RPC_TYPE_ERROR, "start greater than max index "+ itostr(contractsCount));
 
-    int itStartPos=std::min(start-1,contractsCount);
-    int i=0;
-    for (auto it = std::next(map.begin(),itStartPos); it!=map.end(); it++)
-    {
-        result.push_back(Pair(it->first.hex(),ValueFromAmount(CAmount(globalState->balance(it->first)))));
+    int itStartPos = std::min(start - 1, contractsCount);
+    int i = 0;
+    for (auto it = std::next(map.begin(), itStartPos); it != map.end(); it ++) {
+        result.push_back(Pair(it->first.hex(), CAmount(globalState->balance(it->first))));
         i++;
-        if(i==maxDisplay)break;
+        if (i == maxDisplay) {
+            break;
+        }
     }
 
     return result;
@@ -2457,9 +2512,11 @@ static const CRPCCommand commands[] =
     { "blockchain",         "getaccountinfo",         &getaccountinfo,         true,  {"contract_address"} },
     { "blockchain",         "getstorage",             &getstorage,             true,  {"address, index, blockNum"} },
 
-    { "blockchain",         "preciousblock",          &preciousblock,          true,  {"blockhash"} },
+    { "blockchain",         "preciousblock",            &preciousblock,            true,  {"blockhash"} },
 
-    { "blockchain",         "callcontract",           &callcontract,           true,  {"address","data"} }, // fasc
+    {"blockchain",          "contractcode",             &contractcode,             true,  {"address"}},
+    { "blockchain",         "callcontract",             &callcontract,             true,  {"address","data"} }, // fasc
+    { "blockchain",         "fetchscarshardpublickeys", &fetchscarshardpublickeys, true,  {"address","data"} }, // fasc
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        true,  {"blockhash"} },
     { "hidden",             "reconsiderblock",        &reconsiderblock,        true,  {"blockhash"} },

@@ -20,6 +20,10 @@
 
 #include <QRegularExpressionValidator>
 
+void avoidCompilerWarningsDefinedButNotUsedCreateContract() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace CreateContract_NS
 {
 // Contract data names

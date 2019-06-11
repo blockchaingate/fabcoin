@@ -16,6 +16,10 @@
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCoreWrite() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 UniValue ValueFromAmount(const CAmount& amount)
 {
     bool sign = amount < 0;

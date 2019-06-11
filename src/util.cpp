@@ -385,6 +385,7 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
     return strStamped;
 }
 
+#include <log_session.h>
 int LogPrintStr(const std::string &str, bool useVMLog)
 {
 

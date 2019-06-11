@@ -714,6 +714,8 @@ public:
     ///////////////////////////////////////////////// // fasc
     bool IsPayToPubkey() const;
     bool IsPayToPubkeyHash() const;
+    bool IsPayToPubkeyWithSignature() const;
+    bool IsPayToPubkeyHashWithSignature() const;
     /////////////////////////////////////////////////
     bool IsPayToWitnessScriptHash() const;
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
@@ -745,6 +747,10 @@ public:
     bool HasOpCall() const
     {
         return Find(OP_CALL) == 1;
+    }
+    bool HasOpContractCoversFees() const
+    {
+        return Find(OP_CONTRACTCOVERSFEES) == 1;
     }
     bool HasOpSpend() const
     {

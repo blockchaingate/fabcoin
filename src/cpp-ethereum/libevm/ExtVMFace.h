@@ -101,6 +101,7 @@ struct LogEntry
 			ret.shiftBloom<3>(sha3(t.ref()));
 		return ret;
 	}
+    std::string ToString()const;
 
 	Address address;
 	h256s topics;
@@ -304,7 +305,12 @@ public:
 	virtual boost::optional<owning_bytes_ref> call(CallParameters&) = 0;
 
 	/// Revert any changes made (by any of the other calls).
-	virtual void log(h256s&& _topics, bytesConstRef _data) { sub.logs.push_back(LogEntry(myAddress, std::move(_topics), _data.toBytes())); }
+    virtual void
+    log(h256s&& _topics, bytesConstRef _data) {
+        LogEntry incoming = LogEntry(myAddress, std::move(_topics), _data.toBytes());
+        this->sub.logs.push_back(incoming);
+        this->logsGenerated.push_back(incoming);
+    }
 
 	/// Hash of a block if within the last 256 blocks, or h256() otherwise.
 	h256 blockHash(u256 _number) { return _number < envInfo().number() && _number >= (std::max<u256>(256, envInfo().number()) - 256) ? envInfo().lastHashes()[(unsigned)(envInfo().number() - 1 - _number)] : h256(); }
@@ -319,8 +325,32 @@ private:
 	EnvInfo const& m_envInfo;
 
 public:
-	// TODO: make private
-	Address myAddress;			///< Address associated with executing code (a contract, or contract-to-be).
+    //At present, logs generated during EVM execution are
+    //recorded in SubState sub and discarded if
+    //an exception is raised after the logging.
+    //A typical example when this happens is logs generated before solidity's require(false).
+    //
+    //The reason for discarding the logs is that
+    //logs are considered part of the state of the blockchain,
+    //so if an operation is reverted, so should its log messages.
+    //
+    //At the same time, this is not the behavior expected by the programmer,
+    //and it makes it very hard to trace smart contract failure.
+    //
+    //The problem here lies in the fact that two different use cases for "logs" are
+    //conflated together.
+    //The first use of logs is their use as "side-effects"
+    //to extract output from the smart contract.
+    //The second very different use is for debugging and
+    //diagnostics.
+    //
+    //An obvious solution to this issue is what we do here. Every time a
+    //log is executed, we create two copies: one which is to become part of the blockchain state,
+    //and a second, temporary one which is stored for the sole purpose of displaying
+    //it to the programmer who has initiated the call.
+
+    LogEntries logsGenerated;   ///< Generated logs. If the VM raised an exception (for example, via solidity require(false)), then the logs will be reverted.
+    Address myAddress;			///< Address associated with executing code (a contract, or contract-to-be).
 	Address caller;				///< Address which sent the message (either equal to origin or a contract).
 	Address origin;				///< Original transactor.
 	u256 value;					///< Value (in Wei) that was passed to this address.

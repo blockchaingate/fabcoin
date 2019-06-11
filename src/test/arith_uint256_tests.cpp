@@ -14,6 +14,10 @@
 #include <version.h>
 #include <test/test_fabcoin.h>
 
+void avoidCompilerWarningsDefinedButNotUsedArithTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(arith_uint256_tests, BasicTestingSetup)
 
 /// Convert vector to arith_uint256, via uint256 blob

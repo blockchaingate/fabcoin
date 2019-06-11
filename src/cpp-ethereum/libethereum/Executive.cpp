@@ -31,6 +31,8 @@
 #include "ExtVM.h"
 #include "BlockChain.h"
 #include "Block.h"
+#include "log_session.h"
+#include "encodings_crypto.h"
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
@@ -180,6 +182,70 @@ Executive::Executive(State& _s, Block const& _block, unsigned _txIndex, BlockCha
 {
 }
 
+std::string kanbanShardCreationString = "KanbanShardRegistration";
+
+std::string LogEntry::ToString() const {
+    std::stringstream out;
+    out << "Address: " << this->address << ", data: " << Encodings::toHexString(this->data);
+    std::string dataString(this->data.begin(), this->data.end());
+    // Perhaps this->data is a human-readable english ascii string ?
+    // If so, we expect the string to contain bytes in the range [32,126].
+    // If that is the case, we append the string to the output of this function.
+    bool isGoodAsString = true;
+    for (unsigned i = 0; i < dataString.size(); i ++) {
+        if (dataString[i] < 32 || dataString[i] > 126) {
+            isGoodAsString = false;
+            break;
+        }
+    }
+    if (isGoodAsString) {
+        out << " [" << dataString << "]";
+    }
+    return out.str();
+}
+
+std::string Executive::ToStringLogs(const LogEntries& input) {
+    std::stringstream out;
+    unsigned maxEntriesToDisplay = 20;
+    unsigned entriesToDisplay = input.size();
+    if (entriesToDisplay > maxEntriesToDisplay) {
+        entriesToDisplay = maxEntriesToDisplay;
+        out << input.size() << " log entries, showing first " << entriesToDisplay << " only.\n";
+    } else {
+        out << input.size() << " log entries.\n";
+    }
+    for (unsigned i = 0; i < entriesToDisplay; i ++) {
+        const LogEntry& currentLog = input[i];
+        out << currentLog.ToString() << "\n";
+    }
+    return out.str();
+}
+
+void Executive::GetAggregationData(std::vector<std::vector<unsigned char> >& outputData, dev::h160& outputContractAddress, std::stringstream* comments) const
+{
+    outputData.resize(0);
+    std::vector<uint8_t> kanbanShardCreationToken;
+    for (int unsigned i = 0; i < kanbanShardCreationString.size(); i ++) {
+        kanbanShardCreationToken.push_back(kanbanShardCreationString[i]);
+    }
+    const std::vector<dev::eth::LogEntry>& theLogEntries = this->logs();
+    bool flagAggregationFound = false;
+    for (unsigned i = 0; i < theLogEntries.size(); i ++) {
+        const dev::eth::LogEntry& current = theLogEntries[i];
+        const std::vector<uint8_t>& data = current.data;
+        if (flagAggregationFound) {
+            outputData.push_back(data);
+        }
+        if (data == kanbanShardCreationToken) {
+            flagAggregationFound = true;
+            outputContractAddress = current.address;
+        }
+        //if (comments != nullptr) {
+        //    *comments << "DEBUG: about to process smart contract logs: " << Encodings::toHexString(data) << ".\n";
+        //}
+    }
+}
+
 u256 Executive::gasUsed() const
 {
 	return m_t.gas() - m_gas;
@@ -244,45 +310,59 @@ void Executive::initialize(Transaction const& _transaction)
 	m_gasCost = (u256)gasCost;  // Convert back to 256-bit, safe now.
 }
 
-bool Executive::execute()
+bool Executive::execute(std::stringstream* commentsNullForNone)
 {
+    (void) commentsNullForNone; // <-avoid unused variable warning
 	// Entry point for a user-executed transaction.
 
 	// Pay...
-	clog(StateDetail) << "Paying" << formatBalance(m_gasCost) << "from sender for gas (" << m_t.gas() << "gas at" << formatBalance(m_t.gasPrice()) << ")";
+    clog(StateDetail) << "Paying " << formatBalance(m_gasCost) << " from sender for gas (" << m_t.gas() << " gas at " << formatBalance(m_t.gasPrice()) << ")";
 	m_s.subBalance(m_t.sender(), m_gasCost);
 
-	if (m_t.isCreation())
-		return create(m_t.sender(), m_t.value(), m_t.gasPrice(), m_t.gas() - (u256)m_baseGasRequired, &m_t.data(), m_t.sender());
-	else
-		return call(m_t.receiveAddress(), m_t.sender(), m_t.value(), m_t.gasPrice(), bytesConstRef(&m_t.data()), m_t.gas() - (u256)m_baseGasRequired);
+    if (m_t.isCreation()) {
+        return create(m_t.sender(), m_t.value(), m_t.gasPrice(), m_t.gas() - (u256) m_baseGasRequired, &m_t.data(), m_t.sender());
+    } else {
+        u256 gasAvailable = this->m_t.gas() - (u256) this->m_baseGasRequired;
+        bool result = this->call(
+            this->m_t.receiveAddress(),
+            this->m_t.sender(),
+            this->m_t.value(),
+            this->m_t.gasPrice(),
+            bytesConstRef(&m_t.data()),
+            gasAvailable,
+            commentsNullForNone
+        );
+        return result;
+    }
 }
 
-bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _value, u256 _gasPrice, bytesConstRef _data, u256 _gas)
+bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _value, u256 _gasPrice, bytesConstRef _data, u256 _gas, std::stringstream* comments)
 {
 	CallParameters params{_senderAddress, _receiveAddress, _receiveAddress, _value, _value, _gas, _data, {}};
-	return call(params, _gasPrice, _senderAddress);
+    return call(params, _gasPrice, _senderAddress, comments);
 }
 
-bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin)
+bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin, std::stringstream* comments)
 {
-	// If external transaction.
-	if (m_t)
+    (void) comments;
+    //LogSession::evmLog() << "DEBUG: here I am in call. " << LogSession::endL;
+    // If external transaction.
+    if (this->m_t)
 	{
 		// FIXME: changelog contains unrevertable balance change that paid
 		//        for the transaction.
 		// Increment associated nonce for sender.
-		m_s.incNonce(_p.senderAddress);
+        this->m_s.incNonce(_p.senderAddress);
 	}
 
-	m_savepoint = m_s.savepoint();
+    this->m_savepoint = m_s.savepoint();
 
 	if (m_sealEngine.isPrecompiled(_p.codeAddress, m_envInfo.number()))
 	{
 		bigint g = m_sealEngine.costOfPrecompiled(_p.codeAddress, _p.data, m_envInfo.number());
 		if (_p.gas < g)
 		{
-			m_excepted = TransactionException::OutOfGasBase;
+            this->m_excepted = TransactionException::OutOfGasBase;
 			// Bail from exception.
 			
 			// Empty precompiled contracts need to be deleted even in case of OOG
@@ -293,17 +373,15 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 				m_s.addBalance(_p.codeAddress, 0);
 			
 			return true;	// true actually means "all finished - nothing more to be done regarding go().
-		}
-		else
-		{
+        } else {
 			m_gas = (u256)(_p.gas - g);
 			bytes output;
 			bool success;
 			tie(success, output) = m_sealEngine.executePrecompiled(_p.codeAddress, _p.data, m_envInfo.number());
-			if (!success)
-			{
+            if (!success) {
 				m_gas = 0;
 				m_excepted = TransactionException::OutOfGas;
+
 			}
 			size_t outputSize = output.size();
 			m_output = owning_bytes_ref{std::move(output), 0, outputSize};
@@ -316,7 +394,20 @@ bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address co
 		{
 			bytes const& c = m_s.code(_p.codeAddress);
 			h256 codeHash = m_s.codeHash(_p.codeAddress);
-			m_ext = make_shared<ExtVM>(m_s, m_envInfo, m_sealEngine, _p.receiveAddress, _p.senderAddress, _origin, _p.apparentValue, _gasPrice, _p.data, &c, codeHash, m_depth);
+            this->m_ext = std::make_shared<ExtVM>(
+                        m_s,
+                        m_envInfo,
+                        m_sealEngine,
+                        _p.receiveAddress,
+                        _p.senderAddress,
+                        _origin,
+                        _p.apparentValue,
+                        _gasPrice,
+                        _p.data,
+                        &c,
+                        codeHash,
+                        m_depth
+            );
 		}
 	}
 
@@ -383,10 +474,14 @@ OnOpFunc Executive::simpleTrace()
 	};
 }
 
-bool Executive::go(OnOpFunc const& _onOp)
+bool Executive::go(OnOpFunc const& _onOp, stringstream* commentsNullForNone)
 {
-	if (m_ext)
-	{
+    if (!this->m_ext) {
+        if (commentsNullForNone != nullptr) {
+            *commentsNullForNone << "VM not initialized.";
+        }
+        return false;
+    }
 #if ETH_TIMED_EXECUTIONS
 		Timer t;
 #endif
@@ -396,7 +491,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			auto vm = _onOp ? VMFactory::create(VMKind::Interpreter) : VMFactory::create();
 			if (m_isCreation)
 			{
-				auto out = vm->exec(m_gas, *m_ext, _onOp);
+            auto out = vm->exec(m_gas, *this->m_ext, _onOp, commentsNullForNone);
 				if (m_res)
 				{
 					m_res->gasForDeposit = m_gas;
@@ -427,7 +522,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			}
 			else
 			{
-				m_output = vm->exec(m_gas, *m_ext, _onOp);
+            this->m_output = vm->exec(m_gas, *this->m_ext, _onOp, commentsNullForNone);
 				if (m_res)
 					// Copy full output:
 					m_res->output = m_output.toVector();
@@ -438,6 +533,7 @@ bool Executive::go(OnOpFunc const& _onOp)
 			clog(StateSafeExceptions) << "Safe VM Exception. " << diagnostic_information(_e);
 			m_gas = 0;
 			m_excepted = toTransactionException(_e);
+        LogSession::evmLog() << "Safe VM Exception.\n" << diagnostic_information(_e) << "\n";
 			revert();
 		}
 		catch (Exception const& _e)
@@ -459,7 +555,6 @@ bool Executive::go(OnOpFunc const& _onOp)
 #if ETH_TIMED_EXECUTIONS
 		cnote << "VM took:" << t.elapsed() << "; gas used: " << (sgas - m_endGas);
 #endif
-	}
 	return true;
 }
 

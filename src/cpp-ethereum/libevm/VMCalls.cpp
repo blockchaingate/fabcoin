@@ -19,11 +19,10 @@
 #include <libethereum/ExtVM.h>
 #include "VMConfig.h"
 #include "VM.h"
+#include "log_session.h"
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
-
-
 
 void VM::copyDataToMemory(bytesConstRef _data, u256*& _sp)
 {
@@ -45,7 +44,8 @@ void VM::copyDataToMemory(bytesConstRef _data, u256*& _sp)
 
 void VM::throwOutOfGas()
 {
-	BOOST_THROW_EXCEPTION(OutOfGas());
+    LogSession::evmLog() << "OoG!!! remaining gas: " << m_io_gas << LogSession::endL;
+    BOOST_THROW_EXCEPTION(OutOfGas());
 }
 
 void VM::throwBadInstruction()
@@ -96,7 +96,7 @@ int64_t VM::verifyJumpDest(u256 const& _dest, bool _throw)
 // interpreter cases that call out
 //
 
-void VM::caseCreate()
+void VM::caseCreate(std::stringstream* commentsOnFailure)
 {
 	m_bounce = &VM::interpretCases;
 	m_newMemSize = memNeed(*(m_SP - 1), *(m_SP - 2));
@@ -127,7 +127,7 @@ void VM::caseCreate()
 	++m_PC;
 }
 
-void VM::caseCall()
+void VM::caseCall(std::stringstream* comments)
 {
 	m_bounce = &VM::interpretCases;
 	unique_ptr<CallParameters> callParams(new CallParameters());

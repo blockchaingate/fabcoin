@@ -5,6 +5,10 @@
 #include <miner.h>
 #include <validation.h>
 
+void avoidCompilerWarningsDefinedButNotUsedFabcoinTxConverterTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 //Tests data
 CAmount value(5000000000LL - 1000);
 dev::u256 gasPrice(3);
@@ -66,7 +70,8 @@ void runTest(bool isCreation, size_t n, CScript& script1, CScript script2 = CScr
     CTransaction transaction(tx2);
     FascTxConverter converter(transaction, NULL);
     ExtractFascTX fascTx;
-    BOOST_CHECK(converter.extractionFascTransactions(fascTx));
+    dev::u256 notUsed;
+    BOOST_CHECK(converter.extractionFascTransactions(fascTx, notUsed, nullptr));
     std::vector<FascTransaction> result = fascTx.first;
     if(script2 == CScript()){
         BOOST_CHECK(result.size() == n);
@@ -100,7 +105,8 @@ void runFailingTest(bool isCreation, size_t n, CScript& script1, CScript script2
     CTransaction transaction(tx2);
     FascTxConverter converter(transaction, NULL);
     ExtractFascTX fascTx;
-    BOOST_CHECK(!converter.extractionFascTransactions(fascTx));
+    dev::u256 notUsed;
+    BOOST_CHECK(!converter.extractionFascTransactions(fascTx, notUsed, nullptr));
 }
 
 BOOST_FIXTURE_TEST_SUITE(fasctxconverter_tests, TestingSetup)

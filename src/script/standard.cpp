@@ -14,6 +14,7 @@
 #include <fasc/fascstate.h>
 #include <fasc/fasctransaction.h>
 #include <validation.h>
+#include <log_session.h>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -42,20 +43,13 @@ void CScriptTemplate::MakeContractCoversFeesTemplate() {
 
 void CScriptTemplate::MakeInputPublicKeyNoAncestor()
 {
-    switch (t)
-    {
-    case TX_NONSTANDARD: return "nonstandard";
-    case TX_PUBKEY: return "pubkey";
-    case TX_PUBKEYHASH: return "pubkeyhash";
-    case TX_SCRIPTHASH: return "scripthash";
-    case TX_MULTISIG: return "multisig";
-    case TX_NULL_DATA: return "nulldata";
-    case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
-    case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
-    case TX_CREATE: return "create";
-    case TX_CALL: return "call";
-    }
-    return nullptr;
+    this->reset();
+    this->tx_templateType = TX_PUBLIC_KEY_NO_ANCESTOR;
+    this->name = GetTxnOutputType((txnouttype) this->tx_templateType);
+    *this << OpcodePattern(OP_DATA, 40, -1) //<- signature data, at least 40 bytes (signatures have variable-length encoding, max 73 bytes,
+                                             //min length depends on number of leading zeroes in signature, theoretically can be very small.
+          << OpcodePattern(OP_DATA, 33, -1) //<- compressed public key
+          << OP_CHECKSIG;
 }
 
 /**
@@ -84,6 +78,15 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
         // Call contract tx
         mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
+
+        CScriptTemplate kanbanTemplate;
+        // Contract covers fees
+        kanbanTemplate.MakeContractCoversFeesTemplate();
+        kanbanTemplates.insert(std::make_pair(TX_CONTRACT_COVERS_FEES, kanbanTemplate));
+
+        // Aggregate signature
+        kanbanTemplate.MakeAggregateSignatureTemplate();
+        kanbanTemplates.insert(std::make_pair(TX_AGGREGATE_SIGNATURE, kanbanTemplate));
     }
 
     vSolutionsRet.clear();
@@ -142,7 +145,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         opcodetype opcode1, opcode2;
         std::vector<unsigned char> vch1, vch2;
         VersionVM version;
-        version.rootVM=20; //set to some invalid value
+        version.rootVM = 20; //set to some invalid value
 
         // Compare
         CScript::const_iterator pc1 = script1.begin();

@@ -6,6 +6,10 @@
 #include <QFile>
 #include <styleSheet.h>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionRestoreDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 RestoreDialog::RestoreDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::RestoreDialog),

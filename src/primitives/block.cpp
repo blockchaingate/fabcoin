@@ -63,25 +63,29 @@ std::string CBlockHeader::ToString() const
     return s.str();
 }
 
-uint256 CBlockHeader::GetHashWithoutSign() const
-{
-    return SerializeHash(*this, SER_GETHASH | SER_WITHOUT_SIGNATURE);
-}
-
-std::string CBlockHeader::ToString() const
+std::string CBlock::ToString() const
 {
     std::stringstream s;
-    s << strprintf("CBlock(hash=%s, ver=0x%08x, hashPrevBlock=%s, hashMerkleRoot=%s,  hashStateRoot=%s, hashUTXORoot=%s, nHeight=%u, nTime=%u, nBits=%08x, nNonce=%s, vtx=%u)\n",
-        GetHash().ToString(),
-        nVersion,
-        hashPrevBlock.ToString(),
-        hashMerkleRoot.ToString(),
-        hashStateRoot.ToString(), // fasc
-        hashUTXORoot.ToString(), // fasc
-        nHeight, nTime, nBits, nNonce.GetHex(),
-        vtx.size());
-    for (const auto& tx : vtx) {
-        s << "  " << tx->ToString() << "\n";
+    s << "CBlock(";
+    s << "hash=" << GetHash().ToString() << ", ";
+    s << "ver=" << this->nVersion << ", ";
+    s << "hashPrevBlock=" << this->hashPrevBlock.ToString() << ", ";
+    s << "hashMerkleRoot=" << this->hashMerkleRoot.ToString() << ", ";
+    s << "hashStateRoot=" << this->hashStateRoot.ToString() << ", ";
+    s << "hashUTXORoot=" << this->hashUTXORoot.ToString() << ", ";
+    s << "height=" << this->nHeight << ", ";
+    s << "time=" << this->nTime << ", ";
+    s << "bits=" << this->nBits << ", ";
+    s << "nonce=0x" << this->nNonce.ToString() << ", ";
+    s << "\nnumberOfTransactions=" << this->vtx.size() << ")";
+    int transactionCount = 0;
+    for (const auto& tx : this->vtx) {
+        if (tx == nullptr) {
+            s << "\n(non-initialized)";
+            continue;
+        }
+        s << "\nTx " << transactionCount << ": " << tx->ToString();
+        transactionCount ++;
     }
 
     return s.str();

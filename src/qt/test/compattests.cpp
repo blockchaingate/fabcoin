@@ -8,6 +8,10 @@
 
 #include <compat/byteswap.h>
 
+void avoidCompilerWarningsDefinedButNotUsedCompattests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 void CompatTests::bswapTests()
 {
 	// Sibling in fabcoin/src/test/bswap_tests.cpp

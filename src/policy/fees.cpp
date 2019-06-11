@@ -16,6 +16,9 @@
 
 //??? static constexpr double INF_FEERATE = 1e99;
 
+void avoidCompilerWarningsDefinedButNotUsedFees() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 std::string StringForFeeEstimateHorizon(FeeEstimateHorizon horizon) {
     static const std::map<FeeEstimateHorizon, std::string> horizon_strings = {
@@ -565,6 +568,7 @@ CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee)
     shortStats = new TxConfirmStats(buckets, bucketMap, SHORT_BLOCK_PERIODS, SHORT_DECAY, SHORT_SCALE);
     longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 }
+
 CBlockPolicyEstimator::~CBlockPolicyEstimator()
 {
     delete feeStats;
@@ -734,8 +738,8 @@ CFeeRate CBlockPolicyEstimator::estimateRawFee(
 
     return CFeeRate(median);
 }
-CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
-{
+
+CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool) {
     if (answerFoundAtTarget)
         *answerFoundAtTarget = confTarget;
     // Return failure if trying to analyze a target we're not tracking

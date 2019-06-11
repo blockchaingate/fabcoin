@@ -22,6 +22,10 @@
 #include <sendcoinsdialog.h>
 #include <QClipboard>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionSendToContract() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 namespace SendToContract_NS
 {
 // Contract data names
