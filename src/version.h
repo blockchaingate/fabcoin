@@ -9,7 +9,9 @@
  * network protocol versioning
  */
 
-static const int PROTOCOL_VERSION = 70017;
+static const int PROTOCOL_VERSION = 70018;
+
+static const int FAB_AGGREGATESIG_VERSION = 70018;
 
 static const int FAB_CONTRACT_VERSION = 70017;
 
