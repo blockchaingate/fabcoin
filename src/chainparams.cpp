@@ -134,7 +134,7 @@ public:
         strNetworkID = "main";
         consensus.strNetworkID = "main";
  
-        consensus.nSubsidyHalvingInterval = 3360000;
+        consensus.nSubsidyHalvingInterval = 840000;
         consensus.FABHeight = 0;
         consensus.ContractHeight = 235000;
         consensus.EquihashFABHeight = 235000;
@@ -263,7 +263,7 @@ public:
         strNetworkID = "test";
         consensus.strNetworkID = "test";
 
-        consensus.nSubsidyHalvingInterval = 3360000;
+        consensus.nSubsidyHalvingInterval = 840000;
         consensus.FABHeight = 0;
         consensus.ContractHeight = 192430 ;
         consensus.EquihashFABHeight = 221370;
@@ -387,7 +387,7 @@ public:
     CRegTestWithNetParams() {
         strNetworkID = CBaseChainParams::REGTESTWITHNET;
         consensus.strNetworkID = "regtestwithnet";
-        consensus.nSubsidyHalvingInterval = 3360000;
+        consensus.nSubsidyHalvingInterval = 840000;
         consensus.nRuleChangeActivationThreshold = 108; // 75% for testchains
         consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
 
