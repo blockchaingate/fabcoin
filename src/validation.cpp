@@ -777,7 +777,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
             const Coin& coin = inputs.AccessCoin(prevout);
             assert(!coin.IsSpent());
             // If prev is coinbase, check that it's matured
-            if (coin.IsCoinBase()) {
+            // Only the first output can be coinbase, the second might be gas refunding.
+            if (coin.IsCoinBase() && prevout.n == 0 ) {
                 const Consensus::Params& consensus = ::GetParams().GetConsensus();
                 if (nSpendHeight - coin.nHeight < COINBASE_MATURITY)
                     return state.Invalid(false,
