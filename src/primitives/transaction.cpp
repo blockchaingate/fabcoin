@@ -20,9 +20,6 @@ const char* GetTxnOutputType(txnouttype t)
     switch (t)
     {
     case TX_NONSTANDARD: return "nonstandard";
-    case TX_AGGREGATE_SIGNATURE: return "aggregate_signature";
-    case TX_CONTRACT_COVERS_FEES: return "contract_covers_fees";
-    case TX_PUBLIC_KEY_NO_ANCESTOR: return "public_key_no_ancestor";
     case TX_PUBKEY: return "pubkey";
     case TX_PUBKEYHASH: return "pubkeyhash";
     case TX_SCRIPTHASH: return "scripthash";
@@ -32,6 +29,9 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
     case TX_CREATE: return "create";
     case TX_CALL: return "call";
+    case TX_AGGREGATE_SIGNATURE: return "aggregate_signature";
+    case TX_CONTRACT_COVERS_FEES: return "contract_covers_fees";
+    case TX_PUBLIC_KEY_NO_ANCESTOR: return "public_key_no_ancestor";
     case TX_SCAR_SIGNATURE: return "scar_signature";
     }
     return nullptr;

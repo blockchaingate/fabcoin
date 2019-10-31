@@ -125,6 +125,10 @@ extern unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCa
 extern int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& inputs, int flags);
 extern bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fCheckDuplicateInputs);
 
+void avoidCompilerWarningsDefinedButNotUsedValidation() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 // Internal stuff
 namespace {
 
@@ -738,6 +742,10 @@ bool VerifyOutputsThatCoverFees(
         if (!currentOutput.scriptPubKey.HasOpContractCoversFees()) {
             continue;
         }
+        if ( chainActive.Height() < (int)GetParams().GetConsensus().AggregateSignatureHeight )
+        {
+            return false;
+        }
         dev::Address authorityAddress;
         bool success = VerifyInputIsAuthorizedWithoutAncestor(input, authorityAddress, commentsOnFailure);
         if (!success) {
@@ -778,7 +786,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
             assert(!coin.IsSpent());
             // If prev is coinbase, check that it's matured
             // Only the first output can be coinbase, the second might be gas refunding.
-            if (coin.IsCoinBase() && prevout.n == 0 ) {
+            
+            if (coin.IsCoinBase() && ( prevout.n == 0 || coin.nHeight < ::GetParams().GetConsensus().AggregateSignatureHeight ) ) {
                 const Consensus::Params& consensus = ::GetParams().GetConsensus();
                 if (nSpendHeight - coin.nHeight < COINBASE_MATURITY)
                     return state.Invalid(false,
@@ -3985,6 +3994,10 @@ bool FascTxConverter::extractionFascTransactions(
             }
         }
         if (executeEVM && executeOpContractCoversFees) {
+            if( chainActive.Height() < (int)GetParams().GetConsensus().AggregateSignatureHeight )
+            {
+                return false;
+            }
             EthTransactionParams params;
             params.fIsOpCoversFees = true;
             if (!params.constructFeeCoverage(currentScript, comments)) {

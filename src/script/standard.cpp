@@ -79,14 +79,17 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
         // Call contract tx
         mTemplates.insert(std::make_pair(TX_CALL, CScript() << OP_VERSION << OP_GAS_LIMIT << OP_GAS_PRICE << OP_DATA << OP_PUBKEYHASH << OP_CALL));
 
-        CScriptTemplate kanbanTemplate;
-        // Contract covers fees
-        kanbanTemplate.MakeContractCoversFeesTemplate();
-        kanbanTemplates.insert(std::make_pair(TX_CONTRACT_COVERS_FEES, kanbanTemplate));
+        //if ( chainActive.Height() >= GetParams().GetConsensus().AggregateSignatureHeight )
+        {
+            CScriptTemplate kanbanTemplate;
+            // Contract covers fees
+            kanbanTemplate.MakeContractCoversFeesTemplate();
+            kanbanTemplates.insert(std::make_pair(TX_CONTRACT_COVERS_FEES, kanbanTemplate));
 
-        // Aggregate signature
-        kanbanTemplate.MakeAggregateSignatureTemplate();
-        kanbanTemplates.insert(std::make_pair(TX_AGGREGATE_SIGNATURE, kanbanTemplate));
+            // Aggregate signature
+            kanbanTemplate.MakeAggregateSignatureTemplate();
+            kanbanTemplates.insert(std::make_pair(TX_AGGREGATE_SIGNATURE, kanbanTemplate));
+        }
     }
 
     vSolutionsRet.clear();
@@ -129,14 +132,16 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
 
     // Scan templates
     const CScript& script1 = scriptPubKey;
-    vSolutionsRet.clear();
-    for (const std::pair<txnouttype, CScriptTemplate>& currentTemplate : kanbanTemplates) {
-        if (scriptPubKey.FitsOpCodePattern(currentTemplate.second, nullptr, nullptr)) {
-            typeRet = currentTemplate.first;
-            return true;
+    //if ( chainActive.Height() >= GetParams().GetConsensus().AggregateSignatureHeight )
+    {
+        vSolutionsRet.clear();
+        for (const std::pair<txnouttype, CScriptTemplate>& currentTemplate : kanbanTemplates) {
+            if (scriptPubKey.FitsOpCodePattern(currentTemplate.second, nullptr, nullptr)) {
+                typeRet = currentTemplate.first;
+                return true;
+            }
         }
     }
-
     for (const std::pair<txnouttype, CScript>& tplate : mTemplates)
     {
         const CScript& script2 = tplate.second;
@@ -232,7 +237,9 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
                         if (version.rootVM != 0 && val < 1) {
                             return false;
                         }
-                        if (val > MAX_BLOCK_GAS_LIMIT_DGP) {
+
+                        uint64_t maxgas = MAX_BLOCK_GAS_LIMIT_DGP_v1;
+                        if (val > maxgas) {
                             //do not allow transactions that could use more gas than is in a block
                             return false;
                         }
@@ -242,11 +249,12 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<std::v
                         if (version.rootVM != 0 && val < STANDARD_MINIMUM_GAS_LIMIT) {
                             return false;
                         }
-                        if (val > DEFAULT_BLOCK_GAS_LIMIT_DGP / 2) {
+
+                        uint64_t defaultgas = DEFAULT_BLOCK_GAS_LIMIT_DGP_v1;
+                        if (val > defaultgas / 2) {
                             //don't allow transactions that use more than 1/2 block of gas to be broadcast on the mempool
                             return false;
                         }
-
                     }
                 }
                 catch (const scriptnum_error &err) {

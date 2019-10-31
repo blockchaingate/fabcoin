@@ -292,7 +292,7 @@ public:
 #define clog(X) DEV_STATEMENT_IF(!(X::debug)) dev::LogOutputStream<X, true>()
 #define cslog(X) DEV_STATEMENT_IF(!(X::debug)) dev::LogOutputStream<X, false>()
 #else
- #define clog(X) dev::LogOutputStream<X, true>()
+#define clog(X) dev::LogOutputStream<X, true>()
 #define cslog(X) dev::LogOutputStream<X, false>()
 #endif
 #endif

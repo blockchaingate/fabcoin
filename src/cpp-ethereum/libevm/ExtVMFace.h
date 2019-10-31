@@ -348,7 +348,7 @@ public:
     //log is executed, we create two copies: one which is to become part of the blockchain state,
     //and a second, temporary one which is stored for the sole purpose of displaying
     //it to the programmer who has initiated the call.
-
+	// TODO: make private
     LogEntries logsGenerated;   ///< Generated logs. If the VM raised an exception (for example, via solidity require(false)), then the logs will be reverted.
     Address myAddress;			///< Address associated with executing code (a contract, or contract-to-be).
 	Address caller;				///< Address which sent the message (either equal to origin or a contract).

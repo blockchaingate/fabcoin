@@ -54,6 +54,7 @@ private:
     ContractABI* m_contractABI;
     TabBarInfo* m_tabInfo;
     int m_results;
+    uint64_t m_defaultgaslimitOpCreate;
 };
 
 #endif // CREATECONTRACT_H

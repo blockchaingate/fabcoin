@@ -700,9 +700,8 @@ CFeeRate CBlockPolicyEstimator::estimateFee(int confTarget) const {
     return estimateRawFee(confTarget, DOUBLE_SUCCESS_PCT, FeeEstimateHorizon::MED_HALFLIFE);
 }
 
-CFeeRate CBlockPolicyEstimator::estimateRawFee(
-    int confTarget, double successThreshold, FeeEstimateHorizon horizon, EstimationResult* result
-) const {
+CFeeRate CBlockPolicyEstimator::estimateRawFee(int confTarget, double successThreshold, FeeEstimateHorizon horizon, EstimationResult* result) const
+{
     TxConfirmStats* stats;
     double sufficientTxs = SUFFICIENT_FEETXS;
     switch (horizon) {
@@ -738,8 +737,8 @@ CFeeRate CBlockPolicyEstimator::estimateRawFee(
 
     return CFeeRate(median);
 }
-
-CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool) {
+CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
+{
     if (answerFoundAtTarget)
         *answerFoundAtTarget = confTarget;
     // Return failure if trying to analyze a target we're not tracking

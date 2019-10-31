@@ -10,6 +10,7 @@
 #include <script/standard.h>
 #include <consensus/validation.h>
 #include <chainparams.h>
+#include "../validation.h"
 
 // TODO remove the following dependencies
 #include <chain.h>
@@ -126,7 +127,6 @@ unsigned int GetLegacySigOpCount(const CTransaction& tx)
 
 unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& inputs)
 {
-    //LogSession::debugLog() << "DEBUG: about to GetP2SHSigOpCount ... " << LogSession::endL;
     if (tx.IsCoinBase())
         return 0;
     unsigned int nSigOps = 0;
@@ -147,7 +147,6 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
 
 int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& inputs, int flags)
 {
-    //LogSession::debugLog() << "DEBUG: about to get transaction sig op cost ... " << LogSession::endL;
     int64_t nSigOps = GetLegacySigOpCount(tx) * WITNESS_SCALE_FACTOR;
 
     if (tx.IsCoinBase())
@@ -173,16 +172,6 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 
 bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
 {
-    // Basic checks that don't depend on any context
-    if (tx.vin.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
-    if (tx.vout.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");
-    // Size limits (this doesn't take the witness into account, as that hasn't been checked for malleability)
-    //!!!? if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT)
-    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > MAX_TRANSACTION_BASE_SIZE || 
-        ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > dgpMaxBlockWeight)
-        return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
@@ -203,6 +192,18 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
         if (txout.scriptPubKey.HasOpCall() || txout.scriptPubKey.HasOpCreate()) {
             std::vector<valtype> vSolutions;
             txnouttype whichType;
+            if ( chainActive.Height() < (int)GetParams().GetConsensus().AggregateSignatureHeight )
+            {
+                if( txout.scriptPubKey.Find(OP_SCARSIGNATURE) ||
+                    txout.scriptPubKey.Find(OP_AGGREGATEVERIFY) ||
+                    txout.scriptPubKey.Find(OP_CONTRACTCOVERSFEES) 
+                    )
+                {
+                    std::stringstream out;
+                    out << "Invalid op code.";
+                    return state.DoS(100, false, REJECT_INVALID, out.str());
+                }
+            }
             if (!Solver(txout.scriptPubKey, whichType, vSolutions, true)) {
                 std::stringstream out;
                 out << "Output index " << outIndex
@@ -216,7 +217,20 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
 }
 bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fCheckDuplicateInputs)
 {
-    
+
+    // Basic checks that don't depend on any context
+    if (tx.vin.empty())
+        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
+    if (tx.vout.empty())
+        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");
+    // Size limits (this doesn't take the witness into account, as that hasn't been checked for malleability)
+    //!!!? if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > MAX_BLOCK_WEIGHT)
+    if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > MAX_TRANSACTION_BASE_SIZE || 
+        ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * WITNESS_SCALE_FACTOR > dgpMaxBlockWeight)
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
+    if (! CheckVoutsOK(tx, state)) {
+        return false;
+    }
 
     // Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
     if (fCheckDuplicateInputs) {

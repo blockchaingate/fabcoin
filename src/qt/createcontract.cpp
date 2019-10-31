@@ -65,12 +65,14 @@ CreateContract::CreateContract(const PlatformStyle *platformStyle, QWidget *pare
     m_tabInfo = new TabBarInfo(ui->stackedWidget);
     m_tabInfo->addTab(0, tr("Create Contract"));
 
+    m_defaultgaslimitOpCreate = DEFAULT_GAS_LIMIT_OP_CREATE_v1;
+
     // Set defaults
     ui->lineEditGasPrice->setValue(DEFAULT_GAS_PRICE);
     ui->lineEditGasPrice->setSingleStep(SINGLE_STEP);
     ui->lineEditGasLimit->setMinimum(MINIMUM_GAS_LIMIT);
-    ui->lineEditGasLimit->setMaximum(DEFAULT_GAS_LIMIT_OP_CREATE);
-    ui->lineEditGasLimit->setValue(DEFAULT_GAS_LIMIT_OP_CREATE);
+    ui->lineEditGasLimit->setMaximum(m_defaultgaslimitOpCreate);
+    ui->lineEditGasLimit->setValue(m_defaultgaslimitOpCreate);
     ui->pushButtonCreateContract->setEnabled(false);
 
     // Create new PRC command line interface
@@ -165,7 +167,7 @@ void CreateContract::setClientModel(ClientModel *_clientModel)
 void CreateContract::on_clearAllClicked()
 {
     ui->textEditBytecode->clear();
-    ui->lineEditGasLimit->setValue(DEFAULT_GAS_LIMIT_OP_CREATE);
+    ui->lineEditGasLimit->setValue(m_defaultgaslimitOpCreate);
     ui->lineEditGasPrice->setValue(DEFAULT_GAS_PRICE);
     ui->lineEditSenderAddress->setCurrentIndex(-1);
     ui->textEditInterface->clear();
@@ -243,7 +245,7 @@ void CreateContract::on_numBlocksChanged()
         uint64_t nGasPrice = 0;
         m_clientModel->getGasInfo(blockGasLimit, minGasPrice, nGasPrice);
 
-        ui->labelGasLimit->setToolTip(tr("Gas limit. Default = %1, Max = %2").arg(DEFAULT_GAS_LIMIT_OP_CREATE).arg(blockGasLimit));
+        ui->labelGasLimit->setToolTip(tr("Gas limit. Default = %1, Max = %2").arg(m_defaultgaslimitOpCreate).arg(blockGasLimit));
         ui->labelGasPrice->setToolTip(tr("Gas price: FABCOIN price per gas unit. Default = %1, Min = %2").arg(QString::fromStdString(FormatMoney(DEFAULT_GAS_PRICE))).arg(QString::fromStdString(FormatMoney(minGasPrice))));
         ui->lineEditGasPrice->setMinimum(minGasPrice);
         ui->lineEditGasLimit->setMaximum(blockGasLimit);

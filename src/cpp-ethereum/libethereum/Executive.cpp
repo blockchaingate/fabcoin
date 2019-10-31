@@ -345,7 +345,6 @@ bool Executive::call(Address _receiveAddress, Address _senderAddress, u256 _valu
 bool Executive::call(CallParameters const& _p, u256 const& _gasPrice, Address const& _origin, std::stringstream* comments)
 {
     (void) comments;
-    //LogSession::evmLog() << "DEBUG: here I am in call. " << LogSession::endL;
     // If external transaction.
     if (this->m_t)
 	{
@@ -483,7 +482,7 @@ bool Executive::go(OnOpFunc const& _onOp, stringstream* commentsNullForNone)
         return false;
     }
 #if ETH_TIMED_EXECUTIONS
-		Timer t;
+    Timer t;
 #endif
 		try
 		{
@@ -553,7 +552,7 @@ bool Executive::go(OnOpFunc const& _onOp, stringstream* commentsNullForNone)
 			// has drawbacks. Essentially, the amount of ram has to be increased here.
 		}
 #if ETH_TIMED_EXECUTIONS
-		cnote << "VM took:" << t.elapsed() << "; gas used: " << (sgas - m_endGas);
+    cnote << "VM took:" << t.elapsed() << "; gas used: " << (sgas - m_endGas);
 #endif
 	return true;
 }

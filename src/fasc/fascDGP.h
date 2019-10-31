@@ -20,9 +20,9 @@ static const uint64_t MIN_MIN_GAS_PRICE_DGP = 1;
 static const uint64_t MAX_MIN_GAS_PRICE_DGP = 10000;
 static const uint64_t DEFAULT_MIN_GAS_PRICE_DGP = 40;
 
-static const uint64_t MIN_BLOCK_GAS_LIMIT_DGP = 10000000; //10 million
-static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP = 4000000000;
-static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP = 400000000; // 400 million
+static const uint64_t MIN_BLOCK_GAS_LIMIT_DGP_v1 = 10000000; // 10 million
+static const uint64_t MAX_BLOCK_GAS_LIMIT_DGP_v1 = 4000000000; // 4 billion
+static const uint64_t DEFAULT_BLOCK_GAS_LIMIT_DGP_v1 = 400000000; // 400 million
 
 class FascDGP {
 

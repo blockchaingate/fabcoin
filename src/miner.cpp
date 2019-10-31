@@ -84,7 +84,8 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
 
 bool IsBlockTooLate(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
-    if (GetAdjustedTime() > std::max(pblock->GetBlockTime(), pindexPrev->GetBlockTime()) + Params().GetnPowTargetSpacing(pindexPrev->nHeight + 1) * consensusParams.MaxBlockInterval) {
+    if( GetAdjustedTime() > std::max(pblock->GetBlockTime(), pindexPrev->GetBlockTime()) + Params().GetnPowTargetSpacing(pindexPrev->nHeight+1) * consensusParams.MaxBlockInterval ) 
+    {
         return true;
     }
     return false;
@@ -363,7 +364,8 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
     if (nTimeLimit != 0 && GetAdjustedTime() >= nTimeLimit - BYTECODE_TIME_BUFFER) {
         return false;
     }
-    if (gArgs.GetBoolArg("-disablecontractstaking", false)) {
+    if (gArgs.GetBoolArg("-disablecontractstaking", false))
+    {
         return false;
     }  
     dev::h256 oldHashStateRoot(globalState->rootHash());

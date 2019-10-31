@@ -80,10 +80,12 @@ uint64_t FascDGP::getMinGasPrice(unsigned int blockHeight) {
 
 uint64_t FascDGP::getBlockGasLimit(unsigned int blockHeight) {
     clear();
-    uint64_t result = DEFAULT_BLOCK_GAS_LIMIT_DGP;
+    uint64_t result = DEFAULT_BLOCK_GAS_LIMIT_DGP_v1;
     auto phex =  ParseHex("2cc8377d");
     uint64_t blockGasLimit = getUint64FromDGP(blockHeight, BlockGasLimitDGP, phex);
-    if(blockGasLimit <= MAX_BLOCK_GAS_LIMIT_DGP && blockGasLimit >= MIN_BLOCK_GAS_LIMIT_DGP) {
+
+    uint64_t mingas = MIN_BLOCK_GAS_LIMIT_DGP_v1, maxgas = MAX_BLOCK_GAS_LIMIT_DGP_v1;
+    if(blockGasLimit <= maxgas && blockGasLimit >= mingas) {
         result = blockGasLimit;
     }
     return result;

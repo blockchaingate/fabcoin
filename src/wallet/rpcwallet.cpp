@@ -604,6 +604,7 @@ UniValue createcontract(const JSONRPCRequest& request)
     uint64_t minGasPrice = CAmount(fascDGP.getMinGasPrice(height));
     CAmount nGasPrice = (minGasPrice > DEFAULT_GAS_PRICE) ? minGasPrice : DEFAULT_GAS_PRICE;
 
+    uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_CREATE_v1;
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 6)
         throw runtime_error(
             "createcontract \"bytecode\" (gaslimit gasprice \"senderaddress\" broadcast)"
@@ -612,7 +613,7 @@ UniValue createcontract(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. \"bytecode\"  (string, required) contract bytecode.\n"
             "2. gasLimit  (numeric or string, optional) gasLimit, default: " +
-            i64tostr(DEFAULT_GAS_LIMIT_OP_CREATE) + ", max: " + i64tostr(blockGasLimit) + "\n"
+            i64tostr(nGasLimit) + ", max: " + i64tostr(blockGasLimit) + "\n"
                                                                                           "3. gasPrice  (numeric or string, optional) gasPrice FASC price per gas unit, default: " +
             FormatMoney(nGasPrice) + ", min:" + FormatMoney(minGasPrice) + "\n"
                                                                            "4. \"senderaddress\" (string, optional) The quantum address that will be used to create the contract.\n"
@@ -647,13 +648,12 @@ UniValue createcontract(const JSONRPCRequest& request)
         bytecode = bytecode.substr(10);
     }
     */
-    if ((uint32_t) chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if (chainActive.Height() <  (int)Params().GetConsensus().ContractHeight  )
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     if(bytecode.size() % 2 != 0 || !CheckHex(bytecode))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
 
-    uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_CREATE;
     if (request.params.size() > 1) {
         nGasLimit = request.params[1].get_int64();
         if (nGasLimit > blockGasLimit)
@@ -860,7 +860,7 @@ UniValue sendtocontract(const JSONRPCRequest& request)
                             "\nExamples:\n" +
             HelpExampleCli("sendtocontract", "\"c6ca2697719d00446d4ea51f6fac8fd1e9310214\" \"54f6127f\"") + HelpExampleCli("sendtocontract", "\"c6ca2697719d00446d4ea51f6fac8fd1e9310214\" \"54f6127f\" 12.0015 6000000 " + FormatMoney(minGasPrice) + " \"QM72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\""));
 
-    if ((uint32_t) chainActive.Height() <  Params().GetConsensus().ContractHeight  )
+    if ( chainActive.Height() <  (int)Params().GetConsensus().ContractHeight  )
        throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
     std::string contractaddress = request.params[0].get_str();

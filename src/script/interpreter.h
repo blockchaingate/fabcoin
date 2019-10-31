@@ -147,7 +147,6 @@ uint256 SignatureHash(
 class BaseSignatureChecker
 {
 public:
-    std::vector<std::vector<unsigned char> > bytesToSignPerVin;
     virtual bool CheckSig(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion, std::stringstream* commentsOnFailure) const;
     virtual bool CheckLockTime(const CScriptNum& nLockTime) const;
     virtual bool CheckSequence(const CScriptNum& nSequence) const;

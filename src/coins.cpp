@@ -131,6 +131,7 @@ const Coin& CCoinsViewCache::AccessCoin(const COutPoint &outpoint) const {
 }
 
 bool CCoinsViewCache::HaveCoinOrIsWithoutAncestor(const COutPoint &outpoint) const {
+    // this type transaction should not happen before aggregation signature fork
     if (outpoint.IsWithoutAncestor())
         return true;
     return this->HaveCoin(outpoint);
@@ -236,6 +237,8 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
 {
     if (tx.IsCoinBase())
         return 0;
+
+    // this type transaction should not happen before aggregation signature fork
     if (tx.IsWithoutAncestor(nullptr))
         return 0;
 

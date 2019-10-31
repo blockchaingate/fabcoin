@@ -611,7 +611,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             CTxOut out(0, CScript() << OP_RETURN << data);
             rawTx.vout.push_back(out);
         } else if (name_ == "contract") {
-            if ( (uint32_t) chainActive.Height() <  (uint32_t) Params().GetConsensus().ContractHeight  )
+            if ( chainActive.Height() <  (int)Params().GetConsensus().ContractHeight  )
                throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, after block ") + std::to_string(Params().GetConsensus().ContractHeight ));
 
             // Get the call object
@@ -688,7 +688,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             rawTx.vout.push_back(out);
         } else if (name_ == "aggregateSignature" ) {
             std::stringstream errorStream;
-            if ((uint32_t) chainActive.Height() <  (uint32_t) Params().GetConsensus().AggregateSignatureHeight) {
+            if ( chainActive.Height() <  (int)Params().GetConsensus().AggregateSignatureHeight) {
                 errorStream << "This method can only be used after aggregate signature fork, block "
                             << Params().GetConsensus().AggregateSignatureHeight << ". ";
                 throw JSONRPCError(RPC_METHOD_NOT_FOUND, errorStream.str());
@@ -1263,8 +1263,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
         sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, i, amount), sigdata, DataFromTransaction(mtx, i));
 
         UpdateTransaction(mtx, i, sigdata);
-        //transactionConstructionProgress << "DEBUG: got to script verification. Signature script: "
-        //                                << txin.scriptSig.ToString() << ". Unlock script: " << prevPubKey.ToString() << ". ";
+
         ScriptError serror = SCRIPT_ERR_OK;
         if (!VerifyScript(txin.scriptSig, prevPubKey, &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, i, amount), &serror)) {
             TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
@@ -1275,7 +1274,6 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     UniValue result(UniValue::VOBJ);
     result.push_back(Pair("hex", EncodeHexTx(mtx)));
     result.push_back(Pair("complete", fComplete));
-    //result.pushKV("transactionConstructionProgress", transactionConstructionProgress.str());
     if (!vErrors.empty()) {
         result.push_back(Pair("errors", vErrors));
     }
