@@ -208,6 +208,11 @@ bool CheckVoutsOK(const CTransaction& tx, CValidationState &state)
                 std::stringstream out;
                 out << "Output index " << outIndex
                 << " (" << outIndex + 1 << " out of " << tx.vout.size() << ") has non-standard contract. ";
+                if ( whichType == TX_NONSTANDARD && chainActive.Height() < (int)GetParams().GetConsensus().AllowSomeNonstandardTxHeight )
+                {
+                    LogPrintf("Warning: non-standard contract script found, but it is valid.\n");
+                    return true;
+                }
                 return state.DoS(100, false, REJECT_INVALID, out.str());
             }
         }

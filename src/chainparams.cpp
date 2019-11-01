@@ -140,6 +140,7 @@ public:
         consensus.EquihashFABHeight = 235000;
         consensus.LWMAHeight = 235000;
         consensus.AggregateSignatureHeight = 2000000000; // 2 billion
+        consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -268,6 +269,7 @@ public:
         consensus.ContractHeight = 192430 ;
         consensus.EquihashFABHeight = 221370;
         consensus.AggregateSignatureHeight = 330000; 
+        consensus.AllowSomeNonstandardTxHeight = 380000;
         consensus.LWMAHeight = 221370;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
@@ -401,6 +403,7 @@ public:
         consensus.ContractHeight = 100;
         consensus.EquihashFABHeight = 100;
         consensus.AggregateSignatureHeight = 100;
+        consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
@@ -534,6 +537,7 @@ public:
         consensus.ContractHeight = 100;
         consensus.EquihashFABHeight = 100;
         consensus.AggregateSignatureHeight = 100;
+        consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;

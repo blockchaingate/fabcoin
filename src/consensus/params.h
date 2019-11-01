@@ -56,6 +56,9 @@ struct Params {
     uint32_t ContractHeight;
     /** Block height at which Fabcoin Aggregate Signature hard fork becomes active */
     uint32_t AggregateSignatureHeight;
+    /** Some no-standard contract transactions got onto testnet before this height. Just allow them and reject such case after.*/
+    uint32_t AllowSomeNonstandardTxHeight;
+
     /** Block height at which EquihashFAB (184,7) becomes active */
     uint32_t EquihashFABHeight;
     /** Limit BITCOIN_MAX_FUTURE_BLOCK_TIME **/
