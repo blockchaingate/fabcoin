@@ -139,7 +139,7 @@ public:
         consensus.ContractHeight = 235000;
         consensus.EquihashFABHeight = 235000;
         consensus.LWMAHeight = 235000;
-        consensus.AggregateSignatureHeight = 2000000000; // 2 billion
+        consensus.AggregateSignatureHeight = 452000; // 2019.11.18
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
