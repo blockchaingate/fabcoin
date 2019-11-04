@@ -20,7 +20,7 @@ static const CAmount CENT = 1000000;
 extern const std::string CURRENCY_UNIT;
 
 /** No amount larger than this (in liu) is valid.*/
-static const CAmount MAX_MONEY = (168000000 + 32000000) * COIN;
+static const CAmount MAX_MONEY = (42000000 + 32000000) * COIN;
 inline bool MoneyRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
 
 #endif //  FABCOIN_AMOUNT_H
