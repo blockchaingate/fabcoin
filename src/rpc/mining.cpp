@@ -315,7 +315,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                 if (conf.useGPU)
                 {
 #ifdef ENABLE_GPU
-                    found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, false, curr_state);
+                    std::function<bool(GPUSolverCancelCheck)> cancelledGPU = [](GPUSolverCancelCheck pos) {
+                        return false;
+                    };
+                    found = g_solver->run(n, k, header, headerlen, pblock->nNonce, validBlock, cancelledGPU, curr_state);
 #endif
                 }
                 else
