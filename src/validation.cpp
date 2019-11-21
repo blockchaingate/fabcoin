@@ -2583,7 +2583,7 @@ static bool ConnectBlock(
     FascDGP fascDGP(globalState.get(), fGettingValuesDGP);
     dev::u256 minGasPrice = dev::u256(fascDGP.getMinGasPrice(pindex->nHeight + 1));
     dev::u256 blockGasLimit = dev::u256(fascDGP.getBlockGasLimit(pindex->nHeight + 1));
-    dev::u256 blockGasUsed;
+    dev::u256 blockGasUsed = 0;
     auto q1_sch = fascDGP.getGasSchedule(pindex->nHeight + 1);
     globalSealEngine->setFascSchedule(q1_sch);
     uint32_t sizeBlockDGP = fascDGP.getBlockSize(pindex->nHeight + 1);
@@ -2835,6 +2835,9 @@ static bool ConnectBlock(
 
         vPos.push_back(std::make_pair(tx.GetHash(), pos));
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
+
+        if( block.nHeight < 452299 || block.nHeight >= Params().GetConsensus().RewardCheckBugFixed )
+            checkVouts = theProcessor.checkVouts;
     }
     int64_t nTime3 = GetTimeMicros();
     nTimeConnect += nTime3 - nTime2;

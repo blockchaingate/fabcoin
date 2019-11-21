@@ -58,6 +58,10 @@ struct Params {
     uint32_t AggregateSignatureHeight;
     /** Some no-standard contract transactions got onto testnet before this height. Just allow them and reject such case after.*/
     uint32_t AllowSomeNonstandardTxHeight;
+    /** Some miner's invalid blocks passed through the validation, but it will be fixed since this height.
+    The invalid blocks are 452722, 452720, 452714, 452712, 452708, 452706, 452704, 452301, 452300, 452299
+    */
+    uint32_t RewardCheckBugFixed;
 
     /** Block height at which EquihashFAB (184,7) becomes active */
     uint32_t EquihashFABHeight;

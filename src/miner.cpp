@@ -236,7 +236,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(
  
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
     coinbaseTx.vout[0].nValue = nFees + GetBlockSubsidy(nHeight, chainparams.GetConsensus());
-    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
+    char fingerprint[] = "FAB INTERNAL MINER";
+    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << std::vector<unsigned char>((const unsigned char*)fingerprint, (const unsigned char*)fingerprint+strlen(fingerprint)) <<OP_0;
     originalRewardTx = coinbaseTx;
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     //////////////////////////////////////////////////////// fasc
