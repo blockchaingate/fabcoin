@@ -1822,7 +1822,7 @@ CAmount CWalletTx::GetImmatureCredit(bool fUseCache) const
     {
         if (fUseCache && fImmatureCreditCached)
             return nImmatureCreditCached;
-        nImmatureCreditCached = pwallet->GetCredit(*this, ISMINE_SPENDABLE);
+        nImmatureCreditCached = pwallet->GetCredit(tx->vout[0], ISMINE_SPENDABLE);
         fImmatureCreditCached = true;
         return nImmatureCreditCached;
     }
@@ -1835,16 +1835,18 @@ CAmount CWalletTx::GetAvailableCredit(bool fUseCache) const
     if (pwallet == 0)
         return 0;
 
+    int idx = 0;
     // Must wait until coinbase is safely deep enough in the chain before valuing it
     if (IsCoinBase() && GetBlocksToMaturity() > 0)
-        return 0;
-
+    {
+        idx = 1;
+    }
     if (fUseCache && fAvailableCreditCached)
         return nAvailableCreditCached;
 
     CAmount nCredit = 0;
     uint256 hashTx = GetHash();
-    for (unsigned int i = 0; i < tx->vout.size(); i++)
+    for (unsigned int i = idx; i < tx->vout.size(); i++)
     {
         if (!pwallet->IsSpent(hashTx, i))
         {
@@ -2121,15 +2123,20 @@ CAmount CWallet::GetLegacyBalance(const isminefilter& filter, int minDepth, cons
     for (const auto& entry : mapWallet) {
         const CWalletTx& wtx = entry.second;
         const int depth = wtx.GetDepthInMainChain();
-        if (depth < 0 || !CheckFinalTx(*wtx.tx) || wtx.GetBlocksToMaturity() > 0) {
+        if (depth < 0 || !CheckFinalTx(*wtx.tx) ){
             continue;
+        }
+        int idx = 0;
+        if ( wtx.GetBlocksToMaturity() > 0) {
+            idx = 1;
         }
 
         // Loop through tx outputs and add incoming payments. For outgoing txs,
         // treat change outputs specially, as part of the amount debited.
         CAmount debit = wtx.GetDebit(filter);
         const bool outgoing = debit > 0;
-        for (const CTxOut& out : wtx.tx->vout) {
+        for (unsigned int i = idx; i < wtx.tx->vout.size(); i++ ) {
+            CTxOut out = wtx.tx->vout[i];
             if (outgoing && IsChange(out)) {
                 debit -= out.nValue;
             } else if (IsMine(out) & filter && depth >= minDepth && (!account || *account == GetAccountName(out.scriptPubKey))) {
@@ -2182,8 +2189,11 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             if (!CheckFinalTx(*pcoin))
                 continue;
 
+            int idx = 0;
             if (pcoin->IsCoinBase() && pcoin->GetBlocksToMaturity() > 0)
-                continue;
+            {
+                idx = 1;
+            }
 
             int nDepth = pcoin->GetDepthInMainChain();
             if (nDepth < 0)
@@ -2234,7 +2244,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             if (nDepth < nMinDepth || nDepth > nMaxDepth)
                 continue;
 
-            for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+            for (unsigned int i = idx; i < pcoin->tx->vout.size(); i++) {
                 if (pcoin->tx->vout[i].nValue < nMinimumAmount || pcoin->tx->vout[i].nValue > nMaximumAmount)
                     continue;
 
