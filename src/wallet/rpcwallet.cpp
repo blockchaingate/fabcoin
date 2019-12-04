@@ -87,11 +87,11 @@ void EnsureWalletIsUnlocked(CWallet* const pwallet)
     }
 }
 
-void WalletTxToJSON(const CWalletTx& wtx, UniValue& entry)
+void WalletTxToJSON(const CWalletTx& wtx, UniValue& entry, bool coinbase = true)
 {
     int confirms = wtx.GetDepthInMainChain();
     entry.push_back(Pair("confirmations", confirms));
-    if (wtx.IsCoinBase())
+    if (wtx.IsCoinBase() && coinbase)
         entry.push_back(Pair("generated", true));
     if (confirms > 0) {
         entry.push_back(Pair("blockhash", wtx.hashBlock.GetHex()));
@@ -2054,10 +2054,12 @@ void ListTransactions(CWallet* const pwallet, const CWalletTx& wtx, const std::s
                 if (wtx.IsCoinBase()) {
                     if (wtx.GetDepthInMainChain() < 1)
                         entry.push_back(Pair("category", "orphan"));
-                    else if (wtx.GetBlocksToMaturity() > 0)
+                    else if (wtx.GetBlocksToMaturity() > 0 && r.vout == 0 )
                         entry.push_back(Pair("category", "immature"));
-                    else
+                    else if (r.vout == 0 )
                         entry.push_back(Pair("category", "generate"));
+                    else
+                        entry.push_back(Pair("category", "receive"));
                 } else {
                     entry.push_back(Pair("category", "receive"));
                 }
@@ -2067,7 +2069,7 @@ void ListTransactions(CWallet* const pwallet, const CWalletTx& wtx, const std::s
                 }
                 entry.push_back(Pair("vout", r.vout));
                 if (fLong)
-                    WalletTxToJSON(wtx, entry);
+                    WalletTxToJSON(wtx, entry, r.vout == 0);
                 ret.push_back(entry);
             }
         }
@@ -2268,9 +2270,12 @@ UniValue listaccounts(const JSONRPCRequest& request)
         std::list<COutputEntry> listReceived;
         std::list<COutputEntry> listSent;
         int nDepth = wtx.GetDepthInMainChain();
+        bool includefirst = true;
         if (wtx.GetBlocksToMaturity() > 0 || nDepth < 0)
-            continue;
-        wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount, includeWatchonly);
+        {
+            includefirst = false;
+        }
+        wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount, includeWatchonly, includefirst);
         mapAccountBalances[strSentAccount] -= nFee;
         for (const COutputEntry& s : listSent)
             mapAccountBalances[strSentAccount] -= s.amount;

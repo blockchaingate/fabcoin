@@ -101,7 +101,8 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 if (wtx.IsCoinBase() || wtx.IsCoinStake())
                 {
                     // Generated
-                    sub.type = TransactionRecord::Generated;
+                    if( i == 0 )
+                        sub.type = TransactionRecord::Generated;
                 }
 
                 parts.append(sub);
@@ -236,7 +237,7 @@ void TransactionRecord::updateStatus(const CWalletTx &wtx)
         ((wtx.IsCoinBase() || wtx.IsCoinStake()) ? 1 : 0),
         wtx.nTimeReceived,
         idx);
-    status.countsForBalance = wtx.IsTrusted() && !(wtx.GetBlocksToMaturity() > 0);
+    status.countsForBalance = wtx.IsTrusted() && (!(wtx.GetBlocksToMaturity() > 0 && type == TransactionRecord::Generated));
     status.depth = wtx.GetDepthInMainChain();
     status.cur_num_blocks = chainActive.Height();
 
