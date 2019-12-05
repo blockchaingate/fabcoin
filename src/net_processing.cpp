@@ -2593,6 +2593,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         vRecv.SetVersion(original_version);
 
         LogPrint(BCLog::NET, "received block %s peer=%d\n", pblock->GetHash().ToString(), pfrom->GetId());
+        if (fLogIPs)
+        {
+            LogPrintf("received block %s peer=%d peeraddr=%s\n", pblock->GetHash().ToString(), pfrom->GetId(), pfrom->addr.ToString());
+        }
 
         bool forceProcessing = false;
         const uint256 hash(pblock->GetHash());
