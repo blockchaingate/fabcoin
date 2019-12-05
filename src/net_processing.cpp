@@ -2539,6 +2539,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // disk-space attacks), but this should be safe due to the
             // protections in the compact block handler -- see related comment
             // in compact block optimistic reconstruction handling.
+            if (fLogIPs)
+            {
+                LogPrintf("received block %s peer=%d peeraddr=%s\n", pblock->GetHash().ToString(), pfrom->GetId(), pfrom->addr.ToString());
+            }
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
