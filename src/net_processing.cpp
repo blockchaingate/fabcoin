@@ -2455,6 +2455,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // we have a chain with at least nMinimumChainWork), and we ignore
             // compact blocks with less work than our tip, it is safe to treat
             // reconstructed compact blocks as having been requested.
+            if (fLogIPs)
+            {
+                LogPrintf("received block %s peer=%d peeraddr=%s\n", pblock->GetHash().ToString(), pfrom->GetId(), pfrom->addr.ToString());
+            }
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();
