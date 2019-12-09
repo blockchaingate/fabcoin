@@ -2836,7 +2836,9 @@ static bool ConnectBlock(
         vPos.push_back(std::make_pair(tx.GetHash(), pos));
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
 
-        if( block.nHeight < 452299 || block.nHeight >= Params().GetConsensus().RewardCheckBugFixed )
+        if( block.nHeight < 452299 || block.nHeight >= Params().GetConsensus().RewardCheckBugFixed1 )
+            checkVouts.insert(checkVouts.end(), theProcessor.checkVouts.begin(), theProcessor.checkVouts.end());
+        else if ( block.nHeight >= Params().GetConsensus().RewardCheckBugFixed && block.nHeight < Params().GetConsensus().RewardCheckBugFixed1 )
             checkVouts = theProcessor.checkVouts;
     }
     int64_t nTime3 = GetTimeMicros();

@@ -142,6 +142,7 @@ public:
         consensus.AggregateSignatureHeight = 452000; // 2019.11.18
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.RewardCheckBugFixed = 456500; // 2019.11.27
+        consensus.RewardCheckBugFixed1 = 20000000; // need decide fork height
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -272,6 +273,7 @@ public:
         consensus.AggregateSignatureHeight = 330000; 
         consensus.AllowSomeNonstandardTxHeight = 380000;
         consensus.RewardCheckBugFixed = 0; 
+        consensus.RewardCheckBugFixed1 = 0;
         consensus.LWMAHeight = 221370;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
@@ -407,6 +409,7 @@ public:
         consensus.AggregateSignatureHeight = 100;
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.RewardCheckBugFixed = 0; 
+        consensus.RewardCheckBugFixed1 = 0;
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
@@ -542,6 +545,7 @@ public:
         consensus.AggregateSignatureHeight = 100;
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.RewardCheckBugFixed = 0; 
+        consensus.RewardCheckBugFixed1 = 0;
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;

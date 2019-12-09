@@ -62,6 +62,7 @@ struct Params {
     The invalid blocks are 452722, 452720, 452714, 452712, 452708, 452706, 452704, 452301, 452300, 452299
     */
     uint32_t RewardCheckBugFixed;
+    uint32_t RewardCheckBugFixed1;
 
     /** Block height at which EquihashFAB (184,7) becomes active */
     uint32_t EquihashFABHeight;
