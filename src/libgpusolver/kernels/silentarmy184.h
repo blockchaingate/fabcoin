@@ -212,58 +212,59 @@ void kernel_round0(__global ulong *blake_state, __global char *ht, __global ulon
         h[5] = (blake_state[5] ^ v[5] ^ v[13]) & 0xffffffffffff ;
 
         uchar *hash = (uchar *)h;
-        for( uint i= 0; i < 2; i++ )
+        __global char *p;
+        ulong xi0, xi1, xi2;
+        uint row, cnt, xcnt;
+        uint rowIdx, rowOffset;
+        //for( uint i= 0; i < 2; i++ )
         {
-            hash = hash + 23 * i;
-            ulong xi0, xi1, xi2;
-            uint row;
-            __global char *p;
-            uint cnt;
-
             xi0 = *(ulong *)(hash+0);
             xi1 = *(ulong *)(hash+8);
             xi2 = *(ulong *)(hash+16);
-
-
             row = ((((uint)hash[0] << 8) | hash[1]) << 5) | hash[2] >> 3;
-
-
-
-
             xi0 = (xi0 >> 16) | (xi1 << (64 - 16));
             xi1 = (xi1 >> 16) | (xi2 << (64 - 16));
             xi2 = (xi2 >> 16);
-
             p = ht + row * (( 1 << (((184 / (7 + 1)) + 1) - 21)) * 2) * 32;
-            uint rowIdx = row/4;
-            uint rowOffset = 8*(row%4);
-            uint xcnt = atomic_add(rowCounters + rowIdx, 1 << rowOffset);
+            rowIdx = row/4;
+            rowOffset = 8*(row%4);
+            xcnt = atomic_add(rowCounters + rowIdx, 1 << rowOffset);
             xcnt = (xcnt >> rowOffset) & 0xFF;
             cnt = xcnt;
             if (cnt < (( 1 << (((184 / (7 + 1)) + 1) - 21)) * 2))
             {
                 p += cnt * 32 + (8 + ((0) / 2) * 4);
+                *(__global uint *)(p - 4) = (input<<1) + 0;
+                *(__global ulong *)(p + 0) = xi0;
+                *(__global ulong *)(p + 8) = xi1;
+                *(__global ulong *)(p + 16) = xi2 & 0xffffffffff;
+            }
 
-
-                *(__global uint *)(p - 4) = (input<<1) + i;
-
-
+            hash = hash + 23;
+            xi0 = *(ulong *)(hash+0);
+            xi1 = *(ulong *)(hash+8);
+            xi2 = *(ulong *)(hash+16);
+            row = ((((uint)hash[0] << 8) | hash[1]) << 5) | hash[2] >> 3;
+            xi0 = (xi0 >> 16) | (xi1 << (64 - 16));
+            xi1 = (xi1 >> 16) | (xi2 << (64 - 16));
+            xi2 = (xi2 >> 16);
+            p = ht + row * (( 1 << (((184 / (7 + 1)) + 1) - 21)) * 2) * 32;
+            rowIdx = row/4;
+            rowOffset = 8*(row%4);
+            xcnt = atomic_add(rowCounters + rowIdx, 1 << rowOffset);
+            xcnt = (xcnt >> rowOffset) & 0xFF;
+            cnt = xcnt;
+            if (cnt < (( 1 << (((184 / (7 + 1)) + 1) - 21)) * 2))
+            {
+                p += cnt * 32 + (8 + ((0) / 2) * 4);
+                *(__global uint *)(p - 4) = (input<<1) + 1;
                 *(__global ulong *)(p + 0) = xi0;
                 *(__global ulong *)(p + 8) = xi1;
                 *(__global ulong *)(p + 16) = xi2 & 0xffffffffff;
             }
         }
-
-
-
-
-
      input++;
     }
-
-
-
-
 }
 # 421 "input.cl"
 uint getrow(uint round, __global ulong *a, __global ulong *b)
@@ -321,7 +322,7 @@ uint ht_store(uint round, __global char *ht_src, __global char *ht, uint tree, _
 {
     ulong xi0, xi1, xi2, xi3 = 0;
     uint row;
-    __global uchar *p;
+    __global char *p;
     uint cnt;
     __global ulong *a8, *b8;
     __global uint *a4, *b4;
@@ -476,7 +477,7 @@ void equihash_round(uint round,
 {
     uint tid = get_global_id(0);
     uint tlid = get_local_id(0);
-    __global uchar *p;
+    __global char *p;
     uint cnt;
 
     __local uchar *first_words = &first_words_data[((( 1 << (((184 / (7 + 1)) + 1) - 21)) * 2)+2)*tlid];
@@ -732,7 +733,6 @@ void kernel_sols(__global char *ht0, __global char *ht1, __global sols_t *sols,
     uint tid = get_global_id(0);
 
     __global char *htabs[2] = { ht0, ht1 };
-    __global char *hcounters[2] = { rowCountersSrc, rowCountersDst };
     uint ht_i = (7 - 1) % 2;
     uint cnt;
     uint xi_offset = (8 + ((7 - 1) / 2) * 4);

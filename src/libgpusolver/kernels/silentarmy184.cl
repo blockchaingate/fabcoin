@@ -473,7 +473,7 @@ uint ht_store(uint round, __global char *ht_src, __global char *ht, uint tree, _
 {
     ulong xi0, xi1, xi2, xi3 = 0;
     uint    row;
-    __global uchar      *p;
+    __global char      *p;
     uint                cnt;
     __global ulong	*a8, *b8;
     __global uint	*a4, *b4;

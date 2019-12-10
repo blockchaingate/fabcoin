@@ -268,14 +268,10 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                     g_solver = new GPUSolver(conf.currentPlatform, conf.currentDevice, n, k);
 #endif
             }
-            else
-            {
-                // Solve Equihash.
-                EhInitialiseState(n, k, eh_state);
-                // H(I||...
-                crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
-            }
-
+            // Solve Equihash.
+            EhInitialiseState(n, k, eh_state);
+            // H(I||...
+            crypto_generichash_blake2b_update(&eh_state, (unsigned char*)&ss[0], ss.size());
             while ( nMaxTries > 0  && nCounter < nInnerLoopCount ) 
             {
                 crypto_generichash_blake2b_state curr_state;
@@ -294,12 +290,7 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                         header[ headerlen-32 + i] = pblock->nNonce.begin()[i];
 #endif
                 }
-                else
-                {
-                    // H(I||V||...
-                    curr_state = eh_state;
-                    crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
-                }
+                crypto_generichash_blake2b_update(&curr_state, pblock->nNonce.begin(), pblock->nNonce.size());
 
                 // (x_1, x_2, ...) = A(I, V, n, k)
                 std::function<bool(std::vector<unsigned char>)> validBlock =
@@ -308,6 +299,12 @@ UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGen
                     pblock->nSolution = soln;
                     // TODO(h4x3rotab): Add metrics counter like Zcash? `solutionTargetChecks.increment();`
                     // TODO(h4x3rotab): Maybe switch to EhBasicSolve and better deal with `nMaxTries`?
+                    CChainParams chainparams = Params();
+                    // Found a solution
+                    if (!CheckEquihashSolution(pblock, chainparams ))
+                    {
+                        return false;
+                    }
                     return CheckProofOfWork(pblock->GetHash(), pblock->nBits, true, Params().GetConsensus());
                 };
 
