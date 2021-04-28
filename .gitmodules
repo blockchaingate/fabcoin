@@ -1,0 +1,3 @@
+[submodule "src/cpp-ethereum-fab"]
+	path = src/cpp-ethereum-fab
+	url = https://github.com/jasonh-ca/cpp-ethereum-fab
