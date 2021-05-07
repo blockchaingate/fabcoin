@@ -416,7 +416,7 @@ class FabcoinDGPTest(FabcoinTestFramework):
                 2300, //22: callStipend
                 9000, //23: callValueTransferGas
                 25000, //24: callNewAccountGas
-                24000, //25: suicideRefundGas
+                24000, //25: selfdestructRefundGas
                 3, //26: memoryGas
                 512, //27: quadCoeffDiv
                 200, //28: createDataGas

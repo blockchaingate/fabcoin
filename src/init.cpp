@@ -1578,7 +1578,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                     fGettingValuesDGP = false;
                 }
 
-                dev::eth::Ethash::init();
+                dev::eth::NoProof::init();
                 fs::path fascStateDir = GetDataDir() / "stateFasc";
                 bool fStatus = fs::exists(fascStateDir);
                 const std::string dirFasc(fascStateDir.string());

@@ -2,6 +2,7 @@
 #include <libethereum/State.h>
 #include <libethereum/Transaction.h>
 #include <primitives/transaction.h>
+#include <leveldb/db.h>
 #include <uint256.h>
 
 using logEntriesSerializ = std::vector<std::pair<dev::Address, std::pair<dev::h256s, dev::bytes>>>;
@@ -18,6 +19,11 @@ struct TransactionReceiptInfo {
     dev::Address contractAddress;
     dev::eth::LogEntries logs;
     dev::eth::TransactionException excepted;
+    std::string exceptedMessage;
+    uint32_t outputIndex;
+    dev::eth::LogBloom bloom;
+    dev::h256 stateRoot;
+    dev::h256 utxoRoot;    
 };
 
 struct TransactionReceiptInfoSerialized {
@@ -32,6 +38,11 @@ struct TransactionReceiptInfoSerialized {
     std::vector<dev::h160> contractAddresses;
     std::vector<logEntriesSerializ> logs;
     std::vector<uint32_t> excepted;
+    std::vector<std::string> exceptedMessage;
+    std::vector<uint32_t> outputIndexes;
+    std::vector<dev::h2048> blooms;
+    std::vector<dev::h256> stateRoots;
+    std::vector<dev::h256> utxoRoots;    
 };
 
 class StorageResults

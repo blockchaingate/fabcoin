@@ -1,7 +1,7 @@
 #ifndef FASCTRANSACTION_H
 #define FASCTRANSACTION_H
 
-#include <libethcore/Transaction.h>
+#include <libethcore/TransactionBase.h>
 
 struct VersionVM {
     //this should be portable, see https://stackoverflow.com/questions/31726191/is-there-a-portable-alternative-to-c-bitfields

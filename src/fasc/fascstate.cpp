@@ -3,6 +3,7 @@
 #include <chainparams.h>
 #include <fasc/fascstate.h>
 #include "log_session.h"
+#include <libevm/VMFace.h>
 #include <libethereum/ExtVM.h>
 
 void avoidCompilerWarningsDefinedButNotUsedFascState() {
@@ -96,6 +97,7 @@ ResultExecute FascState::execute(
     _sealEngine.deleteAddresses.insert({_t.sender(), _envInfo.author()});
 
     h256 oldStateRoot = rootHash();
+    h256 oldUTXORoot = rootHashUTXO();
     bool voutLimit = false;
 
     auto onOp = _onOp;
@@ -118,9 +120,9 @@ ResultExecute FascState::execute(
         // OK - transaction looks valid - execute.
         startGasUsed = _envInfo.gasUsed();
         //Please note: e.execute returns 0 if execution went normally.
-        if (!e.execute(commentsNullForNone)) {
+        if (!e.execute()) {
             //normal path assumed by a well-executing contract.
-            e.go(onOp, commentsNullForNone);
+            e.go(onOp);
         } else {
             //something went wrong with execution
             e.revert();
@@ -173,7 +175,7 @@ ResultExecute FascState::execute(
             }
             fasc::commit(cacheUTXO, stateUTXO, m_cache);
             cacheUTXO.clear();
-            bool removeEmptyAccounts = _envInfo.number() >= _sealEngine.chainParams().u256Param("EIP158ForkBlock");
+            bool removeEmptyAccounts = _envInfo.number() >= _sealEngine.chainParams().EIP158ForkBlock;
             commit(removeEmptyAccounts ? State::CommitBehaviour::RemoveEmptyAccounts : State::CommitBehaviour::KeepEmptyAccounts);
         }
     }
@@ -214,9 +216,9 @@ ResultExecute FascState::execute(
             refund.vout.push_back(CTxOut(CAmount(_t.value().convert_to<uint64_t>()), script));
         }
         //make sure to use empty transaction if no vouts made
-        return ResultExecute{ex, dev::eth::TransactionReceipt(oldStateRoot, gas, e.logs()), refund.vout.empty() ? CTransaction() : CTransaction(refund)};
-    } else {
-        return ResultExecute{res, dev::eth::TransactionReceipt(rootHash(), startGasUsed + e.gasUsed(), e.logs()), tx ? *tx : CTransaction()};
+        return ResultExecute{ex, FascTransactionReceipt(oldStateRoot, oldUTXORoot, gas, e.logs()), refund.vout.empty() ? CTransaction() : CTransaction(refund)};
+    }else{
+        return ResultExecute{res, FascTransactionReceipt(rootHash(), rootHashUTXO(), startGasUsed + e.gasUsed(), e.logs()), tx ? *tx : CTransaction()};
     }
 }
 
@@ -285,7 +287,7 @@ void FascState::addBalance(dev::Address const& _id, dev::u256 const& _amount)
         // TODO: to save space we can combine this event with Balance by having
         //       Balance and Balance+Touch events.
         if (!a->isDirty() && a->isEmpty())
-            m_changeLog.emplace_back(dev::eth::detail::Change::Touch, _id);
+            m_changeLog.emplace_back(dev::eth::Change::Touch, _id);
 
         // Increase the account balance. This also is done for value 0 to mark
         // the account as dirty. Dirty account are not removed from the cache
@@ -302,7 +304,7 @@ void FascState::addBalance(dev::Address const& _id, dev::u256 const& _amount)
     }
 
     if (_amount)
-        m_changeLog.emplace_back(dev::eth::detail::Change::Balance, _id, _amount);
+        m_changeLog.emplace_back(dev::eth::Change::Balance, _id, _amount);
 }
 
 dev::Address FascState::createFascAddress(dev::h256 hashTx, uint32_t voutNumber)
@@ -352,7 +354,7 @@ void FascState::updateUTXO(const std::unordered_map<dev::Address, Vin>& vins) {
 void FascState::printfErrorLog(const dev::eth::TransactionException er, const std::string& errorMessage) {
     std::stringstream ss;
     ss << "VM exception: " << er << ". " << errorMessage;
-    clog(ExecutiveWarnChannel) << ss.str();
+    clog(dev::VerbosityWarning, "exec") << ss.str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -382,7 +384,8 @@ CTransaction CondensingTX::createCondensingTX(
         //const std::vector<std::vector<uint8_t> >* aggregationData,
         const dev::h160& contractAddress,
         std::stringstream* commentsNullForNone
-) {
+) 
+{
     this->selectionVin(feesPromisedByContract, contractAddress, commentsNullForNone);
     bool shouldAddExtraVin = false;
     if (this->vins.size() == 0) {
@@ -474,7 +477,7 @@ void CondensingTX::calculatePlusAndMinusOneTransfer(const TransferInfo& ti)
     }
 }
 
-void CondensingTX::calculatePlusAndMinus(const dev::u256& feesPromisedByContract, const Address &contractAddress)
+void CondensingTX::calculatePlusAndMinus(const dev::u256& feesPromisedByContract, const dev::Address &contractAddress)
 {
     for (const TransferInfo& ti : transfers) {
         this->calculatePlusAndMinusOneTransfer(ti);

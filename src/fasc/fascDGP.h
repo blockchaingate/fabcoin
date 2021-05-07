@@ -29,7 +29,7 @@ class FascDGP {
 public:
 
     FascDGP(FascState* _state, bool _dgpevm = true) : dgpevm(_dgpevm), state(_state) {
-        initDataEIP158();
+        initDataSchedule();
     }
 
     dev::eth::EVMSchedule getGasSchedule(unsigned int blockHeight);
@@ -50,9 +50,9 @@ private:
 
     void initDataTemplate(const dev::Address& addr, std::vector<unsigned char>& data);
 
-    void initDataEIP158();
+    void initDataSchedule();
 
-    bool checkLimitSchedule(const std::vector<uint32_t>& defaultData, const std::vector<uint32_t>& checkData);
+    bool checkLimitSchedule(const std::vector<uint32_t>& defaultData, const std::vector<uint32_t>& checkData, int blockHeight);
 
     void createParamsInstance();
 
@@ -68,7 +68,7 @@ private:
 
     void parseDataOneUint64(uint64_t& value);
 
-    dev::eth::EVMSchedule createEVMSchedule();
+    dev::eth::EVMSchedule createEVMSchedule(const dev::eth::EVMSchedule &_schedule, int blockHeight);
 
     void clear();
 
@@ -88,7 +88,7 @@ private:
 
     std::vector<std::pair<unsigned int, dev::Address> > paramsInstance;
 
-    std::vector<uint32_t> dataEIP158Schedule;
+    std::vector<uint32_t> dataSchedule;
 
 };
 #endif

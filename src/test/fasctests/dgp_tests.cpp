@@ -39,7 +39,7 @@ std::vector<valtype> code = {
             2300, //22: callStipend
             9000, //23: callValueTransferGas
             25000, //24: callNewAccountGas
-            24000, //25: suicideRefundGas
+            24000, //25: selfdestructRefundGas
             3, //26: memoryGas
             512, //27: quadCoeffDiv
             200, //28: createDataGas
@@ -90,7 +90,7 @@ std::vector<valtype> code = {
             2300, //22: callStipend
             9000, //23: callValueTransferGas
             25000, //24: callNewAccountGas
-            24000, //25: suicideRefundGas
+            24000, //25: selfdestructRefundGas
             3, //26: memoryGas
             512, //27: quadCoeffDiv
             200, //28: createDataGas
@@ -141,7 +141,7 @@ std::vector<valtype> code = {
             2300, //22: callStipend
             9000, //23: callValueTransferGas
             25000, //24: callNewAccountGas
-            24000, //25: suicideRefundGas
+            24000, //25: selfdestructRefundGas
             3, //26: memoryGas
             512, //27: quadCoeffDiv
             200, //28: createDataGas
@@ -260,7 +260,7 @@ struct EVMScheduleCustom : public dev::eth::EVMSchedule{
         callStipend = v20;
         callValueTransferGas = v21;
         callNewAccountGas = v22;
-        suicideRefundGas = v23;
+        selfdestructRefundGas = v23;
         memoryGas = v24;
         quadCoeffDiv = v25;
         createDataGas = v26;
@@ -300,7 +300,7 @@ bool compareEVMSchedule(const dev::eth::EVMSchedule& a, const dev::eth::EVMSched
     a.jumpdestGas == b.jumpdestGas && a.logGas == b.logGas && a.logDataGas == b.logDataGas &&
     a.logTopicGas == b.logTopicGas && a.createGas == b.createGas && a.callGas == b.callGas &&
     a.callStipend == b.callStipend && a.callValueTransferGas == b.callValueTransferGas &&
-    a.callNewAccountGas == b.callNewAccountGas && a.suicideRefundGas == b.suicideRefundGas &&
+    a.callNewAccountGas == b.callNewAccountGas && a.selfdestructRefundGas == b.selfdestructRefundGas &&
     a.memoryGas == b.memoryGas && a.quadCoeffDiv == b.quadCoeffDiv && a.createDataGas == b.createDataGas &&
     a.txGas == b.txGas && a.txCreateGas == b.txCreateGas && a.txDataZeroGas == b.txDataZeroGas &&
     a.txDataNonZeroGas == b.txDataNonZeroGas && a.copyGas == b.copyGas && a.extcodesizeGas == b.extcodesizeGas &&

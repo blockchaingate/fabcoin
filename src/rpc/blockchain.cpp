@@ -703,8 +703,8 @@ UniValue getaccountinfo(const JSONRPCRequest& request)
     for (auto j: storage)
     {
         UniValue e(UniValue::VOBJ);
-        e.push_back(Pair(dev::toHex(j.second.first), dev::toHex(j.second.second)));
-        storageUV.push_back(Pair(j.first.hex(), e));
+        e.pushKV(dev::toHex(dev::h256(j.second.first)), dev::toHex(dev::h256(j.second.second)));
+        storageUV.pushKV(j.first.hex(), e);
     }
 
     result.push_back(Pair("storage", storageUV));
@@ -785,9 +785,9 @@ UniValue getstorage(const JSONRPCRequest& request)
     }
     for (const auto& j: storage)
     {
-        UniValue e(UniValue::VOBJ);
-        e.push_back(Pair(dev::toHex(j.second.first), dev::toHex(j.second.second)));
-        result.push_back(Pair(j.first.hex(), e));
+        UniValue e(UniValue::VOBJ);        
+        e.pushKV(dev::toHex(dev::h256(j.second.first)), dev::toHex(dev::h256(j.second.second)));
+        result.pushKV(j.first.hex(), e);
     }
     return result;
 }
@@ -948,8 +948,7 @@ UniValue getblock(const JSONRPCRequest& request)
     return blockToJSON(block, pblockindex, verbosity >= 2);
 }
 ////////////////////////////////////////////////////////////////////// // fasc
-
-UniValue contractcode(const JSONRPCRequest& request)
+/*UniValue contractcode(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1) {
         throw std::runtime_error(
@@ -984,6 +983,7 @@ UniValue contractcode(const JSONRPCRequest& request)
     result.pushKV("codeDisassembled", dev::eth::disassemble(code));
     return result;
 }
+*/
 
 UniValue fetchscarshardpublickeys(const JSONRPCRequest& request)
 {
@@ -2514,7 +2514,7 @@ static const CRPCCommand commands[] =
 
     { "blockchain",         "preciousblock",            &preciousblock,            true,  {"blockhash"} },
 
-    {"blockchain",          "contractcode",             &contractcode,             true,  {"address"}},
+//    {"blockchain",          "contractcode",             &contractcode,             true,  {"address"}},
     { "blockchain",         "callcontract",             &callcontract,             true,  {"address","data"} }, // fasc
     { "blockchain",         "fetchscarshardpublickeys", &fetchscarshardpublickeys, true,  {"address","data"} }, // fasc
     /* Not shown in help */

@@ -56,6 +56,7 @@
 #include <aggregate_schnorr_signature.h>
 #include <encodings_crypto.h>
 
+#include <libethcore/ABI.h>
 #if defined(NDEBUG)
 # error "Fabcoin cannot be compiled without assertions."
 #endif
@@ -2530,7 +2531,12 @@ bool SmartContractProcessor::ProcessSmartContract(
                 uint64_t(resultExec[k].execRes.gasUsed),
                 resultExec[k].execRes.newAddress,
                 resultExec[k].txRec.log(),
-                resultExec[k].execRes.excepted
+                resultExec[k].execRes.excepted,
+                exceptedMessage(resultExec[k].execRes.excepted, resultExec[k].execRes.output),
+                resultConvertFascTX.first[k].getNVout(),
+                resultExec[k].txRec.bloom(),
+                resultExec[k].txRec.stateRoot(),
+                resultExec[k].txRec.utxoRoot()
             });
         }
         pstorageresult->addResult(uintToh256(this->transaction->GetHash()), tri);
@@ -3279,7 +3285,7 @@ UniValue transactionReceiptToJSON(const dev::eth::TransactionReceipt& txRec)
 {
     UniValue result(UniValue::VOBJ);
     result.push_back(Pair("stateRoot", txRec.stateRoot().hex()));
-    result.push_back(Pair("gasUsed", CAmount(txRec.gasUsed())));
+    result.push_back(Pair("gasUsed", CAmount(txRec.cumulativeGasUsed())));
     result.push_back(Pair("bloom", txRec.bloom().hex()));
     UniValue logEntries(UniValue::VARR);
     dev::eth::LogEntries logs = txRec.log();
@@ -3838,6 +3844,32 @@ void writeVMlog(const std::vector<ResultExecute>& res, const CTransaction& tx, c
     fIsVMlogFile = true;
 }
 
+LastHashes::LastHashes()
+{}
+
+void LastHashes::set(const CBlockIndex *tip)
+{
+    clear();
+
+    m_lastHashes.resize(256);
+    for(int i=0;i<256;i++){
+        if(!tip)
+            break;
+        m_lastHashes[i]= uintToh256(*tip->phashBlock);
+        tip = tip->pprev;
+    }
+}
+
+dev::h256s LastHashes::precedingHashes(const dev::h256 &) const
+{
+    return m_lastHashes;
+}
+
+void LastHashes::clear()
+{
+    m_lastHashes.clear();
+}
+
 bool ByteCodeExec::performByteCode(dev::eth::Permanence type, std::stringstream* commentsNullForNone)
 {
     for (FascTransaction& tx : txs) {
@@ -3852,7 +3884,7 @@ bool ByteCodeExec::performByteCode(dev::eth::Permanence type, std::stringstream*
         if (!tx.isCreation() && !globalState->addressInUse(tx.receiveAddress())) {
             dev::eth::ExecutionResult execRes;
             execRes.excepted = dev::eth::TransactionException::Unknown;
-            result.push_back(ResultExecute{execRes, dev::eth::TransactionReceipt(dev::h256(), dev::u256(), dev::eth::LogEntries()), CTransaction()});
+            result.push_back(ResultExecute{execRes, FascTransactionReceipt(dev::h256(), dev::u256(), dev::u256(), dev::eth::LogEntries()), CTransaction()});
             continue;
         }
         result.push_back(globalState->execute(envInfo, *globalSealEngine.get(), tx, type, OnOpFunc(), commentsNullForNone));
@@ -3874,7 +3906,7 @@ bool ByteCodeExec::processingOneResult(
     if (oneResult.execRes.excepted != dev::eth::TransactionException::None) {
         if (comments != nullptr) {
             *comments << "Exception while running EVM: " << oneResult.execRes.excepted << "\n"
-                      << "Logs: " << oneResult.txRec.ToStringLogs() << "\n"
+                      << "Logs: " << oneResult.txRec << "\n"
                       << "Transaction sender: " << oneTransaction.sender() << "\n"
                       << "Transaction address: " << oneTransaction.to() << "\n";
         }
@@ -3923,24 +3955,19 @@ bool ByteCodeExec::processingResults(ByteCodeExecResult& resultBCE, std::strings
 
 dev::eth::EnvInfo ByteCodeExec::BuildEVMEnvironment()
 {
-    dev::eth::EnvInfo env;
-    CBlockIndex* tip = chainActive.Tip();
-    env.setNumber(dev::u256(tip->nHeight + 1));
-    env.setTimestamp(dev::u256(block.nTime));
-    env.setDifficulty(dev::u256(block.nBits));
+    CBlockIndex* tip = pindex;
+    dev::eth::BlockHeader header;
+    header.setNumber(tip->nHeight + 1);
+    header.setTimestamp(block.nTime);
+    header.setDifficulty(dev::u256(block.nBits));
+    header.setGasLimit(blockGasLimit);
 
-    dev::eth::LastHashes lh;
-    lh.resize(256);
-    for (int i = 0; i < 256; i ++) {
-        if (!tip)
-            break;
-        lh[i] = uintToh256(*tip->phashBlock);
-        tip = tip->pprev;
-    }
-    env.setLastHashes(std::move(lh));
-    env.setGasLimit(blockGasLimit);
+    lastHashes.set(tip);
 
-    env.setAuthor(EthAddrFromScript(block.vtx[0]->vout[0].scriptPubKey));
+    header.setAuthor(EthAddrFromScript(block.vtx[0]->vout[0].scriptPubKey));
+
+    dev::u256 gasUsed;
+    dev::eth::EnvInfo env(header, lastHashes, gasUsed, globalSealEngine->chainParams().chainID);
     return env;
 }
 
@@ -6655,6 +6682,30 @@ double GuessVerificationProgress(const ChainTxData& data, CBlockIndex *pindex) {
     }
 
     return pindex->nChainTx / fTxTotal;
+}
+
+std::string exceptedMessage(const dev::eth::TransactionException& excepted, const dev::bytes& output)
+{
+    std::string message;
+    try
+    {
+        // Process the revert message from the output
+        if(excepted == dev::eth::TransactionException::RevertInstruction)
+        {
+            // Get function: Error(string)
+            dev::bytesConstRef oRawData(&output);
+            dev::bytes errorFunc = oRawData.cropped(0, 4).toBytes();
+            if(dev::toHex(errorFunc) == "08c379a0")
+            {
+                dev::bytesConstRef oData = oRawData.cropped(4);
+                message = dev::eth::ABIDeserialiser<std::string>::deserialise(oData);
+            }
+        }
+    }
+    catch(...)
+    {}
+
+    return message;
 }
 
 class CMainCleanup
