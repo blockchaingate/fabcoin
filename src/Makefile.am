@@ -22,6 +22,8 @@ FABCOIN_CONFIG_INCLUDES=-I$(builddir)/config
 FABCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS) -I$(srcdir)/cpp-ethereum-fab/utils
 
 FABCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
+FABCOIN_INCLUDES += -I$(srcdir)/libff/libff
+FABCOIN_INCLUDES += -I$(srcdir)/libff
 FABCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
 FABCOIN_INCLUDES += -I$(srcdir)/cpp-ethereum-fab
@@ -36,6 +38,7 @@ LIBFABCOIN_CRYPTO=crypto/libfabcoin_crypto.a
 LIBFABCOINQT=qt/libfabcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBCRYPTOPP=cryptopp/libcryptopp.a
+LIBFF=libff/libff.a
 
 if ENABLE_ZMQ
 LIBFABCOIN_ZMQ=libfabcoin_zmq.a
@@ -403,6 +406,10 @@ libfabcoin_common_a_SOURCES = \
   cpp-ethereum-fab/evmc/include/evmc/instructions.h \
   cpp-ethereum-fab/evmc/include/evmc/loader.h \
   cpp-ethereum-fab/evmc/include/evmc/utils.h \
+  cpp-ethereum-fab/intx/int128.hpp \
+  cpp-ethereum-fab/intx/intx.hpp \
+  libff/libff/algebra/curves/public_params.hpp \
+  libff/libff/algebra/curves/curve_utils.hpp \ 
   cpp-ethereum-fab/ethash/include/ethash/hash_types.h \
   cpp-ethereum-fab/ethash/include/ethash/hash_types.hpp \
   cpp-ethereum-fab/ethash/include/ethash/keccak.h \
@@ -485,6 +492,8 @@ libfabcoin_common_a_SOURCES = \
   cpp-ethereum-fab/libdevcrypto/Exceptions.h \
   cpp-ethereum-fab/libdevcrypto/Blake2.cpp \
   cpp-ethereum-fab/libdevcrypto/Blake2.h \
+  cpp-ethereum-fab/libdevcrypto/LibSnark.cpp \
+  cpp-ethereum-fab/libdevcrypto/LibSnark.h \
   cpp-ethereum-fab/libp2p/All.h \
   cpp-ethereum-fab/libp2p/Capability.h \
   cpp-ethereum-fab/libp2p/CapabilityHost.h \
@@ -682,9 +691,10 @@ fabcoind_LDADD = \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
   $(LIBCRYPTOPP) \
+  $(LIBFF) \
   $(LIBSECP256K1)
 
-fabcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(LIBEQUIHASH_LIBS)
+fabcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS) $(GMP_LIBS) $(GMPXX_LIBS) $(LIBEQUIHASH_LIBS)
 
 # fabcoin-cli binary #
 fabcoin_cli_SOURCES = fabcoin-cli.cpp
@@ -787,7 +797,7 @@ clean-local:
 	-$(MAKE) -C secp256k1 clean
 	-$(MAKE) -C univalue clean
 	-rm -f a/*/*.gcda leveldb/*/*.gcno leveldb/helpers/memenv/*.gcda leveldb/helpers/memenv/*.gcno 
-	-rm -f cryptopp/*.o
+	-rm -f cryptopp/*.o libff/*.o
 	-rm -f config.h
 	-rm -rf test/__pycache__
 
@@ -843,6 +853,7 @@ include Makefile.leveldb.include
 endif
 
 include Makefile.cryptopp.include
+include Makefile.libff.include
 if ENABLE_TESTS
 include Makefile.test.include
 endif

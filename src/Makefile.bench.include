@@ -54,6 +54,9 @@ bench_bench_fabcoin_LDADD = \
   $(LIBDEVCRYPTO) \
   $(LIBCRYPTOPP) \
   $(LIBSCRYIPT) \
+  $(LIBFF) \
+  $(GMP_LIBS) \
+  $(GMPXX_LIBS) \
   $(LIBEQUIHASH_LIBS)
 
 if ENABLE_ZMQ
