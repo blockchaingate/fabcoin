@@ -826,8 +826,6 @@ private:
 
     const uint64_t blockGasLimit;
 
-    CBlockIndex* pindex;
-
     LastHashes lastHashes;
 };
 ////////////////////////////////////////////////////////

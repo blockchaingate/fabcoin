@@ -3955,7 +3955,7 @@ bool ByteCodeExec::processingResults(ByteCodeExecResult& resultBCE, std::strings
 
 dev::eth::EnvInfo ByteCodeExec::BuildEVMEnvironment()
 {
-    CBlockIndex* tip = pindex;
+    CBlockIndex* tip = chainActive.Tip();
     dev::eth::BlockHeader header;
     header.setNumber(tip->nHeight + 1);
     header.setTimestamp(block.nTime);
