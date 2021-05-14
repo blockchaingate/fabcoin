@@ -702,6 +702,31 @@ void SelectParams(const std::string& network)
     globalChainParams = CreateChainParams(network);
 }
 
+std::string CChainParams::EVMGenesisInfo() const
+{
+    std::string genesisInfo = dev::eth::genesisInfo(GetEVMNetwork());
+    return genesisInfo;
+}
+
+std::string CChainParams::EVMGenesisInfo(int nHeight) const
+{
+    std::string genesisInfo = dev::eth::genesisInfo(GetEVMNetwork());
+    return genesisInfo;
+}
+
+dev::eth::Network CChainParams::GetEVMNetwork() const
+{
+    if ( NetworkIDString() == CBaseChainParams::MAIN ) {
+        return dev::eth::Network::fascMainNetwork;
+    }
+    else if ( NetworkIDString() == CBaseChainParams::TESTNET ) {
+        return dev::eth::Network::fascTestNetwork;
+    }
+    else {
+        return dev::eth::Network::fascTestNetwork;
+    }
+}
+
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)
 {
     globalChainParams->UpdateVersionBitsParameters(d, nStartTime, nTimeout);

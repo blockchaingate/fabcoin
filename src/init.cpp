@@ -1585,7 +1585,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 const dev::h256 hashDB(dev::sha3(dev::rlp("")));
                 dev::eth::BaseState existsFascstate = fStatus ? dev::eth::BaseState::PreExisting : dev::eth::BaseState::Empty;
                 globalState = std::unique_ptr<FascState>(new FascState(dev::u256(0), FascState::openDB(dirFasc, hashDB, dev::WithExisting::Trust), dirFasc, existsFascstate));
-                dev::eth::ChainParams cp((dev::eth::genesisInfo(dev::eth::Network::fascMainNetwork)));
+                dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
                 globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
 
                 pstorageresult = new StorageResults(fascStateDir.string());
