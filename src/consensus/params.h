@@ -64,6 +64,9 @@ struct Params {
     uint32_t RewardCheckBugFixed;
     uint32_t RewardCheckBugFixed1;
 
+    /** upgrade virtual machine to be compatible with EVM with Constantinopole hard fork */
+    uint32_t EVMConstantinopoleFork;
+
     /** Block height at which EquihashFAB (184,7) becomes active */
     uint32_t EquihashFABHeight;
     /** Limit BITCOIN_MAX_FUTURE_BLOCK_TIME **/

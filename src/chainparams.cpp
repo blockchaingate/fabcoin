@@ -143,6 +143,7 @@ public:
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.RewardCheckBugFixed = 456500; // 2019.11.27
         consensus.RewardCheckBugFixed1 = 20000000; // need decide fork height
+        consensus.EVMConstantinopoleFork = 0xffffffff;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
         consensus.BIP65Height = 0; 
@@ -274,6 +275,7 @@ public:
         consensus.AllowSomeNonstandardTxHeight = 380000;
         consensus.RewardCheckBugFixed = 0; 
         consensus.RewardCheckBugFixed1 = 0;
+        consensus.EVMConstantinopoleFork = 699000;
         consensus.LWMAHeight = 221370;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256S("0x0001cfb309df094182806bf71c66fd4d2d986ff2a309d211db602fc9a7db1835");
@@ -410,6 +412,7 @@ public:
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.RewardCheckBugFixed = 0; 
         consensus.RewardCheckBugFixed1 = 0;
+        consensus.EVMConstantinopoleFork = 0;
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
@@ -546,6 +549,7 @@ public:
         consensus.AllowSomeNonstandardTxHeight = 0;
         consensus.RewardCheckBugFixed = 0; 
         consensus.RewardCheckBugFixed1 = 0;
+        consensus.EVMConstantinopoleFork = 0;
         consensus.LWMAHeight = 100;
         consensus.CoinbaseLock = 0;
         consensus.ForceSegwit = false;
@@ -705,12 +709,18 @@ void SelectParams(const std::string& network)
 std::string CChainParams::EVMGenesisInfo() const
 {
     std::string genesisInfo = dev::eth::genesisInfo(GetEVMNetwork());
+    ReplaceInt(consensus.EVMConstantinopoleFork, "FASC_BYZANTIUMFORK_BLOCK", genesisInfo);
+    ReplaceInt(consensus.EVMConstantinopoleFork, "FASC_CONSTANTINOPOLEFORK_BLOCK", genesisInfo);
+    ReplaceInt(consensus.EVMConstantinopoleFork, "FASC_CONSTANTINOPOLEFIX_BLOCK", genesisInfo);
     return genesisInfo;
 }
 
 std::string CChainParams::EVMGenesisInfo(int nHeight) const
 {
     std::string genesisInfo = dev::eth::genesisInfo(GetEVMNetwork());
+    ReplaceInt(consensus.EVMConstantinopoleFork, "FASC_BYZANTIUMFORK_BLOCK", genesisInfo);
+    ReplaceInt(consensus.EVMConstantinopoleFork, "FASC_CONSTANTINOPOLEFORK_BLOCK", genesisInfo);
+    ReplaceInt(consensus.EVMConstantinopoleFork, "FASC_CONSTANTINOPOLEFIX_BLOCK", genesisInfo);
     return genesisInfo;
 }
 
