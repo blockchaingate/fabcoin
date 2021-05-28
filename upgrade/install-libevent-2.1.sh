@@ -7,8 +7,8 @@ cd libevent-2.1.10-stable
 ./configure
 sudo make install
 cd
-rm libevent-2.1.10-stable.tar.gz
-rm -rf libevent-2.1.10-stable
+sudo rm libevent-2.1.10-stable.tar.gz
+sudo rm -rf libevent-2.1.10-stable
 
 
  

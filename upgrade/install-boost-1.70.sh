@@ -24,7 +24,7 @@ sudo ./b2 --with=all install
 sudo ldconfig
 
 # let's check the installed version
-cat /usr/include/boost/version.hpp | grep "BOOST_LIB_VERSION"
+cat /usr/local/include/boost/version.hpp | grep "BOOST_LIB_VERSION"
 
 # clean up
 cd ..

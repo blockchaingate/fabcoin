@@ -22,8 +22,12 @@ then
 fi
 
 echo "checking libboost ..."
-boost_version=$(cat /usr/local/include/boost/version.hpp | grep define | grep "BOOST_VERSION " | cut -d' ' -f3)
-boost_version=$(echo "$boost_version / 100000" | bc).$(echo "$boost_version / 100 % 1000" | bc).$(echo "$boost_version % 100 " | bc)
+sudo apt-get install bc
+boost_version="0.0.0"
+if test -f "/usr/local/include/boost/version.hpp"; then
+	boost_version=$(cat /usr/local/include/boost/version.hpp | grep define | grep "BOOST_VERSION " | cut -d' ' -f3)
+	boost_version=$(echo "$boost_version / 100000" | bc).$(echo "$boost_version / 100 % 1000" | bc).$(echo "$boost_version % 100 " | bc)
+fi
 echo "current version is " $boost_version 
 if $(dpkg --compare-versions "$boost_version" "lt" "1.70.0")
 then
