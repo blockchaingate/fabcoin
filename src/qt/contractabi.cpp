@@ -301,7 +301,7 @@ bool ParameterABI::abiOutBasic(ParameterType::Type abiType, const std::string &d
     {
         dev::bytes rawData = dev::fromHex(data.substr(pos, HEX_INSTRUCTION_SIZE));
         dev::bytesConstRef o(&rawData);
-        auto outData = dev::eth::ABIDeserialiser<dev::string32>::deserialise(o);
+        std::string outData = dev::toString(dev::eth::ABIDeserialiser<dev::string32>::deserialise(o));
         value = dev::toHex(outData);
     }
         break;
