@@ -1,5 +1,5 @@
 equihash_packages := libsodium
-packages:=boost openssl libevent zeromq $(equihash_packages)
+packages:=gmp boost openssl libevent zeromq $(equihash_packages)
 native_packages := native_ccache
 
 qt_native_packages = native_protobuf

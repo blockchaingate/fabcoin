@@ -5,10 +5,10 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 package=libsodium
-$(package)_version=1.0.15
-$(package)_download_path=https://download.libsodium.org/libsodium/releases/old
+$(package)_version=1.0.18
+$(package)_download_path=https://download.libsodium.org/libsodium/releases/
 $(package)_file_name=$(package)-$($(package)_version).tar.gz
-$(package)_sha256_hash=FB6A9E879A2F674592E4328C5D9F79F082405EE4BB05CB6E679B90AFE9E178F4
+$(package)_sha256_hash=6f504490b342a4f8a4c4a02fc9b866cbef8622d5df4e5452b46be121e46636c1
 $(package)_dependencies=
 $(package)_config_opts=
 $(package)_config_opts_linux=--with-pic
