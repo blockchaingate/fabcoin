@@ -1147,8 +1147,8 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
     unsigned int k = chainparams.EquihashK();
 
     uint8_t * header = NULL;
-    eq_cuda_context<CONFIG_MODE_1> *g_solver = NULL;
-    eq_cuda_context1847 *g_solver184_7 = NULL;
+    eq_cuda_context200x9 *g_solver = NULL;
+    eq_cuda_context<CONFIG_MODE_184x7> *g_solver184_7 = NULL;
     header = (uint8_t *) calloc(CBlockHeader::HEADER_NEWSIZE, sizeof(uint8_t));
 
     try {
@@ -1205,7 +1205,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                     if( !g_solver )
                     {
                         std::lock_guard<std::mutex> lock{g_cs};
-                        g_solver = new eq_cuda_context<CONFIG_MODE_1>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver = new eq_cuda_context200x9(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }
                 else // after fork
@@ -1219,7 +1219,7 @@ void static FabcoinMinerCuda(const CChainParams& chainparams, GPUConfig conf, in
                     if( !g_solver184_7 )
                     {
                         std::lock_guard<std::mutex> lock{g_cs};
-                        g_solver184_7 = new eq_cuda_context1847(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
+                        g_solver184_7 = new eq_cuda_context<CONFIG_MODE_184x7>(thr_id, conf.currentDevice,&cb_validate, &cb_cancel);
                     }
                 }                
             }

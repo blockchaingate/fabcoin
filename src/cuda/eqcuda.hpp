@@ -63,42 +63,46 @@ typedef uint16_t u16;
 typedef uint8_t u8;
 typedef unsigned char uchar;
 
-struct packer_default;
-struct packer_cantor;
-
 
 typedef bool (*fn_cancel)();
 typedef bool (*fn_validate)(std::vector<unsigned char>, unsigned char *, int);
 
-#define PROOFSIZE1 (1<<7)
+
+
+// ************************** 200,9 begin ****************************
+#define PROOFSIZE1 (1<<9)
 typedef u32 proof[PROOFSIZE1];
-struct equi1847;
-struct eq_cuda_context1847
+struct equi200;
+struct eq_cuda_context200x9
 {
 	int threadsperblock;
 	int totalblocks;
 	int device_id;
     int thread_id;
-	equi1847* eq;
-	equi1847* device_eq;
+	equi200* eq;
+	equi200* device_eq;
 	uint32_t *heap0, *heap1;
 	void* sol_memory;
 	proof* solutions;
-    CUcontext pctx;
 
     fn_validate m_fnValidate;
     fn_cancel m_fnCancel;
 
-	eq_cuda_context1847(int thrid, int devid, fn_validate validate, fn_cancel cancel);
-	~eq_cuda_context1847();
+	eq_cuda_context200x9(int thrid, int devid, fn_validate validate, fn_cancel cancel);
+	~eq_cuda_context200x9();
 
     bool solve(unsigned char *pblock, unsigned char *header, unsigned int headerlen);
 };
+// ************************** 200,9 end ****************************
 
 
-#define MAXREALSOLS 10
+// ************************** 184,7 begin ****************************
+struct packer_default;
+struct packer_cantor;
+
+#define MAXREALSOLS 20
 struct scontainerreal {
-    u32 sols[MAXREALSOLS][512];
+    u32 sols[MAXREALSOLS][132];
     u32 nsols;
 };
 
@@ -106,14 +110,18 @@ template <u32 RB, u32 SM> struct equi;
 template <u32 RB, u32 SM, u32 SSM, u32 THREADS, typename PACKER>
 class eq_cuda_context
 {
+    equi<RB, SM>* eq;
     equi<RB, SM>* device_eq;
-    scontainerreal* solutions;
-    CUcontext pctx;
+	unsigned char *testsol;
+	unsigned char *dev_buf;
+	scontainerreal* solutions;
+	CUcontext pctx;
+	u8 *m_buf;
 
 public:
     eq_cuda_context(int thr_id, int dev_id, fn_validate validate, fn_cancel cancel);
-    void freemem();
     ~eq_cuda_context();
+    void freemem();
 
     bool solve(unsigned char *pblock,
         unsigned char *header,
@@ -128,8 +136,7 @@ public:
     int threadsperblock;
     int threadsperblock_digits;
     size_t equi_mem_sz;
-    u8 *m_buf;
 };
-
 // RB, SM, SSM, TPB, PACKER... but any change only here will fail..
-#define CONFIG_MODE_1	9, 1248, 12, 640, packer_cantor
+#define CONFIG_MODE_184x7 5, 128, 12, 640, packer_cantor
+// ************************** 184,7 end ****************************
