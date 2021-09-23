@@ -68,7 +68,6 @@ If you're building on Ubuntu 17.04 or later, run these two commands, selecting t
 to work around issues with mingw-w64. See issue [8732](https://github.com/blockchaingate/fabcoin/issues/8732) for more information.
 ```
 sudo update-alternatives --config x86_64-w64-mingw32-g++
-sudo update-alternatives --config x86_64-w64-mingw32-gcc
 ```
 
 ## Building for 64-bit Windows
