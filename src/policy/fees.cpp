@@ -1,20 +1,24 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "policy/fees.h"
-#include "policy/policy.h"
+#include <policy/fees.h>
+#include <policy/policy.h>
 
-#include "amount.h"
-#include "clientversion.h"
-#include "primitives/transaction.h"
-#include "random.h"
-#include "streams.h"
-#include "txmempool.h"
-#include "util.h"
+#include <amount.h>
+#include <clientversion.h>
+#include <primitives/transaction.h>
+#include <random.h>
+#include <streams.h>
+#include <txmempool.h>
+#include <util.h>
 
-static constexpr double INF_FEERATE = 1e99;
+//??? static constexpr double INF_FEERATE = 1e99;
+
+void avoidCompilerWarningsDefinedButNotUsedFees() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 std::string StringForFeeEstimateHorizon(FeeEstimateHorizon horizon) {
     static const std::map<FeeEstimateHorizon, std::string> horizon_strings = {
@@ -548,6 +552,23 @@ CBlockPolicyEstimator::CBlockPolicyEstimator()
     longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
 }
 
+CBlockPolicyEstimator::CBlockPolicyEstimator(const CFeeRate& _minRelayFee)
+    : nBestSeenHeight(0), firstRecordedHeight(0), historicalFirst(0), historicalBest(0), trackedTxs(0), untrackedTxs(0)
+{
+    static_assert(MIN_BUCKET_FEERATE > 0, "Min feerate must be nonzero");
+    size_t bucketIndex = 0;
+    for (double bucketBoundary = MIN_BUCKET_FEERATE; bucketBoundary <= MAX_BUCKET_FEERATE; bucketBoundary *= FEE_SPACING, bucketIndex++) {
+        buckets.push_back(bucketBoundary);
+        bucketMap[bucketBoundary] = bucketIndex;
+    }
+    buckets.push_back(INF_FEERATE);
+    bucketMap[INF_FEERATE] = bucketIndex;
+    assert(bucketMap.size() == buckets.size());
+    feeStats = new TxConfirmStats(buckets, bucketMap, MED_BLOCK_PERIODS, MED_DECAY, MED_SCALE);
+    shortStats = new TxConfirmStats(buckets, bucketMap, SHORT_BLOCK_PERIODS, SHORT_DECAY, SHORT_SCALE);
+    longStats = new TxConfirmStats(buckets, bucketMap, LONG_BLOCK_PERIODS, LONG_DECAY, LONG_SCALE);
+}
+
 CBlockPolicyEstimator::~CBlockPolicyEstimator()
 {
     delete feeStats;
@@ -555,7 +576,7 @@ CBlockPolicyEstimator::~CBlockPolicyEstimator()
     delete longStats;
 }
 
-void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate)
+void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate, std::stringstream* comments)
 {
     LOCK(cs_feeEstimator);
     unsigned int txHeight = entry.GetHeight();
@@ -563,7 +584,7 @@ void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry& entry, boo
     if (mapMemPoolTxs.count(hash)) {
         LogPrint(BCLog::ESTIMATEFEE, "Blockpolicy error mempool tx %s already being tracked\n",
                  hash.ToString().c_str());
-	return;
+        return;
     }
 
     if (txHeight != nBestSeenHeight) {
@@ -621,9 +642,10 @@ bool CBlockPolicyEstimator::processBlockTx(unsigned int nBlockHeight, const CTxM
     return true;
 }
 
-void CBlockPolicyEstimator::processBlock(unsigned int nBlockHeight,
-                                         std::vector<const CTxMemPoolEntry*>& entries)
-{
+void CBlockPolicyEstimator::processBlock(
+    unsigned int nBlockHeight,
+    std::vector<const CTxMemPoolEntry*>& entries
+) {
     LOCK(cs_feeEstimator);
     if (nBlockHeight <= nBestSeenHeight) {
         // Ignore side chains and re-orgs; assuming they are random
@@ -670,8 +692,7 @@ void CBlockPolicyEstimator::processBlock(unsigned int nBlockHeight,
     untrackedTxs = 0;
 }
 
-CFeeRate CBlockPolicyEstimator::estimateFee(int confTarget) const
-{
+CFeeRate CBlockPolicyEstimator::estimateFee(int confTarget) const {
     // It's not possible to get reasonable estimates for confTarget of 1
     if (confTarget <= 1)
         return CFeeRate(0);
@@ -716,7 +737,41 @@ CFeeRate CBlockPolicyEstimator::estimateRawFee(int confTarget, double successThr
 
     return CFeeRate(median);
 }
+CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
+{
+    if (answerFoundAtTarget)
+        *answerFoundAtTarget = confTarget;
+    // Return failure if trying to analyze a target we're not tracking
+    if (confTarget <= 0 || (unsigned int)confTarget > feeStats->GetMaxConfirms())
+        return CFeeRate(0);
 
+    // It's not possible to get reasonable estimates for confTarget of 1
+    if (confTarget == 1)
+        confTarget = 2;
+
+    double median = -1;
+    while (median < 0 && (unsigned int)confTarget <= feeStats->GetMaxConfirms()) {
+        median = feeStats->EstimateMedianVal(confTarget++, SUFFICIENT_FEETXS, MIN_SUCCESS_PCT, true, nBestSeenHeight);
+    }
+
+    if (answerFoundAtTarget)
+        *answerFoundAtTarget = confTarget - 1;
+
+    // If mempool is limiting txs , return at least the min feerate from the mempool
+    CAmount minPoolFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFeePerK();
+    if (minPoolFee > 0 && minPoolFee > median)
+        return CFeeRate(minPoolFee);
+
+    if (median < 0)
+        return CFeeRate(0);
+
+    return CFeeRate(median);
+}
+
+double CBlockPolicyEstimator::estimatePriority(int confTarget)
+{
+    return -1;
+}
 unsigned int CBlockPolicyEstimator::HighestTargetTracked(FeeEstimateHorizon horizon) const
 {
     switch (horizon) {
@@ -903,8 +958,18 @@ CFeeRate CBlockPolicyEstimator::estimateSmartFee(int confTarget, FeeCalculation 
 
     return CFeeRate(median);
 }
+double CBlockPolicyEstimator::estimateSmartPriority(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool)
+{
+    if (answerFoundAtTarget)
+        *answerFoundAtTarget = confTarget;
 
+    // If mempool is limiting txs, no priority txs are allowed
+    CAmount minPoolFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFeePerK();
+    if (minPoolFee > 0)
+        return INF_PRIORITY;
 
+    return -1;
+}
 bool CBlockPolicyEstimator::Write(CAutoFile& fileout) const
 {
     try {

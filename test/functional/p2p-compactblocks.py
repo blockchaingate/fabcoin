@@ -75,12 +75,12 @@ class TestNode(NodeConnCB):
 
     # Block until a block announcement for a particular block hash is
     # received.
-    def wait_for_block_announcement(self, block_hash, timeout=60):
+    def wait_for_block_announcement(self, block_hash, timeout=30):
         def received_hash():
             return (block_hash in self.announced_blockhashes)
         wait_until(received_hash, timeout=timeout, lock=mininode_lock)
 
-    def send_await_disconnect(self, message, timeout=60):
+    def send_await_disconnect(self, message, timeout=30):
         """Sends a message to the node and wait for disconnect.
 
         This is used when we want to send a message into the node that we expect
@@ -93,14 +93,14 @@ class CompactBlocksTest(FabcoinTestFramework):
         self.setup_clean_chain = True
         # Node0 = pre-segwit, node1 = segwit-aware
         self.num_nodes = 2
-        self.extra_args = [["-vbparams=segwit:0:0"], ["-txindex"]]
+        self.extra_args = [["-vbparams=segwit:0:0", "-minrelaytxfee=0.000001"], ["-txindex", "-minrelaytxfee=0.000001"]]
         self.utxos = []
 
     def build_block_on_tip(self, node, segwit=False):
         height = node.getblockcount()
         tip = node.getbestblockhash()
         mtp = node.getblockheader(tip)['mediantime']
-        block = create_block(int(tip, 16), create_coinbase(height + 1), mtp + 1)
+        block = create_block(int(tip, 16), create_coinbase(height + 1), height +1, mtp + 1)
         block.nVersion = 4
         if segwit:
             add_witness_commitment(block)
@@ -113,7 +113,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block = self.build_block_on_tip(self.nodes[0])
         self.test_node.send_and_ping(msg_block(block))
         assert(int(self.nodes[0].getbestblockhash(), 16) == block.sha256)
-        self.nodes[0].generate(800)
+        self.nodes[0].generate(COINBASE_MATURITY)
 
         total_value = block.vtx[0].vout[0].nValue
         out_value = total_value // 10
@@ -126,6 +126,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block2 = self.build_block_on_tip(self.nodes[0])
         block2.vtx.append(tx)
         block2.hashMerkleRoot = block2.calc_merkle_root()
+        block2.nHeihgt=self.nodes[0].getblockcount()+1
         block2.solve()
         self.test_node.send_and_ping(msg_block(block2))
         assert_equal(int(self.nodes[0].getbestblockhash(), 16), block2.sha256)
@@ -234,7 +235,7 @@ class CompactBlocksTest(FabcoinTestFramework):
 
     # This test actually causes fabcoind to (reasonably!) disconnect us, so do this last.
     def test_invalid_cmpctblock_message(self):
-        self.nodes[0].generate(801)
+        self.nodes[0].generate(101)
         block = self.build_block_on_tip(self.nodes[0])
 
         cmpct_block = P2PHeaderAndShortIDs()
@@ -250,7 +251,7 @@ class CompactBlocksTest(FabcoinTestFramework):
     # fabcoind's choice of nonce.
     def test_compactblock_construction(self, node, test_node, version, use_witness_address):
         # Generate a bunch of transactions.
-        node.generate(801)
+        node.generate(101)
         num_transactions = 25
         address = node.getnewaddress()
         if use_witness_address:
@@ -284,7 +285,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block_hash = int(node.generate(1)[0], 16)
 
         # Store the raw block in our internal format.
-        block = FromHex(CBlock(), node.getblock("%02x" % block_hash, False, True))
+        block = FromHex(CBlock(), node.getblock("%02x" % block_hash, False))
         [tx.calc_sha256() for tx in block.vtx]
         block.rehash()
 
@@ -426,6 +427,7 @@ class CompactBlocksTest(FabcoinTestFramework):
             block.vtx.append(tx)
 
         block.hashMerkleRoot = block.calc_merkle_root()
+        block.nHeihgt=self.nodes[0].getblockcount()+1
         block.solve()
         return block
 
@@ -579,7 +581,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         current_height = chain_height
         while (current_height >= chain_height - MAX_GETBLOCKTXN_DEPTH):
             block_hash = node.getblockhash(current_height)
-            block = FromHex(CBlock(), node.getblock(block_hash, False, True))
+            block = FromHex(CBlock(), node.getblock(block_hash, False))
 
             msg = msg_getblocktxn()
             msg.block_txn_request = BlockTransactionsRequest(int(block_hash, 16), [])
@@ -686,7 +688,7 @@ class CompactBlocksTest(FabcoinTestFramework):
 
         # ToHex() won't serialize with witness, but this block has no witnesses
         # anyway. TODO: repeat this test with witness tx's to a segwit node.
-        node.submitblock(ToHex(block), '', True)
+        node.submitblock(ToHex(block))
 
         for l in listeners:
             wait_until(lambda: l.received_block_announcement(), timeout=30, lock=mininode_lock)
@@ -705,6 +707,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         block = self.build_block_with_transactions(node, utxo, 5)
         del block.vtx[3]
         block.hashMerkleRoot = block.calc_merkle_root()
+        block.nHeihgt=self.nodes[0].getblockcount()+1
         if use_segwit:
             # If we're testing with segwit, also drop the coinbase witness,
             # but include the witness commitment.
@@ -815,6 +818,9 @@ class CompactBlocksTest(FabcoinTestFramework):
         self.test_sendcmpct(self.nodes[1], self.segwit_node, 2, old_node=self.old_node)
         sync_blocks(self.nodes)
 
+        self.nodes[0].generate(1)
+        self.nodes[1].generate(1)
+        self.nodes[0].generate(COINBASE_MATURITY)
         self.log.info("Testing compactblock construction...")
         self.test_compactblock_construction(self.nodes[0], self.test_node, 1, False)
         sync_blocks(self.nodes)
@@ -892,7 +898,7 @@ class CompactBlocksTest(FabcoinTestFramework):
         assert(self.nodes[0].getbestblockhash() != self.nodes[1].getbestblockhash())
         while (self.nodes[0].getblockcount() > self.nodes[1].getblockcount()):
             block_hash = self.nodes[0].getblockhash(self.nodes[1].getblockcount()+1)
-            self.nodes[1].submitblock(self.nodes[0].getblock(block_hash, False, True), '', True)
+            self.nodes[1].submitblock(self.nodes[0].getblock(block_hash, False))
         assert_equal(self.nodes[0].getbestblockhash(), self.nodes[1].getbestblockhash())
 
         self.log.info("Testing compactblock requests (segwit node)... ")

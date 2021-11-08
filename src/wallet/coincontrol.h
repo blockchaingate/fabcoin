@@ -1,14 +1,14 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_WALLET_COINCONTROL_H
 #define FABCOIN_WALLET_COINCONTROL_H
 
-#include "policy/feerate.h"
-#include "policy/fees.h"
-#include "primitives/transaction.h"
-#include "wallet/wallet.h"
+#include <policy/feerate.h>
+#include <policy/fees.h>
+#include <primitives/transaction.h>
+#include <wallet/wallet.h>
 
 #include <boost/optional.hpp>
 

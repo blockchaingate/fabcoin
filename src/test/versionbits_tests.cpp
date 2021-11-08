@@ -1,15 +1,19 @@
-// Copyright (c) 2014-2016 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "chain.h"
-#include "versionbits.h"
-#include "test/test_fabcoin.h"
-#include "chainparams.h"
-#include "validation.h"
-#include "consensus/params.h"
+#include <chain.h>
+#include <versionbits.h>
+#include <test/test_fabcoin.h>
+#include <chainparams.h>
+#include <validation.h>
+#include <consensus/params.h>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedVersionBits() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 /* Define a virtual block time, one block per 10 minutes after Nov 14 2014, 0:55:36am */
 int32_t TestTime(int nHeight) { return 1415926536 + 75 * nHeight; }

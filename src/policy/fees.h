@@ -1,15 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #ifndef FABCOIN_POLICYESTIMATOR_H
 #define FABCOIN_POLICYESTIMATOR_H
 
-#include "amount.h"
-#include "feerate.h"
-#include "uint256.h"
-#include "random.h"
-#include "sync.h"
+#include <amount.h>
+#include <policy/feerate.h>
+#include <uint256.h>
+#include <random.h>
+#include <sync.h>
 
 #include <map>
 #include <string>
@@ -129,6 +129,31 @@ struct FeeCalculation
     int returnedTarget = 0;
 };
 
+/** Track confirm delays up to 25 blocks, can't estimate beyond that */
+static const unsigned int MAX_BLOCK_CONFIRMS = 25;
+
+/** Decay of .998 is a half-life of 346 blocks or about 2.4 days */
+static const double DEFAULT_DECAY = .998;
+
+/** Require greater than 95% of X feerate transactions to be confirmed within Y blocks for X to be big enough */
+static const double MIN_SUCCESS_PCT = .95;
+
+/** Require an avg of 1 tx in the combined feerate bucket per block to have stat significance */
+static const double SUFFICIENT_FEETXS = 1;
+
+// Minimum and Maximum values for tracking feerates
+static constexpr double MIN_FEERATE = 10;
+static const double MAX_FEERATE = 1e7;
+static const double INF_FEERATE = MAX_MONEY;
+
+static const double INF_PRIORITY = 1e9 * MAX_MONEY;
+
+// We have to lump transactions into buckets based on feerate, but we want to be able
+// to give accurate estimates over a large range of potential feerates
+// Therefore it makes sense to exponentially space the buckets
+/** Spacing of FeeRate buckets */
+static const double FEE_SPACING = 1.1; 
+
 /**
  *  We want to be able to estimate feerates that are needed on tx's to be included in
  * a certain number of blocks.  Every time a block is added to the best chain, this class records
@@ -188,14 +213,18 @@ private:
 public:
     /** Create new BlockPolicyEstimator and initialize stats tracking classes with default values */
     CBlockPolicyEstimator();
+    CBlockPolicyEstimator(const CFeeRate& minRelayFee);
     ~CBlockPolicyEstimator();
 
     /** Process all the transactions that have been included in a block */
     void processBlock(unsigned int nBlockHeight,
                       std::vector<const CTxMemPoolEntry*>& entries);
 
+    /** Process a transaction confirmed in a block*/
+    bool processBlockTx(unsigned int nBlockHeight, const CTxMemPoolEntry* entry);
+
     /** Process a transaction accepted to the mempool*/
-    void processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate);
+    void processTransaction(const CTxMemPoolEntry& entry, bool validFeeEstimate, std::stringstream* comments);
 
     /** Remove a transaction from the mempool tracking stats*/
     bool removeTx(uint256 hash, bool inBlock);
@@ -208,7 +237,24 @@ public:
      *  the closest target where one can be given.  'conservative' estimates are
      *  valid over longer time horizons also.
      */
+    CFeeRate estimateSmartFee(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool);
     CFeeRate estimateSmartFee(int confTarget, FeeCalculation *feeCalc, bool conservative) const;
+
+
+
+    /** Return a priority estimate.
+     *  DEPRECATED
+     *  Returns -1
+     */
+    double estimatePriority(int confTarget);
+
+    /** Estimate priority needed to get be included in a block within
+     *  confTarget blocks.
+     *  DEPRECATED
+     *  Returns -1 unless mempool is currently limited then returns INF_PRIORITY
+     *  answerFoundAtTarget is set to confTarget
+     */
+    double estimateSmartPriority(int confTarget, int *answerFoundAtTarget, const CTxMemPool& pool);
 
     /** Return a specific fee estimate calculation with a given success
      * threshold and time horizon, and optionally return detailed data about
@@ -229,6 +275,7 @@ public:
     unsigned int HighestTargetTracked(FeeEstimateHorizon horizon) const;
 
 private:
+    CFeeRate minTrackedFee;    //!< Passed to constructor to avoid dependency on main
     unsigned int nBestSeenHeight;
     unsigned int firstRecordedHeight;
     unsigned int historicalFirst;
@@ -257,8 +304,6 @@ private:
 
     mutable CCriticalSection cs_feeEstimator;
 
-    /** Process a transaction confirmed in a block*/
-    bool processBlockTx(unsigned int nBlockHeight, const CTxMemPoolEntry* entry);
 
     /** Helper for estimateSmartFee */
     double estimateCombinedFee(unsigned int confTarget, double successThreshold, bool checkShorterHorizon, EstimationResult *result) const;

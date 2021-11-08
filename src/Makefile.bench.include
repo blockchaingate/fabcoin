@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016 The Bitcoin Core developers
+# Copyright (c) 2015-2017 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -43,11 +43,26 @@ bench_bench_fabcoin_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
   $(LIBUNIVALUE) \
+  $(LIBETHEREUM) \
+  $(LIBETHASHSEAL) \
+  $(LIBETHASH) \
+  $(LIBETHCORE) \
+  $(LIBDEVCORE) \
+  $(LIBJSONCPP) \
+  $(LIBEVM) \
+  $(LIBEVMCORE) \
+  $(LIBDEVCRYPTO) \
+  $(LIBCRYPTOPP) \
+  $(LIBSCRYIPT) \
+  $(LIBFF) \
+  $(GMP_LIBS) \
+  $(GMPXX_LIBS) \
   $(LIBEQUIHASH_LIBS)
 
 if ENABLE_ZMQ
 bench_bench_fabcoin_LDADD += $(LIBFABCOIN_ZMQ) $(ZMQ_LIBS)
 endif
+
 
 if ENABLE_WALLET
 bench_bench_fabcoin_SOURCES += bench/coin_selection.cpp

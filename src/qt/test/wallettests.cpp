@@ -1,18 +1,18 @@
-#include "wallettests.h"
+#include <qt/test/wallettests.h>
 
-#include "qt/fabcoinamountfield.h"
-#include "qt/callback.h"
-#include "qt/optionsmodel.h"
-#include "qt/platformstyle.h"
-#include "qt/qvalidatedlineedit.h"
-#include "qt/sendcoinsdialog.h"
-#include "qt/sendcoinsentry.h"
-#include "qt/transactiontablemodel.h"
-#include "qt/transactionview.h"
-#include "qt/walletmodel.h"
-#include "test/test_fabcoin.h"
-#include "validation.h"
-#include "wallet/wallet.h"
+#include <qt/fabcoinamountfield.h>
+#include <qt/callback.h>
+#include <qt/optionsmodel.h>
+#include <qt/platformstyle.h>
+#include <qt/qvalidatedlineedit.h>
+#include <qt/sendcoinsdialog.h>
+#include <qt/sendcoinsentry.h>
+#include <qt/transactiontablemodel.h>
+#include <qt/transactionview.h>
+#include <qt/walletmodel.h>
+#include <test/test_fabcoin.h>
+#include <validation.h>
+#include <wallet/wallet.h>
 
 #include <QAbstractButton>
 #include <QAction>
@@ -21,6 +21,10 @@
 #include <QPushButton>
 #include <QTimer>
 #include <QVBoxLayout>
+
+void avoidCompilerWarningsDefinedButNotUsedTransactionWalletTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 namespace
 {
@@ -143,6 +147,7 @@ void BumpFee(TransactionView& view, const uint256& txid, bool expectDisabled, st
 void TestSendCoins()
 {
     // Set up wallet and chain with 805 blocks (5 mature blocks for spending).
+    /// TestChain800Setup test;
     TestChain800Setup test;
     for (int i = 0; i < 5; ++i) {
         test.CreateAndProcessBlock({}, GetScriptForRawPubKey(test.coinbaseKey.GetPubKey()));
@@ -172,9 +177,11 @@ void TestSendCoins()
     // Send two transactions, and verify they are added to transaction list.
     TransactionTableModel* transactionTableModel = walletModel.getTransactionTableModel();
     QCOMPARE(transactionTableModel->rowCount({}), 805);
+    //??? QCOMPARE(transactionTableModel->rowCount({}), 805);
     uint256 txid1 = SendCoins(wallet, sendCoinsDialog, CFabcoinAddress(CKeyID()), 5 * COIN, false /* rbf */);
     uint256 txid2 = SendCoins(wallet, sendCoinsDialog, CFabcoinAddress(CKeyID()), 10 * COIN, true /* rbf */);
     QCOMPARE(transactionTableModel->rowCount({}), 807);
+    //??? QCOMPARE(transactionTableModel->rowCount({}), 807);
     QVERIFY(FindTx(*transactionTableModel, txid1).isValid());
     QVERIFY(FindTx(*transactionTableModel, txid2).isValid());
 

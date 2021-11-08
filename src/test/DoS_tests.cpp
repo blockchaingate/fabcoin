@@ -1,24 +1,27 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 // Unit tests for denial-of-service detection/prevention code
 
-#include "chainparams.h"
-#include "keystore.h"
-#include "net.h"
-#include "net_processing.h"
-#include "pow.h"
-#include "script/sign.h"
-#include "serialize.h"
-#include "util.h"
-#include "validation.h"
+#include <chainparams.h>
+#include <keystore.h>
+#include <net.h>
+#include <net_processing.h>
+#include <pow.h>
+#include <script/sign.h>
+#include <serialize.h>
+#include <util.h>
+#include <validation.h>
 
-#include "test/test_fabcoin.h"
+#include <test/test_fabcoin.h>
 
 #include <stdint.h>
 
 #include <boost/test/unit_test.hpp>
+void avoidCompilerWarningsDefinedButNotUsedDOSTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 // Tests these internal-to-net_processing.cpp methods:
 extern bool AddOrphanTx(const CTransactionRef& tx, NodeId peer);
@@ -127,7 +130,8 @@ BOOST_AUTO_TEST_CASE(stale_tip_peer_management)
         BOOST_CHECK(node->fDisconnect == false);
     }
 
-    SetMockTime(GetTime() + 3*consensusParams.nPowTargetSpacing + 1);
+    //SetMockTime(GetTime() + 3*consensusParams.nPowTargetSpacing + 1);
+    SetMockTime(GetTime() + 5*consensusParams.nPowTargetSpacing + 1);
 
     // Now tip should definitely be stale, and we should look for an extra
     // outbound peer

@@ -89,7 +89,7 @@ class BIP65Test(FabcoinTestFramework):
 
         tip = self.nodes[0].getbestblockhash()
         block_time = self.nodes[0].getblockheader(tip)['mediantime'] + 1
-        block = create_block(int(tip, 16), create_coinbase(CLTV_HEIGHT - 1), block_time)
+        block = create_block(int(tip, 16), create_coinbase(CLTV_HEIGHT - 1), CLTV_HEIGHT - 1, block_time)
         block.nVersion = 3
         block.vtx.append(spendtx)
         block.hashMerkleRoot = block.calc_merkle_root()
@@ -101,7 +101,7 @@ class BIP65Test(FabcoinTestFramework):
         self.log.info("Test that blocks must now be at least version 4")
         tip = block.sha256
         block_time += 1
-        block = create_block(tip, create_coinbase(CLTV_HEIGHT), block_time)
+        block = create_block(tip, create_coinbase(CLTV_HEIGHT), CLTV_HEIGHT, block_time)
         block.nVersion = 3
         block.solve()
         node0.send_and_ping(msg_block(block))

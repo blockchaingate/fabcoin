@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_SENDCOINSENTRY_H
 #define FABCOIN_QT_SENDCOINSENTRY_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QStackedWidget>
 
@@ -24,6 +24,10 @@ namespace Ui {
 class SendCoinsEntry : public QStackedWidget
 {
     Q_OBJECT
+
+    void avoidCompilerWarningsDefinedButNotUsedSendCoinsEntry() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 
 public:
     explicit SendCoinsEntry(const PlatformStyle *platformStyle, QWidget *parent = 0);

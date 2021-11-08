@@ -9,6 +9,7 @@ from test_framework.util import (
     assert_equal,
     connect_nodes_bi,
 )
+from test_framework.fabcoinconfig import COINBASE_MATURITY
 import shutil
 
 class WalletHDTest(FabcoinTestFramework):
@@ -45,7 +46,7 @@ class WalletHDTest(FabcoinTestFramework):
 
         # Derive some HD addresses and remember the last
         # Also send funds to each add
-        self.nodes[0].generate(801)
+        self.nodes[0].generate(COINBASE_MATURITY+1)
         hd_add = None
         num_hd_adds = 300
         for i in range(num_hd_adds):

@@ -1,24 +1,25 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "transactionview.h"
+#include <transactionview.h>
 
-#include "addresstablemodel.h"
-#include "fabcoinunits.h"
-#include "csvmodelwriter.h"
-#include "editaddressdialog.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "platformstyle.h"
-#include "sendcoinsdialog.h"
-#include "transactiondescdialog.h"
-#include "transactionfilterproxy.h"
-#include "transactionrecord.h"
-#include "transactiontablemodel.h"
-#include "walletmodel.h"
+#include <addresstablemodel.h>
+#include <fabcoinunits.h>
+#include <csvmodelwriter.h>
+#include <editaddressdialog.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
+#include <platformstyle.h>
+#include <sendcoinsdialog.h>
+#include <transactiondescdialog.h>
+#include <transactionfilterproxy.h>
+#include <transactionrecord.h>
+#include <transactiontablemodel.h>
+#include <walletmodel.h>
+#include <styleSheet.h>
 
-#include "ui_interface.h"
+#include <ui_interface.h>
 
 #include <QComboBox>
 #include <QDateTimeEdit>
@@ -37,6 +38,10 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
+void avoidCompilerWarningsDefinedButNotUsedTransactionView() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *parent) :
     QWidget(parent), model(0), transactionProxyModel(0),
     transactionView(0), abandonAction(0), bumpFeeAction(0), columnResizingFixer(0)
@@ -45,29 +50,20 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     setContentsMargins(0,0,0,0);
 
     QHBoxLayout *hlayout = new QHBoxLayout();
-    hlayout->setContentsMargins(0,0,0,0);
-
-    if (platformStyle->getUseExtraSpacing()) {
-        hlayout->setSpacing(5);
-        hlayout->addSpacing(26);
-    } else {
-        hlayout->setSpacing(0);
-        hlayout->addSpacing(23);
-    }
+    hlayout->setContentsMargins(6,6,6,6);
+    hlayout->setSpacing(10);
+    hlayout->addSpacing(STATUS_COLUMN_WIDTH);
 
     watchOnlyWidget = new QComboBox(this);
-    watchOnlyWidget->setFixedWidth(24);
+    watchOnlyWidget->setObjectName("watchOnlyWidget");
     watchOnlyWidget->addItem("", TransactionFilterProxy::WatchOnlyFilter_All);
-    watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/eye_plus"), "", TransactionFilterProxy::WatchOnlyFilter_Yes);
-    watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/eye_minus"), "", TransactionFilterProxy::WatchOnlyFilter_No);
+    watchOnlyWidget->addItem(platformStyle->TableColorIcon(":/icons/eye_plus", PlatformStyle::Normal), "", TransactionFilterProxy::WatchOnlyFilter_Yes);
+    watchOnlyWidget->addItem(platformStyle->TableColorIcon(":/icons/eye_minus", PlatformStyle::Normal), "", TransactionFilterProxy::WatchOnlyFilter_No);
     hlayout->addWidget(watchOnlyWidget);
 
     dateWidget = new QComboBox(this);
-    if (platformStyle->getUseExtraSpacing()) {
-        dateWidget->setFixedWidth(121);
-    } else {
-        dateWidget->setFixedWidth(120);
-    }
+    dateWidget->setFixedWidth(DATE_COLUMN_WIDTH -10);
+
     dateWidget->addItem(tr("All"), All);
     dateWidget->addItem(tr("Today"), Today);
     dateWidget->addItem(tr("This week"), ThisWeek);
@@ -78,11 +74,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
-    if (platformStyle->getUseExtraSpacing()) {
-        typeWidget->setFixedWidth(121);
-    } else {
-        typeWidget->setFixedWidth(120);
-    }
+    typeWidget->setFixedWidth(TYPE_COLUMN_WIDTH -10);
 
     typeWidget->addItem(tr("All"), TransactionFilterProxy::ALL_TYPES);
     typeWidget->addItem(tr("Received with"), TransactionFilterProxy::TYPE(TransactionRecord::RecvWithAddress) |
@@ -90,6 +82,8 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
     typeWidget->addItem(tr("Sent to"), TransactionFilterProxy::TYPE(TransactionRecord::SendToAddress) |
                                   TransactionFilterProxy::TYPE(TransactionRecord::SendToOther));
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(TransactionRecord::SendToSelf));
+    typeWidget->addItem(tr("Contract Receive"), TransactionFilterProxy::TYPE(TransactionRecord::ContractRecv));
+    typeWidget->addItem(tr("Contract Send"), TransactionFilterProxy::TYPE(TransactionRecord::ContractSend));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(TransactionRecord::Generated));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(TransactionRecord::Other));
 
@@ -105,11 +99,7 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
 #if QT_VERSION >= 0x040700
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
-    if (platformStyle->getUseExtraSpacing()) {
-        amountWidget->setFixedWidth(97);
-    } else {
-        amountWidget->setFixedWidth(100);
-    }
+    amountWidget->setFixedWidth(AMOUNT_MINIMUM_COLUMN_WIDTH -10);
     amountWidget->setValidator(new QDoubleValidator(0, 1e20, 8, this));
     hlayout->addWidget(amountWidget);
 
@@ -542,7 +532,7 @@ QWidget *TransactionView::createDateRangeWidget()
 {
     dateRangeWidget = new QFrame();
     dateRangeWidget->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    dateRangeWidget->setContentsMargins(1,1,1,1);
+    dateRangeWidget->setContentsMargins(1,1,1,8);
     QHBoxLayout *layout = new QHBoxLayout(dateRangeWidget);
     layout->setContentsMargins(0,0,0,0);
     layout->addSpacing(23);

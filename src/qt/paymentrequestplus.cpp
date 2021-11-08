@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,9 +7,9 @@
 // with some extra methods
 //
 
-#include "paymentrequestplus.h"
+#include <paymentrequestplus.h>
 
-#include "util.h"
+#include <util.h>
 
 #include <stdexcept>
 
@@ -18,6 +18,10 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QSslCertificate>
+
+void avoidCompilerWarningsDefinedButNotUsedPaymentRequestPlus() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 class SSLVerifyError : public std::runtime_error
 {

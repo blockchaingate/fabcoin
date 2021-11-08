@@ -1,18 +1,18 @@
-// Copyright (c) 2015-2016 The Bitcoin Core developers
+// Copyright (c) 2015-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_TEST_TEST_FABCOIN_H
 #define FABCOIN_TEST_TEST_FABCOIN_H
 
-#include "chainparamsbase.h"
-#include "fs.h"
-#include "key.h"
-#include "pubkey.h"
-#include "random.h"
-#include "scheduler.h"
-#include "txdb.h"
-#include "txmempool.h"
+#include <chainparamsbase.h>
+#include <fs.h>
+#include <key.h>
+#include <pubkey.h>
+#include <random.h>
+#include <scheduler.h>
+#include <txdb.h>
+#include <txmempool.h>
 
 #include <boost/thread.hpp>
 

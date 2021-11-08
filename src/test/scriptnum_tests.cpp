@@ -2,13 +2,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "scriptnum10.h"
-#include "script/script.h"
-#include "test/test_fabcoin.h"
+#include <scriptnum10.h>
+#include <script/script.h>
+#include <test/test_fabcoin.h>
 
 #include <boost/test/unit_test.hpp>
 #include <limits.h>
 #include <stdint.h>
+
+void avoidCompilerWarningsDefinedButNotUsedScriptNumTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(scriptnum_tests, BasicTestingSetup)
 

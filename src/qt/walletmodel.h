@@ -1,14 +1,14 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_WALLETMODEL_H
 #define FABCOIN_QT_WALLETMODEL_H
 
-#include "paymentrequestplus.h"
-#include "walletmodeltransaction.h"
+#include <paymentrequestplus.h>
+#include <walletmodeltransaction.h>
 
-#include "support/allocators/secure.h"
+#include <support/allocators/secure.h>
 
 #include <map>
 #include <vector>
@@ -21,6 +21,9 @@ class PlatformStyle;
 class RecentRequestsTableModel;
 class TransactionTableModel;
 class WalletModelTransaction;
+class TokenItemModel;
+class TokenTransactionTableModel;
+class ContractTableModel;
 
 class CCoinControl;
 class CKeyID;
@@ -28,6 +31,8 @@ class COutPoint;
 class COutput;
 class CPubKey;
 class CWallet;
+class CTokenInfo;
+class CTokenTx;
 class uint256;
 
 QT_BEGIN_NAMESPACE
@@ -36,6 +41,9 @@ QT_END_NAMESPACE
 
 class SendCoinsRecipient
 {
+    void avoidCompilerWarningsDefinedButNotUsedMinerTests() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 public:
     explicit SendCoinsRecipient() : amount(0), fSubtractFeeFromAmount(false), nVersion(SendCoinsRecipient::CURRENT_VERSION) { }
     explicit SendCoinsRecipient(const QString &addr, const QString &_label, const CAmount& _amount, const QString &_message):
@@ -126,16 +134,21 @@ public:
 
     OptionsModel *getOptionsModel();
     AddressTableModel *getAddressTableModel();
+    ContractTableModel *getContractTableModel();
     TransactionTableModel *getTransactionTableModel();
     RecentRequestsTableModel *getRecentRequestsTableModel();
+    TokenItemModel *getTokenItemModel();
+    TokenTransactionTableModel *getTokenTransactionTableModel();
 
     CAmount getBalance(const CCoinControl *coinControl = nullptr) const;
     CAmount getUnconfirmedBalance() const;
     CAmount getImmatureBalance() const;
+    CAmount getStake() const;
     bool haveWatchOnly() const;
     CAmount getWatchBalance() const;
     CAmount getWatchUnconfirmedBalance() const;
     CAmount getWatchImmatureBalance() const;
+    CAmount getWatchStake() const;
     EncryptionStatus getEncryptionStatus() const;
 
     // Check address for validity
@@ -166,6 +179,10 @@ public:
     bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
     // Wallet backup
     bool backupWallet(const QString &filename);
+    // Has wallet backup
+    bool hasWalletBackup();
+    // Restore backup
+    bool restoreWallet(const QString &filename, const QString &param);
 
     // RAI object for unlocking wallet, returned by requestUnlock()
     class UnlockContext
@@ -183,6 +200,7 @@ public:
         WalletModel *wallet;
         bool valid;
         mutable bool relock; // mutable, as it can be set to false by copying
+        bool stakingOnly;
 
         void CopyFrom(const UnlockContext& rhs);
     };
@@ -194,6 +212,7 @@ public:
     bool getPrivKey(const CKeyID &address, CKey& vchPrivKeyOut) const;
     void getOutputs(const std::vector<COutPoint>& vOutpoints, std::vector<COutput>& vOutputs);
     bool isSpent(const COutPoint& outpoint) const;
+    bool isUnspentAddress(const std::string& address) const;
     void listCoins(std::map<QString, std::vector<COutput> >& mapCoins) const;
 
     bool isLockedCoin(uint256 hash, unsigned int n) const;
@@ -218,6 +237,21 @@ public:
 
     bool getDefaultWalletRbf() const;
 
+    bool addTokenEntry(const CTokenInfo& token);
+
+    bool addTokenTxEntry(const CTokenTx& tokenTx, bool fFlushOnClose=true);
+
+    bool existTokenEntry(const CTokenInfo& token);
+
+    bool removeTokenEntry(const std::string& sHash);
+
+    QString getRestorePath();
+    QString getRestoreParam();
+
+    std::vector<CTokenInfo> getInvalidTokens();
+
+    bool isMineAddress(const std::string &strAddress);
+
 private:
     CWallet *wallet;
     bool fHaveWatchOnly;
@@ -228,29 +262,38 @@ private:
     OptionsModel *optionsModel;
 
     AddressTableModel *addressTableModel;
+    ContractTableModel *contractTableModel;
     TransactionTableModel *transactionTableModel;
     RecentRequestsTableModel *recentRequestsTableModel;
+    TokenItemModel *tokenItemModel;
+    TokenTransactionTableModel *tokenTransactionTableModel;
 
     // Cache some values to be able to detect changes
     CAmount cachedBalance;
     CAmount cachedUnconfirmedBalance;
     CAmount cachedImmatureBalance;
+    CAmount cachedStake;
     CAmount cachedWatchOnlyBalance;
     CAmount cachedWatchUnconfBalance;
     CAmount cachedWatchImmatureBalance;
+    CAmount cachedWatchOnlyStake;
     EncryptionStatus cachedEncryptionStatus;
     int cachedNumBlocks;
 
     QTimer *pollTimer;
 
+    QString restorePath;
+    QString restoreParam;
+
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
     void checkBalanceChanged();
+    void checkTokenBalanceChanged();
 
 Q_SIGNALS:
     // Signal that balance in wallet changed
-    void balanceChanged(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
-                        const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void balanceChanged(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& stake,
+                        const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance, const CAmount& watchOnlyStake);
 
     // Encryption status of wallet changed
     void encryptionStatusChanged(int status);
@@ -283,6 +326,8 @@ public Q_SLOTS:
     void updateWatchOnlyFlag(bool fHaveWatchonly);
     /* Current, immature or unconfirmed balance might have changed - emit 'balanceChanged' if so */
     void pollBalanceChanged();
+    /* New, updated or removed contract book entry */
+    void updateContractBook(const QString &address, const QString &label, const QString &abi, int status);
 };
 
 #endif // FABCOIN_QT_WALLETMODEL_H

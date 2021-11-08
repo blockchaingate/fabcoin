@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,6 +11,9 @@
 #include "script/standard.h"
 #include "script/sign.h"
 
+void avoidCompilerWarningsDefinedButNotUsedIsMine() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 typedef std::vector<unsigned char> valtype;
 
@@ -144,6 +147,8 @@ isminetype IsMine(const CKeyStore &keystore, const CScript& scriptPubKey, bool& 
             return ISMINE_SPENDABLE;
         break;
     }
+    default:
+        break;
     }
 
     if (keystore.HaveWatchOnly(scriptPubKey)) {

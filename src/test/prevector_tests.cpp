@@ -1,17 +1,21 @@
-// Copyright (c) 2015-2016 The Bitcoin Core developers
+// Copyright (c) 2015-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <vector>
-#include "prevector.h"
+#include <prevector.h>
 
-#include "reverse_iterator.h"
-#include "serialize.h"
-#include "streams.h"
+#include <reverse_iterator.h>
+#include <serialize.h>
+#include <streams.h>
 
-#include "test/test_fabcoin.h"
+#include <test/test_fabcoin.h>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedPVectorTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(PrevectorTests, TestingSetup)
 

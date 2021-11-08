@@ -8,7 +8,7 @@ Test case is:
 4 nodes. 1 2 and 3 send transactions between each other,
 fourth node is a miner.
 1 2 3 each mine a block to start, then
-Miner creates 800 blocks so 1 2 3 each have 25 mature
+Miner creates 100 blocks so 1 2 3 each have 50 mature
 coins to spend.
 Then 5 iterations of 1/2/3 sending coins amongst
 themselves to get transactions in the wallets,
@@ -35,6 +35,7 @@ import shutil
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
+from test_framework.fabcoinconfig import *
 
 class WalletBackupTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -102,20 +103,18 @@ class WalletBackupTest(FabcoinTestFramework):
         sync_blocks(self.nodes)
         self.nodes[2].generate(1)
         sync_blocks(self.nodes)
-
-        self.nodes[3].generate(800)
+        self.nodes[3].generate(COINBASE_MATURITY)
         sync_blocks(self.nodes)
 
-        assert_equal(self.nodes[0].getbalance(), 25)
-        assert_equal(self.nodes[1].getbalance(), 25)
-        assert_equal(self.nodes[2].getbalance(), 25)
+        assert_equal(self.nodes[0].getbalance(), INITIAL_BLOCK_REWARD)
+        assert_equal(self.nodes[1].getbalance(), INITIAL_BLOCK_REWARD)
+        assert_equal(self.nodes[2].getbalance(), INITIAL_BLOCK_REWARD)
         assert_equal(self.nodes[3].getbalance(), 0)
 
         self.log.info("Creating transactions")
         # Five rounds of sending each other transactions.
         for i in range(5):
             self.do_one_round()
-        self.sync_all()
 
         self.log.info("Backing up")
         tmpdir = self.options.tmpdir
@@ -130,10 +129,8 @@ class WalletBackupTest(FabcoinTestFramework):
         for i in range(5):
             self.do_one_round()
 
-        self.sync_all()
-
-        #Generate 801 more blocks, so any fees paid mature
-        self.nodes[3].generate(801)
+        # Generate 101 more blocks, so any fees paid mature
+        self.nodes[3].generate(COINBASE_MATURITY + 1)
         self.sync_all()
 
         balance0 = self.nodes[0].getbalance()
@@ -142,10 +139,9 @@ class WalletBackupTest(FabcoinTestFramework):
         balance3 = self.nodes[3].getbalance()
         total = balance0 + balance1 + balance2 + balance3
 
-        # At this point, there are 1614 blocks (803 for setup, then 10 rounds, then 801.)
-        # 814 are mature, so the sum of all wallets should be 814 * 25 .
-
-        assert_equal(total, 814*25)
+        # At this point, there are 214 blocks (103 for setup, then 10 rounds, then 101.)
+        # 114 are mature, so the sum of all wallets should be 114 * 50 = 5700.
+        assert_equal(total, (COINBASE_MATURITY+14)*INITIAL_BLOCK_REWARD)
 
         ##
         # Test restoring spender wallets from backups

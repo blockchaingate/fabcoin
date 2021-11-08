@@ -59,7 +59,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
 
     def generate_blocks(self, number, version, test_blocks = []):
         for i in range(number):
-            block = create_block(self.tip, create_coinbase(self.height), self.last_block_time + 1)
+            block = create_block(self.tip, create_coinbase(self.height), self.height, self.last_block_time + 1)
             block.nVersion = version
             block.rehash()
             block.solve()
@@ -98,7 +98,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance(test_blocks, sync_every_block=False)
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'started')
-        assert_equal(self.get_bip9_status(bipName)['since'], 844)
+        assert_equal(self.get_bip9_status(bipName)['since'], 144)
         assert_equal(self.get_bip9_status(bipName)['statistics']['elapsed'], 0)
         assert_equal(self.get_bip9_status(bipName)['statistics']['count'], 0)
         tmpl = self.nodes[0].getblocktemplate({})
@@ -198,7 +198,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         spendtx.rehash()
         invalidatePostSignature(spendtx)
         spendtx.rehash()
-        block = create_block(self.tip, create_coinbase(self.height), self.last_block_time + 1)
+        block = create_block(self.tip, create_coinbase(self.height), self.height, self.last_block_time + 1)
         block.nVersion = activated_version
         block.vtx.append(spendtx)
         block.hashMerkleRoot = block.calc_merkle_root()
@@ -228,7 +228,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         invalidatePostSignature(spendtx)
         spendtx.rehash()
 
-        block = create_block(self.tip, create_coinbase(self.height), self.last_block_time + 1)
+        block = create_block(self.tip, create_coinbase(self.height), self.height, self.last_block_time + 1)
         block.nVersion = 5
         block.vtx.append(spendtx)
         block.hashMerkleRoot = block.calc_merkle_root()

@@ -1,17 +1,21 @@
-// Copyright (c) 2016 The Bitcoin Core developers
+// Copyright (c) 2016-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bench.h"
-#include "key.h"
+#include <bench/bench.h>
+#include <key.h>
 #if defined(HAVE_CONSENSUS_LIB)
-#include "script/fabcoinconsensus.h"
+#include <script/fabcoinconsensus.h>
 #endif
-#include "script/script.h"
-#include "script/sign.h"
-#include "streams.h"
+#include <script/script.h>
+#include <script/sign.h>
+#include <streams.h>
 
 #include <array>
+
+void avoidCompilerWarningsDefinedButNotUsedVerifyScript() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 // FIXME: Dedup with BuildCreditingTransaction in test/script_tests.cpp.
 static CMutableTransaction BuildCreditingTransaction(const CScript& scriptPubKey)
@@ -93,7 +97,7 @@ static void VerifyScriptBench(benchmark::State& state)
         assert(success);
 
 #if defined(HAVE_CONSENSUS_LIB)
-        CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream stream(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_BLOCK_LEGACY);
         stream << txSpend;
         int csuccess = fabcoinconsensus_verify_script_with_amount(
             txCredit.vout[0].scriptPubKey.data(),
@@ -105,4 +109,4 @@ static void VerifyScriptBench(benchmark::State& state)
     }
 }
 
-BENCHMARK(VerifyScriptBench);
+BENCHMARK(VerifyScriptBench, 6300);

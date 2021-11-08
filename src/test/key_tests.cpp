@@ -2,19 +2,23 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "key.h"
+#include <key.h>
 
-#include "base58.h"
-#include "script/script.h"
-#include "uint256.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "test/test_fabcoin.h"
+#include <base58.h>
+#include <script/script.h>
+#include <uint256.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <test/test_fabcoin.h>
 
 #include <string>
 #include <vector>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedKeyTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 static const std::string strSecret1     ("5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj");
 static const std::string strSecret2     ("5KC4ejrDjv152FGwP386VD1i2NYc5KkfSMyv1nGy1VGDxGHqVY3");

@@ -2,10 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "utilstrencodings.h"
-#include "test/test_fabcoin.h"
+#include <utilstrencodings.h>
+#include <test/test_fabcoin.h>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedBase32Tests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(base32_tests, BasicTestingSetup)
 

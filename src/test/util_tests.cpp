@@ -1,20 +1,24 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "util.h"
+#include <util.h>
 
-#include "clientversion.h"
-#include "primitives/transaction.h"
-#include "sync.h"
-#include "utilstrencodings.h"
-#include "utilmoneystr.h"
-#include "test/test_fabcoin.h"
+#include <clientversion.h>
+#include <primitives/transaction.h>
+#include <sync.h>
+#include <utilstrencodings.h>
+#include <utilmoneystr.h>
+#include <test/test_fabcoin.h>
 
 #include <stdint.h>
 #include <vector>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedUtilTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(util_tests, BasicTestingSetup)
 

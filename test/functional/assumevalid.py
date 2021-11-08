@@ -118,7 +118,7 @@ class AssumeValidTest(FabcoinTestFramework):
 
         # Create the first block with a coinbase output to our key
         height = 1
-        block = create_block(self.tip, create_coinbase(height, coinbase_pubkey), self.block_time)
+        block = create_block(self.tip, create_coinbase(height, coinbase_pubkey), height, self.block_time)
         self.blocks.append(block)
         self.block_time += 1
         block.solve()
@@ -129,7 +129,7 @@ class AssumeValidTest(FabcoinTestFramework):
 
         # Bury the block 800 deep so the coinbase output is spendable
         for i in range(800):
-            block = create_block(self.tip, create_coinbase(height), self.block_time)
+            block = create_block(self.tip, create_coinbase(height), height, self.block_time)
             block.solve()
             self.blocks.append(block)
             self.tip = block.sha256
@@ -142,7 +142,7 @@ class AssumeValidTest(FabcoinTestFramework):
         tx.vout.append(CTxOut(24 * 100000000, CScript([OP_TRUE])))
         tx.calc_sha256()
 
-        block802 = create_block(self.tip, create_coinbase(height), self.block_time)
+        block802 = create_block(self.tip, create_coinbase(height), height, self.block_time)
         self.block_time += 1
         block802.vtx.extend([tx])
         block802.hashMerkleRoot = block802.calc_merkle_root()
@@ -155,7 +155,7 @@ class AssumeValidTest(FabcoinTestFramework):
 
         # Bury the assumed valid block 2100*8 deep
         for i in range(16800):
-            block = create_block(self.tip, create_coinbase(height), self.block_time)
+            block = create_block(self.tip, create_coinbase(height), height, self.block_time)
             block.nVersion = 4
             block.solve()
             self.blocks.append(block)

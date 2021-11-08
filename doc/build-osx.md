@@ -16,21 +16,22 @@ Then install [Homebrew](https://brew.sh).
 Dependencies
 ----------------------
 
-    brew install automake berkeley-db4 libtool boost --c++11 miniupnpc openssl pkg-config protobuf qt libevent libsodium
+    brew install cmake automake berkeley-db4 libtool boost --c++11 --without-single --without-static miniupnpc openssl pkg-config protobuf qt5 libevent libsodium
 
 If you want to build the disk image with `make deploy` (.dmg / optional), you need RSVG
 
-    brew install librsvg
+    brew imagemagick --with-librsvg
 
 NOTE: Building with Qt4 is still supported, however, could result in a broken UI. Building with Qt5 is recommended.
 
-Build Fabcoin Core
+Build Build Fabcoin Core
 ------------------------
 
 1. Clone the fabcoin source code and cd into `fabcoin`
 
         git clone https://github.com/blockchaingate/fabcoin
         cd fabcoin
+ 
 
 2.  Build fabcoin-core:
 

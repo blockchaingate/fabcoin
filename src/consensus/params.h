@@ -1,12 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_CONSENSUS_PARAMS_H
 #define FABCOIN_CONSENSUS_PARAMS_H
 
-#include "uint256.h"
+#include <uint256.h>
 #include <map>
 #include <string>
 
@@ -37,6 +37,8 @@ struct BIP9Deployment {
  * Parameters that influence chain consensus.
  */
 struct Params {
+    std::string strNetworkID;
+
     uint256 hashGenesisBlock;
     int nSubsidyHalvingInterval;
     /** Block height and hash at which BIP34 becomes active */
@@ -46,13 +48,33 @@ struct Params {
     int BIP65Height;
     /** Block height at which BIP66 becomes active */
     int BIP66Height;
-    /** Block height at which Fabcoin GPU hard fork becomes active */
-    int FABHeight;
+    /** Block height at which Fabcoin Equihash hard fork becomes active */
+    uint32_t FABHeight;
+    /** Block height at which LWMA becomes active */
+    uint32_t LWMAHeight;
+    /** Block height at which Fabcoin Smart Contract hard fork becomes active */
+    uint32_t ContractHeight;
+    /** Block height at which Fabcoin Aggregate Signature hard fork becomes active */
+    uint32_t AggregateSignatureHeight;
+    /** Some no-standard contract transactions got onto testnet before this height. Just allow them and reject such case after.*/
+    uint32_t AllowSomeNonstandardTxHeight;
+    /** Some miner's invalid blocks passed through the validation, but it will be fixed since this height.
+    The invalid blocks are 452722, 452720, 452714, 452712, 452708, 452706, 452704, 452301, 452300, 452299
+    */
+    uint32_t RewardCheckBugFixed;
+    uint32_t RewardCheckBugFixed1;
+
+    /** upgrade virtual machine to be compatible with EVM with Constantinopole hard fork */
+    uint32_t EVMConstantinopoleFork;
+
+    /** Block height at which EquihashFAB (184,7) becomes active */
+    uint32_t EquihashFABHeight;
+    /** Limit BITCOIN_MAX_FUTURE_BLOCK_TIME **/
+    int64_t MaxFutureBlockTime;
     /** Block height before which the coinbase subsidy will be locked for the same period */
     int CoinbaseLock;
     /** whether segwit is active */
     bool ForceSegwit;
-
     /**
      * Minimum blocks including miner confirmation of the total of 2016 blocks in a retargeting period,
      * (nPowTargetTimespan / nPowTargetSpacing) which is also used for BIP9 deployments.
@@ -61,27 +83,36 @@ struct Params {
     uint32_t nRuleChangeActivationThreshold;
     uint32_t nMinerConfirmationWindow;
     BIP9Deployment vDeployments[MAX_VERSION_BITS_DEPLOYMENTS];
-    /** Proof of work parameters */
 
+    /** Proof of work parameters */
     uint256 powLimit;
     uint256 powLimitLegacy;
 
     const uint256& PowLimit(bool postfork) const { return postfork ? powLimit : powLimitLegacy; }
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
-    int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
-    int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
+    int64_t nPowTargetSpacing;
+
+    int64_t DifficultyAdjustmentInterval(uint32_t nheight=0) const { return nPowTargetTimespan / (nheight<EquihashFABHeight?nPowTargetSpacing:2*nPowTargetSpacing); }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
+    
+    int nFixUTXOCacheHFHeight; //fasc
 
-    //Zcash logic for diff adjustment
-    int64_t nPowAveragingWindow;
-    int64_t nPowMaxAdjustDown;
-    int64_t nPowMaxAdjustUp;
-    int64_t AveragingWindowTimespan() const { return nPowAveragingWindow * nPowTargetSpacing; }
-    int64_t MinActualTimespan() const { return (AveragingWindowTimespan() * (100 - nPowMaxAdjustUp  )) / 100; }
-    int64_t MaxActualTimespan() const { return (AveragingWindowTimespan() * (100 + nPowMaxAdjustDown)) / 100; }
+    // Params for Zawy's LWMA difficulty adjustment algorithm.
+    int64_t nZawyLwmaAveragingWindow;
+    bool bZawyLwmaSolvetimeLimitation;
+    uint8_t MaxBlockInterval;
+
+    //Digishield logic for difficulty adjustment
+    int64_t nDigishieldPowAveragingWindow;
+    int64_t nDigishieldPowMaxAdjustDown;
+    int64_t nDigishieldPowMaxAdjustUp;
+    int64_t DigishieldAveragingWindowTimespan(uint32_t nheight=0) const { return nDigishieldPowAveragingWindow * (nheight<EquihashFABHeight?nPowTargetSpacing:2*nPowTargetSpacing); }
+    int64_t DigishieldMinActualTimespan(uint32_t nheight=0) const { return (DigishieldAveragingWindowTimespan(nheight) * (100 - nDigishieldPowMaxAdjustUp  )) / 100; }
+    int64_t DigishieldMaxActualTimespan(uint32_t nheight=0) const { return (DigishieldAveragingWindowTimespan(nheight) * (100 + nDigishieldPowMaxAdjustDown)) / 100; }
+
 };
 } // namespace Consensus
 

@@ -1,12 +1,12 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_TRANSACTIONRECORD_H
 #define FABCOIN_QT_TRANSACTIONRECORD_H
 
-#include "amount.h"
-#include "uint256.h"
+#include <amount.h>
+#include <uint256.h>
 
 #include <QList>
 #include <QString>
@@ -79,11 +79,13 @@ public:
         SendToOther,
         RecvWithAddress,
         RecvFromOther,
-        SendToSelf
+        SendToSelf,
+        ContractRecv,
+        ContractSend
     };
 
     /** Number of confirmation recommended for accepting a transaction */
-    static const int RecommendedNumConfirmations = 6;
+    static const int RecommendedNumConfirmations = 10;
 
     TransactionRecord():
             hash(), time(0), type(Other), address(""), debit(0), credit(0), idx(0)

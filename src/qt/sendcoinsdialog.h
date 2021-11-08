@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_SENDCOINSDIALOG_H
 #define FABCOIN_QT_SENDCOINSDIALOG_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QDialog>
 #include <QMessageBox>
@@ -30,6 +30,9 @@ class SendCoinsDialog : public QDialog
 {
     Q_OBJECT
 
+    void avoidCompilerWarningsDefinedButNotUsedSendCoinsDialog() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 public:
     explicit SendCoinsDialog(const PlatformStyle *platformStyle, QWidget *parent = 0);
     ~SendCoinsDialog();
@@ -51,30 +54,25 @@ public Q_SLOTS:
     void accept();
     SendCoinsEntry *addEntry();
     void updateTabsAndLabels();
-    void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
-                    const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& stake,
+                    const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance, const CAmount& watchOnlyStake);
 
 private:
     Ui::SendCoinsDialog *ui;
     ClientModel *clientModel;
     WalletModel *model;
     bool fNewRecipientAllowed;
-    bool fFeeMinimized;
     const PlatformStyle *platformStyle;
 
     // Process WalletModel::SendCoinsReturn and generate a pair consisting
     // of a message and message flags for use in Q_EMIT message().
     // Additional parameter msgArg can be used via .arg(msgArg).
     void processSendCoinsReturn(const WalletModel::SendCoinsReturn &sendCoinsReturn, const QString &msgArg = QString());
-    void minimizeFeeSection(bool fMinimize);
-    void updateFeeMinimizedLabel();
     // Update the passed in CCoinControl with state from the GUI
     void updateCoinControlState(CCoinControl& ctrl);
 
 private Q_SLOTS:
     void on_sendButton_clicked();
-    void on_buttonChooseFee_clicked();
-    void on_buttonMinimizeFee_clicked();
     void removeEntry(SendCoinsEntry* entry);
     void updateDisplayUnit();
     void coinControlFeatureChanged(bool);

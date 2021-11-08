@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,10 +7,10 @@
 #define FABCOIN_PRIMITIVES_TRANSACTION_H
 
 #include <stdint.h>
-#include "amount.h"
-#include "script/script.h"
-#include "serialize.h"
-#include "uint256.h"
+#include <amount.h>
+#include <script/script.h>
+#include <serialize.h>
+#include <uint256.h>
 
 static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
@@ -33,6 +33,22 @@ public:
     }
 
     void SetNull() { hash.SetNull(); n = (uint32_t) -1; }
+    bool IsWithoutAncestor(std::stringstream* commentsOnFalse = nullptr) const
+    {
+        for (auto iterator = this->hash.begin(); iterator != this->hash.end(); ++ iterator) {
+            if (*iterator != 0xff) {
+                return false;
+            }
+        }
+        if (this->n != 0) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "Your transactions' sequence entry is required to be 0, but is instead: "
+                                 << this->n << ".\n";
+            }
+            return false;
+        }
+        return true;
+    }
     bool IsNull() const { return (hash.IsNull() && n == (uint32_t) -1); }
 
     friend bool operator<(const COutPoint& a, const COutPoint& b)
@@ -63,6 +79,7 @@ class CTxIn
 public:
     COutPoint prevout;
     CScript scriptSig;
+    CScript lockScriptFromPrevout; // cache for the lock script of the prevout input
     uint32_t nSequence;
     CScriptWitness scriptWitness; //! Only serialized through CTransaction
 
@@ -123,6 +140,9 @@ public:
     }
 
     std::string ToString() const;
+
+    //Used when serializing without signature to get bytes to be signed.
+    bool ToBytesForSignatureWithoutAncestor(std::stringstream& output, std::stringstream* commentsOnFailure) const;
 };
 
 /** An output of a transaction.  It contains the public key that the next input
@@ -158,6 +178,17 @@ public:
     bool IsNull() const
     {
         return (nValue == -1);
+    }
+
+    void SetEmpty()
+    {
+        nValue = 0;
+        scriptPubKey.clear();
+    }
+
+    bool IsEmpty() const
+    {
+        return (nValue == 0 && scriptPubKey.empty());
     }
 
     friend bool operator==(const CTxOut& a, const CTxOut& b)
@@ -278,9 +309,9 @@ public:
     // actually immutable; deserialization and assignment are implemented,
     // and bypass the constness. This is safe, as they update the entire
     // structure, including the hash.
-    const int32_t nVersion;
     const std::vector<CTxIn> vin;
     const std::vector<CTxOut> vout;
+    const int32_t nVersion;
     const uint32_t nLockTime;
 
 private:
@@ -315,6 +346,9 @@ public:
         return hash;
     }
 
+    bool ToBytesForSignatureWithoutAncestor(std::vector<unsigned char>& output, std::stringstream* commentsOnFailure) const;
+    bool ToBytesForSignatureWithoutAncestor(std::stringstream& output, std::stringstream* commentsOnFailure) const;
+
     // Compute a hash that includes both transaction and witness data
     uint256 GetWitnessHash() const;
 
@@ -330,9 +364,60 @@ public:
      */
     unsigned int GetTotalSize() const;
 
+//////////////////////////////////////// // fabcoin
+    bool HasCreateOrCallInOutputs() const;
+    bool HasNonFeeCallOrCreateInOutputs() const;
+    bool HasOpSpend() const;
+////////////////////////////////////////
+
+    bool IsWithoutAncestor(std::stringstream* commentsOnFalse) const
+    {
+        if (this->vin.size() != 1) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "To avoid a potential malleability attack vector, "
+                                 << "transactions without ancestors are allowed to have a single input only. ";
+            }
+            return false;
+        }
+        const CTxIn& input = this->vin[0];
+        if (!input.scriptWitness.IsNull()) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "At the moment, transaction witness is not allowed for transactions without ancestor. ";
+            }
+            return false;
+        }
+        if (input.nSequence != CTxIn::SEQUENCE_FINAL) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "Transactions without ancestor are required to have "
+                                 << CTxIn::SEQUENCE_FINAL
+                                 << " in their sequence entry, this one has: "
+                                 << input.nSequence << " instead. ";
+            }
+            return false;
+        }
+        if (this->vout.size() == 0) {
+            if (commentsOnFalse != nullptr) {
+                *commentsOnFalse << "Transactions without ancestor are required to have at least one output. ";
+            }
+            return false;
+        }
+        return input.prevout.IsWithoutAncestor();
+    }
     bool IsCoinBase() const
     {
-        return (vin.size() == 1 && vin[0].prevout.IsNull());
+        return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
+    }
+
+    bool IsCoinStake() const
+    {
+        // ppcoin: the coin stake transaction is marked with the first output empty
+        return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
+    }
+
+    bool IsNormalTx() const
+    {
+        // not coin base or coin stake transaction
+        return !IsCoinBase() && !IsCoinStake();
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)
@@ -361,9 +446,9 @@ public:
 /** A mutable version of CTransaction. */
 struct CMutableTransaction
 {
-    int32_t nVersion;
     std::vector<CTxIn> vin;
     std::vector<CTxOut> vout;
+    int32_t nVersion;
     uint32_t nLockTime;
 
     CMutableTransaction();
@@ -410,4 +495,5 @@ typedef std::shared_ptr<const CTransaction> CTransactionRef;
 static inline CTransactionRef MakeTransactionRef() { return std::make_shared<const CTransaction>(); }
 template <typename Tx> static inline CTransactionRef MakeTransactionRef(Tx&& txIn) { return std::make_shared<const CTransaction>(std::forward<Tx>(txIn)); }
 
+int64_t GetTransactionWeight(const CTransaction &tx);
 #endif // FABCOIN_PRIMITIVES_TRANSACTION_H

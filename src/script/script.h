@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,7 +20,7 @@
 #include <vector>
 
 // Maximum number of bytes pushable to the stack
-static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520;
+static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 128000; //(128 kb)
 
 // Maximum number of non-push operations per script
 static const int MAX_OPS_PER_SCRIPT = 201;
@@ -29,7 +29,7 @@ static const int MAX_OPS_PER_SCRIPT = 201;
 static const int MAX_PUBKEYS_PER_MULTISIG = 20;
 
 // Maximum script length in bytes
-static const int MAX_SCRIPT_SIZE = 10000;
+static const int MAX_SCRIPT_SIZE = 129000; // (129 kb)
 
 // Maximum number of values on script interpreter stack
 static const int MAX_STACK_SIZE = 1000;
@@ -181,6 +181,21 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
+    // Execute EXT byte code.
+    OP_CREATE = 0xc1,
+    OP_CALL = 0xc2,
+    OP_SPEND = 0xc3,
+
+    //Aggregate signature
+    OP_AGGREGATEVERIFY = 0xd1,
+    OP_CONTRACTCOVERSFEES = 0xd2,
+    OP_SCARSIGNATURE = 0xd3, //=211
+
+    // template matching params
+    OP_GAS_PRICE = 0xf5,
+    OP_VERSION = 0xf6,
+    OP_GAS_LIMIT = 0xf7,
+    OP_DATA = 0xf8,
 
     // template matching params
     OP_SMALLINTEGER = 0xfa,
@@ -323,6 +338,30 @@ public:
         return serialize(m_value);
     }
 
+    ///////////////////////////////// fasc
+    static uint64_t vch_to_uint64(const std::vector<unsigned char>& vch)
+    {
+        if (vch.size() > 8) {
+            throw scriptnum_error("script number overflow");
+        }
+
+        if (vch.empty())
+            return 0;
+
+        uint64_t result = 0;
+        for (size_t i = 0; i != vch.size(); ++i)
+            result |= static_cast<uint64_t>(vch[i]) << 8*i;
+
+        // If the input vector's most significant byte is 0x80, remove it from
+        // the result's msb and return a negative.
+        if (vch.back() & 0x80)
+            throw scriptnum_error("Negative gas value.");
+            // return -((uint64_t)(result & ~(0x80ULL << (8 * (vch.size() - 1)))));
+
+        return result;
+    }
+    /////////////////////////////////
+
     static std::vector<unsigned char> serialize(const int64_t& value)
     {
         if(value == 0)
@@ -378,6 +417,42 @@ private:
 };
 
 typedef prevector<28, unsigned char> CScriptBase;
+
+struct OpcodePattern
+{
+    unsigned int opCode;
+    int minDataLength; // - 1 for none
+    int maxDataLength; // - 1 for none
+    std::vector<unsigned char> exactDataContent;
+    OpcodePattern(): opCode(0), minDataLength(-1), maxDataLength(-1){}
+    OpcodePattern(opcodetype inputOpCode): opCode(inputOpCode), minDataLength(-1), maxDataLength(-1){}
+    OpcodePattern(unsigned int inputOpCode, unsigned int inputMinimumDataLength, unsigned int inputMaximumDataLength):
+        opCode(inputOpCode), minDataLength(inputMinimumDataLength), maxDataLength(inputMaximumDataLength){}
+};
+
+struct CScriptTemplate
+{
+    friend CScriptTemplate& operator <<(CScriptTemplate& output, const OpcodePattern& input) {
+        output.thePatterns.push_back(input);
+        return output;
+    }
+    friend CScriptTemplate& operator <<(CScriptTemplate& output, opcodetype input) {
+        output.thePatterns.push_back(OpcodePattern(input));
+        return output;
+    }
+    unsigned int tx_templateType;
+    std::string name;
+    std::vector<OpcodePattern> thePatterns;
+    CScriptTemplate(): tx_templateType(0), name("undefined"){}
+    void MakeAggregateSignatureTemplate();
+    static void MakeSCARSignatureTemplateStatic(CScriptTemplate& output) {
+        output.MakeSCARSignatureTemplate();
+    }
+    void MakeSCARSignatureTemplate();
+    void MakeContractCoversFeesTemplate();
+    void MakeInputPublicKeyNoAncestor();
+    void reset();
+};
 
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public CScriptBase
@@ -580,6 +655,7 @@ public:
             return OP_0;
         return (opcodetype)(OP_1+n-1);
     }
+    bool FitsOpCodePattern(const CScriptTemplate& pattern, std::vector<std::vector<unsigned char> >* outputData, std::stringstream* commentsOnFailure) const;
 
     int FindAndDelete(const CScript& b)
     {
@@ -633,7 +709,14 @@ public:
      */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsPayToAggregateSignature() const;
     bool IsPayToScriptHash() const;
+    ///////////////////////////////////////////////// // fasc
+    bool IsPayToPubkey() const;
+    bool IsPayToPubkeyHash() const;
+    bool IsPayToPubkeyWithSignature() const;
+    bool IsPayToPubkeyHashWithSignature() const;
+    /////////////////////////////////////////////////
     bool IsPayToWitnessScriptHash() const;
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
 
@@ -654,12 +737,34 @@ public:
         return (size() > 0 && *begin() == OP_RETURN) || (size() > MAX_SCRIPT_SIZE);
     }
 
+
+    ///////////////////////////////////////// fasc
+    bool HasOpCreate() const
+    {
+        return Find(OP_CREATE) == 1;
+    }
+
+    bool HasOpCall() const
+    {
+        return Find(OP_CALL) == 1;
+    }
+    bool HasOpContractCoversFees() const
+    {
+        return Find(OP_CONTRACTCOVERSFEES) == 1;
+    }
+    bool HasOpSpend() const
+    {
+        return size()==1 && *begin() == OP_SPEND;
+    }
+    /////////////////////////////////////////
+
     void clear()
     {
         // The default prevector::clear() does not release memory
         CScriptBase::clear();
         shrink_to_fit();
     }
+    std::string ToString() const;
 };
 
 struct CScriptWitness

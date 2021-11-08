@@ -1,28 +1,36 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "txdb.h"
+#include <txdb.h>
 
-#include "chainparams.h"
-#include "hash.h"
-#include "random.h"
-#include "pow.h"
-#include "uint256.h"
-#include "util.h"
-#include "ui_interface.h"
-#include "init.h"
+#include <chainparams.h>
+#include <hash.h>
+#include <random.h>
+#include <pow.h>
+#include <uint256.h>
+#include <util.h>
+#include <ui_interface.h>
+#include <init.h>
+#include <validation.h>
 
 #include <stdint.h>
 
 #include <boost/thread.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedTXDB() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
 static const char DB_BLOCK_FILES = 'f';
 static const char DB_TXINDEX = 't';
 static const char DB_BLOCK_INDEX = 'b';
+////////////////////////////////////////// // fasc
+static const char DB_HEIGHTINDEX = 'h';
+////////////////////////////////////////// // fasc
 
 static const char DB_BEST_BLOCK = 'B';
 static const char DB_HEAD_BLOCKS = 'H';
@@ -259,6 +267,110 @@ bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
     return true;
 }
 
+/////////////////////////////////////////////////////// // fasc
+bool CBlockTreeDB::WriteHeightIndex(const CHeightTxIndexKey &heightIndex, const std::vector<uint256>& hash) {
+    CDBBatch batch(*this);
+    batch.Write(std::make_pair(DB_HEIGHTINDEX, heightIndex), hash);
+    return WriteBatch(batch);
+}
+
+int CBlockTreeDB::ReadHeightIndex(int low, int high, int minconf,
+        std::vector<std::vector<uint256>> &blocksOfHashes,
+        std::set<dev::h160> const &addresses) {
+
+    if ((high < low && high > -1) || (high == 0 && low == 0) || (high < -1 || low < 0)) {
+       return -1;
+    }
+
+    std::unique_ptr<CDBIterator> pcursor(NewIterator());
+
+    pcursor->Seek(std::make_pair(DB_HEIGHTINDEX, CHeightTxIndexIteratorKey(low)));
+
+    int curheight = 0;
+
+    for (size_t count = 0; pcursor->Valid(); pcursor->Next()) {
+
+        std::pair<char, CHeightTxIndexKey> key;
+        if (!pcursor->GetKey(key) || key.first != DB_HEIGHTINDEX) {
+            break;
+        }
+
+        int nextHeight = key.second.height;
+
+        if (high > -1 && nextHeight > high) {
+            break;
+        }
+
+        if (minconf > 0) {
+            int conf = chainActive.Height() - nextHeight;
+            if (conf < minconf) {
+                break;
+            }
+        }
+
+        curheight = nextHeight;
+
+        auto address = key.second.address;
+        if (!addresses.empty() && addresses.find(address) == addresses.end()) {
+            continue;
+        }
+
+        std::vector<uint256> hashesTx;
+
+        if (!pcursor->GetValue(hashesTx)) {
+            break;
+        }
+
+        count += hashesTx.size();
+
+        blocksOfHashes.push_back(hashesTx);
+    }
+
+    return curheight;
+}
+
+bool CBlockTreeDB::EraseHeightIndex(const unsigned int &height) {
+
+    boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
+    CDBBatch batch(*this);
+
+    pcursor->Seek(std::make_pair(DB_HEIGHTINDEX, CHeightTxIndexIteratorKey(height)));
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        std::pair<char, CHeightTxIndexKey> key;
+        if (pcursor->GetKey(key) && key.first == DB_HEIGHTINDEX && key.second.height == height) {
+            batch.Erase(key);
+            pcursor->Next();
+        } else {
+            break;
+        }
+    }
+
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::WipeHeightIndex() {
+
+    boost::scoped_ptr<CDBIterator> pcursor(NewIterator());
+    CDBBatch batch(*this);
+
+    pcursor->Seek(DB_HEIGHTINDEX);
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        std::pair<char, CHeightTxIndexKey> key;
+        if (pcursor->GetKey(key) && key.first == DB_HEIGHTINDEX) {
+            batch.Erase(key);
+            pcursor->Next();
+        } else {
+            break;
+        }
+    }
+
+    return WriteBatch(batch);
+}
+/////////////////////////////////////////////////
 bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
 {
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
@@ -288,9 +400,11 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nSolution      = diskindex.nSolution;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
+                pindexNew->hashStateRoot  = diskindex.hashStateRoot;
+                pindexNew->hashUTXORoot   = diskindex.hashUTXORoot;
 
                 // TODO(h4x3rotab): Check Equihash solution? Not sure why Zcash doesn't do it here.
-                bool postfork = pindexNew->nHeight >= consensusParams.FABHeight;
+                bool postfork = (uint32_t)pindexNew->nHeight >= (uint32_t)consensusParams.FABHeight;
                 if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, postfork, consensusParams))
                     return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
 

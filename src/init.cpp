@@ -1,51 +1,54 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "init.h"
+#include <init.h>
 
-#include "addrman.h"
-#include "amount.h"
-#include "chain.h"
-#include "chainparams.h"
-#include "checkpoints.h"
-#include "compat/sanity.h"
-#include "consensus/validation.h"
-#include "fs.h"
-#include "httpserver.h"
-#include "httprpc.h"
-#include "key.h"
-#include "validation.h"
-#include "miner.h"
-#include "netbase.h"
-#include "net.h"
-#include "net_processing.h"
-#include "policy/feerate.h"
-#include "policy/fees.h"
-#include "policy/policy.h"
-#include "rpc/server.h"
-#include "rpc/register.h"
-#include "rpc/blockchain.h"
-#include "script/standard.h"
-#include "script/sigcache.h"
-#include "scheduler.h"
-#include "timedata.h"
-#include "txdb.h"
-#include "txmempool.h"
-#include "torcontrol.h"
-#include "ui_interface.h"
-#include "util.h"
-#include "utilmoneystr.h"
-#include "validationinterface.h"
+#include <addrman.h>
+#include <amount.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <checkpoints.h>
+#include <compat/sanity.h>
+#include <consensus/validation.h>
+#include <fs.h>
+#include <log_session.h>
+#include <httpserver.h>
+#include <httprpc.h>
+#include <key.h>
+#include <validation.h>
+#include <miner.h>
+#include <netbase.h>
+#include <net.h>
+#include <net_processing.h>
+#include <policy/feerate.h>
+#include <policy/fees.h>
+#include <policy/policy.h>
+#include <rpc/server.h>
+#include <rpc/register.h>
+#include <rpc/blockchain.h>
+#include <rpc/aggregate_signature_test.h>
+#include <script/standard.h>
+#include <script/sigcache.h>
+#include <scheduler.h>
+#include <timedata.h>
+#include <txdb.h>
+#include <txmempool.h>
+#include <torcontrol.h>
+#include <ui_interface.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <utilmoneystr.h>
+#include <validationinterface.h>
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 #endif
-#include "warnings.h"
+#include <warnings.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <memory>
@@ -61,9 +64,10 @@
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
+#include <encodings_crypto.h>
 
 #if ENABLE_ZMQ
-#include "zmq/zmqnotificationinterface.h"
+#include <zmq/zmqnotificationinterface.h>
 #endif
 
 bool fFeeEstimatesInitialized = false;
@@ -88,7 +92,11 @@ static CZMQNotificationInterface* pzmqNotificationInterface = nullptr;
 #define MIN_CORE_FILEDESCRIPTORS 150
 #endif
 
-static const char* FEE_ESTIMATES_FILENAME="fee_estimates.dat";
+static const char* FEE_ESTIMATES_FILENAME = "fee_estimates.dat";
+
+void avoidCompilerWarningsDefinedButNotUsedInit() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -248,6 +256,10 @@ void Shutdown()
         pcoinsdbview = nullptr;
         delete pblocktree;
         pblocktree = nullptr;
+        delete pstorageresult;
+        pstorageresult = nullptr;
+        delete globalState.release();
+        globalSealEngine.reset();
     }
 #ifdef ENABLE_WALLET
     for (CWalletRef pwallet : vpwallets) {
@@ -380,12 +392,14 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-prune=<n>", strprintf(_("Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. "
             "Warning: Reverting this setting requires re-downloading the entire blockchain. "
             "(default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, >%u = automatically prune block files to stay under the specified target size in MiB)"), MIN_DISK_SPACE_FOR_BLOCK_FILES / 1024 / 1024));
+    strUsage += HelpMessageOpt("-record-log-opcodes", strprintf(_("Logs all EVM LOG opcode operations to the file vmExecLogs.json")));
     strUsage += HelpMessageOpt("-reindex-chainstate", _("Rebuild chain state from the currently indexed blocks"));
     strUsage += HelpMessageOpt("-reindex", _("Rebuild chain state and block index from the blk*.dat files on disk"));
 #ifndef WIN32
     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
 #endif
     strUsage += HelpMessageOpt("-txindex", strprintf(_("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)"), DEFAULT_TXINDEX));
+    strUsage += HelpMessageOpt("-logevents", strprintf(_("Maintain a full EVM log index, used by searchlogs and gettransactionreceipt rpc calls (default: %u)"), DEFAULT_LOGEVENTS));
 
     strUsage += HelpMessageGroup(_("Connection options:"));
     strUsage += HelpMessageOpt("-addnode=<ip>", _("Add a node to connect to and attempt to keep the connection open"));
@@ -415,6 +429,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-timeout=<n>", strprintf(_("Specify connection timeout in milliseconds (minimum: 1, default: %d)"), DEFAULT_CONNECT_TIMEOUT));
     strUsage += HelpMessageOpt("-torcontrol=<ip>:<port>", strprintf(_("Tor control port to use if onion listening enabled (default: %s)"), DEFAULT_TOR_CONTROL));
     strUsage += HelpMessageOpt("-torpassword=<pass>", _("Tor control port password (default: empty)"));
+    strUsage += HelpMessageOpt("-dgpstorage", _("Receiving data from DGP via storage (default: -dgpevm)"));
+    strUsage += HelpMessageOpt("-dgpevm", _("Receiving data from DGP via a contract call (default: -dgpevm)"));
 #ifdef USE_UPNP
 #if USE_UPNP
     strUsage += HelpMessageOpt("-upnp", _("Use UPnP to map the listening port (default: 1 when listening and no -proxy)"));
@@ -477,6 +493,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-allgpu", _("If -G is enabled this will mine on all available GPU platforms and devices (default: false)"));
     strUsage += HelpMessageOpt("-forcenolimit", _("Do not limit thread count per GPU by memory limits. (default: false)"));
 #endif
+#ifdef USE_CUDA
+    strUsage += HelpMessageOpt("-CUDA", _("Enable NVIDIA CUDA mining (default: false)"));
+#endif
 #endif
 
     strUsage += HelpMessageOpt("-help-debug", _("Show all debugging options (usage: --help -help-debug)"));
@@ -489,6 +508,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-maxsigcachesize=<n>", strprintf("Limit sum of signature cache and script execution cache sizes to <n> MiB (default: %u)", DEFAULT_MAX_SIG_CACHE_SIZE));
         strUsage += HelpMessageOpt("-maxtipage=<n>", strprintf("Maximum tip age in seconds to consider node in initial block download (default: %u)", DEFAULT_MAX_TIP_AGE));
     }
+    strUsage += HelpMessageOpt("-minmempoolgaslimit=<limit>", strprintf("The minimum transaction gas limit we are willing to accept into the mempool (default: %s)",MEMPOOL_MIN_GAS_LIMIT));
     strUsage += HelpMessageOpt("-maxtxfee=<amt>", strprintf(_("Maximum total fees (in %s) to use in a single wallet transaction or raw transaction; setting this too low may abort large transactions (default: %s)"),
         CURRENCY_UNIT, FormatMoney(DEFAULT_TRANSACTION_MAXFEE)));
     strUsage += HelpMessageOpt("-printtoconsole", _("Send trace/debug info to console instead of debug.log file"));
@@ -522,6 +542,8 @@ std::string HelpMessage(HelpMessageMode mode)
     if (showDebug)
         strUsage += HelpMessageOpt("-blockversion=<n>", "Override block version to test forking scenarios");
 
+    strUsage += HelpMessageOpt("-blockmaxconflict=<n>", strprintf(_("Set max conflicted blocks can be overwrited, default: %d )"), DEFAULT_BLOCK_MAX_CONFLICT ));
+
     strUsage += HelpMessageGroup(_("RPC server options:"));
     strUsage += HelpMessageOpt("-server", _("Accept command line and JSON-RPC commands"));
     strUsage += HelpMessageOpt("-rest", strprintf(_("Accept public REST requests (default: %u)"), DEFAULT_REST_ENABLE));
@@ -547,7 +569,7 @@ std::string LicenseInfo()
     const std::string URL_SOURCE_CODE = "<https://github.com/blockchaingate/fabcoin>";
     const std::string URL_WEBSITE = "<https://fabcoin.pro>";
 
-    return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
+    return CopyrightHolders(strprintf(_("Copyright (C) %i"), COPYRIGHT_YEAR) + " ") + "\n" +
            "\n" +
            strprintf(_("Please contribute if you find %s useful. "
                        "Visit %s for further information about the software."),
@@ -838,6 +860,7 @@ static std::string ResolveErrMsg(const char * const optname, const std::string& 
 void InitLogging()
 {
     fPrintToConsole = gArgs.GetBoolArg("-printtoconsole", false);
+    LogSession::flagLogsForwardedToStdOut = fPrintToConsole;
     fLogTimestamps = gArgs.GetBoolArg("-logtimestamps", DEFAULT_LOGTIMESTAMPS);
     fLogTimeMicros = gArgs.GetBoolArg("-logtimemicros", DEFAULT_LOGTIMEMICROS);
     fLogIPs = gArgs.GetBoolArg("-logips", DEFAULT_LOGIPS);
@@ -915,6 +938,24 @@ bool AppInitBasicSetup()
     std::set_new_handler(new_handler_terminate);
 
     return true;
+}
+
+void ParseKanbanId()
+{
+    std::string& kanbanId = CBaseChainParams::kanbanId;
+    std::vector<unsigned char>& kanbanIdBytes = CBaseChainParams::kanbanIdBytes;
+    kanbanId = gArgs.GetArg("-kanbanSmartContractId", "");
+    std::stringstream errorStream;
+    if (!Encodings::fromHex(kanbanId, kanbanIdBytes, &errorStream)) {
+        LogSession::debugLog() << "Could not hex-decode the input kanban id: "
+                               << CBaseChainParams::kanbanId << ". " << errorStream.str() << LogSession::endL;
+        LogSession::debugLog() << "Clearing the kanban id. " << LogSession::endL;
+        kanbanId = "";
+        kanbanIdBytes.clear();
+    } else {
+        kanbanId = Encodings::toHexString(kanbanIdBytes); //<- ensure id string is encoded standardly (lower case).
+    }
+    LogSession::debugLog() << "DEBUG: got kanban id: " << CBaseChainParams::kanbanId << LogSession::endL;
 }
 
 bool AppInitParameterInteraction()
@@ -996,7 +1037,6 @@ bool AppInitParameterInteraction()
 
     if (gArgs.IsArgSet("-blockminsize"))
         InitWarning("Unsupported argument -blockminsize ignored.");
-
     // Checkmempool and checkblockindex default to true in regtest mode
     int ratio = std::min<int>(std::max<int>(gArgs.GetArg("-checkmempool", chainparams.DefaultConsistencyChecks() ? 1 : 0), 0), 1000000);
     if (ratio != 0) {
@@ -1067,7 +1107,13 @@ bool AppInitParameterInteraction()
         fPruneMode = true;
     }
 
+    ParseKanbanId();
+
     RegisterAllCoreRPCCommands(tableRPC);
+    if (Params().IncludeTestCommands()) {
+        RegisterTestCommands(tableRPC);
+    }
+
 #ifdef ENABLE_WALLET
     RegisterWalletRPCCommands(tableRPC);
 #endif
@@ -1181,7 +1227,7 @@ bool AppInitParameterInteraction()
     return true;
 }
 
-static bool LockDataDirectory(bool probeOnly)
+static bool LockDataDirectory(bool probeOnly, bool try_lock=true)
 {
     std::string strDataDir = GetDataDir().string();
 
@@ -1192,7 +1238,7 @@ static bool LockDataDirectory(bool probeOnly)
 
     try {
         static boost::interprocess::file_lock lock(pathLockFile.string().c_str());
-        if (!lock.try_lock()) {
+        if (try_lock && !lock.try_lock()) {
             return InitError(strprintf(_("Cannot obtain a lock on data directory %s. %s is probably already running."), strDataDir, _(PACKAGE_NAME)));
         }
         if (probeOnly) {
@@ -1252,6 +1298,12 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     if (fPrintToDebugLog)
         OpenDebugLog();
+
+////////////////////////////////////////////////////////////////////// // fasc
+    dev::g_logPost = [&](std::string const& s, char const* c){ LogPrintStr(s + '\n', true); };
+    dev::g_logPost(std::string("\n\n\n\n\n\n\n\n\n\n"), NULL);
+//////////////////////////////////////////////////////////////////////
+
 
     if (!fLogTimestamps)
         LogPrintf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
@@ -1444,15 +1496,22 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 delete pcoinsdbview;
                 delete pcoinscatcher;
                 delete pblocktree;
+                delete pstorageresult;
+                globalState.reset();
+                globalSealEngine.reset();
 
                 pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReset);
+                pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex || fReindexChainState);
+                pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
+                pcoinsTip = new CCoinsViewCache(pcoinscatcher);
+
 
                 if (fReset) {
                     pblocktree->WriteReindexing(true);
                     //If we're reindexing in prune mode, wipe away unusable block files and all undo data files
                     if (fPruneMode)
                         CleanupBlockRevFiles();
-                }
+                } 
 
                 if (fRequestShutdown) break;
 
@@ -1493,19 +1552,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                     break;
                 }
 
-                // At this point we're either in reindex or we've loaded a useful
-                // block tree into mapBlockIndex!
-
-                pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReset || fReindexChainState);
-                pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
-
-                // If necessary, upgrade from older database format.
-                // This is a no-op if we cleared the coinsviewdb with -reindex or -reindex-chainstate
-                if (!pcoinsdbview->Upgrade()) {
-                    strLoadError = _("Error upgrading chainstate database");
-                    break;
-                }
-
                 // ReplayBlocks is a no-op if we cleared the coinsviewdb with -reindex or -reindex-chainstate
                 if (!ReplayBlocks(chainparams, pcoinsdbview)) {
                     strLoadError = _("Unable to replay blocks. You will need to rebuild the database using -reindex-chainstate.");
@@ -1523,6 +1569,58 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                         break;
                     }
                     assert(chainActive.Tip() != nullptr);
+                }
+
+                /////////////////////////////////////////////////////////// fasc
+                if((gArgs.IsArgSet("-dgpstorage") && gArgs.IsArgSet("-dgpevm")) || (!gArgs.IsArgSet("-dgpstorage") && gArgs.IsArgSet("-dgpevm")) ||
+                  (!gArgs.IsArgSet("-dgpstorage") && !gArgs.IsArgSet("-dgpevm"))){
+                    fGettingValuesDGP = true;
+                } else {
+                    fGettingValuesDGP = false;
+                }
+
+                dev::eth::NoProof::init();
+                fs::path fascStateDir = GetDataDir() / "stateFasc";
+                bool fStatus = fs::exists(fascStateDir);
+                const std::string dirFasc(fascStateDir.string());
+                const dev::h256 hashDB(dev::sha3(dev::rlp("")));
+                dev::eth::BaseState existsFascstate = fStatus ? dev::eth::BaseState::PreExisting : dev::eth::BaseState::Empty;
+                globalState = std::unique_ptr<FascState>(new FascState(dev::u256(0), FascState::openDB(dirFasc, hashDB, dev::WithExisting::Trust), dirFasc, existsFascstate));
+                dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
+                globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
+
+                pstorageresult = new StorageResults(fascStateDir.string());
+                if (fReset) {
+                    pstorageresult->wipeResults();
+                }
+
+                if(chainActive.Tip() != nullptr && !chainActive.Tip()->hashStateRoot.IsNull() && !chainActive.Tip()->hashUTXORoot.IsNull() ){
+                    globalState->setRoot(uintToh256(chainActive.Tip()->hashStateRoot));
+                    globalState->setRootUTXO(uintToh256(chainActive.Tip()->hashUTXORoot));
+                } else {
+                    globalState->setRoot(dev::sha3(dev::rlp("")));
+                    globalState->setRootUTXO(uintToh256(chainparams.GenesisBlock().hashUTXORoot));
+                    globalState->populateFrom(cp.genesisState);
+                }
+                globalState->db().commit();
+                globalState->dbUtxo().commit();
+
+                fRecordLogOpcodes = gArgs.IsArgSet("-record-log-opcodes");
+                fIsVMlogFile = fs::exists(GetDataDir() / "vmExecLogs.json");
+                ///////////////////////////////////////////////////////////
+
+                // Check for changed -logevents state
+                if (fLogEvents != gArgs.GetBoolArg("-logevents", DEFAULT_LOGEVENTS) && !fLogEvents) {
+                    strLoadError = _("You need to rebuild the database using -reindex-chainstate to enable -logevents");
+                    break;
+                }
+
+                if (!gArgs.GetBoolArg("-logevents", DEFAULT_LOGEVENTS))
+                {
+                    pstorageresult->wipeResults();
+                    pblocktree->WipeHeightIndex();
+                    fLogEvents = false;
+                    pblocktree->WriteFlag("logevents", fLogEvents);
                 }
 
                 if (!fReset) {
@@ -1756,7 +1854,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 #else
     conf.useGPU = false;
 #endif
-	GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams, conf);
+    GenerateFabcoins(gArgs.GetBoolArg("-gen", DEFAULT_GENERATE), gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams, conf);
 #endif
 
     // ********************************************************* Step 12: finished
@@ -1771,3 +1869,10 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     return !fRequestShutdown;
 }
+
+void UnlockDataDirectory()
+{
+    // Unlock
+    LockDataDirectory(true, false);
+}
+

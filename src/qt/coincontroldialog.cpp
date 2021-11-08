@@ -1,24 +1,25 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "coincontroldialog.h"
-#include "ui_coincontroldialog.h"
+#include <coincontroldialog.h>
+#include <ui_coincontroldialog.h>
 
-#include "addresstablemodel.h"
-#include "fabcoinunits.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
-#include "platformstyle.h"
-#include "txmempool.h"
-#include "walletmodel.h"
+#include <addresstablemodel.h>
+#include <fabcoinunits.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
+#include <platformstyle.h>
+#include <txmempool.h>
+#include <walletmodel.h>
+#include <styleSheet.h>
 
-#include "wallet/coincontrol.h"
-#include "init.h"
-#include "policy/fees.h"
-#include "policy/policy.h"
-#include "validation.h" // For mempool
-#include "wallet/wallet.h"
+#include <wallet/coincontrol.h>
+#include <init.h>
+#include <policy/fees.h>
+#include <policy/policy.h>
+#include <validation.h> // For mempool
+#include <wallet/wallet.h>
 
 #include <QApplication>
 #include <QCheckBox>
@@ -30,6 +31,10 @@
 #include <QString>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
+
+void avoidCompilerWarningsDefinedButNotUsedCoinControlDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 QList<CAmount> CoinControlDialog::payAmounts;
 CCoinControl* CoinControlDialog::coinControl = new CCoinControl();
@@ -49,6 +54,10 @@ CoinControlDialog::CoinControlDialog(const PlatformStyle *_platformStyle, QWidge
     platformStyle(_platformStyle)
 {
     ui->setupUi(this);
+
+    // Set stylesheet
+    SetObjectStyleSheet(ui->pushButtonSelectAll, StyleSheetNames::ButtonBlack);
+    SetObjectStyleSheet(ui->treeWidget, StyleSheetNames::TreeView);
 
     // context menu actions
     QAction *copyAddressAction = new QAction(tr("Copy address"), this);

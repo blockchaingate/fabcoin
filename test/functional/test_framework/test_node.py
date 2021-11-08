@@ -21,7 +21,7 @@ from .util import (
 )
 from .authproxy import JSONRPCException
 
-FABCOIND_PROC_WAIT_TIMEOUT = 60
+FABCOIND_PROC_WAIT_TIMEOUT = 120
 
 class TestNode():
     """A class for representing a fabcoind node under test.
@@ -74,6 +74,9 @@ class TestNode():
             extra_args = self.extra_args
         if stderr is None:
             stderr = self.stderr
+
+        if not any(arg.startswith('-staking=') for arg in extra_args):
+            extra_args.append('-staking=0')
         self.process = subprocess.Popen(self.args + extra_args, stderr=stderr)
         self.running = True
         self.log.debug("fabcoind started, waiting for RPC to come up")

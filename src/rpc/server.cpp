@@ -1,18 +1,18 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "rpc/server.h"
+#include <rpc/server.h>
 
-#include "base58.h"
-#include "fs.h"
-#include "init.h"
-#include "random.h"
-#include "sync.h"
-#include "ui_interface.h"
-#include "util.h"
-#include "utilstrencodings.h"
+#include <base58.h>
+#include <fs.h>
+#include <init.h>
+#include <random.h>
+#include <sync.h>
+#include <ui_interface.h>
+#include <util.h>
+#include <utilstrencodings.h>
 
 #include <univalue.h>
 
@@ -24,6 +24,10 @@
 
 #include <memory> // for unique_ptr
 #include <unordered_map>
+
+void avoidCompilerWarningsDefinedButNotUsedServer() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 static bool fRPCRunning = false;
 static bool fRPCInWarmup = true;
@@ -358,6 +362,45 @@ bool RPCIsInWarmup(std::string *outStatus)
     return fRPCInWarmup;
 }
 
+JSONRPCRequest::JSONRPCRequest(HTTPRequest *_req): JSONRPCRequest() {
+	req = _req;
+}
+
+bool JSONRPCRequest::PollAlive() {
+    return !req->isConnClosed();
+}
+
+void JSONRPCRequest::PollStart() {
+    // send an empty space to the client to ensure that it's still alive.
+    assert(!isLongPolling);
+    req->WriteHeader("Content-Type", "application/json");
+    req->WriteHeader("Connection", "close");
+    req->Chunk(std::string(" "));
+    isLongPolling = true;
+}
+
+void JSONRPCRequest::PollPing() {
+    assert(isLongPolling);
+    // send an empty space to the client to ensure that it's still alive.
+    req->Chunk(std::string(" "));
+}
+
+void JSONRPCRequest::PollCancel() {
+    assert(isLongPolling);
+    req->ChunkEnd();
+}
+
+void JSONRPCRequest::PollReply(const UniValue& result) {
+    assert(isLongPolling);
+    UniValue reply(UniValue::VOBJ);
+    reply.push_back(Pair("result", result));
+    reply.push_back(Pair("error", NullUniValue));
+    reply.push_back(Pair("id", id));
+
+    req->Chunk(reply.write() + "\n");
+    req->ChunkEnd();
+}
+
 void JSONRPCRequest::parse(const UniValue& valRequest)
 {
     // Parse request
@@ -391,7 +434,7 @@ static UniValue JSONRPCExecOne(const UniValue& req)
 {
     UniValue rpc_result(UniValue::VOBJ);
 
-    JSONRPCRequest jreq;
+    JSONRPCRequest jreq(NULL);
     try {
         jreq.parse(req);
 

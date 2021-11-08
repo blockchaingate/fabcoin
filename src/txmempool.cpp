@@ -1,28 +1,33 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "txmempool.h"
-#include "chainparams.h"
-#include "consensus/consensus.h"
-#include "consensus/tx_verify.h"
-#include "consensus/validation.h"
-#include "validation.h"
-#include "policy/policy.h"
-#include "policy/fees.h"
-#include "reverse_iterator.h"
-#include "streams.h"
-#include "timedata.h"
-#include "util.h"
-#include "utilmoneystr.h"
-#include "utiltime.h"
+#include <txmempool.h>
+#include <chainparams.h>
+#include <consensus/consensus.h>
+#include <consensus/tx_verify.h>
+#include <consensus/validation.h>
+#include <validation.h>
+#include <policy/policy.h>
+#include <policy/fees.h>
+#include <reverse_iterator.h>
+#include <streams.h>
+#include <timedata.h>
+#include <util.h>
+#include <utilmoneystr.h>
+#include <utiltime.h>
+
+void avoidCompilerWarningsDefinedButNotUsedTXMempool() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                                  int64_t _nTime, unsigned int _entryHeight,
-                                 bool _spendsCoinbase, int64_t _sigOpsCost, LockPoints lp):
+                                 bool _spendsCoinbase, int64_t _sigOpsCost, LockPoints lp, CAmount _nMinGasPrice):
     tx(_tx), nFee(_nFee), nTime(_nTime), entryHeight(_entryHeight),
-    spendsCoinbase(_spendsCoinbase), sigOpCost(_sigOpsCost), lockPoints(lp)
+    spendsCoinbase(_spendsCoinbase), sigOpCost(_sigOpsCost), lockPoints(lp),
+    nMinGasPrice(_nMinGasPrice)
 {
     nTxWeight = GetTransactionWeight(*tx);
     nUsageSize = RecursiveDynamicUsage(tx);
@@ -362,7 +367,60 @@ void CTxMemPool::AddTransactionsUpdated(unsigned int n)
     nTransactionsUpdated += n;
 }
 
-bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate)
+extern UniValue ValueFromAmount(const CAmount& amount);
+void CTxMemPoolEntry::ToJSON(UniValue& output) const
+{
+    output.setObject();
+    output.push_back(Pair("size", (int)this->GetTxSize()));
+    output.push_back(Pair("fee", ValueFromAmount(this->GetFee())));
+    output.push_back(Pair("modifiedfee", ValueFromAmount(this->GetModifiedFee())));
+    output.push_back(Pair("time", this->GetTime()));
+    output.push_back(Pair("height", (int)this->GetHeight()));
+    output.push_back(Pair("descendantcount", this->GetCountWithDescendants()));
+    output.push_back(Pair("descendantsize", this->GetSizeWithDescendants()));
+    output.push_back(Pair("descendantfees", this->GetModFeesWithDescendants()));
+    output.push_back(Pair("ancestorcount", this->GetCountWithAncestors()));
+    output.push_back(Pair("ancestorsize", this->GetSizeWithAncestors()));
+    output.push_back(Pair("ancestorfees", this->GetModFeesWithAncestors()));
+    const CTransaction& tx = this->GetTx();
+    std::set<std::string> setDepends;
+    AssertLockHeld(mempool.cs);
+    for (const CTxIn& txin : tx.vin) {
+        if (mempool.exists(txin.prevout.hash))
+            setDepends.insert(txin.prevout.hash.ToString());
+    }
+
+    UniValue depends(UniValue::VARR);
+    for (const std::string& dep : setDepends)
+    {
+        depends.push_back(dep);
+    }
+
+    output.push_back(Pair("depends", depends));
+}
+
+UniValue CTxMemPool::ToJSON(bool fVerbose) const
+{
+    if (!fVerbose) {
+        std::vector<uint256> vtxid;
+        this->queryHashes(vtxid);
+
+        UniValue a(UniValue::VARR);
+        for (const uint256& hash : vtxid)
+            a.push_back(hash.ToString());
+        return a;
+    }
+    UniValue result(UniValue::VOBJ);
+    for (const CTxMemPoolEntry& e : this->mapTx) {
+        const uint256& hash = e.GetTx().GetHash();
+        UniValue currentEntry(UniValue::VOBJ);
+        e.ToJSON(currentEntry);
+        result.push_back(Pair(hash.ToString(), currentEntry));
+    }
+    return result;
+}
+
+bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate, std::stringstream* comments)
 {
     NotifyEntryAdded(entry.GetSharedTx());
     // Add to memory pool without checking anything.
@@ -413,8 +471,9 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
 
     nTransactionsUpdated++;
     totalTxSize += entry.GetTxSize();
-    if (minerPolicyEstimator) {minerPolicyEstimator->processTransaction(entry, validFeeEstimate);}
-
+    if (minerPolicyEstimator) {
+        minerPolicyEstimator->processTransaction(entry, validFeeEstimate, comments);
+    }
     vTxHashes.emplace_back(tx.GetWitnessHash(), newit);
     newit->vTxHashesIdx = vTxHashes.size() - 1;
 
@@ -529,10 +588,12 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
                 if (nCheckFrequency != 0) assert(!coin.IsSpent());
 
                 const Consensus::Params& consensus = Params().GetConsensus();
+                
                 if ( coin.IsSpent() || 
-                    ( coin.IsCoinBase() && ((((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY) 
+                    ( coin.IsCoinBase() && ( txin.prevout.n == 0 || coin.nHeight < Params().GetConsensus().AggregateSignatureHeight )&& ((((signed long)nMemPoolHeight) - coin.nHeight < COINBASE_MATURITY) 
                     || ( coin.nHeight < consensus.CoinbaseLock && coin.nHeight != 2 && (signed long)nMemPoolHeight - coin.nHeight < consensus.CoinbaseLock )) ) 
-                    ){
+                    )
+                {
                     txToRemove.insert(it);
                     break;
                 }
@@ -660,7 +721,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
                     parentSigOpCost += it2->GetSigOpCost();
                 }
             } else {
-                assert(pcoins->HaveCoin(txin.prevout));
+                assert(pcoins->HaveCoinOrIsWithoutAncestor(txin.prevout));
             }
             // Check whether its inputs are marked in mapNextTx.
             auto it3 = mapNextTx.find(txin.prevout);
@@ -712,7 +773,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         else {
             CValidationState state;
             bool fCheckResult = tx.IsCoinBase() ||
-                Consensus::CheckTxInputs(tx, state, mempoolDuplicate, nSpendHeight);
+                Consensus::CheckTxInputs(tx, state, mempoolDuplicate, nSpendHeight, nullptr);
             assert(fCheckResult);
             UpdateCoins(tx, mempoolDuplicate, 1000000);
         }
@@ -728,7 +789,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
             assert(stepsSinceLastRemove < waitingOnDependants.size());
         } else {
             bool fCheckResult = entry->GetTx().IsCoinBase() ||
-                Consensus::CheckTxInputs(entry->GetTx(), state, mempoolDuplicate, nSpendHeight);
+                Consensus::CheckTxInputs(entry->GetTx(), state, mempoolDuplicate, nSpendHeight, nullptr);
             assert(fCheckResult);
             UpdateCoins(entry->GetTx(), mempoolDuplicate, 1000000);
             stepsSinceLastRemove = 0;
@@ -791,7 +852,7 @@ std::vector<CTxMemPool::indexed_transaction_set::const_iterator> CTxMemPool::Get
     return iters;
 }
 
-void CTxMemPool::queryHashes(std::vector<uint256>& vtxid)
+void CTxMemPool::queryHashes(std::vector<uint256>& vtxid) const
 {
     LOCK(cs);
     auto iters = GetSortedDepthAndScore();
@@ -909,7 +970,11 @@ bool CCoinsViewMemPool::GetCoin(const COutPoint &outpoint, Coin &coin) const {
             return false;
         }
     }
-    return base->GetCoin(outpoint, coin);
+    return (base->GetCoin(outpoint, coin) && !coin.IsSpent());
+}
+
+bool CCoinsViewMemPool::HaveCoin(const COutPoint &outpoint) const {
+    return mempool.exists(outpoint) || base->HaveCoin(outpoint);
 }
 
 size_t CTxMemPool::DynamicMemoryUsage() const {
@@ -1052,7 +1117,9 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint>* pvNoSpends
             for (const CTransaction& tx : txn) {
                 for (const CTxIn& txin : tx.vin) {
                     if (exists(txin.prevout.hash)) continue;
-                    pvNoSpendsRemaining->push_back(txin.prevout);
+                    if (!mapNextTx.count(txin.prevout)) {
+                        pvNoSpendsRemaining->push_back(txin.prevout);
+                    }
                 }
             }
         }

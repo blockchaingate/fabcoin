@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_RECEIVECOINSDIALOG_H
 #define FABCOIN_QT_RECEIVECOINSDIALOG_H
 
-#include "guiutil.h"
+#include <guiutil.h>
 
 #include <QDialog>
 #include <QHeaderView>
@@ -15,6 +15,7 @@
 #include <QPoint>
 #include <QVariant>
 
+class OptionsModel;
 class PlatformStyle;
 class WalletModel;
 
@@ -67,7 +68,9 @@ private Q_SLOTS:
     void on_receiveButton_clicked();
     void on_showRequestButton_clicked();
     void on_removeRequestButton_clicked();
+    void on_copyAddressButton_clicked();
     void on_recentRequestsView_doubleClicked(const QModelIndex &index);
+    void on_recentRequestsView_clicked(const QModelIndex &index);
     void recentRequestsView_selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void updateDisplayUnit();
     void showMenu(const QPoint &point);

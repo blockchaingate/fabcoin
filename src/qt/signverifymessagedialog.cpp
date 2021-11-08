@@ -1,24 +1,29 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "signverifymessagedialog.h"
-#include "ui_signverifymessagedialog.h"
+#include <signverifymessagedialog.h>
+#include <ui_signverifymessagedialog.h>
 
-#include "addressbookpage.h"
-#include "guiutil.h"
-#include "platformstyle.h"
-#include "walletmodel.h"
+#include <addressbookpage.h>
+#include <guiutil.h>
+#include <platformstyle.h>
+#include <walletmodel.h>
 
-#include "base58.h"
-#include "init.h"
-#include "validation.h" // For strMessageMagic
-#include "wallet/wallet.h"
+#include <base58.h>
+#include <init.h>
+#include <validation.h> // For strMessageMagic
+#include <wallet/wallet.h>
+#include <styleSheet.h>
 
 #include <string>
 #include <vector>
 
 #include <QClipboard>
+
+void avoidCompilerWarningsDefinedButNotUsedTransactionVerifyMessageDialog() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
     QDialog(parent),
@@ -28,14 +33,23 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(const PlatformStyle *_platformS
 {
     ui->setupUi(this);
 
-    ui->addressBookButton_SM->setIcon(platformStyle->SingleColorIcon(":/icons/address-book"));
-    ui->pasteButton_SM->setIcon(platformStyle->SingleColorIcon(":/icons/editpaste"));
-    ui->copySignatureButton_SM->setIcon(platformStyle->SingleColorIcon(":/icons/editcopy"));
-    ui->signMessageButton_SM->setIcon(platformStyle->SingleColorIcon(":/icons/edit"));
-    ui->clearButton_SM->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
-    ui->addressBookButton_VM->setIcon(platformStyle->SingleColorIcon(":/icons/address-book"));
-    ui->verifyMessageButton_VM->setIcon(platformStyle->SingleColorIcon(":/icons/transaction_0"));
-    ui->clearButton_VM->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+    ui->addressBookButton_SM->setIcon(platformStyle->MultiStatesIcon(":/icons/address-book", PlatformStyle::PushButton));
+    ui->pasteButton_SM->setIcon(platformStyle->MultiStatesIcon(":/icons/editpaste", PlatformStyle::PushButton));
+    ui->copySignatureButton_SM->setIcon(platformStyle->MultiStatesIcon(":/icons/editcopy", PlatformStyle::PushButton));
+    ui->signMessageButton_SM->setIcon(platformStyle->MultiStatesIcon(":/icons/edit", PlatformStyle::PushButton));
+    ui->clearButton_SM->setIcon(platformStyle->MultiStatesIcon(":/icons/remove", PlatformStyle::PushButton, 0x5a5a5d));
+    ui->addressBookButton_VM->setIcon(platformStyle->MultiStatesIcon(":/icons/address-book", PlatformStyle::PushButton));
+    ui->verifyMessageButton_VM->setIcon(platformStyle->MultiStatesIcon(":/icons/transaction_0", PlatformStyle::PushButton));
+    ui->clearButton_VM->setIcon(platformStyle->MultiStatesIcon(":/icons/remove", PlatformStyle::PushButton, 0x5a5a5d));
+
+    SetObjectStyleSheet(ui->clearButton_SM, StyleSheetNames::ButtonWhite);
+    SetObjectStyleSheet(ui->clearButton_VM, StyleSheetNames::ButtonWhite);
+    SetObjectStyleSheet(ui->signMessageButton_SM, StyleSheetNames::ButtonBlue);
+    SetObjectStyleSheet(ui->verifyMessageButton_VM, StyleSheetNames::ButtonBlue);
+    SetObjectStyleSheet(ui->addressBookButton_SM, StyleSheetNames::ButtonTransparent);
+    SetObjectStyleSheet(ui->pasteButton_SM, StyleSheetNames::ButtonTransparent);
+    SetObjectStyleSheet(ui->copySignatureButton_SM, StyleSheetNames::ButtonTransparent);
+    SetObjectStyleSheet(ui->addressBookButton_VM, StyleSheetNames::ButtonTransparent);
 
 #if QT_VERSION >= 0x040700
     ui->signatureOut_SM->setPlaceholderText(tr("Click \"Sign Message\" to generate signature"));

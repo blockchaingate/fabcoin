@@ -1,11 +1,11 @@
-// Copyright (c) 2014-2016 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
+#include <base58.h>
 
-#include "hash.h"
-#include "uint256.h"
+#include <hash.h>
+#include <uint256.h>
 
 #include <assert.h>
 #include <stdint.h>
@@ -14,6 +14,10 @@
 #include <string>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedBase58() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
 static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -284,6 +288,11 @@ bool CFabcoinAddress::GetKeyID(CKeyID& keyID) const
 bool CFabcoinAddress::IsScript() const
 {
     return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+}
+
+bool CFabcoinAddress::IsPubKeyHash() const
+{
+    return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS);
 }
 
 void CFabcoinSecret::SetKey(const CKey& vchSecret)

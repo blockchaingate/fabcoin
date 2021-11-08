@@ -2,16 +2,19 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "key.h"
-#include "keystore.h"
-#include "script/ismine.h"
-#include "script/script.h"
-#include "script/script_error.h"
-#include "script/standard.h"
-#include "test/test_fabcoin.h"
+#include <key.h>
+#include <keystore.h>
+#include <script/ismine.h>
+#include <script/script.h>
+#include <script/script_error.h>
+#include <script/standard.h>
+#include <test/test_fabcoin.h>
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedScriptStandardTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(script_standard_tests, BasicTestingSetup)
 
@@ -115,6 +118,7 @@ BOOST_AUTO_TEST_CASE(script_standard_Solver_success)
     // TX_NONSTANDARD
     s.clear();
     s << OP_9 << OP_ADD << OP_11 << OP_EQUAL;
+    whichType=TX_NONSTANDARD;          // fasc
     BOOST_CHECK(!Solver(s, whichType, solutions));
     BOOST_CHECK_EQUAL(whichType, TX_NONSTANDARD);
 }

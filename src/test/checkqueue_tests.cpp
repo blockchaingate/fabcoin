@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "util.h"
-#include "utiltime.h"
-#include "validation.h"
+#include <util.h>
+#include <utiltime.h>
+#include <validation.h>
 
-#include "test/test_fabcoin.h"
-#include "checkqueue.h"
+#include <test/test_fabcoin.h>
+#include <checkqueue.h>
 #include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
 #include <atomic>
@@ -18,7 +18,10 @@
 
 #include <unordered_set>
 #include <memory>
-#include "random.h"
+#include <random.h>
+void avoidCompilerWarningsDefinedButNotUsedCheckQueueTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 // BasicTestingSetup not sufficient because nScriptCheckThreads is not set
 // otherwise.
@@ -27,7 +30,7 @@ BOOST_FIXTURE_TEST_SUITE(checkqueue_tests, TestingSetup)
 static const int QUEUE_BATCH_SIZE = 128;
 
 struct FakeCheck {
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         return true;
     }
@@ -36,7 +39,7 @@ struct FakeCheck {
 
 struct FakeCheckCheckCompletion {
     static std::atomic<size_t> n_calls;
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         ++n_calls;
         return true;
@@ -48,7 +51,7 @@ struct FailingCheck {
     bool fails;
     FailingCheck(bool _fails) : fails(_fails){};
     FailingCheck() : fails(true){};
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         return !fails;
     }
@@ -64,7 +67,7 @@ struct UniqueCheck {
     size_t check_id;
     UniqueCheck(size_t check_id_in) : check_id(check_id_in){};
     UniqueCheck() : check_id(0){};
-    bool operator()()
+    bool operator()(std::stringstream* comments)
     {
         std::lock_guard<std::mutex> l(m);
         results.insert(check_id);
@@ -77,7 +80,7 @@ struct UniqueCheck {
 struct MemoryCheck {
     static std::atomic<size_t> fake_allocated_memory;
     bool b {false};
-    bool operator()()
+    bool operator()(std::stringstream* comments = nullptr)
     {
         return true;
     }
@@ -108,7 +111,7 @@ struct FrozenCleanupCheck {
     // Freezing can't be the default initialized behavior given how the queue
     // swaps in default initialized Checks.
     bool should_freeze {false};
-    bool operator()()
+    bool operator()(std::stringstream* comments)
     {
         return true;
     }

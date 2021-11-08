@@ -6,17 +6,19 @@
 
 from .mininode import *
 from .script import CScript, OP_TRUE, OP_CHECKSIG, OP_RETURN
+from .fabcoinconfig import *
 
 # Create a block (with regtest difficulty)
-def create_block(hashprev, coinbase, nTime=None):
+def create_block(hashprev, coinbase, nHeight, nTime=None):
     block = CBlock()
     if nTime is None:
         import time
-        block.nTime = int(time.time()+75)
+        block.nTime = int(time.time()+FABCOIN_BLOCK_DURATION)
     else:
         block.nTime = nTime
     block.hashPrevBlock = hashprev
     block.nBits = 0x207fffff # Will break after a difficulty adjustment...
+    block.nHeight = nHeight
     block.vtx.append(coinbase)
     block.hashMerkleRoot = block.calc_merkle_root()
     block.calc_sha256()
@@ -70,12 +72,20 @@ def serialize_script_num(value):
 # otherwise an anyone-can-spend output.
 def create_coinbase(height, pubkey = None):
     coinbase = CTransaction()
-    coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), 
-                ser_string(serialize_script_num(height)), 0xffffffff))
+    #coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff), 
+    #            ser_string(serialize_script_num(height)), 0xffffffff))
+
+    coinbase.vin.append(CTxIn(COutPoint(0, 0xffffffff),
+                CScript() + height + b"\x00", 0xffffffff)) #Fix for BIP34
+
     coinbaseoutput = CTxOut()
-    coinbaseoutput.nValue = 25 * COIN
-    halvings = int(height/850) # regtest
-    coinbaseoutput.nValue >>= halvings
+    coinbaseoutput.nValue = INITIAL_BLOCK_REWARD * COIN
+
+    #halvings = int(height/150) # regtest
+    #coinbaseoutput.nValue >>= halvings
+    #halvings = int(height/850) # regtest
+    #coinbaseoutput.nValue >>= halvings
+
     if (pubkey != None):
         coinbaseoutput.scriptPubKey = CScript([pubkey, OP_CHECKSIG])
     else:

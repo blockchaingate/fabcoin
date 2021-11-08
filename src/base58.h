@@ -14,12 +14,12 @@
 #ifndef FABCOIN_BASE58_H
 #define FABCOIN_BASE58_H
 
-#include "chainparams.h"
-#include "key.h"
-#include "pubkey.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "support/allocators/zeroafterfree.h"
+#include <chainparams.h>
+#include <key.h>
+#include <pubkey.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <support/allocators/zeroafterfree.h>
 
 #include <string>
 #include <vector>
@@ -57,13 +57,13 @@ std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn);
  * Decode a base58-encoded string (psz) that includes a checksum into a byte
  * vector (vchRet), return true if decoding is successful
  */
-inline bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet);
+bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet);
 
 /**
  * Decode a base58-encoded string (str) that includes a checksum into a byte
  * vector (vchRet), return true if decoding is successful
  */
-inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
+bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
 /**
  * Base class for all base58-encoded data
@@ -117,6 +117,7 @@ public:
     CTxDestination Get() const;
     bool GetKeyID(CKeyID &keyID) const;
     bool IsScript() const;
+    bool IsPubKeyHash() const;
 };
 
 /**

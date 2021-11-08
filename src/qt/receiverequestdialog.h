@@ -1,11 +1,11 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_QT_RECEIVEREQUESTDIALOG_H
 #define FABCOIN_QT_RECEIVEREQUESTDIALOG_H
 
-#include "walletmodel.h"
+#include <walletmodel.h>
 
 #include <QDialog>
 #include <QImage>
@@ -16,6 +16,7 @@ class OptionsModel;
 
 namespace Ui {
     class ReceiveRequestDialog;
+
 }
 
 QT_BEGIN_NAMESPACE
@@ -49,12 +50,16 @@ class ReceiveRequestDialog : public QDialog
 {
     Q_OBJECT
 
+    void avoidCompilerWarningsDefinedButNotUsedReceiverRequestDialog() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
 public:
     explicit ReceiveRequestDialog(QWidget *parent = 0);
     ~ReceiveRequestDialog();
 
     void setModel(OptionsModel *model);
     void setInfo(const SendCoinsRecipient &info);
+    static bool createQRCode(QLabel * label, SendCoinsRecipient info, bool showAddress = false);
 
 private Q_SLOTS:
     void on_btnCopyURI_clicked();

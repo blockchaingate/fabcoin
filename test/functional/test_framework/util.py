@@ -19,6 +19,8 @@ import time
 from . import coverage
 from .authproxy import AuthServiceProxy, JSONRPCException
 
+from .fabcoinconfig import COINBASE_MATURITY
+
 logger = logging.getLogger("TestFramework.utils")
 
 # Assert functions
@@ -353,7 +355,7 @@ def connect_nodes_bi(nodes, a, b):
     connect_nodes(nodes[a], b)
     connect_nodes(nodes[b], a)
 
-def sync_blocks(rpc_connections, *, wait=1, timeout=60):
+def sync_blocks(rpc_connections, *, wait=1, timeout=120):
     """
     Wait until everybody has the same tip.
 
@@ -378,7 +380,7 @@ def sync_blocks(rpc_connections, *, wait=1, timeout=60):
     raise AssertionError("Block sync to height {} timed out:{}".format(
                          maxheight, "".join("\n  {!r}".format(tip) for tip in tips)))
 
-def sync_chain(rpc_connections, *, wait=1, timeout=60):
+def sync_chain(rpc_connections, *, wait=1, timeout=120):
     """
     Wait until everybody has the same best block
     """
@@ -477,7 +479,7 @@ def random_transaction(nodes, amount, min_fee, fee_increment, fee_variants):
 # Helper to create at least "count" utxos
 # Pass in a fee that is sufficient for relay and mining new transactions.
 def create_confirmed_utxos(fee, node, count):
-    to_generate = int(0.5 * count) + 801
+    to_generate = int(0.5 * count) + COINBASE_MATURITY+1
     while to_generate > 0:
         node.generate(min(25, to_generate))
         to_generate -= 25

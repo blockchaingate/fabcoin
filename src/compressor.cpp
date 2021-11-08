@@ -3,11 +3,15 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "compressor.h"
+#include <compressor.h>
 
-#include "hash.h"
-#include "pubkey.h"
-#include "script/standard.h"
+#include <hash.h>
+#include <pubkey.h>
+#include <script/standard.h>
+
+void avoidCompilerWarningsDefinedButNotUsedCompressor() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 bool CScriptCompressor::IsToKeyID(CKeyID &hash) const
 {

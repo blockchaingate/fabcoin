@@ -24,6 +24,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+void avoidCompilerWarningsDefinedButNotUsedMinerTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
+
 BOOST_FIXTURE_TEST_SUITE(miner_tests, TestingSetup)
 
 // BOOST_CHECK_EXCEPTION predicates to check the specific validation error
@@ -40,14 +44,13 @@ private:
 static CFeeRate blockMinFeeRate = CFeeRate(DEFAULT_BLOCK_MIN_TX_FEE);
 
 static BlockAssembler AssemblerForTest(const CChainParams& params) {
-    BlockAssembler::Options options;
+    //BlockAssembler::Options options;
 
-    options.nBlockMaxWeight = MAX_BLOCK_WEIGHT;
-    options.blockMinFeeRate = blockMinFeeRate;
-    return BlockAssembler(params, options);
+    //options.nBlockMaxWeight = MAX_BLOCK_WEIGHT;
+    //options.blockMinFeeRate = blockMinFeeRate;
+    return BlockAssembler(params);
 }
 
-static
 struct {
     unsigned char extranonce;
     unsigned int nonce;
@@ -81,6 +84,10 @@ struct {
     {2, 0xd351e722}, {1, 0xf4ca48c9}, {1, 0x5b19c670}, {1, 0xa164bf0e},
     {2, 0xbbbeb305}, {2, 0xfe1c810a},
 };
+
+void avoidCompilerWarningsDefinedButNotUsedMinerTests() {
+    (void) blockinfo;
+}
 
 CBlockIndex CreateBlockIndex(int nHeight)
 {
@@ -128,8 +135,8 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vout[0].nValue = 5000000000LL - 1000 - 50000; // 50k lius fee
     uint256 hashHighFeeTx = tx.GetHash();
     mempool.addUnchecked(hashHighFeeTx, entry.Fee(50000).Time(GetTime()).SpendsCoinbase(false).FromTx(tx));
-
-    std::unique_ptr<CBlockTemplate> pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey);
+    std::stringstream* notUsed = nullptr;
+    std::unique_ptr<CBlockTemplate> pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, notUsed);
     BOOST_CHECK(pblocktemplate->block.vtx[1]->GetHash() == hashParentTx);
     BOOST_CHECK(pblocktemplate->block.vtx[2]->GetHash() == hashHighFeeTx);
     BOOST_CHECK(pblocktemplate->block.vtx[3]->GetHash() == hashMediumFeeTx);
@@ -149,7 +156,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vout[0].nValue = 5000000000LL - 1000 - 50000 - feeToUse;
     uint256 hashLowFeeTx = tx.GetHash();
     mempool.addUnchecked(hashLowFeeTx, entry.Fee(feeToUse).FromTx(tx));
-    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey);
+    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, notUsed);
     // Verify that the free tx and the low fee tx didn't get selected
     for (size_t i=0; i<pblocktemplate->block.vtx.size(); ++i) {
         BOOST_CHECK(pblocktemplate->block.vtx[i]->GetHash() != hashFreeTx);
@@ -163,7 +170,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vout[0].nValue -= 2; // Now we should be just over the min relay fee
     hashLowFeeTx = tx.GetHash();
     mempool.addUnchecked(hashLowFeeTx, entry.Fee(feeToUse+2).FromTx(tx));
-    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey);
+    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, notUsed);
     BOOST_CHECK(pblocktemplate->block.vtx[4]->GetHash() == hashFreeTx);
     BOOST_CHECK(pblocktemplate->block.vtx[5]->GetHash() == hashLowFeeTx);
 
@@ -183,8 +190,8 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     feeToUse = blockMinFeeRate.GetFee(freeTxSize);
     tx.vout[0].nValue = 5000000000LL - 100000000 - feeToUse;
     uint256 hashLowFeeTx2 = tx.GetHash();
-    mempool.addUnchecked(hashLowFeeTx2, entry.Fee(feeToUse).SpendsCoinbase(false).FromTx(tx));
-    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey);
+    mempool.addUnchecked(hashLowFeeTx2, entry.Fee(feeToUse).SpendsCoinbase(false).FromTx(tx));    
+    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, notUsed);
 
     // Verify that this tx isn't selected.
     for (size_t i=0; i<pblocktemplate->block.vtx.size(); ++i) {
@@ -197,7 +204,7 @@ void TestPackageSelection(const CChainParams& chainparams, CScript scriptPubKey,
     tx.vin[0].prevout.n = 1;
     tx.vout[0].nValue = 100000000 - 10000; // 10k lius fee
     mempool.addUnchecked(tx.GetHash(), entry.Fee(10000).FromTx(tx));
-    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey);
+    pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, notUsed);
     BOOST_CHECK(pblocktemplate->block.vtx[8]->GetHash() == hashLowFeeTx2);
 }
 
@@ -217,9 +224,9 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     entry.nHeight = 11;
 
     fCheckpointsEnabled = false;
-
+    std::stringstream* notUsed = nullptr;
     // Simple block creation, nothing special yet:
-    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey));
+    BOOST_CHECK(pblocktemplate = AssemblerForTest(chainparams).CreateNewBlock(scriptPubKey, notUsed));
 
 #if 0
     // We can't make transactions until we have inputs

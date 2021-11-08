@@ -2,13 +2,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "compressor.h"
-#include "util.h"
-#include "test/test_fabcoin.h"
+#include <compressor.h>
+#include <util.h>
+#include <test/test_fabcoin.h>
 
 #include <stdint.h>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedCompressTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 // amounts 0.00000001 .. 0.00100000
 #define NUM_MULTIPLES_UNIT 100000

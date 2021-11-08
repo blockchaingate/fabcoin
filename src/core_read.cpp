@@ -1,18 +1,18 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "core_io.h"
+#include <core_io.h>
 
-#include "primitives/block.h"
-#include "primitives/transaction.h"
-#include "script/script.h"
-#include "serialize.h"
-#include "streams.h"
+#include <primitives/block.h>
+#include <primitives/transaction.h>
+#include <script/script.h>
+#include <serialize.h>
+#include <streams.h>
 #include <univalue.h>
-#include "util.h"
-#include "utilstrencodings.h"
-#include "version.h"
+#include <util.h>
+#include <utilstrencodings.h>
+#include <version.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -143,14 +143,13 @@ bool DecodeHexTx(CMutableTransaction& tx, const std::string& strHexTx, bool fTry
     return true;
 }
 
-bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk, bool fLegacyFormat)
+bool DecodeHexBlk(CBlock& block, const std::string& strHexBlk )
 {
     if (!IsHex(strHexBlk))
         return false;
 
     std::vector<unsigned char> blockData(ParseHex(strHexBlk));
-    int ser_flags = fLegacyFormat ? SERIALIZE_BLOCK_LEGACY : 0;
-    CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION | ser_flags);
+    CDataStream ssBlock(blockData, SER_NETWORK, PROTOCOL_VERSION );
     try {
         ssBlock >> block;
     }

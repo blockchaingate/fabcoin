@@ -1,0 +1,6 @@
+./autogen.sh
+./configure
+
+
+
+ 

@@ -1,13 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "merkleblock.h"
+#include <merkleblock.h>
 
-#include "hash.h"
-#include "consensus/consensus.h"
-#include "utilstrencodings.h"
+#include <hash.h>
+#include <consensus/consensus.h>
+#include <utilstrencodings.h>
 
 CMerkleBlock::CMerkleBlock(const CBlock& block, CBloomFilter& filter)
 {
@@ -156,7 +156,8 @@ uint256 CPartialMerkleTree::ExtractMatches(std::vector<uint256> &vMatch, std::ve
     if (nTransactions == 0)
         return uint256();
     // check for excessively high numbers of transactions
-    if (nTransactions > MAX_BLOCK_WEIGHT / MIN_TRANSACTION_WEIGHT)
+    //if (nTransactions > MAX_BLOCK_WEIGHT / MIN_TRANSACTION_WEIGHT)
+    if (nTransactions > dgpMaxBlockSize * WITNESS_SCALE_FACTOR / MIN_TRANSACTION_WEIGHT)
         return uint256();
     // there can never be more hashes provided than one for every txid
     if (vHash.size() > nTransactions)

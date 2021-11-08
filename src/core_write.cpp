@@ -1,20 +1,24 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "core_io.h"
+#include <core_io.h>
 
-#include "base58.h"
-#include "consensus/consensus.h"
-#include "consensus/validation.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "serialize.h"
-#include "streams.h"
+#include <base58.h>
+#include <consensus/consensus.h>
+#include <consensus/validation.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <serialize.h>
+#include <streams.h>
 #include <univalue.h>
-#include "util.h"
-#include "utilmoneystr.h"
-#include "utilstrencodings.h"
+#include <util.h>
+#include <utilmoneystr.h>
+#include <utilstrencodings.h>
+
+void avoidCompilerWarningsDefinedButNotUsedCoreWrite() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 UniValue ValueFromAmount(const CAmount& amount)
 {
@@ -70,6 +74,18 @@ const std::map<unsigned char, std::string> mapSigHashTypes = {
     {static_cast<unsigned char>(SIGHASH_SINGLE|SIGHASH_ANYONECANPAY), std::string("SINGLE|ANYONECANPAY")},
 };
 
+std::string joinVectorOfStrings(const std::vector<std::string>& input)
+{
+    std::stringstream out;
+    for (unsigned i = 0; i < input.size(); i ++) {
+        if (i > 0) {
+            out << " ";
+        }
+        out << input[i];
+    }
+    return out.str();
+}
+
 /**
  * Create the assembly string representation of a CScript object.
  * @param[in] script    CScript object to convert into the asm string representation.
@@ -79,21 +95,20 @@ const std::map<unsigned char, std::string> mapSigHashTypes = {
  */
 std::string ScriptToAsmStr(const CScript& script, const bool fAttemptSighashDecode)
 {
-    std::string str;
     opcodetype opcode;
-    std::vector<unsigned char> vch;
     CScript::const_iterator pc = script.begin();
+    std::vector<std::string> resultNonJoined;
+    std::vector<unsigned char> lastFour, vch;
+
     while (pc < script.end()) {
-        if (!str.empty()) {
-            str += " ";
-        }
         if (!script.GetOp(pc, opcode, vch)) {
-            str += "[error]";
-            return str;
+            resultNonJoined.push_back("[error]");
+            return joinVectorOfStrings(resultNonJoined);
         }
         if (0 <= opcode && opcode <= OP_PUSHDATA4) {
             if (vch.size() <= static_cast<std::vector<unsigned char>::size_type>(4)) {
-                str += strprintf("%d", CScriptNum(vch, false).getint());
+                lastFour = vch;
+                resultNonJoined.push_back(strprintf("%d", CScriptNum(vch, false).getint()));
             } else {
                 // the IsUnspendable check makes sure not to try to decode OP_RETURN data that may match the format of a signature
                 if (fAttemptSighashDecode && !script.IsUnspendable()) {
@@ -109,16 +124,23 @@ std::string ScriptToAsmStr(const CScript& script, const bool fAttemptSighashDeco
                             vch.pop_back(); // remove the sighash type byte. it will be replaced by the decode.
                         }
                     }
-                    str += HexStr(vch) + strSigHashDecode;
+                    resultNonJoined.push_back(HexStr(vch) + strSigHashDecode);
                 } else {
-                    str += HexStr(vch);
+                    resultNonJoined.push_back(HexStr(vch));
                 }
             }
         } else {
-            str += GetOpName(opcode);
+            resultNonJoined.push_back(GetOpName(opcode));
         }
     }
-    return str;
+    if (resultNonJoined.size() >= 4) {
+        if (resultNonJoined[resultNonJoined.size() - 1] == "OP_CALL") {
+            if (lastFour.size() == 4) {
+                resultNonJoined[resultNonJoined.size() - 3] = "0x" + HexStr(lastFour);
+            }
+        }
+    }
+    return joinVectorOfStrings(resultNonJoined);
 }
 
 std::string EncodeHexTx(const CTransaction& tx, const int serializeFlags)
@@ -166,9 +188,9 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
     for (unsigned int i = 0; i < tx.vin.size(); i++) {
         const CTxIn& txin = tx.vin[i];
         UniValue in(UniValue::VOBJ);
-        if (tx.IsCoinBase())
+        if (tx.IsCoinBase()) {
             in.pushKV("coinbase", HexStr(txin.scriptSig.begin(), txin.scriptSig.end()));
-        else {
+        } else {
             in.pushKV("txid", txin.prevout.hash.GetHex());
             in.pushKV("vout", (int64_t)txin.prevout.n);
             UniValue o(UniValue::VOBJ);
@@ -209,5 +231,16 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
 
     if (include_hex) {
         entry.pushKV("hex", EncodeHexTx(tx, serialize_flags)); // the hex-encoded transaction. used the name "hex" to be consistent with the verbose output of "getrawtransaction".
+    }
+    if (tx.IsWithoutAncestor(nullptr)) {
+        std::vector<unsigned char> bytesForSignature;
+        std::stringstream comments;
+        if (tx.ToBytesForSignatureWithoutAncestor(bytesForSignature, &comments)) {
+            entry.pushKV("bytesForSignatureWithoutAncestor", HexStr(bytesForSignature));
+            entry.pushKV("comments", comments.str());
+        } else {
+            comments << "Failed to compute bytes for signature without ancestor. ";
+            entry.pushKV("error", comments.str());
+        }
     }
 }

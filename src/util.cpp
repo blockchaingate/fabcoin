@@ -1,20 +1,21 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "config/fabcoin-config.h"
+#include <config/fabcoin-config.h>
 #endif
 
-#include "util.h"
+#include <util.h>
 
-#include "chainparamsbase.h"
-#include "fs.h"
-#include "random.h"
-#include "serialize.h"
-#include "utilstrencodings.h"
-#include "utiltime.h"
+#include <chainparamsbase.h>
+#include <fs.h>
+#include <random.h>
+#include <serialize.h>
+#include <utilstrencodings.h>
+#include <utiltime.h>
+#include <regex>
 
 #include <stdarg.h>
 
@@ -84,6 +85,7 @@
 #include <openssl/rand.h>
 #include <openssl/conf.h>
 
+using namespace std;
 // Application startup time (used for uptime calculation)
 const int64_t nStartupTime = GetTime();
 
@@ -177,6 +179,11 @@ static FILE* fileout = nullptr;
 static boost::mutex* mutexDebugLog = nullptr;
 static std::list<std::string>* vMsgsBeforeOpenLog;
 
+/////////////////////////////////////////////////////////////////////// // fasc
+static FILE* fileoutVM = nullptr;
+///////////////////////////////////////////////////////////////////////
+
+
 static int FileWriteStr(const std::string &str, FILE *fp)
 {
     return fwrite(str.data(), 1, str.size(), fp);
@@ -195,9 +202,15 @@ void OpenDebugLog()
     boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
 
     assert(fileout == nullptr);
+    assert(fileoutVM == nullptr); // fasc
+
     assert(vMsgsBeforeOpenLog);
     fs::path pathDebug = GetDataDir() / "debug.log";
+    fs::path pathDebugVM = GetDataDir() / "vm.log"; // fasc
+
     fileout = fsbridge::fopen(pathDebug, "a");
+    fileoutVM = fsbridge::fopen(pathDebugVM, "a"); // fasc
+
     if (fileout) {
         setbuf(fileout, nullptr); // unbuffered
         // dump buffered messages from before we opened the log
@@ -206,6 +219,18 @@ void OpenDebugLog()
             vMsgsBeforeOpenLog->pop_front();
         }
     }
+
+    ///////////////////////////////////////////// // fasc
+    if (fileoutVM) {
+        setbuf(fileoutVM, NULL); // unbuffered
+        // dump buffered messages from before we opened the log
+        while (!vMsgsBeforeOpenLog->empty()) {
+            FileWriteStr(vMsgsBeforeOpenLog->front(), fileoutVM);
+            vMsgsBeforeOpenLog->pop_front();
+        }
+    }
+    /////////////////////////////////////////////
+
 
     delete vMsgsBeforeOpenLog;
     vMsgsBeforeOpenLog = nullptr;
@@ -242,6 +267,7 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::QT, "qt"},
     {BCLog::LEVELDB, "leveldb"},
     {BCLog::POW, "pow"},
+    {BCLog::HTTPPOLL, "http-poll"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 };
@@ -293,6 +319,40 @@ std::vector<CLogCategoryActive> ListActiveLogCategories()
     return ret;
 }
 
+bool LogAcceptCategoryChar(const char* category)
+{
+    /*
+    if (category != NULL)
+    {
+        if (!fDebug)
+            return false;
+
+        // Give each thread quick access to -debug settings.
+        // This helps prevent issues debugging global destructors,
+        // where mapMultiArgs might be deleted before another
+        // global destructor calls LogPrint()
+        static boost::thread_specific_ptr<set<string> > ptrCategory;
+        if (ptrCategory.get() == NULL)
+        {
+            if (mapMultiArgs.count("-debug")) {
+                const vector<string>& categories = mapMultiArgs.at("-debug");
+                ptrCategory.reset(new set<string>(categories.begin(), categories.end()));
+                // thread_specific_ptr automatically deletes the set when the thread ends.
+            } else
+                ptrCategory.reset(new set<string>());
+        }
+        const set<string>& setCategories = *ptrCategory.get();
+
+        // if not debugging everything and not debugging specific category, LogPrint does nothing.
+        if (setCategories.count(string("")) == 0 &&
+            setCategories.count(string("1")) == 0 &&
+            setCategories.count(string(category)) == 0)
+            return false;
+    }
+    */
+    return true;
+}
+
 /**
  * fStartedNewLine is a state variable held by the calling context that will
  * suppress printing of the timestamp when multiple calls are made that don't
@@ -326,8 +386,17 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
     return strStamped;
 }
 
-int LogPrintStr(const std::string &str)
+#include <log_session.h>
+int LogPrintStr(const std::string &str, bool useVMLog)
 {
+
+//////////////////////////////// // fasc
+    FILE* file = fileout;
+    if(useVMLog){
+        file = fileoutVM;
+    }
+////////////////////////////////
+
     int ret = 0; // Returns total number of characters written
     static std::atomic_bool fStartedNewLine(true);
 
@@ -335,17 +404,20 @@ int LogPrintStr(const std::string &str)
 
     if (fPrintToConsole)
     {
-        // print to console
-        ret = fwrite(strTimestamped.data(), 1, strTimestamped.size(), stdout);
-        fflush(stdout);
+        if (LogSession::flagLogsTurnedOn) {
+            LogSession::debugLog() << strTimestamped << LogSession::endL;
+        } else {
+            // print to console
+            ret = fwrite(strTimestamped.data(), 1, strTimestamped.size(), stdout);
+            fflush(stdout);
+        }
     }
     else if (fPrintToDebugLog)
     {
         boost::call_once(&DebugPrintInit, debugPrintInitFlag);
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
-
         // buffer if we haven't opened the log yet
-        if (fileout == nullptr) {
+        if (file == nullptr) {
             assert(vMsgsBeforeOpenLog);
             ret = strTimestamped.length();
             vMsgsBeforeOpenLog->push_back(strTimestamped);
@@ -356,11 +428,11 @@ int LogPrintStr(const std::string &str)
             if (fReopenDebugLog) {
                 fReopenDebugLog = false;
                 fs::path pathDebug = GetDataDir() / "debug.log";
-                if (fsbridge::freopen(pathDebug,"a",fileout) != nullptr)
-                    setbuf(fileout, nullptr); // unbuffered
+                if (fsbridge::freopen(pathDebug,"a",file) != nullptr)
+                    setbuf(file, nullptr); // unbuffered
             }
 
-            ret = FileWriteStr(strTimestamped, fileout);
+            ret = FileWriteStr(strTimestamped, file);
         }
     }
     return ret;
@@ -531,7 +603,7 @@ fs::path GetDefaultDataDir()
     // Unix: ~/.fabcoin
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Fabcoin";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Fabcoinsc";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -541,10 +613,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/Fabcoin";
+    return pathRet / "Library/Application Support/Fabcoinsc";
 #else
     // Unix
-    return pathRet / ".fabcoin";
+    return pathRet / ".fabcoinsc";
 #endif
 #endif
 }
@@ -913,4 +985,34 @@ std::string CopyrightHolders(const std::string& strPrefix)
 int64_t GetStartupTime()
 {
     return nStartupTime;
+}
+
+bool CheckHex(const std::string& str) {
+    size_t data=0;
+    if(str.size() > 2 && (str.compare(0, 2, "0x") == 0 || str.compare(0, 2, "0X") == 0)){
+        data=2;
+    }
+    return str.size() > data && str.find_first_not_of("0123456789abcdefABCDEF", data) == std::string::npos;
+}
+
+std::string toHexString(int64_t intValue) {
+    //Store big endian representation in a vector
+    uint64_t num = (uint64_t)intValue;
+    std::vector<unsigned char> bigEndian;
+    for(int i=sizeof(num) -1; i>=0; i--){
+       bigEndian.push_back( (num>>(8*i)) & 0xff );
+    }
+
+    //Convert the vector into hex string
+    return "0x" + HexStr(bigEndian.begin(), bigEndian.end());
+}
+
+void ReplaceInt(const int64_t& number, const std::string& key, std::string& str)
+{
+    // Convert the number into hex string
+    std::string num_hex = toHexString(number);
+
+    // Search for key in str and replace it with the hex string
+    std::string str_replaced = std::regex_replace(str, std::regex(key), num_hex);
+    str = str_replaced;
 }

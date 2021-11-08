@@ -2,14 +2,18 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "util.h"
-#include "test/test_fabcoin.h"
+#include <util.h>
+#include <test/test_fabcoin.h>
 
 #include <string>
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedGetArgTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(getarg_tests, BasicTestingSetup)
 

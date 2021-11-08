@@ -5,7 +5,7 @@
 #ifndef FABCOIN_QT_FABCOINAMOUNTFIELD_H
 #define FABCOIN_QT_FABCOINAMOUNTFIELD_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QWidget>
 
@@ -55,6 +55,9 @@ public:
         in these cases we have to set it up manually.
     */
     QWidget *setupTabChain(QWidget *prev);
+
+    CAmount minimum() const;
+    void setMinimum(const CAmount& min);
 
 Q_SIGNALS:
     void valueChanged();

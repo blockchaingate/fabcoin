@@ -1,0 +1,3 @@
+repository='external project URL'
+module='https://github.com/chfast/secp256k1/archive/9859f02f9eca2787d697e7d11e5e9daf4c49732f.tar.gz'
+tag='SHA256=d31e40f3bdc2982d2e21f21e1e7a50731bae258f5245d51e32481bbe549035c4'

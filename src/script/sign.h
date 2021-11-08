@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,7 @@
 #define FABCOIN_SCRIPT_SIGN_H
 
 #include "script/interpreter.h"
+#include "coins.h"
 
 class CKeyID;
 class CKeyStore;
@@ -27,7 +28,7 @@ public:
     virtual const BaseSignatureChecker& Checker() const =0;
 
     /** Create a singular (non-script) signature. */
-    virtual bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const =0;
+    virtual bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion, std::stringstream* commentsNonSensitive = 0) const =0;
 };
 
 /** A signature creator for transactions. */
@@ -41,7 +42,7 @@ class TransactionSignatureCreator : public BaseSignatureCreator {
 public:
     TransactionSignatureCreator(const CKeyStore* keystoreIn, const CTransaction* txToIn, unsigned int nInIn, const CAmount& amountIn, int nHashTypeIn=SIGHASH_ALL);
     const BaseSignatureChecker& Checker() const override { return checker; }
-    bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override;
+    bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion, std::stringstream* commentsNonSensitive = 0) const override;
 };
 
 class MutableTransactionSignatureCreator : public TransactionSignatureCreator {
@@ -56,7 +57,7 @@ class DummySignatureCreator : public BaseSignatureCreator {
 public:
     DummySignatureCreator(const CKeyStore* keystoreIn) : BaseSignatureCreator(keystoreIn) {}
     const BaseSignatureChecker& Checker() const override;
-    bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override;
+    bool CreateSig(std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion, std::stringstream* commentsNonSensitive = 0) const override;
 };
 
 struct SignatureData {
@@ -68,11 +69,12 @@ struct SignatureData {
 };
 
 /** Produce a script signature using a generic signature creator. */
-bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& scriptPubKey, SignatureData& sigdata);
+bool ProduceSignature(const BaseSignatureCreator& creator, const CScript& scriptPubKey, SignatureData& sigdata, std::stringstream *commentsNonSensitive = nullptr);
 
 /** Produce a script signature for a transaction. */
 bool SignSignature(const CKeyStore &keystore, const CScript& fromPubKey, CMutableTransaction& txTo, unsigned int nIn, const CAmount& amount, int nHashType);
 bool SignSignature(const CKeyStore& keystore, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType);
+bool VerifySignature(const Coin& coin, uint256 txFromHash, const CTransaction& txTo, unsigned int nIn, unsigned int flags);
 
 /** Combine two script signatures using a generic signature checker, intelligently, possibly with OP_0 placeholders. */
 SignatureData CombineSignatures(const CScript& scriptPubKey, const BaseSignatureChecker& checker, const SignatureData& scriptSig1, const SignatureData& scriptSig2);

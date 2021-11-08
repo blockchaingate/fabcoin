@@ -1,27 +1,35 @@
-// Copyright (c) 2016 The Bitcoin Core developers
+// Copyright (c)2016-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "modaloverlay.h"
-#include "ui_modaloverlay.h"
+#include <modaloverlay.h>
+#include <ui_modaloverlay.h>
 
-#include "guiutil.h"
+#include <guiutil.h>
+#include <styleSheet.h>
 
-#include "chainparams.h"
+#include <chainparams.h>
 
 #include <QResizeEvent>
 #include <QPropertyAnimation>
 
-ModalOverlay::ModalOverlay(QWidget *parent) :
+ModalOverlay::ModalOverlay(QWidget *parent, OverlayType _type) :
 QWidget(parent),
 ui(new Ui::ModalOverlay),
 bestHeaderHeight(0),
 bestHeaderDate(QDateTime()),
 layerIsVisible(false),
-userClosed(false)
+userClosed(false),
+type(_type)
 {
     ui->setupUi(this);
+
+    // Set stylesheet
+    SetObjectStyleSheet(ui->warningIcon, StyleSheetNames::ButtonTransparent);
+    SetObjectStyleSheet(ui->warningIconBackup, StyleSheetNames::ButtonTransparent);
+
     connect(ui->closeButton, SIGNAL(clicked()), this, SLOT(closeClicked()));
+    connect(ui->walletBackupButton, SIGNAL(clicked()), this, SLOT(backupWalletClicked()));
     if (parent) {
         parent->installEventFilter(this);
         raise();
@@ -29,6 +37,8 @@ userClosed(false)
 
     blockProcessTime.clear();
     setVisible(false);
+
+    ui->stackedWidget->setCurrentIndex(type);
 }
 
 ModalOverlay::~ModalOverlay()
@@ -130,7 +140,7 @@ void ModalOverlay::tipUpdate(int count, const QDateTime& blockDate, double nVeri
 
     // estimate the number of headers left based on nPowTargetSpacing
     // and check if the gui is not aware of the best header (happens rarely)
-    int estimateNumHeadersLeft = bestHeaderDate.secsTo(currentDate) / Params().GetConsensus().nPowTargetSpacing;
+    int estimateNumHeadersLeft = bestHeaderDate.secsTo(currentDate) / Params().GetnPowTargetSpacing(bestHeaderHeight);
     bool hasBestHeader = bestHeaderHeight >= count;
 
     // show remaining number of blocks
@@ -172,4 +182,10 @@ void ModalOverlay::closeClicked()
 {
     showHide(true);
     userClosed = true;
+}
+
+void ModalOverlay::backupWalletClicked()
+{
+    Q_EMIT backupWallet();
+    showHide(true, true);
 }

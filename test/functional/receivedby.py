@@ -28,6 +28,9 @@ class ReceivedByTest(FabcoinTestFramework):
         self.enable_mocktime()
 
     def run_test(self):
+        # avoid IBD errors
+        self.nodes[0].generate(1)
+
         '''
         listreceivedbyaddress Test
         '''

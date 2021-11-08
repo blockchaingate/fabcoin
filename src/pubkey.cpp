@@ -1,8 +1,8 @@
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "pubkey.h"
+#include <pubkey.h>
 
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
@@ -177,7 +177,9 @@ bool CPubKey::Verify(const uint256 &hash, const std::vector<unsigned char>& vchS
     }
     /* libsecp256k1's ECDSA verification requires lower-S signatures, which have
      * not historically been enforced in Fabcoin, so normalize them first. */
-    secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
+
+    // it has been enforced to use lower-S signature in Fabcoin
+    // secp256k1_ecdsa_signature_normalize(secp256k1_context_verify, &sig, &sig);
     return secp256k1_ecdsa_verify(secp256k1_context_verify, &sig, hash.begin(), &pubkey);
 }
 

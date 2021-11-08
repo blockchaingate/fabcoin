@@ -59,8 +59,8 @@ BASE_SCRIPTS= [
     # vv Tests less than 5m vv
 
     'fundrawtransaction.py',
-
-    'segwit.py',
+    'p2p-compactblocks.py',
+    ###'segwit.py',
     # vv Tests less than 2m vv
     'wallet.py',
     'wallet-accounts.py',
@@ -98,6 +98,7 @@ BASE_SCRIPTS= [
     'disconnect_ban.py',
     'decodescript.py',
     'blockchain.py',
+    'blockconflict.py',
     'disablewallet.py',
     'net.py',
     'keypool.py',
@@ -117,12 +118,41 @@ BASE_SCRIPTS= [
     'listsinceblock.py',
     'p2p-leaktests.py',
     'wallet-encryption.py',
-    'bipdersig-p2p.py',
-    'bip65-cltv-p2p.py',
     'uptime.py',
     'resendwallettransactions.py',
     'minchainwork.py',
-    'p2p-acceptblock.py',
+
+    # fabcoin
+    'fabcoin-dgp.py',
+    'fabcoin-opcall.py',
+    'fabcoin-opcreate.py',
+    'fabcoin-8mb-block.py',
+    'fabcoin-gas-limit.py',
+    'fabcoin-searchlog.py',
+    'fabcoin-state-root.py',
+    'fabcoin-evm-globals.py',
+    'fabcoin-null-sender.py',
+    'fabcoin-waitforlogs.py',
+    'fabcoin-block-header.py',
+    'fabcoin-callcontract.py',
+    'fabcoin-spend-op-call.py',
+    'fabcoin-condensing-txs.py',
+    'fabcoin-createcontract.py',
+    'fabcoin-sendtocontract.py',
+    'fabcoin-identical-refunds.py',
+    'fabcoin-create-eth-op-code.py',
+    'fabcoin-gas-limit-overflow.py',
+    'fabcoin-call-empty-contract.py',
+    'fabcoin-dgp-block-size-sync.py',
+    'fabcoin-globals-state-changer.py',
+    'fabcoin-no-exec-call-disabled.py',
+    'fabcoin-soft-block-gas-limits.py',
+    'fabcoin-dgp-block-size-restart.py',
+    'fabcoin-searchlog-restart-node.py',
+    'fabcoin-transaction-prioritization.py',
+    'fabcoin-many-value-refunds-from-same-tx.py',
+    'fabcoin-combined-outputs-exceed-gas-limit.py',
+    'fabcoin-dgp-gas-price-lingering-mempool-tx.py',
 ]
 
 EXTENDED_SCRIPTS = [
@@ -139,6 +169,10 @@ EXTENDED_SCRIPTS = [
     'bip68-sequence.py',
     'getblocktemplate_longpoll.py',
     'p2p-timeouts.py',
+    # Version <4 blocks are never allowed in regtest on fabcoin
+    'bipdersig-p2p.py',
+    'bip65-cltv-p2p.py',
+    'p2p-acceptblock.py',
     # vv Tests less than 60s vv
     'bip9-softforks.py',
     'p2p-feefilter.py',

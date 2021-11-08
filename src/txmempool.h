@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,17 +13,18 @@
 #include <utility>
 #include <string>
 
-#include "amount.h"
-#include "coins.h"
-#include "indirectmap.h"
-#include "policy/feerate.h"
-#include "primitives/transaction.h"
-#include "sync.h"
-#include "random.h"
+#include <amount.h>
+#include <coins.h>
+#include <indirectmap.h>
+#include <policy/feerate.h>
+#include <primitives/transaction.h>
+#include <sync.h>
+#include <random.h>
+#include <univalue.h>
 
-#include "boost/multi_index_container.hpp"
-#include "boost/multi_index/ordered_index.hpp"
-#include "boost/multi_index/hashed_index.hpp"
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 
 #include <boost/signals2/signal.hpp>
@@ -31,7 +32,8 @@
 class CBlockIndex;
 
 /** Fake height value used in Coin to signify they are only in the memory pool (since 0.8) */
-static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
+static const uint32_t MEMPOOL_HEIGHT = 0x0FFFFFFF;
+//??? static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
 
 struct LockPoints
 {
@@ -75,6 +77,7 @@ private:
     int64_t sigOpCost;         //!< Total sigop cost
     int64_t feeDelta;          //!< Used for determining the priority of the transaction for mining in a block
     LockPoints lockPoints;     //!< Track the height and time at which tx was final
+    CAmount nMinGasPrice;      //!< The minimum gas price among the contract outputs of the tx
 
     // Information about descendants of this transaction that are in the
     // mempool; if we remove this transaction we must remove all of these
@@ -93,9 +96,11 @@ public:
     CTxMemPoolEntry(const CTransactionRef& _tx, const CAmount& _nFee,
                     int64_t _nTime, unsigned int _entryHeight,
                     bool spendsCoinbase,
-                    int64_t nSigOpsCost, LockPoints lp);
+                    int64_t nSigOpsCost, LockPoints lp, CAmount _nMinGasPrice = 0);
 
     CTxMemPoolEntry(const CTxMemPoolEntry& other);
+
+    void ToJSON(UniValue& output) const;
 
     const CTransaction& GetTx() const { return *this->tx; }
     CTransactionRef GetSharedTx() const { return this->tx; }
@@ -108,6 +113,7 @@ public:
     int64_t GetModifiedFee() const { return nFee + feeDelta; }
     size_t DynamicMemoryUsage() const { return nUsageSize; }
     const LockPoints& GetLockPoints() const { return lockPoints; }
+    const CAmount& GetMinGasPrice() const { return nMinGasPrice; }
 
     // Adjusts the descendant state.
     void UpdateDescendantState(int64_t modifySize, CAmount modifyFee, int64_t modifyCount);
@@ -287,11 +293,58 @@ public:
     }
 };
 
+class CompareTxMemPoolEntryByAncestorFeeOrGasPrice
+{
+public:
+    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b) const
+    {
+        bool fAHasCreateOrCallInOutputs = a.GetTx().HasNonFeeCallOrCreateInOutputs();
+        bool fBHasCreateOrCallInOutputs = b.GetTx().HasNonFeeCallOrCreateInOutputs();
+
+        // If either of the two entries that we are comparing has a contract scriptPubKey, the comparison here takes precedence
+        if(fAHasCreateOrCallInOutputs || fBHasCreateOrCallInOutputs) {
+            // Prioritze non-contract txs
+            if(fAHasCreateOrCallInOutputs != fBHasCreateOrCallInOutputs) {
+                return fAHasCreateOrCallInOutputs ? false : true;
+            }
+
+            // Prioritize the contract txs that have the least number of ancestors
+            // The reason for this is that otherwise it is possible to send one tx with a
+            // high gas limit but a low gas price which has a child with a low gas limit but a high gas price
+            // Without this condition that transaction chain would get priority in being included into the block.
+            if(a.GetCountWithAncestors() != b.GetCountWithAncestors()) {
+                return a.GetCountWithAncestors() < b.GetCountWithAncestors();
+            }
+
+            // Otherwise, prioritize the contract tx with the highest (minimum among its outputs) gas price
+            // The reason for using the gas price of the output that sets the minimum gas price is that there
+            // otherwise it may be possible to game the prioritization by setting a large gas price in one output
+            // that does no execution, while the real execution has a very low gas price
+            if(a.GetMinGasPrice() != b.GetMinGasPrice()) {
+                return a.GetMinGasPrice() > b.GetMinGasPrice();
+            }
+
+            // Otherwise, prioritize the tx with the minimum size
+            if(a.GetTxSize() != b.GetTxSize()) {
+                return a.GetTxSize() < b.GetTxSize();
+            }
+
+            // If the txs are identical in their minimum gas prices and tx size
+            // order based on the tx hash for consistency.
+            return a.GetTx().GetHash() < b.GetTx().GetHash();
+        }
+
+        // If neither of the txs we are comparing are contract txs, use the standard comparison based on ancestor fees / ancestor size
+        return CompareTxMemPoolEntryByAncestorFee()(a, b);
+    }
+};
+
 // Multi_index tag names
 struct descendant_score {};
 struct entry_time {};
 struct mining_score {};
 struct ancestor_score {};
+struct ancestor_score_or_gas_price {};
 
 class CBlockPolicyEstimator;
 
@@ -460,7 +513,13 @@ public:
                 boost::multi_index::tag<ancestor_score>,
                 boost::multi_index::identity<CTxMemPoolEntry>,
                 CompareTxMemPoolEntryByAncestorFee
-            >
+            >,
+            // sorted by fee rate with gas price (if contract tx) or ancestors otherwise
+            boost::multi_index::ordered_non_unique<
+                boost::multi_index::tag<ancestor_score_or_gas_price>,
+                boost::multi_index::identity<CTxMemPoolEntry>,
+                CompareTxMemPoolEntryByAncestorFeeOrGasPrice
+             >
         >
     > indexed_transaction_set;
 
@@ -517,7 +576,7 @@ public:
     // addUnchecked can be used to have it call CalculateMemPoolAncestors(), and
     // then invoke the second version.
     bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, bool validFeeEstimate = true);
-    bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate = true);
+    bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, setEntries &setAncestors, bool validFeeEstimate = true, std::stringstream *comments = nullptr);
 
     void removeRecursive(const CTransaction &tx, MemPoolRemovalReason reason = MemPoolRemovalReason::UNKNOWN);
     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
@@ -527,7 +586,7 @@ public:
     void clear();
     void _clear(); //lock free
     bool CompareDepthAndScore(const uint256& hasha, const uint256& hashb);
-    void queryHashes(std::vector<uint256>& vtxid);
+    void queryHashes(std::vector<uint256>& vtxid) const;
     bool isSpent(const COutPoint& outpoint);
     unsigned int GetTransactionsUpdated() const;
     void AddTransactionsUpdated(unsigned int n);
@@ -618,11 +677,19 @@ public:
         return (mapTx.count(hash) != 0);
     }
 
+    bool exists(const COutPoint& outpoint) const
+    {
+        LOCK(cs);
+        auto it = mapTx.find(outpoint.hash);
+        return (it != mapTx.end() && outpoint.n < it->GetTx().vout.size());
+    }
+
     CTransactionRef get(const uint256& hash) const;
     TxMempoolInfo info(const uint256& hash) const;
     std::vector<TxMempoolInfo> infoAll() const;
 
     size_t DynamicMemoryUsage() const;
+    UniValue ToJSON(bool fVerbose) const;
 
     boost::signals2::signal<void (CTransactionRef)> NotifyEntryAdded;
     boost::signals2::signal<void (CTransactionRef, MemPoolRemovalReason)> NotifyEntryRemoved;
@@ -685,6 +752,7 @@ protected:
 public:
     CCoinsViewMemPool(CCoinsView* baseIn, const CTxMemPool& mempoolIn);
     bool GetCoin(const COutPoint &outpoint, Coin &coin) const override;
+    bool HaveCoin(const COutPoint &outpoint) const override;
 };
 
 /**

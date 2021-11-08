@@ -2,10 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "trafficgraphwidget.h"
-#include "clientmodel.h"
+#include <trafficgraphwidget.h>
+#include <clientmodel.h>
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QColor>
 #include <QTimer>
 

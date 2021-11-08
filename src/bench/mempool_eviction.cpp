@@ -1,13 +1,17 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "bench.h"
-#include "policy/policy.h"
-#include "txmempool.h"
+#include <bench/bench.h>
+#include <policy/policy.h>
+#include <txmempool.h>
 
 #include <list>
 #include <vector>
+
+void avoidCompilerWarningsDefinedButNotUsedMempoolEviction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 static void AddTx(const CTransaction& tx, const CAmount& nFee, CTxMemPool& pool)
 {
@@ -111,4 +115,4 @@ static void MempoolEviction(benchmark::State& state)
     }
 }
 
-BENCHMARK(MempoolEviction);
+BENCHMARK(MempoolEviction, 41000);

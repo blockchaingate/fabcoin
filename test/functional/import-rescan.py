@@ -143,7 +143,7 @@ class ImportRescanTest(FabcoinTestFramework):
         # block further in the future (past the rescan window).
         self.nodes[0].generate(1)
         assert_equal(self.nodes[0].getrawmempool(), [])
-        timestamp = self.nodes[0].getblockheader(self.nodes[0].getbestblockhash())["time"]
+        timestamp = self.nodes[0].getblockheader(self.nodes[0].getbestblockhash(), True)["time"]
         set_node_times(self.nodes, timestamp + TIMESTAMP_WINDOW + 1)
         self.nodes[0].generate(1)
         sync_blocks(self.nodes)

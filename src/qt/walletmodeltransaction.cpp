@@ -1,11 +1,15 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "walletmodeltransaction.h"
+#include <walletmodeltransaction.h>
 
-#include "policy/policy.h"
-#include "wallet/wallet.h"
+#include <policy/policy.h>
+#include <wallet/wallet.h>
+
+void avoidCompilerWarningsDefinedButNotUsedWalletModelTransaction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 WalletModelTransaction::WalletModelTransaction(const QList<SendCoinsRecipient> &_recipients) :
     recipients(_recipients),

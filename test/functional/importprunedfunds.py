@@ -5,6 +5,7 @@
 """Test the importprunedfunds and removeprunedfunds RPCs."""
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
+from test_framework.fabcoinconfig import COINBASE_MATURITY
 
 class ImportPrunedFundsTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -13,7 +14,7 @@ class ImportPrunedFundsTest(FabcoinTestFramework):
 
     def run_test(self):
         self.log.info("Mining blocks...")
-        self.nodes[0].generate(801)
+        self.nodes[0].generate(COINBASE_MATURITY+1)
 
         self.sync_all()
         
@@ -33,7 +34,7 @@ class ImportPrunedFundsTest(FabcoinTestFramework):
         self.sync_all()
 
         #Node 1 sync test
-        assert_equal(self.nodes[1].getblockcount(),801)
+        assert_equal(self.nodes[1].getblockcount(),COINBASE_MATURITY+1)
 
         #Address Test - before import
         address_info = self.nodes[1].validateaddress(address1)

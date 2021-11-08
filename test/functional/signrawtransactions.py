@@ -6,7 +6,7 @@
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
-
+from test_framework.fabcoin import convert_btc_address_to_fabcoin
 
 class SignRawTransactionsTest(FabcoinTestFramework):
     def set_test_params(self):

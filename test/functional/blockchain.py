@@ -20,8 +20,11 @@ Tests correspond to code in rpc/blockchain.cpp.
 from decimal import Decimal
 import http.client
 import subprocess
+import time
 
 from test_framework.test_framework import FabcoinTestFramework
+from test_framework.fabcoinconfig import *
+
 from test_framework.util import (
     assert_equal,
     assert_raises,
@@ -33,7 +36,8 @@ from test_framework.util import (
 class BlockchainTest(FabcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
-        self.extra_args = [['-stopatheight=907']]
+        str_args = '-stopatheight=%d'%(COINBASE_MATURITY+107)
+        self.extra_args = [[str_args]]
 
     def run_test(self):
         self._test_getchaintxstats()
@@ -47,8 +51,8 @@ class BlockchainTest(FabcoinTestFramework):
     def _test_getchaintxstats(self):
         chaintxstats = self.nodes[0].getchaintxstats(1)
         # 900 txs plus genesis tx
-        assert_equal(chaintxstats['txcount'], 901)
-        # tx rate should be 1 per 75 second, or 1/75
+        assert_equal(chaintxstats['txcount'], COINBASE_MATURITY+101)
+        # tx rate should be 1 per 75 second , 
         # we have to round because of binary math
         assert_equal(round(chaintxstats['txrate'] * 75, 10), Decimal(1))
 
@@ -56,38 +60,39 @@ class BlockchainTest(FabcoinTestFramework):
         node = self.nodes[0]
         res = node.gettxoutsetinfo()
 
-        assert_equal(res['total_amount'], Decimal('21862.5'))
-        assert_equal(res['transactions'], 900)
-        assert_equal(res['height'], 900)
-        assert_equal(res['txouts'], 900)
-        assert_equal(res['bogosize'], 76500),
-        assert_equal(res['bestblock'], node.getblockhash(900))
+        
+        assert_equal(res['total_amount'], Decimal((COINBASE_MATURITY+100) * INITIAL_BLOCK_REWARD))
+        assert_equal(res['transactions'], COINBASE_MATURITY+100)
+        assert_equal(res['height'], COINBASE_MATURITY+100)
+        assert_equal(res['txouts'], COINBASE_MATURITY+100)
+        assert_equal(res['bogosize'], (COINBASE_MATURITY+100)*85)
+        assert_equal(res['bestblock'], node.getblockhash(COINBASE_MATURITY+100))
         size = res['disk_size']
         assert size > 6400
-        assert size < 64000/2*9
+        assert size < 64000/2* (COINBASE_MATURITY+100) /100
         assert_equal(len(res['bestblock']), 64)
         assert_equal(len(res['hash_serialized_2']), 64)
 
         self.log.info("Test that gettxoutsetinfo() works for blockchain with just the genesis block")
-        b1hash = node.getblockhash(1)
+        b1hash = node.getblockhash(COINBASE_MATURITY+1)
         node.invalidateblock(b1hash)
 
         res2 = node.gettxoutsetinfo()
-        assert_equal(res2['transactions'], 0)
-        assert_equal(res2['total_amount'], Decimal('0'))
-        assert_equal(res2['height'], 0)
-        assert_equal(res2['txouts'], 0)
-        assert_equal(res2['bogosize'], 0),
-        assert_equal(res2['bestblock'], node.getblockhash(0))
+        assert_equal(res2['transactions'], COINBASE_MATURITY)
+        assert_equal(res2['total_amount'], Decimal(COINBASE_MATURITY * INITIAL_BLOCK_REWARD))
+        assert_equal(res2['height'], COINBASE_MATURITY)
+        assert_equal(res2['txouts'], COINBASE_MATURITY)
+        assert_equal(res2['bogosize'], COINBASE_MATURITY*85)
+        assert_equal(res2['bestblock'], node.getblockhash(COINBASE_MATURITY))
         assert_equal(len(res2['hash_serialized_2']), 64)
 
         self.log.info("Test that gettxoutsetinfo() returns the same result after invalidate/reconsider block")
         node.reconsiderblock(b1hash)
 
         res3 = node.gettxoutsetinfo()
+        assert_equal(res['height'], res3['height'])
         assert_equal(res['total_amount'], res3['total_amount'])
         assert_equal(res['transactions'], res3['transactions'])
-        assert_equal(res['height'], res3['height'])
         assert_equal(res['txouts'], res3['txouts'])
         assert_equal(res['bogosize'], res3['bogosize'])
         assert_equal(res['bestblock'], res3['bestblock'])
@@ -100,11 +105,11 @@ class BlockchainTest(FabcoinTestFramework):
                               node.getblockheader, "nonsense")
 
         besthash = node.getbestblockhash()
-        secondbesthash = node.getblockhash(899)
+        secondbesthash = node.getblockhash(COINBASE_MATURITY+99)
         header = node.getblockheader(besthash)
 
         assert_equal(header['hash'], besthash)
-        assert_equal(header['height'], 900)
+        assert_equal(header['height'], COINBASE_MATURITY+100)
         assert_equal(header['confirmations'], 1)
         assert_equal(header['previousblockhash'], secondbesthash)
         assert_is_hex_string(header['chainwork'])
@@ -114,7 +119,8 @@ class BlockchainTest(FabcoinTestFramework):
         assert_is_hash_string(header['bits'], length=None)
         assert isinstance(header['time'], int)
         assert isinstance(header['mediantime'], int)
-        assert_is_hex_string(header['nonce'])
+        assert isinstance(header['nonce'], int)
+        #assert_is_hex_string(header['nonce'])
         assert isinstance(header['version'], int)
         assert isinstance(int(header['versionHex'], 16), int)
         assert isinstance(header['difficulty'], Decimal)
@@ -125,15 +131,16 @@ class BlockchainTest(FabcoinTestFramework):
         # binary => decimal => binary math is why we do this check
         assert abs(difficulty * 2**31 - 1) < 0.0001
 
+
     def _test_getnetworkhashps(self):
         hashes_per_second = self.nodes[0].getnetworkhashps()
         # This should be 2 hashes every 75 second or 2/75
         assert abs(hashes_per_second /2 * 75 - 1) < 0.0001
 
     def _test_stopatheight(self):
-        assert_equal(self.nodes[0].getblockcount(), 900)
+        assert_equal(self.nodes[0].getblockcount(), COINBASE_MATURITY+100)
         self.nodes[0].generate(6)
-        assert_equal(self.nodes[0].getblockcount(), 906)
+        assert_equal(self.nodes[0].getblockcount(), COINBASE_MATURITY+106)
         self.log.debug('Node should not stop at this height')
         assert_raises(subprocess.TimeoutExpired, lambda: self.nodes[0].process.wait(timeout=3))
         try:
@@ -143,7 +150,7 @@ class BlockchainTest(FabcoinTestFramework):
         self.log.debug('Node should stop at this height...')
         self.nodes[0].wait_until_stopped()
         self.start_node(0)
-        assert_equal(self.nodes[0].getblockcount(), 907)
+        assert_equal(self.nodes[0].getblockcount(), COINBASE_MATURITY+107)
 
 
 if __name__ == '__main__':

@@ -1,14 +1,14 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_RPCSERVER_H
 #define FABCOIN_RPCSERVER_H
 
-#include "amount.h"
-#include "rpc/protocol.h"
-#include "uint256.h"
+#include <amount.h>
+#include <rpc/protocol.h>
+#include <uint256.h>
 
 #include <list>
 #include <map>
@@ -16,9 +16,20 @@
 #include <string>
 
 #include <univalue.h>
+#include <httpserver.h>
+#include <mutex>
+#include <condition_variable>
 
 static const unsigned int DEFAULT_RPC_SERIALIZE_VERSION = 1;
 
+struct CUpdatedBlock
+{
+    uint256 hash;
+    int height;
+};
+static std::mutex cs_blockchange;
+static std::condition_variable cond_blockchange;
+static CUpdatedBlock latestblock;
 class CRPCCommand;
 
 namespace RPCServer
@@ -26,7 +37,10 @@ namespace RPCServer
     void OnStarted(std::function<void ()> slot);
     void OnStopped(std::function<void ()> slot);
     void OnPreCommand(std::function<void (const CRPCCommand&)> slot);
+    void OnPostCommand(std::function<void (const CRPCCommand&)> slot);
 }
+class CBlockIndex;
+class CNetAddr;
 
 /** Wrapper for UniValue::VType, which includes typeAny:
  * Used to denote don't care type. Only used by RPCTypeCheckObj */
@@ -47,8 +61,50 @@ public:
     std::string URI;
     std::string authUser;
 
-    JSONRPCRequest() : id(NullUniValue), params(NullUniValue), fHelp(false) {}
+    bool isLongPolling;
+
+    /**
+     * If using batch JSON request, this object won't get the underlying HTTPRequest.
+     */
+    JSONRPCRequest() {
+        id = NullUniValue;
+        params = NullUniValue;
+        fHelp = false;
+        req = NULL;
+        isLongPolling = false;
+    };
+
+    JSONRPCRequest(HTTPRequest *_req);
+
+    /**
+     * Start long-polling
+     */
+    void PollStart();
+
+    /**
+     * Ping long-poll connection with an empty character to make sure it's still alive.
+     */
+    void PollPing();
+
+    /**
+     * Returns whether the underlying long-poll connection is still alive.
+     */
+    bool PollAlive();
+
+    /**
+     * End a long poll request.
+     */
+    void PollCancel();
+
+    /**
+     * Return the JSON result of a long poll request
+     */
+    void PollReply(const UniValue& result);
+
     void parse(const UniValue& valRequest);
+
+    // FIXME: make this private?
+    HTTPRequest *req;
 };
 
 /** Query whether RPC is running */
@@ -184,14 +240,22 @@ extern uint256 ParseHashO(const UniValue& o, std::string strKey);
 extern std::vector<unsigned char> ParseHexV(const UniValue& v, std::string strName);
 extern std::vector<unsigned char> ParseHexO(const UniValue& o, std::string strKey);
 
+extern int64_t nWalletUnlockTime;
 extern CAmount AmountFromValue(const UniValue& value);
+extern UniValue ValueFromAmount(const CAmount& amount);
+extern double GetDifficulty(const CBlockIndex* blockindex);
+extern double GetPoWMHashPS();
+
+extern std::string HelpRequiringPassphrase();
 extern std::string HelpExampleCli(const std::string& methodname, const std::string& args);
 extern std::string HelpExampleRpc(const std::string& methodname, const std::string& args);
 
+extern void EnsureWalletIsUnlocked();
 bool StartRPC();
 void InterruptRPC();
 void StopRPC();
 std::string JSONRPCExecBatch(const UniValue& vReq);
+void RPCNotifyBlockChange(bool ibd, const CBlockIndex *);
 
 // Retrieves any serialization flags requested in command line argument
 int RPCSerializationFlags();

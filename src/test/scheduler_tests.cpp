@@ -1,15 +1,19 @@
-// Copyright (c) 2012-2016 The Bitcoin Core developers
+// Copyright (c) 2012-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "random.h"
-#include "scheduler.h"
+#include <random.h>
+#include <scheduler.h>
 
-#include "test/test_fabcoin.h"
+#include <test/test_fabcoin.h>
 
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedSchedulerTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_AUTO_TEST_SUITE(scheduler_tests)
 

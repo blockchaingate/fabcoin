@@ -1,25 +1,29 @@
-// Copyright (c) 2013-2016 The Bitcoin Core developers
+// Copyright (c) 2013-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "consensus/tx_verify.h"
-#include "consensus/validation.h"
-#include "data/sighash.json.h"
-#include "hash.h"
-#include "script/interpreter.h"
-#include "script/script.h"
-#include "serialize.h"
-#include "streams.h"
-#include "test/test_fabcoin.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "version.h"
+#include <consensus/tx_verify.h>
+#include <consensus/validation.h>
+#include <data/sighash.json.h>
+#include <hash.h>
+#include <script/interpreter.h>
+#include <script/script.h>
+#include <serialize.h>
+#include <streams.h>
+#include <test/test_fabcoin.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <version.h>
 
 #include <iostream>
 
 #include <boost/test/unit_test.hpp>
 
 #include <univalue.h>
+
+void avoidCompilerWarningsDefinedButNotUsedSighashTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 extern UniValue read_json(const std::string& jsondata);
 

@@ -57,7 +57,7 @@ installing the toolchain will be different.
 
 First, install the general dependencies:
 
-    sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl
+    sudo apt-get install build-essential libtool autotools-dev automake cmake pkg-config bsdmainutils curl
 
 A host toolchain (`build-essential`) is necessary because some dependency
 packages (such as `protobuf`) need to build host utilities that are used in the
@@ -68,7 +68,6 @@ If you're building on Ubuntu 17.04 or later, run these two commands, selecting t
 to work around issues with mingw-w64. See issue [8732](https://github.com/blockchaingate/fabcoin/issues/8732) for more information.
 ```
 sudo update-alternatives --config x86_64-w64-mingw32-g++
-sudo update-alternatives --config x86_64-w64-mingw32-gcc
 ```
 
 ## Building for 64-bit Windows

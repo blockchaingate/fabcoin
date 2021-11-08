@@ -1,38 +1,44 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "base58.h"
-#include "chain.h"
-#include "coins.h"
-#include "consensus/validation.h"
-#include "core_io.h"
-#include "init.h"
-#include "keystore.h"
-#include "validation.h"
-#include "merkleblock.h"
-#include "net.h"
-#include "policy/policy.h"
-#include "policy/rbf.h"
-#include "primitives/transaction.h"
-#include "rpc/server.h"
-#include "script/script.h"
-#include "script/script_error.h"
-#include "script/sign.h"
-#include "script/standard.h"
-#include "txmempool.h"
-#include "uint256.h"
-#include "utilstrencodings.h"
+#include <base58.h>
+#include <chain.h>
+#include <coins.h>
+#include <consensus/validation.h>
+#include <core_io.h>
+#include <init.h>
+#include <keystore.h>
+#include <validation.h>
+#include <merkleblock.h>
+#include <net.h>
+#include <policy/policy.h>
+#include <policy/rbf.h>
+#include <primitives/transaction.h>
+#include <rpc/server.h>
+#include <script/script.h>
+#include <script/script_error.h>
+#include <script/sign.h>
+#include <script/standard.h>
+#include <txmempool.h>
+#include <uint256.h>
+#include <utilstrencodings.h>
+#include <utilmoneystr.h>
+#include "aggregate_schnorr_signature.h"
+#include <encodings_crypto.h>
 #ifdef ENABLE_WALLET
-#include "wallet/rpcwallet.h"
-#include "wallet/wallet.h"
+#include <wallet/rpcwallet.h>
+#include <wallet/wallet.h>
 #endif
 
 #include <stdint.h>
 
 #include <univalue.h>
 
+void avoidCompilerWarningsDefinedButNotUsedRawTransaction() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
 {
@@ -57,6 +63,60 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
                 entry.push_back(Pair("confirmations", 0));
         }
     }
+}
+
+UniValue gethexaddress(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
+        throw std::runtime_error(
+                "gethexaddress \"address\"\n"
+
+                        "\nConverts a base58 pubkeyhash address to a hex address for use in smart contracts.\n"
+
+                        "\nArguments:\n"
+                        "1. \"address\"      (string, required) The base58 address\n"
+
+                        "\nResult:\n"
+                        "\"hexaddress\"      (string) The raw hex pubkeyhash address for use in smart contracts\n"
+
+                        "\nExamples:\n"
+                + HelpExampleCli("gethexaddress", "\"address\"")
+                + HelpExampleRpc("gethexaddress", "\"address\"")
+        );
+
+    CFabcoinAddress address(request.params[0].get_str());
+    if (!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
+
+    if(!address.IsPubKeyHash())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Only pubkeyhash addresses are supported");
+
+    return boost::get<CKeyID>(address.Get()).GetReverseHex();
+}
+
+UniValue fromhexaddress(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
+        throw std::runtime_error(
+                "fromhexaddress \"hexaddress\"\n"
+
+                        "\nConverts a raw hex address to a base58 pubkeyhash address\n"
+
+                        "\nArguments:\n"
+                        "1. \"hexaddress\"      (string, required) The raw hex address\n"
+
+                        "\nResult:\n"
+                        "\"address\"      (string) The base58 pubkeyhash address\n"
+
+                        "\nExamples:\n"
+                + HelpExampleCli("fromhexaddress", "\"hexaddress\"")
+                + HelpExampleRpc("fromhexaddress", "\"hexaddress\"")
+        );
+    if (request.params[0].get_str().size() != 40)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid pubkeyhash hex size (should be 40 hex characters)");
+    CKeyID raw;
+    raw.SetReverseHex(request.params[0].get_str());
+    CFabcoinAddress address(raw);
+
+    return address.ToString();
 }
 
 UniValue getrawtransaction(const JSONRPCRequest& request)
@@ -287,11 +347,152 @@ UniValue verifytxoutproof(const JSONRPCRequest& request)
     return res;
 }
 
-UniValue createrawtransaction(const JSONRPCRequest& request)
+bool GetPublicKeysHexFromArray(const UniValue& input, std::vector<std::string>& outputAppend, std::stringstream* reasonForFailure)
 {
+    unsigned maxNumberOfPublicKeys = 2048;
+    if (!input.isArray()) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "The public keys entry: " << input.write() << " does not appear to be an array. ";
+        }
+        return false;
+    }
+    if (input.size() > maxNumberOfPublicKeys) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Too many (" << input.size() << ") public keys. ";
+        }
+        return false;
+    }
+    for (unsigned i = 0; i < input.size(); i ++) {
+        if (!input[i].isStr()) {
+            if (reasonForFailure != 0) {
+                *reasonForFailure << "Failed to extract public key string at index: "
+                                  << i << "(" << i + 1 << " out of " << input.size() << "). "
+                                  << "The input was: " << input[i].write();
+            }
+            return false;
+        }
+        outputAppend.push_back(input[i].get_str());
+    }
+    return true;
+}
+
+bool GetPublicKeysHexFromString(const UniValue& input, std::vector<std::string>& outputAppend, std::stringstream* reasonForFailure)
+{
+    unsigned maxNumberOfPublicKeys = 2048;
+    unsigned lengthPublicKeyCompressed = PublicKeyKanban::lengthPublicKeySerializationCompressed; // = 33
+    if (!input.isStr()) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "The public keys entry: " << input.write() << " is not a hex string, as expected. ";
+        }
+        return false;
+    }
+    std::string inputString = input.get_str();
+    if (inputString.size() > maxNumberOfPublicKeys * lengthPublicKeyCompressed * 2 + 4) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Input too large ( " << inputString.size() << " bytes). ";
+        }
+        return false;
+    }
+
+    if (inputString.size() < 4) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Too few hex characters in public keys hex entry: "
+                              << inputString << ". At least 2 bytes = 4 hex characters expected. ";
+        }
+        return false;
+    }
+    std::string firstFour = inputString.substr(0, 4);
+    std::vector<unsigned char> firstTwoBytes;
+    if (!Encodings::fromHex(firstFour, firstTwoBytes, reasonForFailure)) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Failed to extract 2 bytes from the first 4 hex characters of your input: "
+            << firstFour;
+        }
+        return false;
+    }
+    if (firstTwoBytes.size() != 2) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Failed to extract 2 bytes from the first 4 characters of your input: " << firstFour;
+        }
+        return false;
+    }
+    unsigned expectedNumberOfPublicKeys = ((unsigned int)(firstTwoBytes[0])) * 256 + (unsigned int)(firstTwoBytes[1]);
+    unsigned expectedSize = 4 + lengthPublicKeyCompressed * 2 * expectedNumberOfPublicKeys;
+    if (inputString.size() != expectedSize) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Expected 4 + 33 * 2 * " << expectedNumberOfPublicKeys
+                              << " = " << expectedSize  << " hex characters, got " << inputString.size()
+                              << " instead. ";
+        }
+        return false;
+    }
+    unsigned offset = 4;
+    for (unsigned i = 0; i < expectedNumberOfPublicKeys; i ++) {
+        std::string currentSlice = inputString.substr(offset, lengthPublicKeyCompressed * 2);
+        outputAppend.push_back(currentSlice);
+        offset += 2 * lengthPublicKeyCompressed;
+    }
+    return true;
+}
+
+bool GetPublicKeysFromAggregateSignature(
+    const UniValue& input, std::vector<unsigned char>& outputPublicKeysSerialized, std::stringstream* reasonForFailure
+) {
+    unsigned maxNumberOfPublicKeys = 2048;
+    unsigned lengthPublicKeyCompressed = PublicKeyKanban::lengthPublicKeySerializationCompressed; //=33
+    std::vector<std::string> publicKeysHex;
+    if (input.exists("publicKeys")) {
+        UniValue publicKeysUniValue = input["publicKeys"];
+        if (!GetPublicKeysHexFromArray(publicKeysUniValue, publicKeysHex, reasonForFailure)) {
+            return false;
+        }
+    }
+    if (input.exists("publicKeysHex")) {
+        UniValue publicKeysUniValue = input["publicKeysHex"];
+        if (!GetPublicKeysHexFromString(publicKeysUniValue, publicKeysHex, reasonForFailure)) {
+            return false;
+        }
+    }
+    if (publicKeysHex.size() > maxNumberOfPublicKeys) {
+        if (reasonForFailure != 0) {
+            *reasonForFailure << "Too many public keys: " << publicKeysHex.size() << ". Maximum allowed: " << maxNumberOfPublicKeys << ". ";
+        }
+        return false;
+    }
+    unsigned numKeys = publicKeysHex.size();
+    std::vector<PublicKeyKanban> thePublicKeys;
+    thePublicKeys.resize(numKeys);
+    for (unsigned i = 0; i < numKeys; i ++) {
+        if (!thePublicKeys[i].MakeFromStringRecognizeFormat(publicKeysHex[i], reasonForFailure)) {
+            if (reasonForFailure != 0) {
+                *reasonForFailure
+                << "Failed to extract public key index "
+                << i << " (" << i + 1 << " out of " << numKeys << "). ";
+            }
+            return false;
+        }
+    }
+
+    outputPublicKeysSerialized.clear();
+    outputPublicKeysSerialized.reserve( 2 + numKeys * lengthPublicKeyCompressed);
+    unsigned char topByte = (unsigned char) (numKeys / 256);
+    unsigned char bottomByte = (unsigned char) (numKeys % 256);
+    outputPublicKeysSerialized.push_back(topByte);
+    outputPublicKeysSerialized.push_back(bottomByte);
+    std::vector<unsigned char> currentBytes;
+    for (unsigned i = 0; i < numKeys; i ++) {
+        thePublicKeys[i].SerializeCompressed(currentBytes);
+        for (unsigned j = 0; j < currentBytes.size(); j ++) {
+            outputPublicKeysSerialized.push_back(currentBytes[j]);
+        }
+    }
+    return true;
+}
+
+UniValue createrawtransaction(const JSONRPCRequest& request) {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
         throw std::runtime_error(
-            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
+            "createrawtransaction [{\"txid\":\"id\",\"vout\":n},...] {\"aggregation\": {...(see below)}, \"address\":amount,\"data\":\"hex\",...} ( locktime ) ( replaceable )\n"
             "\nCreate a transaction spending the given inputs and creating new outputs.\n"
             "Outputs can be addresses or data.\n"
             "Returns hex-encoded raw transaction.\n"
@@ -310,8 +511,20 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "     ]\n"
             "2. \"outputs\"               (object, required) a json object with outputs\n"
             "    {\n"
-            "      \"address\": x.xxx,    (numeric or string, required) The key is the fabcoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
+            "      \"aggregateSignature\":{\n       (required when address not present)\n"
+            "           \"publicKeys\": [\"pubKeyCompressedHex1\", \"pubKeyCompressedHex2\", ...],      (array, required when pubKeysHex not present) \n"
+            "           \"publicKeysHex\": \"serializedPubKeysHex\",                                    (string, required when pubKeys not present) First two bytes: number of pubkeys, big-endian. Next 33*numPubKeys: the public keys compressed. All data hex-encoded.\n"
+            "           \"amount\": x.xxx (numeric or string) Amount to be transferred."
+            "      },\n"
+            "      \"address\": x.xxx,    (numeric or string, required when aggregation not present) The key is the fabcoin address, the numeric value (can be string) is the " + CURRENCY_UNIT + " amount\n"
             "      \"data\": \"hex\"      (string, required) The key is \"data\", the value is hex encoded data\n"
+            "      \"contract\":{\n"
+            "         \"contractAddress\":\"address\", (string, required) Valid contract address (valid hash160 hex data)\n"
+            "         \"data\":\"hex\",                (string, required) Hex data to add in the call output\n"
+            "         \"amount\":x.xxx,                (numeric, optional) Value in fasc to send with the call, should be a valid amount, default 0\n"
+            "         \"gasLimit\":x,                  (numeric, optional) The gas limit for the transaction\n"
+            "         \"gasPrice\":x.xxxxxxxx          (numeric, optional) The gas price for the transaction\n"
+            "       } \n"
             "      ,...\n"
             "    }\n"
             "3. locktime                  (numeric, optional, default=0) Raw locktime. Non-0 value also locktime-activates inputs\n"
@@ -323,8 +536,13 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\" \"{\\\"address\\\":0.01}\"")
             + HelpExampleCli("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\" \"{\\\"data\\\":\\\"00010203\\\"}\"")
+            + HelpExampleCli("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\" \"{\\\"contract\\\":{\\\"contractAddress\\\":\\\"mycontract\\\","
+                                                     "\\\"data\\\":\\\"00\\\", \\\"gasLimit\\\":250000, \\\"gasPrice\\\":0.00000040, \\\"amount\\\":0}}\"")
             + HelpExampleRpc("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\", \"{\\\"address\\\":0.01}\"")
             + HelpExampleRpc("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\", \"{\\\"data\\\":\\\"00010203\\\"}\"")
+            + HelpExampleRpc("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\" \"{\\\"contract\\\":{\\\"contractAddress\\\":\\\"mycontract\\\","
+                                                     "\\\"data\\\":\\\"00\\\", \\\"gasLimit\\\":250000, \\\"gasPrice\\\":0.00000040, \\\"amount\\\":0}}\"")
+
         );
 
     RPCTypeCheck(request.params, {UniValue::VARR, UniValue::VOBJ, UniValue::VNUM}, true);
@@ -391,6 +609,106 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
             std::vector<unsigned char> data = ParseHexV(sendTo[name_].getValStr(),"Data");
 
             CTxOut out(0, CScript() << OP_RETURN << data);
+            rawTx.vout.push_back(out);
+        } else if (name_ == "contract") {
+            if ( chainActive.Height() <  (int)Params().GetConsensus().ContractHeight  )
+               throw JSONRPCError(RPC_METHOD_NOT_FOUND, std::string ("This method can only be used after fasc fork, after block ") + std::to_string(Params().GetConsensus().ContractHeight ));
+
+            // Get the call object
+            UniValue Contract = sendTo[name_];
+            if(!Contract.isObject())
+                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, need to be object: ")+name_);
+
+            // Get dgp gas limit and gas price
+            LOCK(cs_main);
+            FascDGP fascDGP(globalState.get(), fGettingValuesDGP);
+            uint64_t blockGasLimit = fascDGP.getBlockGasLimit(chainActive.Height());
+            uint64_t minGasPrice = CAmount(fascDGP.getMinGasPrice(chainActive.Height()));
+            CAmount nGasPrice = (minGasPrice>DEFAULT_GAS_PRICE)?minGasPrice:DEFAULT_GAS_PRICE;
+
+            // Get the contract address
+            if(!Contract.exists("contractAddress") || !Contract["contractAddress"].isStr())
+                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, contract address is mandatory."));
+
+            std::string contractaddress = Contract["contractAddress"].get_str();
+            if(contractaddress.size() != 40 || !CheckHex(contractaddress))
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Incorrect contract address");
+
+            dev::Address addrAccount(contractaddress);
+            if(!globalState->addressInUse(addrAccount))
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "contract address does not exist");
+
+            // Get the contract data
+            if(!Contract.exists("data") || !Contract["data"].isStr())
+                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, contract data is mandatory."));
+
+            std::string datahex = Contract["data"].get_str();
+            if(datahex.size() % 2 != 0 || !CheckHex(datahex))
+                throw JSONRPCError(RPC_TYPE_ERROR, "Invalid data (data not hex)");
+
+            // Get amount
+            CAmount nAmount = 0;
+            if (Contract.exists("amount")){
+                nAmount = AmountFromValue(Contract["amount"]);
+                if (nAmount < 0)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount for call contract");
+            }
+
+            // Get gas limit
+            uint64_t nGasLimit = DEFAULT_GAS_LIMIT_OP_SEND;
+            if (Contract.exists("gasLimit")){
+                nGasLimit = Contract["gasLimit"].get_int64();
+                if (nGasLimit > blockGasLimit)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasLimit (Maximum is: "+i64tostr(blockGasLimit)+")");
+                if (nGasLimit < MINIMUM_GAS_LIMIT)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasLimit (Minimum is: "+i64tostr(MINIMUM_GAS_LIMIT)+")");
+                if (nGasLimit <= 0)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasLimit");
+            }
+
+            // Get gas price
+            if (Contract.exists("gasPrice")){
+                UniValue uGasPrice = Contract["gasPrice"];
+                if(!ParseMoney(uGasPrice.getValStr(), nGasPrice))
+                {
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasPrice");
+                }
+                CAmount maxRpcGasPrice = gArgs.GetArg("-rpcmaxgasprice", MAX_RPC_GAS_PRICE);
+                if (nGasPrice > (int64_t)maxRpcGasPrice)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasPrice, Maximum allowed in RPC calls is: "+FormatMoney(maxRpcGasPrice)+" (use -rpcmaxgasprice to change it)");
+                if (nGasPrice < (int64_t)minGasPrice)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasPrice (Minimum is: "+FormatMoney(minGasPrice)+")");
+                if (nGasPrice <= 0)
+                    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid value for gasPrice");
+            }
+
+            // Add call contract output
+            CScript scriptPubKey = CScript() << CScriptNum(VersionVM::GetEVMDefault().toRaw()) << CScriptNum(nGasLimit) << CScriptNum(nGasPrice) << ParseHex(datahex) << ParseHex(contractaddress) << OP_CALL;
+            CTxOut out(nAmount, scriptPubKey);
+            rawTx.vout.push_back(out);
+        } else if (name_ == "aggregateSignature" ) {
+            std::stringstream errorStream;
+            if ( chainActive.Height() <  (int)Params().GetConsensus().AggregateSignatureHeight) {
+                errorStream << "This method can only be used after aggregate signature fork, block "
+                            << Params().GetConsensus().AggregateSignatureHeight << ". ";
+                throw JSONRPCError(RPC_METHOD_NOT_FOUND, errorStream.str());
+            }
+            UniValue aggregation = sendTo[name_];
+            std::vector<unsigned char> publicKeysSerialized;
+            if (!GetPublicKeysFromAggregateSignature(aggregation, publicKeysSerialized, &errorStream)) {
+                errorStream << "Error processing aggregation input: " << aggregation.write();
+                throw JSONRPCError(RPC_INVALID_PARAMETER, errorStream.str());
+            }
+            // Get amount
+            CAmount nAmount = 0;
+            if (aggregation.exists("amount")){
+                nAmount = AmountFromValue(aggregation["amount"]);
+                errorStream << "Error: the amount I got: " << nAmount << " appears to be negative. ";
+                if (nAmount < 0)
+                    throw JSONRPCError(RPC_TYPE_ERROR, errorStream.str());
+            }
+            CScript scriptPubKey = CScript() << publicKeysSerialized << OP_AGGREGATEVERIFY;
+            CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         } else {
             CFabcoinAddress address(name_);
@@ -481,6 +799,71 @@ UniValue decoderawtransaction(const JSONRPCRequest& request)
 
     UniValue result(UniValue::VOBJ);
     TxToUniv(CTransaction(std::move(mtx)), uint256(), result, false);
+
+    return result;
+}
+
+UniValue getcontractaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "getcontractaddress \"hexstring\"\n"
+            "\nReturn the expected contract address of a transaction.\n"
+
+            "\nArguments:\n"
+            "1. \"hexstring\"      (string, required) The transaction hex string\n"
+
+            "\nResult:\n"
+            "\"address\"      (string) The fabcoin address of the contract.\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("getcontractaddress", "\"hexstring\"")
+            + HelpExampleRpc("getcontractaddress", "\"hexstring\"")
+        );
+
+    LOCK(cs_main);
+    RPCTypeCheck(request.params, {UniValue::VSTR});
+
+    CMutableTransaction mtx;
+
+    if (!DecodeHexTx(mtx, request.params[0].get_str(), true))
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
+
+    std::vector<unsigned char> SHA256TxVout(32);
+    std::vector<unsigned char> contractAddress(20);
+    std::vector<unsigned char> txIdAndVout(mtx.GetHash().begin(), mtx.GetHash().end());
+
+    /* uint256 GetHash is meant to provide a length 32 array, but reading from GDB
+     * the size and contents of GetHash is nondeterministic; I'm pretty sure it's
+     * picking up garbage from somewhere and throwing it in with the correct
+     * initial 32 chars.
+     * We resize the array after calling constructor to ensure we're getting a hash
+     * of the correct length.
+     */
+    txIdAndVout.resize(32);
+    uint32_t voutNumber = 0;
+    bool txHasOpCreate = false;
+    for (auto txout : mtx.vout) {
+        if (txout.scriptPubKey.HasOpCreate()) {
+            std::vector<unsigned char> voutNumberChrs;
+            if (voutNumberChrs.size() < sizeof(voutNumber))
+                voutNumberChrs.resize(sizeof(voutNumber));
+            std::memcpy(voutNumberChrs.data(), &voutNumber, sizeof(voutNumber));
+            txIdAndVout.insert(txIdAndVout.end(), voutNumberChrs.begin(), voutNumberChrs.end());
+            txHasOpCreate = true;
+            break;
+        }
+        voutNumber++;
+    }
+
+    if (!txHasOpCreate)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Given transaction does not create a contract");
+
+    CSHA256().Write(txIdAndVout.data(), txIdAndVout.size()).Finalize(SHA256TxVout.data());
+    CRIPEMD160().Write(SHA256TxVout.data(), SHA256TxVout.size()).Finalize(contractAddress.data());
+
+    UniValue result(UniValue::VOBJ);
+    result.push_back(Pair("address", HexStr(contractAddress)));
 
     return result;
 }
@@ -846,9 +1229,22 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     // Script verification errors
     UniValue vErrors(UniValue::VARR);
 
+    //std::stringstream transactionConstructionProgress;
     // Use CTransaction for the constant parts of the
     // transaction to avoid rehashing.
     const CTransaction txConst(mtx);
+    //Comments is a pointer to a stream that will contain technical but non-sensitive details on the signature,
+    //including the actual bytes being signed by the ECDSA algorithm.
+    //Once again, no sensitive information is written in the comments.
+    //Without having timed it, I expect that the comments have a neglible effect on penalty,
+    //so passing on the comments stream on mainnet should pose no risks.
+    //The comments are turned on only when the fIncludeTestCommands flag is set, i.e., on regtest and
+    //regtestwithnet.
+    std::stringstream bufferStream;
+    std::stringstream* commentsNonSensitive = nullptr;
+    if (Params().IncludeTestCommands()) {
+        commentsNonSensitive = &bufferStream;
+    }
     // Sign what we can:
     for (unsigned int i = 0; i < mtx.vin.size(); i++) {
         CTxIn& txin = mtx.vin[i];
@@ -863,7 +1259,7 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
         SignatureData sigdata;
         // Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mtx.vout.size()))
-            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, i, amount, nHashType), prevPubKey, sigdata);
+            ProduceSignature(MutableTransactionSignatureCreator(&keystore, &mtx, i, amount, nHashType), prevPubKey, sigdata, commentsNonSensitive);
         sigdata = CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, i, amount), sigdata, DataFromTransaction(mtx, i));
 
         UpdateTransaction(mtx, i, sigdata);
@@ -881,7 +1277,9 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
     if (!vErrors.empty()) {
         result.push_back(Pair("errors", vErrors));
     }
-
+    if (commentsNonSensitive != nullptr) {
+        result.pushKV("comments", commentsNonSensitive->str());
+    }
     return result;
 }
 
@@ -929,19 +1327,22 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
         fHaveChain = !existingCoin.IsSpent();
     }
     bool fHaveMempool = mempool.exists(hashTx);
+    std::stringstream comments;
     if (!fHaveMempool && !fHaveChain) {
         // push to local node and sync with wallets
         CValidationState state;
         bool fMissingInputs;
         bool fLimitFree = true;
-        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee)) {
+        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, nMaxRawTxFee, true, &comments)) {
+            comments << state.GetRejectCode() << ": " << state.GetRejectReason();
             if (state.IsInvalid()) {
-                throw JSONRPCError(RPC_TRANSACTION_REJECTED, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
+                throw JSONRPCError(RPC_TRANSACTION_REJECTED, comments.str());
             } else {
                 if (fMissingInputs) {
-                    throw JSONRPCError(RPC_TRANSACTION_ERROR, "Missing inputs");
+                    comments << "Missing inputs.\n";
+                    throw JSONRPCError(RPC_TRANSACTION_ERROR, comments.str());
                 }
-                throw JSONRPCError(RPC_TRANSACTION_ERROR, state.GetRejectReason());
+                throw JSONRPCError(RPC_TRANSACTION_ERROR, comments.str());
             }
         }
     } else if (fHaveChain) {
@@ -955,7 +1356,11 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
     {
         pnode->PushInventory(inv);
     });
-    return hashTx.GetHex();
+    UniValue result;
+    result.setObject();
+    result.pushKV("txid", hashTx.GetHex());
+    result.pushKV("comments", comments.str());
+    return result;
 }
 
 static const CRPCCommand commands[] =
@@ -964,10 +1369,13 @@ static const CRPCCommand commands[] =
     { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      true,  {"txid","verbose"} },
     { "rawtransactions",    "createrawtransaction",   &createrawtransaction,   true,  {"inputs","outputs","locktime","replaceable"} },
     { "rawtransactions",    "decoderawtransaction",   &decoderawtransaction,   true,  {"hexstring"} },
+    { "rawtransactions",    "getcontractaddress",     &getcontractaddress,     true,  {"hexstring"} },
     { "rawtransactions",    "decodescript",           &decodescript,           true,  {"hexstring"} },
     { "rawtransactions",    "sendrawtransaction",     &sendrawtransaction,     false, {"hexstring","allowhighfees"} },
     { "rawtransactions",    "combinerawtransaction",  &combinerawtransaction,  true,  {"txs"} },
     { "rawtransactions",    "signrawtransaction",     &signrawtransaction,     false, {"hexstring","prevtxs","privkeys","sighashtype"} }, /* uses wallet if enabled */
+    { "rawtransactions",    "gethexaddress",          &gethexaddress,          true,  {"address",} },
+    { "rawtransactions",    "fromhexaddress",         &fromhexaddress,         true,  {"hexaddress",} },
 
     { "blockchain",         "gettxoutproof",          &gettxoutproof,          true,  {"txids", "blockhash"} },
     { "blockchain",         "verifytxoutproof",       &verifytxoutproof,       true,  {"proof"} },

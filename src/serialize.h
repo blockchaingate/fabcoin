@@ -1,12 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef FABCOIN_SERIALIZE_H
 #define FABCOIN_SERIALIZE_H
 
-#include "compat/endian.h"
+#include <compat/endian.h>
 
 #include <algorithm>
 #include <assert.h>
@@ -21,9 +21,11 @@
 #include <utility>
 #include <vector>
 
-#include "prevector.h"
+#include <prevector.h>
+#include <uint256.h>
 
-static const unsigned int MAX_SIZE = 0x02000000;
+static const unsigned int MAX_SIZE = 0x10000000; // Fabcoin: Increase max serialized size to 256mb
+//static const unsigned int MAX_SIZE = 0x02000000;
 
 /**
  * Dummy data type to identify deserializing constructors.
@@ -77,6 +79,15 @@ template<typename Stream> inline void ser_writedata32(Stream &s, uint32_t obj)
     obj = htole32(obj);
     s.write((char*)&obj, 4);
 }
+
+///////////////////////////////////////////////// // fasc
+template<typename Stream> inline void ser_writedata32be(Stream &s, uint32_t obj)
+{
+    obj = htobe32(obj);
+    s.write((char*)&obj, 4);
+}
+/////////////////////////////////////////////////
+
 template<typename Stream> inline void ser_writedata64(Stream &s, uint64_t obj)
 {
     obj = htole64(obj);
@@ -100,6 +111,23 @@ template<typename Stream> inline uint32_t ser_readdata32(Stream &s)
     s.read((char*)&obj, 4);
     return le32toh(obj);
 }
+//////////////////////////////////////////////////////////////////// // fasc
+template<typename Stream> inline uint32_t ser_readdata32be(Stream &s)
+{
+    uint32_t obj;
+    s.read((char*)&obj, 4);
+    return be32toh(obj);
+}
+
+template<typename Stream> inline uint256 ser_readdata256(Stream &s)
+{
+    uint256 obj;
+    s.read((char*)&obj, 32);
+    //return le64toh(obj);
+    return obj;
+}
+////////////////////////////////////////////////////////////////////
+
 template<typename Stream> inline uint64_t ser_readdata64(Stream &s)
 {
     uint64_t obj;
@@ -271,6 +299,12 @@ uint64_t ReadCompactSize(Stream& is)
     if (nSizeRet > (uint64_t)MAX_SIZE)
         throw std::ios_base::failure("ReadCompactSize(): size too large");
     return nSizeRet;
+}
+
+template<typename Stream>
+uint256 ReadUint256(Stream& is)
+{
+    return ser_readdata256(is);
 }
 
 /**

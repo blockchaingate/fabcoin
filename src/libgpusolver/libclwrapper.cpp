@@ -13,6 +13,7 @@
 //#include <atomic>
 #include "libclwrapper.h"
 #include "kernels/silentarmy.h" // Created from CMake
+#include "kernels/silentarmy184.h" // Created from CMake
 #include "../primitives/block.h"
 
 // workaround lame platforms
@@ -57,11 +58,18 @@ static std::atomic_flag s_logSpin = ATOMIC_FLAG_INIT;
 // Types of OpenCL devices we are interested in
 #define CL_QUERIED_DEVICE_TYPES (CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR)
 
-cl_gpuminer::cl_gpuminer()
+cl_gpuminer::cl_gpuminer(unsigned int n, unsigned int k)
 :	m_openclOnePointOne()
 {
+    PARAM_N = n;
+    PARAM_K = k;
 
-	dst_solutions = (uint32_t *) malloc(10*NUM_INDICES*sizeof(uint32_t));
+    if( PARAM_N == 200 && PARAM_K == 9 )
+        NR_ROWS_LOG = 20;
+    else if( PARAM_N == 184 && PARAM_K == 7 )
+        NR_ROWS_LOG = 21;
+
+	dst_solutions = (uint32_t *) malloc(10*(1<<PARAM_K)*sizeof(uint32_t));
 	if(dst_solutions == NULL)
 		std::cout << "Error allocating dst_solutions array!" << std::endl;
 
@@ -334,7 +342,24 @@ bool cl_gpuminer::init(
 		string code((istreambuf_iterator<char>(kernel_file)), istreambuf_iterator<char>());
 		kernel_file.close();
 #else
-		string code(CL_MINER_KERNEL, CL_MINER_KERNEL + CL_MINER_KERNEL_SIZE);
+        unsigned char *pcodestr = nullptr;
+        size_t codesize = 0;
+        if( PARAM_N == 200 && PARAM_K == 9 )
+        {
+            pcodestr = (unsigned char *)CL_MINER_KERNEL;
+            codesize = CL_MINER_KERNEL_SIZE;
+        }
+        else if( PARAM_N == 184 && PARAM_K == 7 )
+        {
+            pcodestr = (unsigned char *)CL_MINER_KERNEL184;
+            codesize = CL_MINER_KERNEL_SIZE184;
+        }
+        else
+        {
+            CL_LOG("unsupported parameters: n=" << PARAM_N << ", k=" << PARAM_K);
+            return false;
+        }
+		string code(pcodestr, pcodestr+ codesize);
 #endif
 		// create miner OpenCL program
 		cl::Program::Sources sources;
@@ -363,15 +388,15 @@ bool cl_gpuminer::init(
 			CL_LOG("gpuKERNEL Creation failed: " << err.what() << "(" << err.err() << "). Bailing.");
 			return false;
 		}
-
-	  	buf_dbg = cl::Buffer(m_context, CL_MEM_READ_WRITE, dbg_size, NULL, NULL);
-
+  	
+        buf_dbg = cl::Buffer(m_context, CL_MEM_READ_WRITE, dbg_size, NULL, NULL);
         m_queue.enqueueFillBuffer(buf_dbg, &zero, 1, 0, dbg_size, 0);
-		buf_ht[0] = cl::Buffer(m_context, CL_MEM_READ_WRITE, HT_SIZE, NULL, NULL);
-		buf_ht[1] = cl::Buffer(m_context, CL_MEM_READ_WRITE, HT_SIZE, NULL, NULL);
-		buf_sols = cl::Buffer(m_context, CL_MEM_READ_WRITE, sizeof (sols_t), NULL, NULL);
-        rowCounters[0] = cl::Buffer(m_context, CL_MEM_READ_WRITE, NR_ROWS, NULL,NULL);
-        rowCounters[1] = cl::Buffer(m_context, CL_MEM_READ_WRITE, NR_ROWS, NULL, NULL);
+
+		buf_ht[0] = cl::Buffer(m_context, CL_MEM_READ_WRITE, HT_SIZE(), NULL, NULL);
+		buf_ht[1] = cl::Buffer(m_context, CL_MEM_READ_WRITE, HT_SIZE(), NULL, NULL);
+        buf_sols = cl::Buffer(m_context, CL_MEM_READ_WRITE, sizeof(sols_t), NULL, NULL); 
+        rowCounters[0] = cl::Buffer(m_context, CL_MEM_READ_WRITE, NR_ROWS(), NULL,NULL);
+        rowCounters[1] = cl::Buffer(m_context, CL_MEM_READ_WRITE, NR_ROWS(), NULL, NULL);
 
 		m_queue.finish();
 
@@ -385,36 +410,48 @@ bool cl_gpuminer::init(
 }
 
 
-void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t * indices, uint32_t * n_sol, uint256 * ptr)
+void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t *indices, uint32_t * n_sol, uint256 * ptr)
 {
 	try
 	{
 		blake2b_state_t blake;
         cl::Buffer      buf_blake_st;
+        cl::Buffer      databuf;
 		uint32_t		sol_found = 0;
 		size_t          local_ws = 64;
 		size_t		    global_ws;
+        unsigned char   buf[136] = {0};
+        unsigned int    round;
 
-        assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
-        *ptr = *(uint256 *)(header + CBlockHeader::HEADER_SIZE - FABCOIN_NONCE_LEN);
+        assert(header_len == CBlockHeader::HEADER_SIZE || header_len == CBlockHeader::HEADER_NEWSIZE);
+        *ptr = *(uint256 *)(header + header_len - FABCOIN_NONCE_LEN);
 
-		zcash_blake2b_init(&blake, FABCOIN_HASH_LEN, PARAM_N, PARAM_K);
-		zcash_blake2b_update(&blake, header, 128, 0);
+		zcash_blake2b_init(&blake, FABCOIN_HASH_LEN(), PARAM_N, PARAM_K);
+
+        zcash_blake2b_update(&blake, header, 128, 0);
+
+        memcpy( buf + 8, header + 128, header_len - 128);
+        buf[0] = (header_len - 128)/8+1;
+
 		buf_blake_st = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof (blake.h), NULL, NULL);
 		m_queue.enqueueWriteBuffer(buf_blake_st, true, 0, sizeof(blake.h), blake.h);
-		m_queue.finish();
 
-		for (unsigned round = 0; round < PARAM_K; round++) 
+        databuf = cl::Buffer(m_context, CL_MEM_READ_ONLY, 136, NULL, NULL);
+        m_queue.enqueueWriteBuffer(databuf, true, 0, 136, buf);
+        m_queue.finish();
+
+		for (round = 0; round < PARAM_K; round++) 
         {
 			m_gpuKernels[0].setArg(0, buf_ht[round % 2]);
             m_gpuKernels[0].setArg(1, rowCounters[round % 2]);
-			m_queue.enqueueNDRangeKernel(m_gpuKernels[0], cl::NullRange, cl::NDRange(NR_ROWS / ROWS_PER_UINT), cl::NDRange(256));
+			m_queue.enqueueNDRangeKernel(m_gpuKernels[0], cl::NullRange, cl::NDRange(NR_ROWS() / ROWS_PER_UINT()), cl::NDRange(256));
             
 			if (!round) 
             {
 				m_gpuKernels[1+round].setArg(0, buf_blake_st);
 				m_gpuKernels[1+round].setArg(1, buf_ht[round % 2]);
-                m_gpuKernels[1+round].setArg(2, rowCounters[round % 2]);
+                m_gpuKernels[1+round].setArg(2, databuf);
+                m_gpuKernels[1+round].setArg(3, rowCounters[round % 2]);
 				global_ws = select_work_size_blake();
 			} 
             else 
@@ -423,10 +460,10 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
 				m_gpuKernels[1+round].setArg(1, buf_ht[round % 2]);
                 m_gpuKernels[1+round].setArg(2, rowCounters[(round - 1) % 2]);
                 m_gpuKernels[1+round].setArg(3, rowCounters[round % 2]);
-				global_ws = NR_ROWS;
+				global_ws = NR_ROWS();
 			}
+            m_gpuKernels[1+round].setArg(4, buf_dbg);
 
-			m_gpuKernels[1+round].setArg(round == 0 ? 3 : 4, buf_dbg);
             if (round == PARAM_K - 1)
             {
                 m_gpuKernels[1+round].setArg(5, buf_sols);
@@ -435,15 +472,15 @@ void cl_gpuminer::run(uint8_t *header, size_t header_len, uint256 nonce, sols_t 
 			m_queue.enqueueNDRangeKernel(m_gpuKernels[1+round], cl::NullRange, cl::NDRange(global_ws), cl::NDRange(local_ws));
 		}
 
-		m_gpuKernels[10].setArg(0, buf_ht[0]);
-		m_gpuKernels[10].setArg(1, buf_ht[1]);
-		m_gpuKernels[10].setArg(2, buf_sols);
-        m_gpuKernels[10].setArg(3, rowCounters[0]);
-        m_gpuKernels[10].setArg(4, rowCounters[1]);
-		global_ws = NR_ROWS;
-		m_queue.enqueueNDRangeKernel(m_gpuKernels[10], cl::NullRange, cl::NDRange(global_ws), cl::NDRange(local_ws));
+		m_gpuKernels[round+1].setArg(0, buf_ht[0]);
+		m_gpuKernels[round+1].setArg(1, buf_ht[1]);
+		m_gpuKernels[round+1].setArg(2, buf_sols);
+        m_gpuKernels[round+1].setArg(3, rowCounters[0]);
+        m_gpuKernels[round+1].setArg(4, rowCounters[1]);
+		global_ws = NR_ROWS();
+		m_queue.enqueueNDRangeKernel(m_gpuKernels[round+1], cl::NullRange, cl::NDRange(global_ws), cl::NDRange(local_ws));
 
-		sols_t	* sols;
+		sols_t *sols;
         size_t sz = sizeof(sols_t)*1;
 
 		sols = (sols_t *)malloc(sz);

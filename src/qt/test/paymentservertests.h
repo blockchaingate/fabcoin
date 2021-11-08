@@ -5,10 +5,16 @@
 #ifndef FABCOIN_QT_TEST_PAYMENTSERVERTESTS_H
 #define FABCOIN_QT_TEST_PAYMENTSERVERTESTS_H
 
-#include "../paymentserver.h"
+#include <../paymentserver.h>
 
 #include <QObject>
 #include <QTest>
+
+class notUsed {
+    void avoidCompilerWarningsDefinedButNotUsed() {
+        (void) FetchSCARShardPublicKeysInternalPointer;
+    }
+};
 
 class PaymentServerTests : public QObject
 {

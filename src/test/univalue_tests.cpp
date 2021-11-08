@@ -1,5 +1,5 @@
 // Copyright (c) 2014 BitPay Inc.
-// Copyright (c) 2014-2016 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,9 +8,13 @@
 #include <string>
 #include <map>
 #include <univalue.h>
-#include "test/test_fabcoin.h"
+#include <test/test_fabcoin.h>
 
 #include <boost/test/unit_test.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedUnivalueTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 BOOST_FIXTURE_TEST_SUITE(univalue_tests, BasicTestingSetup)
 

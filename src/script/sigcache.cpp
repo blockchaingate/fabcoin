@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,6 +13,10 @@
 
 #include "cuckoocache.h"
 #include <boost/thread.hpp>
+
+void avoidCompilerWarningsDefinedButNotUsedSigCache() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 namespace {
 /**
@@ -78,6 +82,19 @@ void InitSignatureCache()
     size_t nElems = signatureCache.setup_bytes(nMaxCacheSize);
     LogPrintf("Using %zu MiB out of %zu/2 requested for signature cache, able to store %zu elements\n",
             (nElems*sizeof(uint256)) >>20, (nMaxCacheSize*2)>>20, nElems);
+}
+
+void CachingTransactionSignatureChecker::GetPrecomputedTransactionData(PrecomputedTransactionDatA &output) const
+{
+    if (this->txdata == nullptr) {
+        output.hashOutputs.SetNull();
+        output.hashPrevouts.SetNull();
+        output.hashSequence.SetNull();
+        return;
+    }
+    output.hashOutputs = this->txdata->hashOutputs;
+    output.hashPrevouts = this->txdata->hashPrevouts;
+    output.hashSequence = this->txdata->hashSequence;
 }
 
 bool CachingTransactionSignatureChecker::VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const

@@ -32,9 +32,6 @@
 #include "libclwrapper.h"
 #include "uint256.h"
 
-
-//#include "param.h"
-//#include "blake.h"
 #include <cassert>
 
 #ifdef __APPLE__
@@ -45,10 +42,6 @@
 
 // The maximum size of the .cl file we read in and compile
 #define MAX_SOURCE_SIZE 	(0x200000)
-
-#define EK 9
-#define EN 200
-#define DIGITBITS_S	(EN/(EK+1))
 
 class GPUSolverCancelledException : public std::exception
 {
@@ -66,9 +59,25 @@ enum GPUSolverCancelCheck
 class GPUSolver {
 
 public:
-	GPUSolver();
-	GPUSolver(unsigned platform, unsigned device);
+	GPUSolver(unsigned int n, unsigned k);
+	GPUSolver(unsigned platform, unsigned device, unsigned int n, unsigned int k);
 	~GPUSolver();
+
+    std::pair<int, int> getparam() 
+    { 
+        std::pair<int, int> param;
+        if(  miner )
+        {
+            param.first = miner->PARAM_N;
+            param.second = miner->PARAM_K;
+        }
+        else
+        {
+            param.first = 0;
+            param.second = 0;
+        }            
+        return param;
+    }
     bool run(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 nonce,
         const std::function<bool(std::vector<unsigned char>)> validBlock,
         const std::function<bool(GPUSolverCancelCheck)> cancelled,
@@ -78,16 +87,15 @@ private:
 	cl_gpuminer * miner;
 	bool GPU;
 	bool initOK;
-	static const uint32_t PROOFSIZE = 1 << EK;
 	//TODO 20?
-	sols_t * indices;
+	sols_t *indices;
 	uint32_t n_sol;
 	//Avg
 	uint32_t counter = 0;
 	float sum = 0.f;
 	float avg = 0.f;
 
-	bool GPUSolve200_9(uint8_t *header, size_t header_len, uint256 &nonce,
+	bool GPUSolve(unsigned int n, unsigned int k, uint8_t *header, size_t header_len, uint256 &nonce,
         const std::function<bool(std::vector<unsigned char>)> validBlock,
         const std::function<bool(GPUSolverCancelCheck)> cancelled,
         crypto_generichash_blake2b_state base_state);

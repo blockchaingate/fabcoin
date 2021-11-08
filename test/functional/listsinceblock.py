@@ -6,6 +6,7 @@
 
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import assert_equal, assert_array_result, assert_raises_rpc_error
+from test_framework.fabcoinconfig import *
 
 class ListSinceBlockTest (FabcoinTestFramework):
     def set_test_params(self):
@@ -13,7 +14,7 @@ class ListSinceBlockTest (FabcoinTestFramework):
         self.setup_clean_chain = True
 
     def run_test(self):
-        self.nodes[2].generate(801)
+        self.nodes[2].generate(COINBASE_MATURITY+1)
         self.sync_all()
 
         self.test_no_blockhash()

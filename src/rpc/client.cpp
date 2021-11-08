@@ -1,15 +1,16 @@
 // Copyright (c) 2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "rpc/client.h"
-#include "rpc/protocol.h"
-#include "util.h"
+#include <rpc/client.h>
+#include <rpc/protocol.h>
+#include <util.h>
 
 #include <set>
 #include <stdint.h>
 
+#include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <univalue.h>
 
 class CRPCConvertParam
@@ -40,7 +41,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendtoaddress", 4, "subtractfeefromamount" },
     { "sendtoaddress", 5 , "replaceable" },
     { "sendtoaddress", 6 , "conf_target" },
+    { "sendtoaddress", 9, "changeToSender"},
     { "settxfee", 0, "amount" },
+    { "getsubsidy", 0, "height" },
     { "getreceivedbyaddress", 1, "minconf" },
     { "getreceivedbyaccount", 1, "minconf" },
     { "listreceivedbyaddress", 0, "minconf" },
@@ -66,6 +69,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "listaccounts", 0, "minconf" },
     { "listaccounts", 1, "include_watchonly" },
     { "walletpassphrase", 1, "timeout" },
+    { "walletpassphrase", 2, "stakingonly" },
     { "getblocktemplate", 0, "template_request" },
     { "listsinceblock", 1, "target_confirmations" },
     { "listsinceblock", 2, "include_watchonly" },
@@ -75,8 +79,30 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "sendmany", 4, "subtractfeefrom" },
     { "sendmany", 5 , "replaceable" },
     { "sendmany", 6 , "conf_target" },
+    { "sendmanywithdupes", 1, "amounts" },
+    { "sendmanywithdupes", 2, "minconf" },
+    { "sendmanywithdupes", 4, "subtractfeefrom" },
     { "addmultisigaddress", 0, "nrequired" },
     { "addmultisigaddress", 1, "keys" },
+    ////////////////////////////////////////////////// // fasc
+    { "getaddresstxids", 0, "addresses"},
+    { "getaddressmempool", 0, "addresses"},
+    { "getaddressdeltas", 0, "addresses"},
+    { "getaddressbalance", 0, "addresses"},
+    { "getaddressutxos", 0, "addresses"},
+    { "getblockhashes", 0, "high"},
+    { "getblockhashes", 1, "low"},
+    { "getblockhashes", 2, "options"},
+    { "getspentinfo", 0, "argument"},
+    { "searchlogs", 0, "fromBlock"},
+    { "searchlogs", 1, "toBlock"},
+    { "searchlogs", 2, "address"},
+    { "searchlogs", 3, "topics"},
+    { "waitforlogs", 0, "fromBlock"},
+    { "waitforlogs", 1, "txlimit"},
+    { "waitforlogs", 2, "address"},
+    { "waitforlogs", 3, "topics"},
+    ////////////////////////////////////////////////// 
     { "createmultisig", 0, "nrequired" },
     { "createmultisig", 1, "keys" },
     { "listunspent", 0, "minconf" },
@@ -87,10 +113,13 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getblock", 1, "verbosity" },
     { "getblock", 1, "verbose" },
     { "getblock", 2, "legacy" },
+    { "getblock", 3, "no_contract" },
     { "getblockheader", 1, "verbose" },
     { "getblockheader", 2, "legacy" },
+    { "getblockheader", 3, "no_contract" },
     { "getchaintxstats", 0, "nblocks" },
     { "gettransaction", 1, "include_watchonly" },
+    { "gettransaction", 2, "waitconf" },
     { "getrawtransaction", 1, "verbose" },
     { "createrawtransaction", 0, "inputs" },
     { "createrawtransaction", 1, "outputs" },
@@ -118,6 +147,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "keypoolrefill", 0, "newsize" },
     { "getrawmempool", 0, "verbose" },
     { "estimatefee", 0, "nblocks" },
+    { "estimatepriority", 0, "nblocks" },
+    { "estimatesmartpriority", 0, "nblocks" },
     { "estimatesmartfee", 0, "conf_target" },
     { "estimaterawfee", 0, "conf_target" },
     { "estimaterawfee", 1, "threshold" },
@@ -132,6 +163,25 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 0, "include" },
     { "logging", 1, "exclude" },
     { "disconnectnode", 1, "nodeid" },
+    { "callcontract",   3, "gasLimit" },
+    { "createcontract", 1, "gasLimit" },
+    { "createcontract", 2, "gasPrice" },
+    { "createcontract", 4, "broadcast" },
+    { "createcontract", 5, "changeToSender" },
+    { "sendtocontract", 2, "amount" },
+    { "sendtocontract", 3, "gasLimit" },
+    { "sendtocontract", 4, "gasPrice" },
+    { "sendtocontract", 6, "broadcast" },
+    { "sendtocontract", 7, "changeToSender" },
+    { "reservebalance", 0, "reserve"},
+    { "reservebalance", 1, "amount"},
+    { "listcontracts", 0, "start" },
+    { "listcontracts", 1, "maxDisplay" },
+    { "getstorage", 2, "index" },
+    { "getstorage", 1, "blockNum" },
+    { "logging", 0, "include" },
+    { "logging", 1, "exclude" },
+    { "disconnectnode", 1, "nodeid" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
@@ -143,9 +193,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "echojson", 7, "arg7" },
     { "echojson", 8, "arg8" },
     { "echojson", 9, "arg9" },
-	{ "setgenerate", 0, "generate"},
-	{ "setgenerate", 1, "genproclimit" },
-	{ "getgenerate", 0, "generate"},
+    { "setgenerate", 0, "generate"},
+    { "setgenerate", 1, "genproclimit" },
+    { "getgenerate", 0, "generate"},
 };
 
 class CRPCConvertTable

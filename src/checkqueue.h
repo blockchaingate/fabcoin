@@ -5,7 +5,7 @@
 #ifndef FABCOIN_CHECKQUEUE_H
 #define FABCOIN_CHECKQUEUE_H
 
-#include "sync.h"
+#include <sync.h>
 
 #include <algorithm>
 #include <vector>
@@ -121,7 +121,7 @@ private:
             // execute work
             for (T& check : vChecks)
                 if (fOk)
-                    fOk = check();
+                    fOk = check(nullptr);
             vChecks.clear();
         } while (true);
     }

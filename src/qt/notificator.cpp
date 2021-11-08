@@ -1,8 +1,8 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "notificator.h"
+#include <notificator.h>
 
 #include <QApplication>
 #include <QByteArray>
@@ -24,7 +24,7 @@
 // #define __ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES 0
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
-#include "macnotificationhandler.h"
+#include <macnotificationhandler.h>
 #endif
 
 

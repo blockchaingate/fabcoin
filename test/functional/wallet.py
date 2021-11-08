@@ -5,6 +5,7 @@
 """Test the wallet."""
 from test_framework.test_framework import FabcoinTestFramework
 from test_framework.util import *
+from test_framework.fabcoinconfig import *
 
 class WalletTest(FabcoinTestFramework):
     def set_test_params(self):
@@ -39,15 +40,15 @@ class WalletTest(FabcoinTestFramework):
         self.nodes[0].generate(1)
 
         walletinfo = self.nodes[0].getwalletinfo()
-        assert_equal(walletinfo['immature_balance'], 25)
+        assert_equal(walletinfo['immature_balance'], INITIAL_BLOCK_REWARD)
         assert_equal(walletinfo['balance'], 0)
 
         self.sync_all([self.nodes[0:3]])
-        self.nodes[1].generate(801)
+        self.nodes[1].generate(COINBASE_MATURITY+1)
         self.sync_all([self.nodes[0:3]])
 
-        assert_equal(self.nodes[0].getbalance(), 25)
-        assert_equal(self.nodes[1].getbalance(), 25)
+        assert_equal(self.nodes[0].getbalance(), INITIAL_BLOCK_REWARD)
+        assert_equal(self.nodes[1].getbalance(), INITIAL_BLOCK_REWARD)
         assert_equal(self.nodes[2].getbalance(), 0)
 
         # Check that only first and second nodes have UTXOs
@@ -61,9 +62,9 @@ class WalletTest(FabcoinTestFramework):
         # First, outputs that are unspent both in the chain and in the
         # mempool should appear with or without include_mempool
         txout = self.nodes[0].gettxout(txid=confirmed_txid, n=confirmed_index, include_mempool=False)
-        assert_equal(txout['value'], 25)
+        assert_equal(txout['value'], INITIAL_BLOCK_REWARD)
         txout = self.nodes[0].gettxout(txid=confirmed_txid, n=confirmed_index, include_mempool=True)
-        assert_equal(txout['value'], 25)
+        assert_equal(txout['value'], INITIAL_BLOCK_REWARD)
         
         # Send 21 FAB from 0 to 2 using sendtoaddress call.
         # Locked memory should use at least 32 bytes to sign each transaction
@@ -72,13 +73,13 @@ class WalletTest(FabcoinTestFramework):
         self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 11)
         mempool_txid = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 10)
         memory_after = self.nodes[0].getmemoryinfo()
-        assert(memory_before['locked']['used'] + 32 <= memory_after['locked']['used'])
+        assert(memory_before['locked']['used'] + 64 <= memory_after['locked']['used'])
 
         self.log.info("test gettxout (second part)")
         # utxo spent in mempool should be visible if you exclude mempool
         # but invisible if you include mempool
         txout = self.nodes[0].gettxout(confirmed_txid, confirmed_index, False)
-        assert_equal(txout['value'], 25)
+        assert_equal(txout['value'], INITIAL_BLOCK_REWARD)
         txout = self.nodes[0].gettxout(confirmed_txid, confirmed_index, True)
         assert txout is None
         # new utxo from mempool should be invisible if you exclude mempool
@@ -107,14 +108,13 @@ class WalletTest(FabcoinTestFramework):
         self.nodes[2].lockunspent(True, [unspent_0])
         assert_equal(len(self.nodes[2].listlockunspent()), 0)
 
-        # Have node1 generate 800 blocks (so node0 can recover the fee)
-
-        self.nodes[1].generate(800)
+        # Have node1 generate 100 blocks (so node0 can recover the fee)
+        self.nodes[1].generate(COINBASE_MATURITY)
         self.sync_all([self.nodes[0:3]])
 
-        # node0 should end up with 25-21 + getblocksubsidy(802)   fab in block rewards plus fees, but
+        # node0 should end up with 100 btc in block rewards plus fees, but
         # minus the 21 plus fees sent to node2
-        assert_equal(self.nodes[0].getbalance(), 25-21 + self.nodes[0].getblocksubsidy(800)['miner']/100000000. )
+        assert_equal(self.nodes[0].getbalance(), 2*INITIAL_BLOCK_REWARD-21)
         assert_equal(self.nodes[2].getbalance(), 21)
 
         # Node0 should have two unspent outputs.
@@ -129,7 +129,7 @@ class WalletTest(FabcoinTestFramework):
             inputs = []
             outputs = {}
             inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]})
-            outputs[self.nodes[2].getnewaddress("from1")] = utxo["amount"] - Decimal('0.5')
+            outputs[self.nodes[2].getnewaddress("from1")] = utxo["amount"] - 3
             raw_tx = self.nodes[0].createrawtransaction(inputs, outputs)
             txns_to_send.append(self.nodes[0].signrawtransaction(raw_tx))
 
@@ -142,44 +142,42 @@ class WalletTest(FabcoinTestFramework):
         self.sync_all([self.nodes[0:3]])
 
         assert_equal(self.nodes[0].getbalance(), 0)
-        assert_equal(self.nodes[2].getbalance(), 49)
-        assert_equal(self.nodes[2].getbalance("from1"), 49-21)
+        assert_equal(self.nodes[2].getbalance(), 2*INITIAL_BLOCK_REWARD-6)
+        assert_equal(self.nodes[2].getbalance("from1"), 2*INITIAL_BLOCK_REWARD-6-21)
 
-
-        # Send 5 FAB normal
+        # Send 10 FAB normal
         address = self.nodes[0].getnewaddress("test")
-        fee_per_byte = Decimal('0.001') / 1000
+        fee_per_byte = Decimal('0.004') / 1000
         self.nodes[2].settxfee(fee_per_byte * 1000)
-        txid = self.nodes[2].sendtoaddress(address, 5, "", "", False)
+        txid = self.nodes[2].sendtoaddress(address, 10, "", "", False)
         self.nodes[2].generate(1)
         self.sync_all([self.nodes[0:3]])
-        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), Decimal('49')-5, fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
-        assert_equal(self.nodes[0].getbalance(), Decimal('5'))
+        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), 2*INITIAL_BLOCK_REWARD-16, fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
+        assert_equal(self.nodes[0].getbalance(), Decimal('10'))
 
-
-        # Send 5 FAB with subtract fee from amount
-        txid = self.nodes[2].sendtoaddress(address, 5, "", "", True)
+        # Send 10 FAB with subtract fee from amount
+        txid = self.nodes[2].sendtoaddress(address, 10, "", "", True)
         self.nodes[2].generate(1)
         self.sync_all([self.nodes[0:3]])
-        node_2_bal -= Decimal('5')
+        node_2_bal -= Decimal('10')
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
-        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), Decimal('10'), fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
+        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), Decimal('20'), fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
 
-        # Sendmany 1 FAB
-        txid = self.nodes[2].sendmany('from1', {address: 1}, 0, "", [])
+        # Sendmany 10 FAB
+        txid = self.nodes[2].sendmany('from1', {address: 10}, 0, "", [])
         self.nodes[2].generate(1)
         self.sync_all([self.nodes[0:3]])
-        node_0_bal += Decimal('1')
-        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), node_2_bal - Decimal('1'), fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
+        node_0_bal += Decimal('10')
+        node_2_bal = self.check_fee_amount(self.nodes[2].getbalance(), node_2_bal - Decimal('10'), fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
         assert_equal(self.nodes[0].getbalance(), node_0_bal)
 
-        # Sendmany 1 FAB with subtract fee from amount
-        txid = self.nodes[2].sendmany('from1', {address: 1}, 0, "", [address])
+        # Sendmany 10 FAB with subtract fee from amount
+        txid = self.nodes[2].sendmany('from1', {address: 10}, 0, "", [address])
         self.nodes[2].generate(1)
         self.sync_all([self.nodes[0:3]])
-        node_2_bal -= Decimal('1')
+        node_2_bal -= Decimal('10')
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
-        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), node_0_bal + Decimal('1'), fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
+        node_0_bal = self.check_fee_amount(self.nodes[0].getbalance(), node_0_bal + Decimal('10'), fee_per_byte, count_bytes(self.nodes[2].getrawtransaction(txid)))
 
         # Test ResendWalletTransactions:
         # Create a couple of transactions, then start up a fourth
@@ -210,7 +208,7 @@ class WalletTest(FabcoinTestFramework):
         #4. check if recipient (node0) can list the zero value tx
         usp = self.nodes[1].listunspent()
         inputs = [{"txid":usp[0]['txid'], "vout":usp[0]['vout']}]
-        outputs = {self.nodes[1].getnewaddress(): 24.998, self.nodes[0].getnewaddress(): 11.11}
+        outputs = {self.nodes[1].getnewaddress(): INITIAL_BLOCK_REWARD-0.002, self.nodes[0].getnewaddress(): 11.11}
 
         rawTx = self.nodes[1].createrawtransaction(inputs, outputs).replace("c0833842", "00000000") #replace 11.11 with 0.0 (int32)
         decRawTx = self.nodes[1].decoderawtransaction(rawTx)
@@ -280,14 +278,14 @@ class WalletTest(FabcoinTestFramework):
         txObj = self.nodes[0].gettransaction(txId)
         assert_equal(txObj['amount'], Decimal('-2'))
 
-        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "0.0001")
+        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "0.01")
         txObj = self.nodes[0].gettransaction(txId)
-        assert_equal(txObj['amount'], Decimal('-0.0001'))
+        assert_equal(txObj['amount'], Decimal('-0.01'))
 
         #check if JSON parser can handle scientific notation in strings
-        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "1e-4")
+        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "1e-2")
         txObj = self.nodes[0].gettransaction(txId)
-        assert_equal(txObj['amount'], Decimal('-0.0001'))
+        assert_equal(txObj['amount'], Decimal('-0.01'))
 
         # This will raise an exception because the amount type is wrong
         assert_raises_rpc_error(-3, "Invalid amount", self.nodes[0].sendtoaddress, self.nodes[2].getnewaddress(), "1f-4")
@@ -400,13 +398,13 @@ class WalletTest(FabcoinTestFramework):
         sending_addr = self.nodes[1].getnewaddress()
         txid_list = []
         for i in range(chainlimit*2):
-            txid_list.append(self.nodes[0].sendtoaddress(sending_addr, Decimal('0.0001')))
+            txid_list.append(self.nodes[0].sendtoaddress(sending_addr, Decimal('0.01')))
         assert_equal(self.nodes[0].getmempoolinfo()['size'], chainlimit*2)
         assert_equal(len(txid_list), chainlimit*2)
 
         # Without walletrejectlongchains, we will still generate a txid
         # The tx will be stored in the wallet but not accepted to the mempool
-        extra_txid = self.nodes[0].sendtoaddress(sending_addr, Decimal('0.0001'))
+        extra_txid = self.nodes[0].sendtoaddress(sending_addr, Decimal('0.01'))
         assert(extra_txid not in self.nodes[0].getrawmempool())
         assert(extra_txid in [tx["txid"] for tx in self.nodes[0].listtransactions()])
         self.nodes[0].abandontransaction(extra_txid)

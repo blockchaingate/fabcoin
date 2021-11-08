@@ -1,12 +1,12 @@
-// Copyright (c) 2012-2016 The Bitcoin Core developers
+// Copyright (c) 2012-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "coins.h"
+#include <coins.h>
 
-#include "consensus/consensus.h"
-#include "memusage.h"
-#include "random.h"
+#include <consensus/consensus.h>
+#include <memusage.h>
+#include <random.h>
 
 #include <assert.h>
 
@@ -15,6 +15,11 @@ uint256 CCoinsView::GetBestBlock() const { return uint256(); }
 std::vector<uint256> CCoinsView::GetHeadBlocks() const { return std::vector<uint256>(); }
 bool CCoinsView::BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock) { return false; }
 CCoinsViewCursor *CCoinsView::Cursor() const { return 0; }
+
+bool CCoinsView::HaveCoinOrIsWithoutAncestor(const COutPoint &outpoint) const
+{
+    return this->HaveCoin(outpoint);
+}
 
 bool CCoinsView::HaveCoin(const COutPoint &outpoint) const
 {
@@ -125,6 +130,13 @@ const Coin& CCoinsViewCache::AccessCoin(const COutPoint &outpoint) const {
     }
 }
 
+bool CCoinsViewCache::HaveCoinOrIsWithoutAncestor(const COutPoint &outpoint) const {
+    // this type transaction should not happen before aggregation signature fork
+    if (outpoint.IsWithoutAncestor())
+        return true;
+    return this->HaveCoin(outpoint);
+}
+
 bool CCoinsViewCache::HaveCoin(const COutPoint &outpoint) const {
     CCoinsMap::const_iterator it = FetchCoin(outpoint);
     return (it != cacheCoins.end() && !it->second.coin.IsSpent());
@@ -226,11 +238,33 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
     if (tx.IsCoinBase())
         return 0;
 
-    CAmount nResult = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
-        nResult += AccessCoin(tx.vin[i].prevout).out.nValue;
+    // this type transaction should not happen before aggregation signature fork
+    if (tx.IsWithoutAncestor(nullptr))
+        return 0;
 
+    CAmount nResult = 0;
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        const auto& coin = AccessCoin(tx.vin[i].prevout);
+        if (coin.out.nValue > 0) {
+            nResult += coin.out.nValue;
+        }
+    }
     return nResult;
+}
+
+std::string CCoinsViewCache::ToString() const
+{
+    std::stringstream out;
+    int counter = 0;
+    int total = this->cacheCoins.size();
+    out << "Coins view with: " << counter << " entries. ";
+    for (auto iterator = this->cacheCoins.begin(); iterator != this->cacheCoins.end(); iterator ++) {
+        const COutPoint& current = iterator->first;
+        counter ++;
+        out << "Coin " << counter  << " out of " << total  << ": " << current.ToString() << "<br>\n";
+    }
+    return out.str();
+
 }
 
 bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const
@@ -246,7 +280,8 @@ bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const
 }
 
 static const size_t MIN_TRANSACTION_OUTPUT_WEIGHT = WITNESS_SCALE_FACTOR * ::GetSerializeSize(CTxOut(), SER_NETWORK, PROTOCOL_VERSION);
-static const size_t MAX_OUTPUTS_PER_BLOCK = MAX_BLOCK_WEIGHT / MIN_TRANSACTION_OUTPUT_WEIGHT;
+static const size_t MAX_OUTPUTS_PER_BLOCK = dgpMaxBlockWeight / MIN_TRANSACTION_OUTPUT_WEIGHT;
+//??? static const size_t MAX_OUTPUTS_PER_BLOCK = MAX_BLOCK_WEIGHT / MIN_TRANSACTION_OUTPUT_WEIGHT;
 
 const Coin& AccessByTxid(const CCoinsViewCache& view, const uint256& txid)
 {

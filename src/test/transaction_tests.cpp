@@ -1,25 +1,25 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "data/tx_invalid.json.h"
-#include "data/tx_valid.json.h"
-#include "test/test_fabcoin.h"
+#include <data/tx_invalid.json.h>
+#include <data/tx_valid.json.h>
+#include <test/test_fabcoin.h>
 
-#include "clientversion.h"
-#include "checkqueue.h"
-#include "consensus/tx_verify.h"
-#include "consensus/validation.h"
-#include "core_io.h"
-#include "key.h"
-#include "keystore.h"
-#include "validation.h"
-#include "policy/policy.h"
-#include "script/script.h"
-#include "script/sign.h"
-#include "script/script_error.h"
-#include "script/standard.h"
-#include "utilstrencodings.h"
+#include <clientversion.h>
+#include <checkqueue.h>
+#include <consensus/tx_verify.h>
+#include <consensus/validation.h>
+#include <core_io.h>
+#include <key.h>
+#include <keystore.h>
+#include <validation.h>
+#include <policy/policy.h>
+#include <script/script.h>
+#include <script/sign.h>
+#include <script/script_error.h>
+#include <script/standard.h>
+#include <utilstrencodings.h>
 
 #include <map>
 #include <string>
@@ -29,6 +29,10 @@
 #include <boost/test/unit_test.hpp>
 
 #include <univalue.h>
+
+void avoidCompilerWarningsDefinedButNotUsedTransactionTests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 typedef std::vector<unsigned char> valtype;
 
@@ -153,7 +157,7 @@ BOOST_AUTO_TEST_CASE(tx_valid)
             BOOST_CHECK_MESSAGE(CheckTransaction(tx, state), strTest);
             BOOST_CHECK(state.IsValid());
 
-            PrecomputedTransactionData txdata(tx);
+            PrecomputedTransactionDatA txdata(tx);
             for (unsigned int i = 0; i < tx.vin.size(); i++)
             {
                 if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
@@ -239,7 +243,7 @@ BOOST_AUTO_TEST_CASE(tx_invalid)
             CValidationState state;
             fValid = CheckTransaction(tx, state) && state.IsValid();
 
-            PrecomputedTransactionData txdata(tx);
+            PrecomputedTransactionDatA txdata(tx);
             for (unsigned int i = 0; i < tx.vin.size() && fValid; i++)
             {
                 if (!mapprevOutScriptPubKeys.count(tx.vin[i].prevout))
@@ -460,7 +464,7 @@ BOOST_AUTO_TEST_CASE(test_big_witness_transaction) {
     CTransaction tx(deserialize, vstream);
 
     // check all inputs concurrently, with the cache
-    PrecomputedTransactionData txdata(tx);
+    PrecomputedTransactionDatA txdata(tx);
     boost::thread_group threadGroup;
     CCheckQueue<CScriptCheck> scriptcheckqueue(128);
     CCheckQueueControl<CScriptCheck> control(&scriptcheckqueue);

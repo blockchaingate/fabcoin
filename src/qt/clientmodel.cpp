@@ -1,24 +1,25 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "clientmodel.h"
+#include <clientmodel.h>
 
-#include "bantablemodel.h"
-#include "guiconstants.h"
-#include "guiutil.h"
-#include "peertablemodel.h"
+#include <bantablemodel.h>
+#include <guiconstants.h>
+#include <guiutil.h>
+#include <peertablemodel.h>
 
-#include "chain.h"
-#include "chainparams.h"
-#include "checkpoints.h"
-#include "clientversion.h"
-#include "validation.h"
-#include "net.h"
-#include "txmempool.h"
-#include "ui_interface.h"
-#include "util.h"
-#include "warnings.h"
+#include <chain.h>
+#include <chainparams.h>
+#include <checkpoints.h>
+#include <clientversion.h>
+#include <validation.h>
+#include <net.h>
+#include <txmempool.h>
+#include <ui_interface.h>
+#include <util.h>
+#include <warnings.h>
+#include <wallet/wallet.h>
 
 #include <stdint.h>
 
@@ -29,6 +30,10 @@ class CBlockIndex;
 
 static int64_t nLastHeaderTipUpdateNotification = 0;
 static int64_t nLastBlockTipUpdateNotification = 0;
+
+void avoidCompilerWarningsDefinedButNotUsedClientModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 ClientModel::ClientModel(OptionsModel *_optionsModel, QObject *parent) :
     QObject(parent),
@@ -206,6 +211,16 @@ QString ClientModel::getStatusBarWarnings() const
     return QString::fromStdString(GetWarnings("gui"));
 }
 
+void ClientModel::getGasInfo(uint64_t& blockGasLimit, uint64_t& minGasPrice, uint64_t& nGasPrice) const
+{
+    LOCK(cs_main);
+
+    FascDGP fascDGP(globalState.get(), fGettingValuesDGP);
+    blockGasLimit = fascDGP.getBlockGasLimit(chainActive.Height());
+    minGasPrice = CAmount(fascDGP.getMinGasPrice(chainActive.Height()));
+    nGasPrice = (minGasPrice>DEFAULT_GAS_PRICE)?minGasPrice:DEFAULT_GAS_PRICE;
+}
+
 OptionsModel *ClientModel::getOptionsModel()
 {
     return optionsModel;
@@ -287,6 +302,21 @@ static void BannedListChanged(ClientModel *clientmodel)
 
 static void BlockTipChanged(ClientModel *clientmodel, bool initialSync, const CBlockIndex *pIndex, bool fHeader)
 {
+    // Wallet batch mode checks
+    if(pIndex)
+    {
+        int64_t secs = GetTime() - pIndex->GetBlockTime();
+        bool batchMode = secs >= 90*60 ? true : false;
+        if(batchMode)
+        {
+            initialSync |= batchMode;
+            if(!fBatchProcessingMode)
+            {
+                fBatchProcessingMode = true;
+            }
+        }
+    }
+
     // lock free async UI updates in case we have a new block tip
     // during initial sync, only update the UI if the last update
     // was > 250ms (MODEL_UPDATE_DELAY) ago
@@ -309,6 +339,10 @@ static void BlockTipChanged(ClientModel *clientmodel, bool initialSync, const CB
                                   Q_ARG(QDateTime, QDateTime::fromTime_t(pIndex->GetBlockTime())),
                                   Q_ARG(double, clientmodel->getVerificationProgress(pIndex)),
                                   Q_ARG(bool, fHeader));
+        if(!fHeader && !fBatchProcessingMode)
+        {
+            QMetaObject::invokeMethod(clientmodel, "tipChanged", Qt::QueuedConnection);
+        }
         nLastUpdateNotification = now;
     }
 }

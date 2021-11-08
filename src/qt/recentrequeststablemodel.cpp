@@ -1,16 +1,19 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "recentrequeststablemodel.h"
+#include <recentrequeststablemodel.h>
 
-#include "fabcoinunits.h"
-#include "guiutil.h"
-#include "optionsmodel.h"
+#include <fabcoinunits.h>
+#include <guiutil.h>
+#include <optionsmodel.h>
 
-#include "clientversion.h"
-#include "streams.h"
+#include <clientversion.h>
+#include <streams.h>
 
+void avoidCompilerWarningsDefinedButNotUsedRecentRequestTableModel() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 RecentRequestsTableModel::RecentRequestsTableModel(CWallet *wallet, WalletModel *parent) :
     QAbstractTableModel(parent), walletModel(parent)

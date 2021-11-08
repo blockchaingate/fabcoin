@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +9,10 @@
 #include "pubkey.h"
 #include "script/interpreter.h"
 #include "version.h"
+
+void avoidCompilerWarningsDefinedButNotUsedFabcoinConsensus() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 namespace {
 
@@ -76,10 +80,11 @@ static bool verify_flags(unsigned int flags)
     return (flags & ~(fabcoinconsensus_SCRIPT_FLAGS_VERIFY_ALL)) == 0;
 }
 
-static int verify_script(const unsigned char *scriptPubKey, unsigned int scriptPubKeyLen, CAmount amount,
-                                    const unsigned char *txTo        , unsigned int txToLen,
-                                    unsigned int nIn, unsigned int flags, fabcoinconsensus_error* err)
-{
+static int verify_script(
+    const unsigned char *scriptPubKey, unsigned int scriptPubKeyLen, CAmount amount,
+    const unsigned char *txTo, unsigned int txToLen,
+    unsigned int nIn, unsigned int flags, fabcoinconsensus_error* err
+) {
     if (!verify_flags(flags)) {
         return fabcoinconsensus_ERR_INVALID_FLAGS;
     }
@@ -94,7 +99,7 @@ static int verify_script(const unsigned char *scriptPubKey, unsigned int scriptP
         // Regardless of the verification result, the tx did not error.
         set_error(err, fabcoinconsensus_ERR_OK);
 
-        PrecomputedTransactionData txdata(tx);
+        PrecomputedTransactionDatA txdata(tx);
         return VerifyScript(tx.vin[nIn].scriptSig, CScript(scriptPubKey, scriptPubKey + scriptPubKeyLen), &tx.vin[nIn].scriptWitness, flags, TransactionSignatureChecker(&tx, nIn, amount, txdata), nullptr);
     } catch (const std::exception&) {
         return set_error(err, fabcoinconsensus_ERR_TX_DESERIALIZE); // Error deserializing

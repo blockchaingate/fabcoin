@@ -4,15 +4,19 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "base58.h"
-#include "key.h"
-#include "uint256.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "test/test_fabcoin.h"
+#include <base58.h>
+#include <key.h>
+#include <uint256.h>
+#include <util.h>
+#include <utilstrencodings.h>
+#include <test/test_fabcoin.h>
 
 #include <string>
 #include <vector>
+
+void avoidCompilerWarningsDefinedButNotUsedBIP32Tests() {
+    (void) FetchSCARShardPublicKeysInternalPointer;
+}
 
 struct TestDerivation {
     std::string pub;
