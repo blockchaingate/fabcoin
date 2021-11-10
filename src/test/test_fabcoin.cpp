@@ -89,7 +89,7 @@ TestingSetup::TestingSetup(const std::string& chainName) : BasicTestingSetup(cha
         pcoinsTip = new CCoinsViewCache(pcoinsdbview);
 
 ////////////////////////////////////////////////////////////// fasc
-        dev::eth::Ethash::init();
+        dev::eth::NoProof::init();
         boost::filesystem::path pathTemp = fs::temp_directory_path() / strprintf("test_fabcoin_%lu_%i", (unsigned long)GetTime(), (int)(GetRand(100000)));
         boost::filesystem::create_directories(pathTemp);
         const dev::h256 hashDB(dev::sha3(dev::rlp("")));

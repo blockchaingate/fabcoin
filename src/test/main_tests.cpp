@@ -66,12 +66,10 @@ BOOST_AUTO_TEST_CASE(subsidy_limit_test)
         BOOST_CHECK(nSubsidy <= 25 * COIN);
 
         nSum += nSubsidy * 1000;
-
         BOOST_CHECK(MoneyRange(nSum));
     }
-
     //std::cerr << "nSum" << nSum << std::endl;
-    BOOST_CHECK_EQUAL(nSum, 16799999963040000ULL);
+    BOOST_CHECK_EQUAL(nSum, 4199999990760000ULL);
 }
 
 bool ReturnFalse() { return false; }

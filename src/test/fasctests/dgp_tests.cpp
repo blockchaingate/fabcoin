@@ -51,7 +51,7 @@ std::vector<valtype> code = {
             700, //34: extcodesizeGas
             700, //35: extcodecopyGas
             400, //36: balanceGas
-            5000, //37: suicideGas
+            5000, //37: selfdestructGas
             24576 //38: maxCodeSize
         ];
         function getSchedule() constant returns(uint32[39] _schedule){
@@ -102,7 +102,7 @@ std::vector<valtype> code = {
             700, //34: extcodesizeGas
             700, //35: extcodecopyGas
             400, //36: balanceGas
-            5000, //37: suicideGas
+            5000, //37: selfdestructGas
             300 //38: maxCodeSize
         ];
         function getSchedule() constant returns(uint32[39] _schedule){
@@ -153,7 +153,7 @@ std::vector<valtype> code = {
             700, //34: extcodesizeGas
             700, //35: extcodecopyGas
             400, //36: balanceGas
-            600, //37: suicideGas
+            600, //37: selfdestructGas
             300 //38: maxCodeSize
         ];
         function getSchedule() constant returns(uint32[39] _schedule){
@@ -272,7 +272,7 @@ struct EVMScheduleCustom : public dev::eth::EVMSchedule{
         extcodesizeGas = v32;
         extcodecopyGas = v33;
         balanceGas = v34;
-        suicideGas = v35;
+        selfdestructGas = v35;
         maxCodeSize = v36;
     }
 };
@@ -304,9 +304,11 @@ bool compareEVMSchedule(const dev::eth::EVMSchedule& a, const dev::eth::EVMSched
     a.memoryGas == b.memoryGas && a.quadCoeffDiv == b.quadCoeffDiv && a.createDataGas == b.createDataGas &&
     a.txGas == b.txGas && a.txCreateGas == b.txCreateGas && a.txDataZeroGas == b.txDataZeroGas &&
     a.txDataNonZeroGas == b.txDataNonZeroGas && a.copyGas == b.copyGas && a.extcodesizeGas == b.extcodesizeGas &&
-    a.extcodecopyGas == b.extcodecopyGas && a.balanceGas == b.balanceGas && a.suicideGas == b.suicideGas &&
+    a.extcodecopyGas == b.extcodecopyGas && a.balanceGas == b.balanceGas && a.selfdestructGas == b.selfdestructGas &&
     a.maxCodeSize == b.maxCodeSize && a.exceptionalFailedCodeDeposit == b.exceptionalFailedCodeDeposit &&
-    a.haveDelegateCall == b.haveDelegateCall && a.eip150Mode == b.eip150Mode && a.eip158Mode == b.eip158Mode)
+    a.haveDelegateCall == b.haveDelegateCall && a.eip150Mode == b.eip150Mode && a.eip158Mode == b.eip158Mode &&
+    a.haveRevert == b.haveRevert && a.haveStaticCall == b.haveStaticCall && a.haveReturnData == b.haveReturnData &&
+    a.blockRewardOverwrite == b.blockRewardOverwrite)
         return true;
     return false;
 }
