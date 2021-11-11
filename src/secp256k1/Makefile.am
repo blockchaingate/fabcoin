@@ -44,7 +44,6 @@ noinst_HEADERS += src/java/org_fabcoin_Secp256k1Context.h
 noinst_HEADERS += src/util.h
 noinst_HEADERS += src/testrand.h
 noinst_HEADERS += src/testrand_impl.h
-noinst_HEADERS += src/hash.h
 noinst_HEADERS += src/hash_impl.h
 noinst_HEADERS += src/field.h
 noinst_HEADERS += src/field_impl.h

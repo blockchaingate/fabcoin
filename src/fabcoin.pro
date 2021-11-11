@@ -3461,7 +3461,6 @@ HEADERS += \
     secp256k1/src/field_impl.h \
     secp256k1/src/group.h \
     secp256k1/src/group_impl.h \
-    secp256k1/src/hash.h \
     secp256k1/src/hash_impl.h \
     secp256k1/src/libsecp256k1-config.h \
     secp256k1/src/num.h \
@@ -4212,7 +4211,6 @@ HEADERS += \
     secp256k1/src/field_impl.h \
     secp256k1/src/group.h \
     secp256k1/src/group_impl.h \
-    secp256k1/src/hash.h \
     secp256k1/src/hash_impl.h \
     secp256k1/src/libsecp256k1-config.h \
     secp256k1/src/num.h \
@@ -4963,7 +4961,6 @@ HEADERS += \
     secp256k1/src/field_impl.h \
     secp256k1/src/group.h \
     secp256k1/src/group_impl.h \
-    secp256k1/src/hash.h \
     secp256k1/src/hash_impl.h \
     secp256k1/src/libsecp256k1-config.h \
     secp256k1/src/num.h \
