@@ -409,7 +409,7 @@ libfabcoin_common_a_SOURCES = \
   cpp-ethereum-fab/intx/int128.hpp \
   cpp-ethereum-fab/intx/intx.hpp \
   libff/libff/algebra/curves/public_params.hpp \
-  libff/libff/algebra/curves/curve_utils.hpp \ 
+  libff/libff/algebra/curves/curve_utils.hpp \
   cpp-ethereum-fab/ethash/include/ethash/hash_types.h \
   cpp-ethereum-fab/ethash/include/ethash/hash_types.hpp \
   cpp-ethereum-fab/ethash/include/ethash/keccak.h \
@@ -827,10 +827,6 @@ endif
 	@test -f $(WINDRES)
 	## FIXME: How to get the appropriate modulename_CPPFLAGS in here?
 	$(AM_V_GEN) $(WINDRES) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -DWINDRES_PREPROC -i $< -o $@
-
-.mm.o:
-	$(AM_V_CXX) $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	  $(CPPFLAGS) $(AM_CXXFLAGS) $(QT_INCLUDES) $(AM_CXXFLAGS) $(PIE_FLAGS) $(CXXFLAGS) -c -o $@ $<
 
 check-symbols: $(bin_PROGRAMS)
 if GLIBC_BACK_COMPAT
