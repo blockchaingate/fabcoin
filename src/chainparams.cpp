@@ -659,6 +659,7 @@ public:
         consensus.nSubsidyHalvingInterval = 850;
         consensus.nRuleChangeActivationThreshold = 633; //  258 75% for testchains
         consensus.nMinerConfirmationWindow = 844; // Faster than normal for regtest (144 instead of 2016)
+        consensus.EVMConstantinopoleFork = 1500;
 
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();

@@ -1,6 +1,7 @@
 #include <boost/test/unit_test.hpp>
 #include <fasctests/test_utils.h>
 #include <script/standard.h>
+#include <chainparams.h>
 
 void avoidCompilerWarningsDefinedButNotUsedDGPTests() {
     (void) FetchSCARShardPublicKeysInternalPointer;
@@ -287,7 +288,8 @@ EVMScheduleCustom EVMScheduleContractGasSchedule3(true,true,true,true,{{13,13,10
 dev::h256 hash = dev::h256(ParseHex("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
 void contractLoading(){
-    dev::eth::ChainParams cp((dev::eth::genesisInfo(dev::eth::Network::fascMainNetwork)));
+    const CChainParams& chainparams = Params();
+    dev::eth::ChainParams cp(chainparams.EVMGenesisInfo(COINBASE_MATURITY + 1000));
     globalState->populateFrom(cp.genesisState);
     globalSealEngine = std::unique_ptr<dev::eth::SealEngineFace>(cp.createSealEngine());
     globalState->db().commit();
@@ -379,6 +381,14 @@ BOOST_AUTO_TEST_CASE(gas_schedule_default_state_test2){
     BOOST_CHECK(compareEVMSchedule(schedule, dev::eth::EIP158Schedule));
 }
 
+BOOST_AUTO_TEST_CASE(gas_schedule_default_state_test3){
+    initState();
+    contractLoading();
+    FascDGP fascDGP(globalState.get());
+    dev::eth::EVMSchedule schedule = fascDGP.getGasSchedule(COINBASE_MATURITY + 1000);
+    BOOST_CHECK(compareEVMSchedule(schedule, dev::eth::ConstantinopleFixSchedule));
+}
+
 BOOST_AUTO_TEST_CASE(gas_schedule_one_paramsInstance_introductory_block_1_test1){
     initState();
     contractLoading();
@@ -423,6 +433,7 @@ BOOST_AUTO_TEST_CASE(gas_schedule_passage_from_0_to_130_three_paramsInstance_tes
             EVMScheduleContractGasSchedule2, EVMScheduleContractGasSchedule3, i, func);
     }
 }
+
 
 BOOST_AUTO_TEST_CASE(gas_schedule_passage_from_130_to_0_three_paramsInstance_test){
     initState();
