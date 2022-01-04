@@ -51,6 +51,7 @@ Optional dependencies:
  libzmq3     | ZMQ notification | Optional, allows generating ZMQ notifications (requires ZMQ version >= 4.x)
 
 For the versions used in the release, see [release-process.md](release-process.md) under *Fetch and build inputs*.
+
 For upgrading dependencies, see ./upgrade/upgrade.sh.
 
 Memory Requirements
