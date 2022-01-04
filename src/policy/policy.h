@@ -17,7 +17,7 @@ class CCoinsViewCache;
 class CTxOut;
 
 
-static const unsigned int DEFAULT_BLOCK_MAX_CONFLICT = 30; 
+static const unsigned int DEFAULT_BLOCK_MAX_CONFLICT = 12; 
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
 static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 0;
 /** Default for -blockmaxweight, which controls the range of block weights the mining code will create **/

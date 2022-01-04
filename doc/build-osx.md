@@ -39,6 +39,7 @@ Build Build Fabcoin Core
 
     You can disable the GUI build by passing `--without-gui` to configure.
 
+        ./getall.sh
         ./autogen.sh
         ./configure
         make

@@ -6,7 +6,7 @@ Source: https://github.com/blockchaingate/fabcoin
 Files: *
 Copyright: 2018-2018, Fabcoin Core Developers
 License: Expat
-Comment: The Fabcoin Core Developers encompasses the current developers listed on fabcoin.pro,
+Comment: The Fabcoin Core Developers encompasses the current developers listed on  https://fabcoin.pro,
          as well as the numerous contributors to the project.
 
 Files: debian/*

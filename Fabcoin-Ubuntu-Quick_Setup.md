@@ -37,7 +37,7 @@ Please refer doc/GPU-Mining.md and your graphic card specification to install pr
 # Download Fabcoin and configure
     
 ## Download
-Download Fabcoin Ubuntu 16.04 version from  fabcoin.pro/runtime.html, and extract it to $HOME/fabcoin 
+Download Fabcoin Ubuntu 16.04 version from  https://fabcoin.pro/runtime.html, and extract it to $HOME/fabcoin.
 
 ## Configure Fabcoin
 

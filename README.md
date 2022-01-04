@@ -14,7 +14,7 @@ the Fabcoin Core software, see https://fa.biz/download/fab-en.pdf, or read the.
 Fabcoin Core Binary Package 
 =====================================
 
-Download Fabcoin Binary Package from fabcoin.pro/runtime.html
+Download Fabcoin Binary Package from https://fabcoin.pro/runtime.html
 
 
 License
