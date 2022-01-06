@@ -169,10 +169,11 @@ static void SetProgressBreakAction(SplashScreen *splash, const std::function<voi
         Q_ARG(std::function<void(void)>, action));
 }
 
+namespace ph = boost::placeholders;
 #ifdef ENABLE_WALLET
 void SplashScreen::ConnectWallet(CWallet* wallet)
 {
-    wallet->ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2));
+    wallet->ShowProgress.connect(boost::bind(ShowProgress, this, ph::_1, ph::_2));
     connectedWallets.push_back(wallet);
 }
 #endif
@@ -180,22 +181,22 @@ void SplashScreen::ConnectWallet(CWallet* wallet)
 void SplashScreen::subscribeToCoreSignals()
 {
     // Connect signals to client
-    uiInterface.InitMessage.connect(boost::bind(InitMessage, this, _1));
-    uiInterface.ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2));
-    uiInterface.SetProgressBreakAction.connect(boost::bind(SetProgressBreakAction, this, _1));
+    uiInterface.InitMessage.connect(boost::bind(InitMessage, this, ph::_1));
+    uiInterface.ShowProgress.connect(boost::bind(ShowProgress, this, ph::_1, ph::_2));
+    uiInterface.SetProgressBreakAction.connect(boost::bind(SetProgressBreakAction, this, ph::_1));
 #ifdef ENABLE_WALLET
-    uiInterface.LoadWallet.connect(boost::bind(&SplashScreen::ConnectWallet, this, _1));
+    uiInterface.LoadWallet.connect(boost::bind(&SplashScreen::ConnectWallet, this, ph::_1));
 #endif
 }
 
 void SplashScreen::unsubscribeFromCoreSignals()
 {
     // Disconnect signals from client
-    uiInterface.InitMessage.disconnect(boost::bind(InitMessage, this, _1));
-    uiInterface.ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2));
+    uiInterface.InitMessage.disconnect(boost::bind(InitMessage, this, ph::_1));
+    uiInterface.ShowProgress.disconnect(boost::bind(ShowProgress, this, ph::_1, ph::_2));
 #ifdef ENABLE_WALLET
     for (CWallet* const & pwallet : connectedWallets) {
-        pwallet->ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2));
+        pwallet->ShowProgress.disconnect(boost::bind(ShowProgress, this, ph::_1, ph::_2));
     }
 #endif
 }

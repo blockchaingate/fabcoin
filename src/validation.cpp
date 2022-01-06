@@ -215,6 +215,8 @@ namespace {
     std::set<int> setDirtyFileInfo;
 } // anon namespace
 
+namespace ph = boost::placeholders;
+
 class MemPoolConflictRemovalTracker
 {
 private:
@@ -222,7 +224,7 @@ private:
     CTxMemPool &pool;
 public:
     MemPoolConflictRemovalTracker(CTxMemPool &_pool) : pool(_pool) {
-        pool.NotifyEntryRemoved.connect(boost::bind(&MemPoolConflictRemovalTracker::NotifyEntryRemoved, this, _1, _2));
+        pool.NotifyEntryRemoved.connect(boost::bind(&MemPoolConflictRemovalTracker::NotifyEntryRemoved, this, ph::_1, ph::_2));
     }
     void NotifyEntryRemoved(CTransactionRef txRemoved, MemPoolRemovalReason reason) {
         if (reason == MemPoolRemovalReason::CONFLICT) {
@@ -230,7 +232,7 @@ public:
         }
     }
     ~MemPoolConflictRemovalTracker() {
-        pool.NotifyEntryRemoved.disconnect(boost::bind(&MemPoolConflictRemovalTracker::NotifyEntryRemoved, this, _1, _2));
+        pool.NotifyEntryRemoved.disconnect(boost::bind(&MemPoolConflictRemovalTracker::NotifyEntryRemoved, this, ph::_1, ph::_2));
     for (const auto& tx : conflictedTxs) {
         GetMainSignals().SyncTransaction(*tx, nullptr, CMainSignals::SYNC_TRANSACTION_NOT_IN_BLOCK);
     } 
@@ -4165,11 +4167,11 @@ private:
 
 public:
     ConnectTrace(CTxMemPool &_pool) : blocksConnected(1), pool(_pool) {
-        pool.NotifyEntryRemoved.connect(boost::bind(&ConnectTrace::NotifyEntryRemoved, this, _1, _2));
+        pool.NotifyEntryRemoved.connect(boost::bind(&ConnectTrace::NotifyEntryRemoved, this, ph::_1, ph::_2));
     }
 
     ~ConnectTrace() {
-        pool.NotifyEntryRemoved.disconnect(boost::bind(&ConnectTrace::NotifyEntryRemoved, this, _1, _2));
+        pool.NotifyEntryRemoved.disconnect(boost::bind(&ConnectTrace::NotifyEntryRemoved, this, ph::_1, ph::_2));
     }
 
     void BlockConnected(CBlockIndex* pindex, std::shared_ptr<const CBlock> pblock) {

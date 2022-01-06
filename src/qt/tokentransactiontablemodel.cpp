@@ -751,16 +751,17 @@ static void ShowProgress(TokenTransactionTableModel *ttm, const std::string &tit
     }
 }
 
+namespace ph = boost::placeholders;
 void TokenTransactionTableModel::subscribeToCoreSignals()
 {
     // Connect signals to wallet
-    wallet->NotifyTokenTransactionChanged.connect(boost::bind(NotifyTokenTransactionChanged, this, _1, _2, _3));
-    wallet->ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2));
+    wallet->NotifyTokenTransactionChanged.connect(boost::bind(NotifyTokenTransactionChanged, this, ph::_1, ph::_2, ph::_3));
+    wallet->ShowProgress.connect(boost::bind(ShowProgress, this, ph::_1, ph::_2));
 }
 
 void TokenTransactionTableModel::unsubscribeFromCoreSignals()
 {
     // Disconnect signals from wallet
-    wallet->NotifyTokenTransactionChanged.disconnect(boost::bind(NotifyTokenTransactionChanged, this, _1, _2, _3));
-    wallet->ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2));
+    wallet->NotifyTokenTransactionChanged.disconnect(boost::bind(NotifyTokenTransactionChanged, this, ph::_1, ph::_2, ph::_3));
+    wallet->ShowProgress.disconnect(boost::bind(ShowProgress, this, ph::_1, ph::_2));
 }
