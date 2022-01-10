@@ -68,7 +68,7 @@ Dependency Build Instructions: Ubuntu & Debian
 ----------------------------------------------
 Build requirements:
 
-    sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils libsodium-dev
+    sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils libsodium-dev libgmp-dev
 
 Options when installing required Boost library files:
 
@@ -76,7 +76,7 @@ Options when installing required Boost library files:
 individual boost development packages, so the following can be used to only
 install necessary parts of boost:
 
-        sudo apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev libsodium-dev
+        sudo apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
 
 2. If that doesn't work, you can install all boost development packages with:
 
@@ -91,6 +91,21 @@ You can add the repository and install using the following commands:
     sudo add-apt-repository ppa:bitcoin/bitcoin
     sudo apt-get update
     sudo apt-get install libdb4.8-dev libdb4.8++-dev
+
+For Ubuntu 20.04 and above, db4.8 has to be built from source code:
+    
+    wget http://download.oracle.com/berkeley-db/db-4.8.30.zip
+    unzip db-4.8.30.zip
+    cd db-4.8.30
+
+    # opens the dbinc/atomic.h file and changes all the __atomic_compare_exchange appearances to __atomic_compare_exchange_db
+    sed -i 's/__atomic_compare_exchange/__atomic_compare_exchange_db/g' dbinc/atomic.h
+
+    cd build_unix/
+    ../dist/configure --prefix=/usr/local --enable-cxx
+    make
+    sudo make install
+    sudo ldconfig
 
 Ubuntu and Debian have their own libdb-dev and libdb++-dev packages, but these will install
 BerkeleyDB 5.1 or later, which break binary wallet compatibility with the distributed executables which
@@ -117,7 +132,7 @@ To build without GUI pass `--without-gui`.
 
 To build with Qt 5 (recommended) you need the following:
 
-    sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+    sudo apt-get install qtcreator qt5-default libprotobuf-dev protobuf-compiler
 
 Alternatively, to build with Qt 4 you need the following:
 
