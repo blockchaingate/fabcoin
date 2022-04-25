@@ -1250,6 +1250,7 @@ UniValue getgenerate(const JSONRPCRequest& request)
     return gArgs.GetBoolArg("-gen", DEFAULT_GENERATE);
 }
 
+#ifdef ENABLE_WALLET
 UniValue setgenerate(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
@@ -1300,7 +1301,7 @@ UniValue setgenerate(const JSONRPCRequest& request)
 
     return 0;
 }
-
+#endif
 
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
@@ -1312,9 +1313,11 @@ static const CRPCCommand commands[] =
     { "mining",             "submitblock",            &submitblock,            true,  {"hexdata","dummy"} },
     { "mining",             "getblocksubsidy",        &getblocksubsidy,        true,  {"height"} },
 
+#ifdef ENABLE_WALLET
     { "generating",         "generatetoaddress",      &generatetoaddress,      true,  {"nblocks","address","maxtries"} },
     { "generating",         "getgenerate",            &getgenerate,            true,  {"generate","genproclimit"} },
     { "generating",         "setgenerate",            &setgenerate,            true,  {"generate"} },
+#endif
 
     { "util",               "estimatefee",            &estimatefee,            true,  {"nblocks"} },
     { "util",               "estimatesmartfee",       &estimatesmartfee,       true,  {"conf_target", "estimate_mode"} },
