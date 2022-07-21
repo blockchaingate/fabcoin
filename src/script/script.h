@@ -756,6 +756,13 @@ public:
     {
         return size()==1 && *begin() == OP_SPEND;
     }
+    uint160 GetOpCallAddressBytes() const {
+        if (HasOpCall()) {
+            std::vector<unsigned char> vch(this->end() - 21, this->end() - 1);
+            return uint160(vch);
+        }
+        return uint160();
+    }
     /////////////////////////////////////////
 
     void clear()
