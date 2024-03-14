@@ -86,6 +86,7 @@ FABCOIN_CORE_H = \
   addrdb.h \
   addrman.h \
   base58.h \
+  bech32.h \  
   bloom.h \
   blockencodings.h \
   chain.h \
@@ -360,6 +361,7 @@ libfabcoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libfabcoin_common_a_CFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) -std=c99
 libfabcoin_common_a_SOURCES = \
   base58.cpp \
+  bech32.cpp \  
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
