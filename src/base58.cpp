@@ -5,15 +5,15 @@
 #include <base58.h>
 
 #include <hash.h>
+#include "script/script.h"
 #include <uint256.h>
 
-#include <assert.h>
-#include <stdint.h>
-#include <string.h>
-#include <vector>
-#include <string>
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+
+#include <algorithm>
+#include <assert.h>
+#include <string.h>
 
 void avoidCompilerWarningsDefinedButNotUsedBase58() {
     (void) FetchSCARShardPublicKeysInternalPointer;
@@ -216,140 +216,101 @@ int CBase58Data::CompareTo(const CBase58Data& b58) const
 
 namespace
 {
-class CFabcoinAddressVisitor : public boost::static_visitor<bool>
+class DestinationEncoder : public boost::static_visitor<std::string>
 {
 private:
-    CFabcoinAddress* addr;
+    const CChainParams& m_params;
 
 public:
-    CFabcoinAddressVisitor(CFabcoinAddress* addrIn) : addr(addrIn) {}
+    DestinationEncoder(const CChainParams& params) : m_params(params) {}
 
-    bool operator()(const CKeyID& id) const { return addr->Set(id); }
-    bool operator()(const CScriptID& id) const { return addr->Set(id); }
-    bool operator()(const CNoDestination& no) const { return false; }
+    std::string operator()(const CKeyID& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const CScriptID& id) const
+    {
+        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+        data.insert(data.end(), id.begin(), id.end());
+        return EncodeBase58Check(data);
+    }
+
+    std::string operator()(const CNoDestination& no) const { return ""; }
 };
 
-} // namespace
-
-bool CFabcoinAddress::Set(const CKeyID& id)
+CTxDestination DecodeDestination(const std::string& str, const CChainParams& params)
 {
-    SetData(Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
-    return true;
+    std::vector<unsigned char> data;
+    uint160 hash;
+    if (DecodeBase58Check(str, data)) {
+        // base58-encoded Bitcoin addresses.
+        // Public-key-hash-addresses have version 0 (or 111 testnet).
+        // The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
+        const std::vector<unsigned char>& pubkey_prefix = params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+        if (data.size() == hash.size() + pubkey_prefix.size() && std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin())) {
+            std::copy(data.begin() + pubkey_prefix.size(), data.end(), hash.begin());
+            return CKeyID(hash);
+        }
+        // Script-hash-addresses have version 5 (or 196 testnet).
+        // The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
+        const std::vector<unsigned char>& script_prefix = params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
+        if (data.size() == hash.size() + script_prefix.size() && std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) {
+            std::copy(data.begin() + script_prefix.size(), data.end(), hash.begin());
+            return CScriptID(hash);
+        }
+    }
+    return CNoDestination();
+}
 }
 
-bool CFabcoinAddress::Set(const CScriptID& id)
+CKey DecodeSecret(const std::string& str)
 {
-    SetData(Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS), &id, 20);
-    return true;
+    CKey key;
+    std::vector<unsigned char> data;
+    if (DecodeBase58Check(str, data)) {
+        const std::vector<unsigned char>& privkey_prefix = Params().Base58Prefix(CChainParams::SECRET_KEY);
+        if ((data.size() == 32 + privkey_prefix.size() || (data.size() == 33 + privkey_prefix.size() && data.back() == 1)) &&
+            std::equal(privkey_prefix.begin(), privkey_prefix.end(), data.begin())) {
+            bool compressed = data.size() == 33 + privkey_prefix.size();
+            key.Set(data.begin() + privkey_prefix.size(), data.begin() + privkey_prefix.size() + 32, compressed);
+        }
+    }
+    memory_cleanse(data.data(), data.size());
+    return key;
 }
 
-bool CFabcoinAddress::Set(const CTxDestination& dest)
+std::string EncodeSecret(const CKey& key)
 {
-    return boost::apply_visitor(CFabcoinAddressVisitor(this), dest);
-}
-
-bool CFabcoinAddress::IsValid() const
-{
-    return IsValid(Params());
-}
-
-bool CFabcoinAddress::IsValid(const CChainParams& params) const
-{
-    bool fCorrectSize = vchData.size() == 20;
-    bool fKnownVersion = vchVersion == params.Base58Prefix(CChainParams::PUBKEY_ADDRESS) ||
-                         vchVersion == params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
-    return fCorrectSize && fKnownVersion;
-}
-
-CTxDestination CFabcoinAddress::Get() const
-{
-    if (!IsValid())
-        return CNoDestination();
-    uint160 id;
-    memcpy(&id, vchData.data(), 20);
-    if (vchVersion == Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS))
-        return CKeyID(id);
-    else if (vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS))
-        return CScriptID(id);
-    else
-        return CNoDestination();
-}
-
-bool CFabcoinAddress::GetKeyID(CKeyID& keyID) const
-{
-    if (!IsValid() || vchVersion != Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS))
-        return false;
-    uint160 id;
-    memcpy(&id, vchData.data(), 20);
-    keyID = CKeyID(id);
-    return true;
-}
-
-bool CFabcoinAddress::IsScript() const
-{
-    return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS);
-}
-
-bool CFabcoinAddress::IsPubKeyHash() const
-{
-    return IsValid() && vchVersion == Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS);
-}
-
-void CFabcoinSecret::SetKey(const CKey& vchSecret)
-{
-    assert(vchSecret.IsValid());
-    SetData(Params().Base58Prefix(CChainParams::SECRET_KEY), vchSecret.begin(), vchSecret.size());
-    if (vchSecret.IsCompressed())
-        vchData.push_back(1);
-}
-
-CKey CFabcoinSecret::GetKey()
-{
-    CKey ret;
-    assert(vchData.size() >= 32);
-    ret.Set(vchData.begin(), vchData.begin() + 32, vchData.size() > 32 && vchData[32] == 1);
+    assert(key.IsValid());
+    std::vector<unsigned char> data = Params().Base58Prefix(CChainParams::SECRET_KEY);
+    data.insert(data.end(), key.begin(), key.end());
+    if (key.IsCompressed()) {
+        data.push_back(1);
+    }
+    std::string ret = EncodeBase58Check(data);
+    memory_cleanse(data.data(), data.size());
     return ret;
-}
-
-bool CFabcoinSecret::IsValid() const
-{
-    bool fExpectedFormat = vchData.size() == 32 || (vchData.size() == 33 && vchData[32] == 1);
-    bool fCorrectVersion = vchVersion == Params().Base58Prefix(CChainParams::SECRET_KEY);
-    return fExpectedFormat && fCorrectVersion;
-}
-
-bool CFabcoinSecret::SetString(const char* pszSecret)
-{
-    return CBase58Data::SetString(pszSecret) && IsValid();
-}
-
-bool CFabcoinSecret::SetString(const std::string& strSecret)
-{
-    return SetString(strSecret.c_str());
-}
-
-std::vector<unsigned char> CFabcoinSecret::Version() {
-    return vchVersion;
 }
 
 std::string EncodeDestination(const CTxDestination& dest)
 {
-    CFabcoinAddress addr(dest);
-    if (!addr.IsValid()) return "";
-    return addr.ToString();
+    return boost::apply_visitor(DestinationEncoder(Params()), dest);
 }
 
 CTxDestination DecodeDestination(const std::string& str)
 {
-    return CFabcoinAddress(str).Get();
+    return DecodeDestination(str, Params());
 }
 
 bool IsValidDestinationString(const std::string& str, const CChainParams& params)
 {
-    return CFabcoinAddress(str).IsValid(params);
+    return IsValidDestination(DecodeDestination(str, params));
 }
 
 bool IsValidDestinationString(const std::string& str)
 {
-    return CFabcoinAddress(str).IsValid();
+    return IsValidDestinationString(str, Params());
 }

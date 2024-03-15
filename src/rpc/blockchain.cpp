@@ -1067,10 +1067,9 @@ UniValue callcontract(const JSONRPCRequest& request)
 
     dev::Address senderAddress;
     if(request.params.size() >= 3){
-        CFabcoinAddress fascSenderAddress(request.params[2].get_str());
-        if(fascSenderAddress.IsValid()){
-            CKeyID keyid;
-            fascSenderAddress.GetKeyID(keyid);
+        CTxDestination dest = DecodeDestination(request.params[2].get_str());
+        if(IsValidDestination(dest)){
+            CKeyID keyid(boost::get<CKeyID>(dest));
             senderAddress = dev::Address(HexStr(valtype(keyid.begin(),keyid.end())));
         }else{
             senderAddress = dev::Address(request.params[2].get_str());
@@ -1862,10 +1861,10 @@ UniValue gettxoutset(const JSONRPCRequest& request)
             {
                 for( const CTxDestination addr: addresses )
                 {
-                    if( (address.length() > 0 && address == CFabcoinAddress(addr).ToString())
+                    if( (address.length() > 0 && address == EncodeDestination(addr))
                         ||  address.length() == 0 )
                     {
-                        strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << CFabcoinAddress(addr).ToString() << ", " << coin.out.nValue ;
+                        strUtxo << coin.nHeight << ", " << key.hash.ToString() << ", " << key.n << ", " << EncodeDestination(addr) << ", " << coin.out.nValue ;
                         ret.push_back(strUtxo.str());
                     }
                 }

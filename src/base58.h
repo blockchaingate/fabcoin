@@ -17,7 +17,6 @@
 #include <chainparams.h>
 #include <key.h>
 #include <pubkey.h>
-#include <script/script.h>
 #include <script/standard.h>
 #include <support/allocators/zeroafterfree.h>
 
@@ -95,47 +94,8 @@ public:
     bool operator> (const CBase58Data& b58) const { return CompareTo(b58) >  0; }
 };
 
-/** base58-encoded Fabcoin addresses.
- * Public-key-hash-addresses have version 0 (or 111 testnet).
- * The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
- * Script-hash-addresses have version 5 (or 196 testnet).
- * The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
- */
-class CFabcoinAddress : public CBase58Data {
-public:
-    bool Set(const CKeyID &id);
-    bool Set(const CScriptID &id);
-    bool Set(const CTxDestination &dest);
-    bool IsValid() const;
-    bool IsValid(const CChainParams &params) const;
-
-    CFabcoinAddress() {}
-    CFabcoinAddress(const CTxDestination &dest) { Set(dest); }
-    CFabcoinAddress(const std::string& strAddress) { SetString(strAddress); }
-    CFabcoinAddress(const char* pszAddress) { SetString(pszAddress); }
-
-    CTxDestination Get() const;
-    bool GetKeyID(CKeyID &keyID) const;
-    bool IsScript() const;
-    bool IsPubKeyHash() const;
-};
-
-/**
- * A base58-encoded secret key
- */
-class CFabcoinSecret : public CBase58Data
-{
-public:
-    void SetKey(const CKey& vchSecret);
-    CKey GetKey();
-    bool IsValid() const;
-    bool SetString(const char* pszSecret);
-    bool SetString(const std::string& strSecret);
-    std::vector<unsigned char> Version();
-
-    CFabcoinSecret(const CKey& vchSecret) { SetKey(vchSecret); }
-    CFabcoinSecret() {}
-};
+CKey DecodeSecret(const std::string& str);
+std::string EncodeSecret(const CKey& key);
 
 template<typename K, int Size, CChainParams::Base58Type Type> class CFabcoinExtKeyBase : public CBase58Data
 {

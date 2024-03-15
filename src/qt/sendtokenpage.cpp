@@ -212,7 +212,7 @@ void SendTokenPage::on_confirmClicked()
     else
     {
         QString message = tr("To send %1 you need FABCOIN on address <br /> %2.")
-                .arg(QString::fromStdString(m_selectedToken->symbol)).arg(QString::fromStdString(CFabcoinAddress(m_selectedToken->sender).ToString()));
+                .arg(QString::fromStdString(m_selectedToken->symbol)).arg(QString::fromStdString(m_selectedToken->sender));
 
         QMessageBox::warning(this, tr("Send token"), message);
     }

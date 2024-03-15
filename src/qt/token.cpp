@@ -78,10 +78,9 @@ struct TokenData
 
 bool ToHash160(const std::string& strFabTokenAddress, std::string& strHash160)
 {
-    CFabcoinAddress fabTokenAddress(strFabTokenAddress);
-    if(fabTokenAddress.IsValid()){
-        CKeyID keyid;
-        fabTokenAddress.GetKeyID(keyid);
+    CTxDestination dest = DecodeDestination(strFabTokenAddress);
+    if(IsValidDestination(dest)) {
+        CKeyID keyid(boost::get<CKeyID>(dest));
         strHash160 = HexStr(valtype(keyid.begin(),keyid.end()));
     }else{
         return false;
@@ -91,12 +90,9 @@ bool ToHash160(const std::string& strFabTokenAddress, std::string& strHash160)
 
 bool ToFabTokenAddress(const std::string& strHash160, std::string& strFabTokenAddress)
 {
-    uint160 key(ParseHex(strHash160.c_str()));
-    CKeyID keyid(key);
-    CFabcoinAddress fabTokenAddress;
-    fabTokenAddress.Set(keyid);
-    if(fabTokenAddress.IsValid()){
-        strFabTokenAddress = fabTokenAddress.ToString();
+    CTxDestination dest = CKeyID(uint160(ParseHex(strHash160.c_str())));
+    if(IsValidDestination(dest)){
+        strFabTokenAddress = EncodeDestination(dest);
         return true;
     }
     return false;

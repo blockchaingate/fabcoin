@@ -549,15 +549,14 @@ bool PrivateKeyKanban::MakeFromBase58WithoutCheck(const std::string& input, std:
 }
 
 bool PrivateKeyKanban::MakeFromBase58Check(const std::string& input, std::stringstream* commentsOnFailure) {
-    CFabcoinSecret theSecret;
-    if (!theSecret.SetString(input)) {
+    CKey otherKey = DecodeSecret(input);
+    if (!otherKey.IsValid()) {
         if (commentsOnFailure != 0) {
             *commentsOnFailure << "Failed to extract base 58 secret from your input: " << input << ". ";
         }
         return false;
     }
-    auto otherKey = theSecret.GetKey();
-    this->flagCorrespondingPublicKeyUsedWithCompressedEncoding = theSecret.GetKey().IsCompressed();
+    this->flagCorrespondingPublicKeyUsedWithCompressedEncoding = otherKey.IsCompressed();
     this->dataBuffeR.resize(otherKey.end() - otherKey.begin());
     unsigned i = 0;
     for (auto iterator = otherKey.begin(); iterator != otherKey.end(); iterator ++) {

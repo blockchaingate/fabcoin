@@ -87,13 +87,16 @@ UniValue gethexaddress(const JSONRPCRequest& request) {
     if (!IsValidDestination(dest))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
 
-    CFabcoinSecret b58;
-    b58.SetString(request.params[0].get_str());
-    if (b58.Version() != Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Only pubkeyhash addresses are supported"); 
+    std::vector<unsigned char> data;
+    uint160 hash;
+    if (DecodeBase58Check(request.params[0].get_str(), data)) {
+        const std::vector<unsigned char>& pubkey_prefix = Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS);
+        if (data.size() == hash.size() + pubkey_prefix.size() && std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin())) {
+            std::copy(data.begin() + pubkey_prefix.size(), data.end(), hash.begin());
+            return boost::get<CKeyID>(dest).GetReverseHex();
+        }
     }
-
-    return boost::get<CKeyID>(dest).GetReverseHex();
+    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Only pubkeyhash addresses are supported"); 
 }
 
 UniValue fromhexaddress(const JSONRPCRequest& request) {
@@ -1121,14 +1124,11 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
         fGivenKeys = true;
         UniValue keys = request.params[2].get_array();
         for (unsigned int idx = 0; idx < keys.size(); idx++) {
-            UniValue k = keys[idx];
-            CFabcoinSecret vchSecret;
-            bool fGood = vchSecret.SetString(k.get_str());
-            if (!fGood)
+            UniValue k = keys[idx];            
+            CKey key = DecodeSecret(k.get_str());
+            if (!key.IsValid()) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key");
-            CKey key = vchSecret.GetKey();
-            if (!key.IsValid())
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+            }
             tempKeystore.AddKey(key);
         }
     }

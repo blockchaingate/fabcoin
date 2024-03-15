@@ -747,7 +747,7 @@ bool WalletModel::isUnspentAddress(const std::string &fabTokenAddress) const
         const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
         bool fValidAddress = ExtractDestination(scriptPubKey, address);
 
-        if(fValidAddress && CFabcoinAddress(address).ToString() == fabTokenAddress && out.tx->tx->vout[out.i].nValue)
+        if(fValidAddress && EncodeDestination(address) == fabTokenAddress && out.tx->tx->vout[out.i].nValue)
         {
             return true;
         }

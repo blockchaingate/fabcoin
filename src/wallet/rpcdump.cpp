@@ -120,13 +120,8 @@ UniValue importprivkey(const JSONRPCRequest& request)
     if (fRescan && fPruneMode)
         throw JSONRPCError(RPC_WALLET_ERROR, "Rescan is disabled in pruned mode");
 
-    CFabcoinSecret vchSecret;
-    bool fGood = vchSecret.SetString(strSecret);
-
-    if (!fGood) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-
-    CKey key = vchSecret.GetKey();
-    if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+    CKey key = DecodeSecret(strSecret);
+    if (!key.IsValid()) throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
 
     CPubKey pubkey = key.GetPubKey();
     assert(key.VerifyPubKey(pubkey));
@@ -499,45 +494,57 @@ UniValue importwallet(const JSONRPCRequest& request)
         boost::split(vstr, line, boost::is_any_of(" "));
         if (vstr.size() < 2)
             continue;
-        CFabcoinSecret vchSecret;
-        if (!vchSecret.SetString(vstr[0]))
-            continue;
-        CKey key = vchSecret.GetKey();
-        CPubKey pubkey = key.GetPubKey();
-        assert(key.VerifyPubKey(pubkey));
-        CKeyID keyid = pubkey.GetID();
-        if (pwallet->HaveKey(keyid)) {
-            LogPrintf("Skipping import of %s (key already present)\n", EncodeDestination(keyid));
-            continue;
-        }
-        int64_t nTime = DecodeDumpTime(vstr[1]);
-        std::string strLabel;
-        bool fLabel = true;
-        for (unsigned int nStr = 2; nStr < vstr.size(); nStr++) {
-            if (boost::algorithm::starts_with(vstr[nStr], "#"))
-                break;
-            if (vstr[nStr] == "change=1")
-                fLabel = false;
-            if (vstr[nStr] == "reserve=1")
-                fLabel = false;
-            if (boost::algorithm::starts_with(vstr[nStr], "label=")) {
-                strLabel = DecodeDumpString(vstr[nStr].substr(6));
-                fLabel = true;
+        CKey key = DecodeSecret(vstr[0]);
+        if (key.IsValid()) {
+            CPubKey pubkey = key.GetPubKey();
+            assert(key.VerifyPubKey(pubkey));
+            CKeyID keyid = pubkey.GetID();
+
+            if (pwallet->HaveKey(keyid)) {
+                LogPrintf("Skipping import of %s (key already present)\n", EncodeDestination(keyid));
+                continue;
             }
+            int64_t nTime = DecodeDumpTime(vstr[1]);
+            std::string strLabel;
+            bool fLabel = true;
+            for (unsigned int nStr = 2; nStr < vstr.size(); nStr++) {
+                if (boost::algorithm::starts_with(vstr[nStr], "#"))
+                    break;
+                if (vstr[nStr] == "change=1")
+                    fLabel = false;
+                if (vstr[nStr] == "reserve=1")
+                    fLabel = false;
+                if (boost::algorithm::starts_with(vstr[nStr], "label=")) {
+                    strLabel = DecodeDumpString(vstr[nStr].substr(6));
+                    fLabel = true;
+                }
+            }
+            LogPrintf("Importing %s...\n", EncodeDestination(keyid));
+            if (!pwallet->AddKeyPubKey(key, pubkey)) {
+                fGood = false;
+                continue;
+            }
+            pwallet->mapKeyMetadata[keyid].nCreateTime = nTime;
+            if (fLabel)
+                pwallet->SetAddressBook(keyid, strLabel, "receive");
+            nTimeBegin = std::min(nTimeBegin, nTime);
+        } else if(IsHex(vstr[0])) {
+           std::vector<unsigned char> vData(ParseHex(vstr[0]));
+           CScript script = CScript(vData.begin(), vData.end());
+           if (pwallet->HaveCScript(script)) {
+               LogPrintf("Skipping import of %s (script already present)\n", vstr[0]);
+               continue;
+           }
+           if(!pwallet->AddCScript(script)) {
+               LogPrintf("Error importing script %s\n", vstr[0]);
+               fGood = false;
+               continue;
+           }
         }
-        LogPrintf("Importing %s...\n", EncodeDestination(keyid));
-        if (!pwallet->AddKeyPubKey(key, pubkey)) {
-            fGood = false;
-            continue;
-        }
-        pwallet->mapKeyMetadata[keyid].nCreateTime = nTime;
-        if (fLabel)
-            pwallet->SetAddressBook(keyid, strLabel, "receive");
-        nTimeBegin = std::min(nTimeBegin, nTime);
     }
     file.close();
     pwallet->ShowProgress("", 100); // hide progress dialog in GUI
-    pwallet->UpdateTimeFirstKey(nTimeBegin);
+    pwallet->UpdateTimeFirstKey(nTimeBegin);        
     pwallet->RescanFromTime(nTimeBegin, false /* update */);
     pwallet->MarkDirty();
 
@@ -585,7 +592,7 @@ UniValue dumpprivkey(const JSONRPCRequest& request)
     if (!pwallet->GetKey(*keyID, vchSecret)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + strAddress + " is not known");
     }
-    return CFabcoinSecret(vchSecret).ToString();
+    return EncodeSecret(vchSecret);
 }
 
 
@@ -674,7 +681,7 @@ UniValue dumpwallet(const JSONRPCRequest& request)
         std::string strAddr = EncodeDestination(keyid);
         CKey key;
         if (pwallet->GetKey(keyid, key)) {
-            file << strprintf("%s %s ", CFabcoinSecret(key).ToString(), strTime);
+            file << strprintf("%s %s ", EncodeSecret(key), strTime);
             if (pwallet->mapAddressBook.count(keyid)) {
                 file << strprintf("label=%s", EncodeDumpString(pwallet->mapAddressBook[keyid].name));
             } else if (keyid == masterKeyID) {
@@ -815,17 +822,10 @@ UniValue ProcessImport(CWallet * const pwallet, const UniValue& data, const int6
                 for (size_t i = 0; i < keys.size(); i++) {
                     const std::string& privkey = keys[i].get_str();
 
-                    CFabcoinSecret vchSecret;
-                    bool fGood = vchSecret.SetString(privkey);
-
-                    if (!fGood) {
-                        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-                    }
-
-                    CKey key = vchSecret.GetKey();
+                    CKey key = DecodeSecret(privkey);
 
                     if (!key.IsValid()) {
-                        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+                        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
                     }
 
                     CPubKey pubkey = key.GetPubKey();
@@ -922,16 +922,9 @@ UniValue ProcessImport(CWallet * const pwallet, const UniValue& data, const int6
                 const std::string& strPrivkey = keys[0].get_str();
 
                 // Checks.
-                CFabcoinSecret vchSecret;
-                bool fGood = vchSecret.SetString(strPrivkey);
-
-                if (!fGood) {
-                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
-                }
-
-                CKey key = vchSecret.GetKey();
+                CKey key = DecodeSecret(strPrivkey);
                 if (!key.IsValid()) {
-                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Private key outside allowed range");
+                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid private key encoding");
                 }
 
                 CPubKey pubKey = key.GetPubKey();
