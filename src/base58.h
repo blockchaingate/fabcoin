@@ -131,6 +131,7 @@ public:
     bool IsValid() const;
     bool SetString(const char* pszSecret);
     bool SetString(const std::string& strSecret);
+    std::vector<unsigned char> Version();
 
     CFabcoinSecret(const CKey& vchSecret) { SetKey(vchSecret); }
     CFabcoinSecret() {}
@@ -167,5 +168,10 @@ public:
 
 typedef CFabcoinExtKeyBase<CExtKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_SECRET_KEY> CFabcoinExtKey;
 typedef CFabcoinExtKeyBase<CExtPubKey, BIP32_EXTKEY_SIZE, CChainParams::EXT_PUBLIC_KEY> CFabcoinExtPubKey;
+
+std::string EncodeDestination(const CTxDestination& dest);
+CTxDestination DecodeDestination(const std::string& str);
+bool IsValidDestinationString(const std::string& str);
+bool IsValidDestinationString(const std::string& str, const CChainParams& params);
 
 #endif // FABCOIN_BASE58_H

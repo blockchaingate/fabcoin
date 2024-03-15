@@ -20,10 +20,8 @@ void avoidCompilerWarningsDefinedButNotUsedTransactionRecord() {
  */
 std::string toStringHash160(const CTxDestination& address)
 {
-    CFabcoinAddress txAdress(address);
-    CKeyID keyid;
-    txAdress.GetKeyID(keyid);
-    return HexStr(valtype(keyid.begin(),keyid.end()));
+    const CKeyID keyID(boost::get<CKeyID>(address));
+    return HexStr(valtype(keyID.begin(),keyID.end()));
 }
 
 /* Return positive answer if transaction should be shown in list.
@@ -89,7 +87,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     else
                     {
                         sub.type = TransactionRecord::RecvWithAddress;
-                        sub.address = CFabcoinAddress(address).ToString();
+                        sub.address = EncodeDestination(address);
                     }
                 }
                 else
@@ -169,7 +167,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                 {
                     // Sent to Fabcoin Address
                     sub.type = TransactionRecord::SendToAddress;
-                    sub.address = CFabcoinAddress(address).ToString();
+                    sub.address = EncodeDestination(address);
                 }
                 else
                 {

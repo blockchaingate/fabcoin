@@ -81,16 +81,19 @@ UniValue gethexaddress(const JSONRPCRequest& request) {
                         "\nExamples:\n"
                 + HelpExampleCli("gethexaddress", "\"address\"")
                 + HelpExampleRpc("gethexaddress", "\"address\"")
-        );
+        );    
 
-    CFabcoinAddress address(request.params[0].get_str());
-    if (!address.IsValid())
+    CTxDestination dest = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(dest))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Fabcoin address");
 
-    if(!address.IsPubKeyHash())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Only pubkeyhash addresses are supported");
+    CFabcoinSecret b58;
+    b58.SetString(request.params[0].get_str());
+    if (b58.Version() != Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Only pubkeyhash addresses are supported"); 
+    }
 
-    return boost::get<CKeyID>(address.Get()).GetReverseHex();
+    return boost::get<CKeyID>(dest).GetReverseHex();
 }
 
 UniValue fromhexaddress(const JSONRPCRequest& request) {
@@ -114,9 +117,8 @@ UniValue fromhexaddress(const JSONRPCRequest& request) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid pubkeyhash hex size (should be 40 hex characters)");
     CKeyID raw;
     raw.SetReverseHex(request.params[0].get_str());
-    CFabcoinAddress address(raw);
-
-    return address.ToString();
+    
+    return EncodeDestination(raw);
 }
 
 UniValue getrawtransaction(const JSONRPCRequest& request)
@@ -601,7 +603,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
         rawTx.vin.push_back(in);
     }
 
-    std::set<CFabcoinAddress> setAddress;
+    std::set<CTxDestination> destinations;
     std::vector<std::string> addrList = sendTo.getKeys();
     for (const std::string& name_ : addrList) {
 
@@ -711,15 +713,15 @@ UniValue createrawtransaction(const JSONRPCRequest& request) {
             CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         } else {
-            CFabcoinAddress address(name_);
-            if (!address.IsValid())
+            CTxDestination destination = DecodeDestination(name_);
+            if (!IsValidDestination(destination))
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Fabcoin address: ")+name_);
 
-            if (setAddress.count(address))
-                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ")+name_);
-            setAddress.insert(address);
+            if (!destinations.insert(destination).second) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid parameter, duplicated address: ") + name_);
+            }
 
-            CScript scriptPubKey = GetScriptForDestination(address.Get());
+            CScript scriptPubKey = GetScriptForDestination(destination);
             CAmount nAmount = AmountFromValue(sendTo[name_]);
 
             CTxOut out(nAmount, scriptPubKey);
@@ -911,7 +913,7 @@ UniValue decodescript(const JSONRPCRequest& request)
     if (type.isStr() && type.get_str() != "scripthash") {
         // P2SH cannot be wrapped in a P2SH. If this script is already a P2SH,
         // don't return the address for a P2SH of the P2SH.
-        r.push_back(Pair("p2sh", CFabcoinAddress(CScriptID(script)).ToString()));
+        r.push_back(Pair("p2sh", EncodeDestination(CScriptID(script))));
     }
 
     return r;

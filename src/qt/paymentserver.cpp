@@ -222,17 +222,16 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
             SendCoinsRecipient r;
             if (GUIUtil::parseFabcoinURI(arg, &r) && !r.address.isEmpty())
             {
-                CFabcoinAddress address(r.address.toStdString());
                 auto tempChainParams = CreateChainParams(CBaseChainParams::MAIN);
 
-                if (address.IsValid(*tempChainParams))
-                {
+                if (IsValidDestinationString(r.address.toStdString(), *tempChainParams)) {                
                     SelectParams(CBaseChainParams::MAIN);
                 }
                 else {
                     tempChainParams = CreateChainParams(CBaseChainParams::TESTNET);
-                    if (address.IsValid(*tempChainParams))
+                    if (IsValidDestinationString(r.address.toStdString(), *tempChainParams)) {
                         SelectParams(CBaseChainParams::TESTNET);
+                    }
                 }
             }
         }
@@ -445,8 +444,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
             SendCoinsRecipient recipient;
             if (GUIUtil::parseFabcoinURI(s, &recipient))
             {
-                CFabcoinAddress address(recipient.address.toStdString());
-                if (!address.IsValid()) {
+                if (!IsValidDestinationString(recipient.address.toStdString())) {
                     Q_EMIT message(tr("URI handling"), tr("Invalid payment address %1").arg(recipient.address),
                         CClientUIInterface::MSG_ERROR);
                 }
@@ -564,7 +562,7 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus& request, Sen
         CTxDestination dest;
         if (ExtractDestination(sendingTo.first, dest)) {
             // Append destination address
-            addresses.append(QString::fromStdString(CFabcoinAddress(dest).ToString()));
+            addresses.append(QString::fromStdString(EncodeDestination(dest)));
         }
         else if (!recipient.authenticatedMerchant.isEmpty()) {
             // Unauthenticated payment requests to custom fabcoin addresses are not supported

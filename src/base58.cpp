@@ -327,3 +327,29 @@ bool CFabcoinSecret::SetString(const std::string& strSecret)
 {
     return SetString(strSecret.c_str());
 }
+
+std::vector<unsigned char> CFabcoinSecret::Version() {
+    return vchVersion;
+}
+
+std::string EncodeDestination(const CTxDestination& dest)
+{
+    CFabcoinAddress addr(dest);
+    if (!addr.IsValid()) return "";
+    return addr.ToString();
+}
+
+CTxDestination DecodeDestination(const std::string& str)
+{
+    return CFabcoinAddress(str).Get();
+}
+
+bool IsValidDestinationString(const std::string& str, const CChainParams& params)
+{
+    return CFabcoinAddress(str).IsValid(params);
+}
+
+bool IsValidDestinationString(const std::string& str)
+{
+    return CFabcoinAddress(str).IsValid();
+}

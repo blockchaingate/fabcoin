@@ -94,13 +94,8 @@ QValidator::State FabcoinAddressCheckValidator::validate(QString &input, int &po
 {
     Q_UNUSED(pos);
     // Validate the passed Fabcoin address
-    CFabcoinAddress addr(input.toStdString());
-    if (addr.IsValid())
-    {
-        if(bAllowScript)
-            return QValidator::Acceptable;
-        else if(!addr.IsScript())
-            return QValidator::Acceptable;
+    if (IsValidDestinationString(input.toStdString())) {    
+        return QValidator::Acceptable;
     }
 
     return QValidator::Invalid;
