@@ -27,6 +27,7 @@ const char* GetTxnOutputType(txnouttype t)
     case TX_NULL_DATA: return "nulldata";
     case TX_WITNESS_V0_KEYHASH: return "witness_v0_keyhash";
     case TX_WITNESS_V0_SCRIPTHASH: return "witness_v0_scripthash";
+    case TX_WITNESS_UNKNOWN: return "witness_unknown";
     case TX_CREATE: return "create";
     case TX_CALL: return "call";
     case TX_AGGREGATE_SIGNATURE: return "aggregate_signature";

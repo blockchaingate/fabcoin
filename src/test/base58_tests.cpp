@@ -140,11 +140,8 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
         std::vector<unsigned char> exp_payload = ParseHex(test[1].get_str());
         const UniValue &metadata = test[2].get_obj();
         bool isPrivkey = find_value(metadata, "isPrivkey").get_bool();
-        bool isTestnet = find_value(metadata, "isTestnet").get_bool();
-        if (isTestnet)
-            SelectParams(CBaseChainParams::TESTNET);
-        else
-            SelectParams(CBaseChainParams::MAIN);
+        SelectParams(find_value(metadata, "chain").get_str());
+        bool try_case_flip = find_value(metadata, "tryCaseFlip").isNull() ? false : find_value(metadata, "tryCaseFlip").get_bool();
         if(isPrivkey)
         {
             bool isCompressed = find_value(metadata, "isCompressed").get_bool();
@@ -160,12 +157,26 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
         }
         else
         {
-            std::string exp_addrType = find_value(metadata, "addrType").get_str(); // "script" or "pubkey"
             // Must be valid public key
             destination = DecodeDestination(exp_base58string);
+            CScript script = GetScriptForDestination(destination);
             BOOST_CHECK_MESSAGE(IsValidDestination(destination), "!IsValid:" + strTest);
-            BOOST_CHECK_MESSAGE((boost::get<CScriptID>(&destination) != nullptr) == (exp_addrType == "script"), "isScript mismatch" + strTest);
-            BOOST_CHECK_MESSAGE(boost::apply_visitor(TestAddrTypeVisitor(exp_addrType), destination), "addrType mismatch" + strTest);
+            BOOST_CHECK_EQUAL(HexStr(script), HexStr(exp_payload));
+            
+            // Try flipped case version
+            for (char& c : exp_base58string) {
+                if (c >= 'a' && c <= 'z') {
+                    c = (c - 'a') + 'A';
+                } else if (c >= 'A' && c <= 'Z') {
+                    c = (c - 'A') + 'a';
+                }
+            }
+            destination = DecodeDestination(exp_base58string);
+            BOOST_CHECK_MESSAGE(IsValidDestination(destination) == try_case_flip, "!IsValid case flipped:" + strTest);
+            if (IsValidDestination(destination)) {
+                script = GetScriptForDestination(destination);
+                BOOST_CHECK_EQUAL(HexStr(script), HexStr(exp_payload));
+            }
 
             // Public key must be invalid private key
             privkey = DecodeSecret(exp_base58string);
@@ -191,11 +202,7 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_gen)
         std::vector<unsigned char> exp_payload = ParseHex(test[1].get_str());
         const UniValue &metadata = test[2].get_obj();
         bool isPrivkey = find_value(metadata, "isPrivkey").get_bool();
-        bool isTestnet = find_value(metadata, "isTestnet").get_bool();
-        if (isTestnet)
-            SelectParams(CBaseChainParams::TESTNET);
-        else
-            SelectParams(CBaseChainParams::MAIN);
+        SelectParams(find_value(metadata, "chain").get_str());
         if(isPrivkey)
         {
             bool isCompressed = find_value(metadata, "isCompressed").get_bool();
@@ -206,30 +213,14 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_gen)
         }
         else
         {
-            std::string exp_addrType = find_value(metadata, "addrType").get_str();
             CTxDestination dest;
-            if(exp_addrType == "pubkey")
-            {
-                dest = CKeyID(uint160(exp_payload));
-            }
-            else if(exp_addrType == "script")
-            {
-                dest = CScriptID(uint160(exp_payload));
-            }
-            else if(exp_addrType == "none")
-            {
-                dest = CNoDestination();
-            }
-            else
-            {
-                BOOST_ERROR("Bad addrtype: " << strTest);
-                continue;
-            }
+            CScript exp_script(exp_payload.begin(), exp_payload.end());
+            ExtractDestination(exp_script, dest);
             std::string address = EncodeDestination(dest);
-            BOOST_CHECK_MESSAGE(address == exp_base58string, "mismatch: " + strTest);
+
+            BOOST_CHECK_EQUAL(address, exp_base58string);
         }
     }
-
     SelectParams(CBaseChainParams::MAIN);
 }
 
