@@ -41,7 +41,7 @@ class NULLDUMMYTest(FabcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
-        self.extra_args = [['-whitelist=127.0.0.1', '-walletprematurewitness']]
+        self.extra_args = [['-whitelist=127.0.0.1', '-walletprematurewitness', '-vbparams=segwit:0:999999999999', '-addresstype=legacy']]
 
     def run_test(self):
         self.address = self.nodes[0].getnewaddress()

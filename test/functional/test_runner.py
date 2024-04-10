@@ -182,6 +182,7 @@ EXTENDED_SCRIPTS = [
     'example_test.py',
     'txn_doublespend.py',
     'txn_clone.py --mineblock',
+    'txn_clone.py --segwit',
     'forknotify.py',
     'invalidateblock.py',
     'replace-by-fee.py',

@@ -20,6 +20,8 @@ WalletTestingSetup::WalletTestingSetup(const std::string& chainName):
     bitdb.MakeMock();
 
     bool fFirstRun;
+    g_address_type = OUTPUT_TYPE_DEFAULT;
+    g_change_type = OUTPUT_TYPE_DEFAULT;    
     std::unique_ptr<CWalletDBWrapper> dbw(new CWalletDBWrapper(&bitdb, "wallet_test.dat"));
     pwalletMain = new CWallet(std::move(dbw));
     pwalletMain->LoadWallet(fFirstRun);

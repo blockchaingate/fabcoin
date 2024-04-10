@@ -146,6 +146,8 @@ void BumpFee(TransactionView& view, const uint256& txid, bool expectDisabled, st
 //     src/qt/test/test_fabcoin-qt -platform cocoa    # macOS
 void TestSendCoins()
 {
+    g_address_type = OUTPUT_TYPE_P2SH_SEGWIT;
+    g_change_type = OUTPUT_TYPE_P2SH_SEGWIT;
     // Set up wallet and chain with 805 blocks (5 mature blocks for spending).
     /// TestChain800Setup test;
     TestChain800Setup test;
@@ -158,8 +160,8 @@ void TestSendCoins()
     bool firstRun;
     wallet.LoadWallet(firstRun);
     {
-        LOCK(wallet.cs_wallet);
-        wallet.SetAddressBook(test.coinbaseKey.GetPubKey().GetID(), "", "receive");
+        LOCK(wallet.cs_wallet);        
+        wallet.SetAddressBook(GetDestinationForKey(test.coinbaseKey.GetPubKey(), g_address_type), "", "receive");
         wallet.AddKeyPubKey(test.coinbaseKey, test.coinbaseKey.GetPubKey());
     }
     wallet.ScanForWalletTransactions(chainActive.Genesis(), true);
