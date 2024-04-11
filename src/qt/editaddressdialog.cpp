@@ -13,6 +13,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 
+extern OutputType g_address_type;
+
 EditAddressDialog::EditAddressDialog(Mode _mode, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditAddressDialog),
@@ -82,7 +84,8 @@ bool EditAddressDialog::saveCurrentRow()
         address = model->addRow(
                 mode == NewSendingAddress ? AddressTableModel::Send : AddressTableModel::Receive,
                 ui->labelEdit->text(),
-                ui->addressEdit->text());
+                ui->addressEdit->text(),
+                g_address_type);
         break;
     case EditReceivingAddress:
     case EditSendingAddress:

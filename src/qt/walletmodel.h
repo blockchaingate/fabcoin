@@ -14,6 +14,7 @@
 #include <vector>
 
 #include <QObject>
+enum OutputType : int;
 
 class AddressTableModel;
 class OptionsModel;
@@ -233,6 +234,8 @@ public:
 
     bool hdEnabled() const;
 
+    OutputType getDefaultAddressType() const;
+    
     int getDefaultConfirmTarget() const;
 
     bool getDefaultWalletRbf() const;
