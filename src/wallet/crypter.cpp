@@ -233,13 +233,13 @@ bool CCryptoKeyStore::AddKeyPubKey(const CKey& key, const CPubKey &pubkey)
 
 bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<unsigned char> &vchCryptedSecret)
 {
-    {
-        LOCK(cs_KeyStore);
-        if (!SetCrypted())
-            return false;
-
-        mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
+    LOCK(cs_KeyStore);
+    if (!SetCrypted()) {
+        return false;
     }
+
+    mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
+    ImplicitlyLearnRelatedKeyScripts(vchPubKey);
     return true;
 }
 

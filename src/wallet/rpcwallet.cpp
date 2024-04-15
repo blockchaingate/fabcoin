@@ -1694,50 +1694,6 @@ public:
     bool operator()(const T& dest) { return false; }
 };
 
-UniValue addwitnessaddress(const JSONRPCRequest& request)
-{
-    CWallet* const pwallet = GetWalletForJSONRPCRequest(request);
-    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
-        return NullUniValue;
-    }
-
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1) {
-        std::string msg = "addwitnessaddress \"address\"\n"
-                          "\nAdd a witness address for a script (with pubkey or redeemscript known).\n"
-                          "It returns the witness script.\n"
-
-                          "\nArguments:\n"
-                          "1. \"address\"       (string, required) An address known to the wallet\n"
-
-                          "\nResult:\n"
-                          "\"witnessaddress\",  (string) The value of the new address (P2SH of witness script).\n"
-                          "}\n";
-        throw std::runtime_error(msg);
-    }
-
-    {
-        LOCK(cs_main);
-        if (!IsWitnessEnabled(chainActive.Tip(), Params().GetConsensus()) && !gArgs.GetBoolArg("-walletprematurewitness", false)) {
-            throw JSONRPCError(RPC_WALLET_ERROR, "Segregated witness not enabled on network");
-        }
-    }
-
-    CTxDestination dest = DecodeDestination(request.params[0].get_str());
-    if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
-    }
-
-    Witnessifier w(pwallet);
-    bool ret = boost::apply_visitor(w, dest);
-    if (!ret) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "Public key or redeemscript not known to wallet, or the key is uncompressed");
-    }
-
-    pwallet->SetAddressBook(w.result, "", "receive");
-
-    return EncodeDestination(w.result);
-}
-
 struct tallyitem {
     CAmount nAmount;
     int nConf;
@@ -3608,7 +3564,6 @@ static const CRPCCommand commands[] =
         {"wallet", "abandontransaction", &abandontransaction, false, {"txid"}},
         {"wallet", "abortrescan", &abortrescan, false, {}},
         {"wallet", "addmultisigaddress", &addmultisigaddress, true, {"nrequired", "keys", "account"}},
-        {"wallet", "addwitnessaddress", &addwitnessaddress, true, {"address"}},
         {"wallet", "backupwallet", &backupwallet, true, {"destination"}},
         {"wallet", "bumpfee", &bumpfee, true, {"txid", "options"}},
         {"wallet", "dumpprivkey", &dumpprivkey, true, {"address"}},
