@@ -54,138 +54,147 @@ TEST_EXIT_SKIPPED = 77
 BASE_SCRIPTS= [
     # Scripts that are run by the travis build process.
     # Longest test should go first, to favor running tests in parallel
-    'wallet-hd.py',
-    'walletbackup.py',
+    'wallet_hd.py',
+    'wallet_backup.py',
     # vv Tests less than 5m vv
 
-    'fundrawtransaction.py',
-    'p2p-compactblocks.py',
-    ###'segwit.py',
+    'feature_block.py',
+    'rpc_fundrawtransaction.py',
+    'p2p_compactblocks.py',
+    'feature_segwit.py',
     # vv Tests less than 2m vv
-    'wallet.py',
-    'wallet-accounts.py',
-    'p2p-segwit.py',
-    'wallet-dump.py',
-    'listtransactions.py',
+    'wallet_basic.py',
+    'wallet_accounts.py',
+    'p2p_segwit.py',
+    'wallet_dump.py',
+    'rpc_listtransactions.py',
     # vv Tests less than 60s vv
-    'sendheaders.py',
-    'zapwallettxes.py',
-    'importmulti.py',
+    'p2p_sendheaders.py',
+    'wallet_zapwallettxes.py',
+    'wallet_importmulti.py',
     'mempool_limit.py',
-    'merkle_blocks.py',
-    'receivedby.py',
-    'abandonconflict.py',
-
-    'rawtransactions.py',
-    'reindex.py',
+    'rpc_txoutproof.py',
+    'wallet_listreceivedby.py',
+    'wallet_receivedby.py',
+    'wallet_abandonconflict.py',
+    'rpc_rawtransactions.py',
+    'wallet_address_types.py',
+    'feature_reindex.py',
     # vv Tests less than 30s vv
-    'keypool-topup.py',
-    'zmq_test.py',
-    'fabcoin_cli.py',
-    'mempool_resurrect_test.py',
-    'txn_doublespend.py --mineblock',
+    'wallet_keypool_topup.py',
+    'interface_zmq.py',
+    'interface_fabcoin_cli.py',
+    'mempool_resurrect.py',
+    'wallet_txn_doublespend.py --mineblock',
+    'wallet_txn_clone.py',
+    'wallet_txn_clone.py --segwit',
 
-    'getchaintips.py',
-    'rest.py',
-    'mempool_spendcoinbase.py',
+    'rpc_getchaintips.py',
+    'interface_rest.py',
+    'mempool_spend_coinbase.py',
     'mempool_reorg.py',
     'mempool_persist.py',
-    'multiwallet.py',
-    'httpbasics.py',
-    'multi_rpc.py',
-    'proxy_test.py',
-    'signrawtransactions.py',
-    'disconnect_ban.py',
-    'decodescript.py',
-    'blockchain.py',
-    'blockconflict.py',
-    'disablewallet.py',
-    'net.py',
-    'keypool.py',
-    'p2p-mempool.py',
-    'prioritise_transaction.py',
-    'invalidblockrequest.py',
-    'invalidtxrequest.py',
-    'p2p-versionbits-warning.py',
-    'preciousblock.py',
-    'importprunedfunds.py',
-    'signmessages.py',
-    'nulldummy.py',
-    'import-rescan.py',
-    'mining.py',
-    'bumpfee.py',
-    'rpcnamedargs.py',
-    'listsinceblock.py',
-    'p2p-leaktests.py',
-    'wallet-encryption.py',
-    'uptime.py',
-    'resendwallettransactions.py',
-    'minchainwork.py',
+    'wallet_multiwallet.py',
+    'wallet_multiwallet.py --usecli',
+    'interface_http.py',
+    'rpc_users.py',
+    'feature_proxy.py',
+    'rpc_signrawtransactions.py',
+    'p2p_disconnect_ban.py',
+    'rpc_decodescript.py',
+    'rpc_blockchain.py',
+    'rpc_deprecated.py',
+    'mining_blockconflict.py',
+    'wallet_disable.py',
+    'rpc_net.py',
+    'wallet_keypool.py',
+    'p2p_mempool.py',
+    'mining_prioritisetransaction.py',
+    'p2p_invalid_block.py',
+    'p2p_invalid_tx.py',
+    'feature_versionbits_warning.py',
+    'rpc_preciousblock.py',
+    'wallet_importprunedfunds.py',
+    'rpc_signmessages.py',
+    'feature_nulldummy.py',
+    'wallet_import_rescan.py',
+    'mining_basic.py',
+    'wallet_bumpfee.py',
+    'rpc_named_arguments.py',
+    'wallet_listsinceblock.py',
+    'p2p_leak.py',
+    'wallet_encryption.py',
+    'rpc_uptime.py',
+    'wallet_resendwallettransactions.py',
+    'feature_minchainwork.py',
+    'feature_uacomment.py',
+    'p2p_unrequested_blocks.py',
+    'p2p_node_network_limited.py',
+    'feature_config_args.py',
 
     # fabcoin
-    'fabcoin-dgp.py',
-    'fabcoin-opcall.py',
-    'fabcoin-opcreate.py',
-    'fabcoin-8mb-block.py',
-    'fabcoin-gas-limit.py',
-    'fabcoin-searchlog.py',
-    'fabcoin-state-root.py',
-    'fabcoin-evm-globals.py',
-    'fabcoin-null-sender.py',
-    'fabcoin-waitforlogs.py',
-    'fabcoin-block-header.py',
-    'fabcoin-callcontract.py',
-    'fabcoin-spend-op-call.py',
-    'fabcoin-condensing-txs.py',
-    'fabcoin-createcontract.py',
-    'fabcoin-sendtocontract.py',
-    'fabcoin-identical-refunds.py',
-    'fabcoin-create-eth-op-code.py',
-    'fabcoin-gas-limit-overflow.py',
-    'fabcoin-call-empty-contract.py',
-    'fabcoin-dgp-block-size-sync.py',
-    'fabcoin-globals-state-changer.py',
-    'fabcoin-no-exec-call-disabled.py',
-    'fabcoin-soft-block-gas-limits.py',
-    'fabcoin-dgp-block-size-restart.py',
-    'fabcoin-searchlog-restart-node.py',
-    'fabcoin-transaction-prioritization.py',
-    'fabcoin-many-value-refunds-from-same-tx.py',
-    'fabcoin-combined-outputs-exceed-gas-limit.py',
-    'fabcoin-dgp-gas-price-lingering-mempool-tx.py',
+    'contract_dgp.py',
+    'contract_opcall.py',
+    'contract_opcreate.py',
+    'contract_8mb-block.py',
+    'contract_gas-limit.py',
+    'contract_searchlog.py',
+    'contract_state-root.py',
+    'contract_evm-globals.py',
+    'contract_null-sender.py',
+    'contract_waitforlogs.py',
+    'contract_block-header.py',
+    'contract_callcontract.py',
+    'contract_spend-op-call.py',
+    'contract_condensing-txs.py',
+    'contract_createcontract.py',
+    'contract_sendtocontract.py',
+    'contract_identical-refunds.py',
+    'contract_create-eth-op-code.py',
+    'contract_gas-limit-overflow.py',
+    'contract_call-empty-contract.py',
+    'contract_dgp-block-size-sync.py',
+    'contract_globals-state-changer.py',
+    'contract_no-exec-call-disabled.py',
+    'contract_soft-block-gas-limits.py',
+    'contract_dgp-block-size-restart.py',
+    'contract_searchlog-restart-node.py',
+    'contract_transaction-prioritization.py',
+    'contract_many-value-refunds-from-same-tx.py',
+    'contract_combined-outputs-exceed-gas-limit.py',
+    'contract_dgp-gas-price-lingering-mempool-tx.py',
 ]
 
 EXTENDED_SCRIPTS = [
     # These tests are not run by the travis build process.
     # Longest test should go first, to favor running tests in parallel
-    'pruning.py',
+    'feature_pruning.py',
     # vv Tests less than 20m vv
-    'smartfees.py',
+    'feature_fee_estimation.py',
     # vv Tests less than 5m vv
-    'maxuploadtarget.py',
+    'feature_maxuploadtarget.py',
     'mempool_packages.py',
-    'dbcrash.py',
+    'feature_dbcrash.py',
     # vv Tests less than 2m vv
-    'bip68-sequence.py',
-    'getblocktemplate_longpoll.py',
-    'p2p-timeouts.py',
+    'feature_bip68_sequence.py',
+    'feature_csv_activation.py',
+    'mining_getblocktemplate_longpoll.py',
+    'p2p_timeouts.py',
     # Version <4 blocks are never allowed in regtest on fabcoin
-    'bipdersig-p2p.py',
-    'bip65-cltv-p2p.py',
-    'p2p-acceptblock.py',
+    'feature_dersig.py',
+    'feature_cltv.py',
     # vv Tests less than 60s vv
-    'bip9-softforks.py',
-    'p2p-feefilter.py',
-    'rpcbind_test.py',
+    'feature_bip9_softforks.py',
+    'p2p_feefilter.py',
+    'rpc_bind.py',
     # vv Tests less than 30s vv
-    'assumevalid.py',
+    'feature_assumevalid.py',
     'example_test.py',
-    'txn_doublespend.py',
-    'txn_clone.py --mineblock',
-    'txn_clone.py --segwit',
-    'forknotify.py',
-    'invalidateblock.py',
-    'replace-by-fee.py',
+    'wallet_txn_doublespend.py',
+    'wallet_txn_clone.py --mineblock',
+    'feature_notifications.py',
+    'rpc_invalidateblock.py',
+    'feature_rbf.py',
 ]
 
 # Place EXTENDED_SCRIPTS first since it has the 3 longest running tests
@@ -294,6 +303,7 @@ def main():
         sys.exit(0)
 
     check_script_list(config["environment"]["SRCDIR"])
+    check_script_prefixes()
 
     if not args.keepcache:
         shutil.rmtree("%s/test/cache" % config["environment"]["BUILDDIR"], ignore_errors=True)
@@ -476,6 +486,24 @@ class TestResult():
     @property
     def was_successful(self):
         return self.status != "Failed"
+
+
+def check_script_prefixes():
+    """Check that at most a handful of the
+       test scripts don't start with one of the allowed name prefixes."""    
+
+    # LEEWAY is provided as a transition measure, so that pull-requests
+    # that introduce new tests that don't conform with the naming
+    # convention don't immediately cause the tests to fail.
+    LEEWAY = 10
+
+    good_prefixes_re = re.compile("(example|feature|interface|mempool|mining|p2p|rpc|wallet|contract)_")
+    bad_script_names = [script for script in ALL_SCRIPTS if good_prefixes_re.match(script) is None]
+
+    if len(bad_script_names) > 0:
+        print("INFO: %d tests not meeting naming conventions:" % (len(bad_script_names)))
+        print("  %s" % ("\n  ".join(sorted(bad_script_names))))
+    assert len(bad_script_names) <= LEEWAY, "Too many tests not following naming convention! (%d found, maximum: %d)" % (len(bad_script_names), LEEWAY)
 
 
 def check_script_list(src_dir):
